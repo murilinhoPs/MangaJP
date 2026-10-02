@@ -33,18 +33,24 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static QueryExecutor _openConnection() {
+    if (!Platform.isLinux) {
+      return driftDatabase(name: 'mangajp');
+    }
     return driftDatabase(
       name: 'mangajp',
-      native: const DriftNativeOptions(databaseDirectory: databaseDirectory),
+      native: const DriftNativeOptions(
+        databaseDirectory: linuxDatabaseDirectory,
+      ),
     );
   }
 }
 
-/// Directory for `mangajp.sqlite`.
+/// Linux-only directory for `mangajp.sqlite`.
 ///
-/// `getApplicationDocumentsDirectory()` fails on some Linux desktops (no XDG
-/// Documents). Prefer support dir, then documents, then system temp.
-Future<Directory> databaseDirectory() async {
+/// Android and iOS use Drift’s default (`getApplicationDocumentsDirectory()`).
+/// On Linux that call can fail when XDG Documents is missing, so we try
+/// app-support, then documents, then system temp.
+Future<Directory> linuxDatabaseDirectory() async {
   try {
     return await getApplicationSupportDirectory();
   } catch (_) {
