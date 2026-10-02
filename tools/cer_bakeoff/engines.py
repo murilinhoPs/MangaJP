@@ -88,6 +88,9 @@ class PredictionsFileEngine(OcrEngine):
             raise ValueError(
                 f"{self.path}: engine_id {file_id!r} != requested {self.engine_id!r}"
             )
+        file_ver = data.get("version") if isinstance(data, dict) else None
+        if file_ver:
+            self._version = str(file_ver)
 
     def recognize(self, image_path: Path) -> str:
         if self._preds is None:

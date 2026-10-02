@@ -9,7 +9,7 @@ Reads the M0.2 GT package (`manifest-kanji.csv` + `crops/*.png`) and scores:
 | `cloud_vision` | Cloud Vision `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]` | **SKIPPED** unless GCP credentials exist. |
 | `manga_ocr` | [kha-white/manga-ocr](https://github.com/kha-white/manga-ocr) `MangaOcr()`, model `kha-white/manga-ocr-base` | Runnable on Linux CPU. |
 
-Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables: `results/`.
+Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables from the Linux Cloud Agent run: `results/` (`manga_ocr` corpus CER **20.75%**; ML Kit and Cloud Vision `SKIPPED`).
 
 ## CER protocol (glyph-as-drawn)
 

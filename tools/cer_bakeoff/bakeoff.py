@@ -53,6 +53,7 @@ class EngineSummary:
     n_crops: int = 0
     n_ok: int = 0
     n_error: int = 0
+    n_exact: int = 0
     gt_chars: int = 0
     edits: int = 0
     cer_corpus: float | None = None
@@ -147,6 +148,8 @@ def run_engine(engine: eng.OcrEngine, crops: list[Crop]) -> EngineSummary:
                 cer=scored.cer,
             )
             summary.n_ok += 1
+            if scored.edits == 0:
+                summary.n_exact += 1
             summary.gt_chars += scored.gt_len
             summary.edits += scored.edits
             cer_sum += scored.cer
@@ -232,6 +235,7 @@ def write_outputs(
                 "status",
                 "n_crops",
                 "n_ok",
+                "n_exact",
                 "n_error",
                 "gt_chars",
                 "edits",
@@ -250,6 +254,7 @@ def write_outputs(
                     summary.status,
                     summary.n_crops,
                     summary.n_ok,
+                    summary.n_exact if summary.status != "skipped" else "",
                     summary.n_error,
                     summary.gt_chars if summary.status != "skipped" else "",
                     summary.edits if summary.status != "skipped" else "",
@@ -330,14 +335,14 @@ def render_summary_md(
         "Headline CER is **corpus** = Σ edits / Σ GT length (successful crops only). "
         "Skipped engines have **no** invented numbers.",
         "",
-        "| Engine | Status | Corpus CER | Macro CER | Crops ok | GT chars | Edits | Notes |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Engine | Status | Corpus CER | Macro CER | Exact | Crops ok | GT chars | Edits | Notes |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for s in summaries:
         if s.status == "skipped":
             notes = s.skip_reason.replace("|", "/")
             lines.append(
-                f"| `{s.engine_id}` | SKIPPED | — | — | — | — | — | {notes} |"
+                f"| `{s.engine_id}` | SKIPPED | — | — | — | — | — | — | {notes} |"
             )
             continue
         corpus = f"{s.cer_corpus * 100:.2f}%" if s.cer_corpus is not None else "—"
@@ -346,8 +351,37 @@ def render_summary_md(
         notes = notes.replace("|", "/")
         lines.append(
             f"| `{s.engine_id}` | {s.status} | {corpus} | {macro} | "
-            f"{s.n_ok}/{s.n_crops} | {s.gt_chars} | {s.edits} | {notes} |"
+            f"{s.n_exact}/{s.n_ok} | {s.n_ok}/{s.n_crops} | {s.gt_chars} | {s.edits} | {notes} |"
         )
+    lines.extend(
+        [
+            "",
+            "## Q-B1 gate (corpus CER ≤ 10%)",
+            "",
+        ]
+    )
+    measured = [s for s in summaries if s.cer_corpus is not None]
+    skipped = [s for s in summaries if s.status == "skipped"]
+    if not measured:
+        lines.append("No engine produced a CER. Cannot close Q-B1.")
+    else:
+        best = min(measured, key=lambda s: s.cer_corpus or 1.0)
+        clears = [s for s in measured if s.cer_corpus is not None and s.cer_corpus <= 0.10]
+        if clears:
+            names = ", ".join(f"`{s.engine_id}` ({s.cer_corpus * 100:.2f}%)" for s in clears)
+            lines.append(f"**Clears:** {names}. Use the lowest CER as default (prefer on-device if tied).")
+        else:
+            lines.append(
+                f"**None ≤ 10%.** Best measured: `{best.engine_id}` at "
+                f"**{best.cer_corpus * 100:.2f}%** ({best.edits}/{best.gt_chars}). "
+                "Do not invent numbers for skipped engines. Working default = best measured "
+                "(PRD: Cloud/manga) until the skipped engines are scored on this same GT."
+            )
+    if skipped:
+        lines.append("")
+        lines.append("Skipped:")
+        for s in skipped:
+            lines.append(f"- `{s.engine_id}`: {s.skip_reason}")
     lines.extend(["", "## Per-crop (measured engines)", ""])
     for s in summaries:
         if s.status == "skipped":
