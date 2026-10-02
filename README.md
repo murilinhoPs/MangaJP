@@ -6,7 +6,7 @@ License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
 ## Setup
 
-Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.47.x / Dart 3.13) and, for APKs, an Android SDK (`compileSdk` 36).
+Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.47.x / Dart 3.13). Android APKs need an Android SDK (`compileSdk` 36). iOS builds need Xcode on macOS.
 
 ```bash
 flutter pub get
@@ -22,15 +22,24 @@ flutter devices
 flutter run
 ```
 
-The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Android share of an image also opens `/capture`.
+The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`.
 
 ### Share + crop (M0.8)
 
-See `lib/features/capture/README.md` for AndroidManifest filters and emulator steps (share from Photos, or gallery pick on `/capture`). Confirm crop prints `Crop PNG: N bytes` with N > 0. CI: `flutter test test/features/capture/`.
+See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, and device steps (share from Photos, or gallery pick on `/capture`). Confirm crop prints `Crop PNG: N bytes` with N > 0. CI: `flutter test test/features/capture/`.
+
+## Run on iOS
+
+```bash
+flutter devices
+flutter run
+```
+
+Needs a Mac with Xcode. Bundle ID / display name match Android: `dev.murilinhops.mangajp` / **MangaJP**. Signing team and App Group `group.dev.murilinhops.mangajp` are configured in Xcode on first device run (see capture README).
 
 ## Run on Linux desktop
 
-Linux is a **dev convenience** for the crop/gallery UI. Share intent (`ACTION_SEND`) is Android-only.
+Linux is a **dev convenience** for the crop/gallery UI. There is no Linux share target.
 
 Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
 
@@ -40,7 +49,7 @@ flutter run -d linux
 
 Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0. `/capture` has no bottom tabs.
 
-iOS / macOS runners are not in this repo (PRD: Android first).
+Linux has no share target. Drift uses a Linux-only directory fallback (app-support → documents → temp); Android and iOS keep Drift’s default documents path.
 
 ## Dictionary (`jmdict.sqlite`)
 
@@ -68,7 +77,7 @@ flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test`. `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `linux/**`, and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, and `build/**`.
 
 ## Cloud Agents environment
 

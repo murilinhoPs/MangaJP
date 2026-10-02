@@ -14,19 +14,19 @@ ImageSourceService imageSourceService(Ref ref) => ImageSourceService();
 
 /// Share intent + gallery pick (camera is Could / F28, not M0.8).
 ///
-/// Native share is Android-only. `flutter test` on desktop never touches the
-/// plugin (`Platform.isAndroid` is false on the CI host).
+/// Native share is Android + iOS. `flutter test` on desktop never touches the
+/// plugin (`Platform.isAndroid` / `Platform.isIOS` are false on the CI host).
 class ImageSourceService {
   ImageSourceService();
 
-  bool get _androidShare {
+  bool get _nativeShare {
     if (kIsWeb) return false;
-    return Platform.isAndroid;
+    return Platform.isAndroid || Platform.isIOS;
   }
 
-  /// Cold-start share (app launched as the SEND target).
+  /// Cold-start share (app launched as the SEND / Share Extension target).
   Future<IncomingImage?> initialMedia() async {
-    if (!_androidShare) return null;
+    if (!_nativeShare) return null;
     try {
       final image = _firstImage(
         await ReceiveSharingIntent.instance.getInitialMedia(),
@@ -41,9 +41,9 @@ class ImageSourceService {
     }
   }
 
-  /// Warm share while the activity is already running (`singleTask`).
+  /// Warm share while the host app is already running.
   Stream<IncomingImage> get mediaStream {
-    if (!_androidShare) return const Stream.empty();
+    if (!_nativeShare) return const Stream.empty();
     return ReceiveSharingIntent.instance
         .getMediaStream()
         .map(_firstImage)

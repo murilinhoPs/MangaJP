@@ -9,6 +9,7 @@ analyzer:
     - linux/**
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - ios/**
 
 linter:
   rules:

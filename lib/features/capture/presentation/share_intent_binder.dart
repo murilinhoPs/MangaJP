@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../data/image_source_service.dart';
 import '../domain/incoming_image.dart';
 
-/// Listens for Android share-target images and `go`s to `/capture`.
+/// Listens for Android / iOS share-target images and `go`s to `/capture`.
 ///
 /// Capture is **not** a tab (PRD §11). Share must open `/capture` with the
 /// image extra, without requiring a Home hop (F2 / AC-share).
