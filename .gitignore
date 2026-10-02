@@ -47,8 +47,13 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Local Drift / SQLite files
+# Local Drift / SQLite files (full jmdict.sqlite is baked, not committed)
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
 *.db
+
+# Python
+__pycache__/
+# JMdict / KANJIDIC2 downloads
+tools/build_jmdict_sqlite/.cache/

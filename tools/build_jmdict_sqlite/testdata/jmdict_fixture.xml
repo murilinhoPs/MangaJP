@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tiny JMdict_e subset for schema/smoke tests. Not a substitute for the full dictionary. -->
+<!DOCTYPE JMdict [
+<!ENTITY v1 "Ichidan verb">
+<!ENTITY vt "transitive verb">
+<!ENTITY adj-i "adjective (keiyoushi)">
+<!ENTITY n "noun (common) (futsuumeishi)">
+<!ENTITY uk "word usually written using kana alone">
+<!ENTITY iK "word containing irregular kanji usage">
+]>
+<JMdict>
+<entry>
+<ent_seq>1358280</ent_seq>
+<k_ele>
+<keb>食べる</keb>
+<ke_pri>ichi1</ke_pri>
+<ke_pri>news1</ke_pri>
+<ke_pri>nf02</ke_pri>
+</k_ele>
+<k_ele>
+<keb>喰べる</keb>
+<ke_inf>&iK;</ke_inf>
+</k_ele>
+<r_ele>
+<reb>たべる</reb>
+<re_pri>ichi1</re_pri>
+<re_pri>news1</re_pri>
+<re_pri>nf02</re_pri>
+</r_ele>
+<sense>
+<pos>&v1;</pos>
+<pos>&vt;</pos>
+<gloss>to eat</gloss>
+</sense>
+<sense>
+<gloss>to live on (e.g. a salary)</gloss>
+<gloss>to live off</gloss>
+<gloss>to subsist on</gloss>
+</sense>
+</entry>
+<entry>
+<ent_seq>1411580</ent_seq>
+<k_ele>
+<keb>高い</keb>
+<ke_pri>ichi1</ke_pri>
+<ke_pri>news1</ke_pri>
+<ke_pri>nf01</ke_pri>
+</k_ele>
+<r_ele>
+<reb>たかい</reb>
+<re_pri>ichi1</re_pri>
+<re_pri>news1</re_pri>
+<re_pri>nf01</re_pri>
+</r_ele>
+<sense>
+<pos>&adj-i;</pos>
+<gloss>high</gloss>
+<gloss>tall</gloss>
+</sense>
+<sense>
+<pos>&adj-i;</pos>
+<gloss>expensive</gloss>
+<gloss>high-priced</gloss>
+</sense>
+</entry>
+<entry>
+<ent_seq>1583470</ent_seq>
+<k_ele>
+<keb>猫</keb>
+<ke_pri>ichi1</ke_pri>
+<ke_pri>news1</ke_pri>
+<ke_pri>nf02</ke_pri>
+</k_ele>
+<r_ele>
+<reb>ねこ</reb>
+<re_pri>ichi1</re_pri>
+<re_pri>news1</re_pri>
+<re_pri>nf02</re_pri>
+</r_ele>
+<sense>
+<pos>&n;</pos>
+<misc>&uk;</misc>
+<gloss>cat (esp. the domestic cat, Felis catus)</gloss>
+</sense>
+</entry>
+</JMdict>

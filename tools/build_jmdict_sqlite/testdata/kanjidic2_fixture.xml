@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tiny KANJIDIC2 subset for smoke tests. -->
+<kanjidic2>
+<header>
+<file_version>4</file_version>
+<database_version>fixture</database_version>
+</header>
+<character>
+<literal>食</literal>
+<misc>
+<grade>3</grade>
+<stroke_count>9</stroke_count>
+<freq>328</freq>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">ショク</reading>
+<reading r_type="ja_on">ジキ</reading>
+<reading r_type="ja_kun">た.べる</reading>
+<reading r_type="ja_kun">く.う</reading>
+<meaning>eat</meaning>
+<meaning>food</meaning>
+<meaning m_lang="fr">nourriture</meaning>
+</rmgroup>
+</reading_meaning>
+</character>
+<character>
+<literal>高</literal>
+<misc>
+<grade>2</grade>
+<stroke_count>10</stroke_count>
+<freq>65</freq>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">コウ</reading>
+<reading r_type="ja_kun">たか.い</reading>
+<meaning>tall</meaning>
+<meaning>high</meaning>
+<meaning>expensive</meaning>
+</rmgroup>
+</reading_meaning>
+</character>
+</kanjidic2>
