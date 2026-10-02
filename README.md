@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). **M0.5 adds the JMdict SQLite baker**; OCR, SM-2 scheduling, and lookup UI are still later M0.
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. **M0.5** added the JMdict SQLite baker; OCR, capture UI, and deinflect rules are still later M0.
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
