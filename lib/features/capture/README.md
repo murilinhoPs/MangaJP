@@ -71,6 +71,19 @@ crop**. The screen must show `Crop PNG: N bytes (W×H)` with N > 0. Logcat:
 opens `/capture` with the image (no Home hop, no Capture tab). Confirm crop as
 above.
 
+## Verify on Linux desktop
+
+Linux has no share target. The crop UI is Flutter-only, so `flutter run -d linux`
+is enough to click through gallery → rect → bytes:
+
+```bash
+# Ubuntu: ninja-build libgtk-3-dev g++
+flutter run -d linux
+```
+
+Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
+crop**. Same `Crop PNG: N bytes` check. `/capture` is not a bottom tab.
+
 ## CI
 
 ```bash

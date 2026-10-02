@@ -37,6 +37,20 @@ flutter run
 
 Needs a Mac with Xcode. Bundle ID / display name match Android: `dev.murilinhops.mangajp` / **MangaJP**. Signing team and App Group `group.dev.murilinhops.mangajp` are configured in Xcode on first device run (see capture README).
 
+## Run on Linux desktop
+
+Linux is a **dev convenience** for the crop/gallery UI. There is no Linux share
+target. Drift uses a Linux-only directory fallback (app-support → documents →
+temp); Android and iOS keep Drift’s default documents path.
+
+Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
+
+```bash
+flutter run -d linux
+```
+
+Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0. `/capture` has no bottom tabs.
+
 ## Dictionary (`jmdict.sqlite`)
 
 Bake the read-only JMdict DB (PRD §9.2: `entries` / `forms` / `sense_pos` / `kanji`):
@@ -63,7 +77,7 @@ flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, and `build/**`.
 
 ## Cloud Agents environment
 
