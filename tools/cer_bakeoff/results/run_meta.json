@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-10-02T22:10:53.212083+00:00",
+  "gt_dir": "/tmp/mangajp-m0.2-gt",
+  "argv": [
+    "/workspace/tools/cer_bakeoff/bakeoff.py",
+    "--gt-dir",
+    "/tmp/mangajp-m0.2-gt",
+    "--out-dir",
+    "/workspace/tools/cer_bakeoff/results",
+    "--predictions",
+    "manga_ocr=/workspace/tools/cer_bakeoff/results/predictions_manga_ocr.json"
+  ],
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "Linux-6.12.94+-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "cer_protocol": {
+    "metric": "Levenshtein / len(GT)",
+    "unit": "Unicode code points",
+    "normalize": "strip whitespace (str.isspace) only; no NFKC, no kana fold, no 1↔１"
+  }
+}

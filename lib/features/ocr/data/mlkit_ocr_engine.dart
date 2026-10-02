@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import '../domain/ocr_engine.dart';
 import '../domain/ocr_result.dart';
 
-/// ML Kit JP — bake-off later M0. Not implemented in the scaffold.
+/// ML Kit JP (`mlkit_ja`) — M0.3 bake-off. Not implemented in the app.
 class MlkitOcrEngine implements OcrEngine {
   const MlkitOcrEngine();
 
@@ -12,6 +12,6 @@ class MlkitOcrEngine implements OcrEngine {
 
   @override
   Future<OcrResult> recognize(Uint8List image) {
-    throw UnimplementedError('ML Kit OCR is not part of M0.1.');
+    throw UnimplementedError('ML Kit OCR is scored in tools/cer_bakeoff/; not called from the app yet.');
   }
 }

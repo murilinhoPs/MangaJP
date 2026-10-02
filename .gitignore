@@ -57,3 +57,7 @@ app.*.map.json
 __pycache__/
 # JMdict / KANJIDIC2 downloads
 tools/build_jmdict_sqlite/.cache/
+# CER bake-off: local venv, HF cache, unzipped M0.2 GT (copyrighted crops)
+tools/cer_bakeoff/.venv/
+tools/cer_bakeoff/.cache/
+tools/cer_bakeoff/gt/
