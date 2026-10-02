@@ -1,5 +1,5 @@
 name: manga_jp
-description: MangaJP Study — personal manga Japanese study tool (M0.5 JMdict baker).
+description: MangaJP Study — personal manga Japanese study tool (M0.8 share + crop smoke).
 publish_to: "none"
 version: 0.1.0+1
 
@@ -26,6 +26,9 @@ dependencies:
   uuid: ^4.6.0
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
+  receive_sharing_intent: ^1.9.0
+  image_picker: ^1.2.3
+  image: ^4.10.1
 
 dev_dependencies:
   flutter_test:

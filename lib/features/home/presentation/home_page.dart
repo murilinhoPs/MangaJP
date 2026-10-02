@@ -15,10 +15,7 @@ class HomePage extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          'MangaJP Study',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text('MangaJP Study', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         hello.when(
           data: (value) => Card(
@@ -57,7 +54,7 @@ class HomePage extends ConsumerWidget {
         ),
         _StubBlock(
           title: 'Galeria',
-          subtitle: 'Import → /capture — stub',
+          subtitle: 'Import → /capture (crop)',
           icon: Icons.add_photo_alternate_outlined,
           onTap: () => const CaptureRoute().push<void>(context),
         ),

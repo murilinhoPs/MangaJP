@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. **M0.5** added the JMdict SQLite baker; OCR, capture UI, and deinflect rules are still later M0.
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. **M0.8** is the share-intent + crop smoke (`/capture`, not a tab). OCR, Drift `pages`/`crops`, and deinflect rules are still later M0.
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
@@ -22,7 +22,11 @@ flutter devices
 flutter run
 ```
 
-The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider.
+The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Android share of an image also opens `/capture`.
+
+### Share + crop (M0.8)
+
+See `lib/features/capture/README.md` for AndroidManifest filters and emulator steps (share from Photos, or gallery pick on `/capture`). Confirm crop prints `Crop PNG: N bytes` with N > 0. CI: `flutter test test/features/capture/`.
 
 ## Dictionary (`jmdict.sqlite`)
 

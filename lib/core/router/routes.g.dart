@@ -237,23 +237,28 @@ RouteBase get $captureRoute => GoRouteData.$route(
 );
 
 mixin $CaptureRoute on GoRouteData {
-  static CaptureRoute _fromState(GoRouterState state) => const CaptureRoute();
+  static CaptureRoute _fromState(GoRouterState state) =>
+      CaptureRoute($extra: state.extra as IncomingImage?);
+
+  CaptureRoute get _self => this as CaptureRoute;
 
   @override
   String get location => GoRouteData.$location('/capture');
 
   @override
-  void go(BuildContext context) => context.go(location);
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
 
   @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
 
   @override
   void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
+      context.pushReplacement(location, extra: _self.$extra);
 
   @override
-  void replace(BuildContext context) => context.replace(location);
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 RouteBase get $settingsRoute => GoRouteData.$route(

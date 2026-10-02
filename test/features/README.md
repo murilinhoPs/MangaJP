@@ -1,4 +1,5 @@
 # Feature tests
 
-- `dictionary/jmdict_service_test.dart` — rebuilds the JMdict XML fixture and opens it read-only (`entries` / `forms` / `sense_pos`, 食べる `v1`).
-- Capture / OCR / lookup UI tests land with those features.
+Capture M0.8 smoke lives in `test/features/capture/` (fixture PNG → `/capture` →
+one rect → non-empty PNG bytes). Add OCR / SRS feature tests alongside as they
+land.
