@@ -1,0 +1,4 @@
+# manga-ocr
+# Apache-2.0 (kha-white/manga-ocr). Not vendored; pip-install at bake-off time.
+# Install CPU torch first on Linux Cloud Agents (see README).
+manga-ocr==0.1.16
