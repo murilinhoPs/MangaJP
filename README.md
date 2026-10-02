@@ -6,7 +6,7 @@ License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
 ## Setup
 
-Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.47.x / Dart 3.13). Android APKs need an Android SDK (`compileSdk` 36). iOS builds need Xcode on macOS.
+Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.47.x / Dart 3.13). Android APKs need an Android SDK (`compileSdk` 37, required by `receive_sharing_intent`). iOS builds need Xcode on macOS.
 
 ```bash
 flutter pub get
@@ -81,7 +81,7 @@ CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter
 
 ## Cloud Agents environment
 
-Repo config is `.cursor/environment.json`. `install` runs `scripts/cloud-agent-install.sh`, which bootstraps Flutter stable + Android cmdline-tools/SDK (API 36, build-tools, NDK 28.2) when missing, then `flutter pub get` and `dart run build_runner build`.
+Repo config is `.cursor/environment.json`. `install` runs `scripts/cloud-agent-install.sh`, which bootstraps Flutter stable + Android cmdline-tools/SDK (API 37/36, build-tools, NDK 28.2) when missing, then `flutter pub get` and `dart run build_runner build`.
 
 After this is merged, start Cloud Agents on `main` (or this branch). Cursor uses `.cursor/environment.json` from the git revision the agent boots.
 

@@ -71,6 +71,24 @@ crop**. The screen must show `Crop PNG: N bytes (W×H)` with N > 0. Logcat:
 opens `/capture` with the image (no Home hop, no Capture tab). Confirm crop as
 above.
 
+### Share without a photo app (adb)
+
+Simulates **Share → MangaJP** with a MediaStore `content://` URI (needs
+`READ_EXTERNAL_STORAGE` granted, as a sender app would hold on API ≤ 32):
+
+```bash
+adb push page.jpg /sdcard/Pictures/ && adb shell am broadcast \
+  -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/page.jpg
+adb shell pm grant dev.murilinhops.mangajp android.permission.READ_EXTERNAL_STORAGE
+ID=$(adb shell content query --uri content://media/external/images/media \
+  --projection _id:_display_name | rg page.jpg | rg -o '_id=\d+' | cut -d= -f2)
+adb shell am start -a android.intent.action.SEND -t image/jpeg \
+  --grant-read-uri-permission --eu android.intent.extra.STREAM \
+  content://media/external/images/media/$ID -n dev.murilinhops.mangajp/.MainActivity
+```
+
+Then tap **Confirmar crop**; logcat shows `M0.8 crop PNG bytes.length=…`.
+
 ## Verify on Linux desktop
 
 Linux has no share target. The crop UI is Flutter-only, so `flutter run -d linux`
