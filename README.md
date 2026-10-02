@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). **M0.1 is scaffold only** — no OCR, SM-2 algorithm, JMdict import, or capture UI.
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). **M0.5 adds the JMdict SQLite baker**; OCR, SM-2 scheduling, and lookup UI are still later M0.
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
@@ -24,14 +24,33 @@ flutter run
 
 The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider.
 
+## Dictionary (`jmdict.sqlite`)
+
+Bake the read-only JMdict DB (PRD §9.2: `entries` / `forms` / `sense_pos` / `kanji`):
+
+```bash
+python3 tools/build_jmdict_sqlite/build_jmdict_sqlite.py \
+  --output assets/dict/jmdict.sqlite \
+  --with-kanji
+```
+
+The full DB is gitignored. Fixture smoke (no download):
+
+```bash
+python3 tools/build_jmdict_sqlite/test_smoke.py
+```
+
+Details: `tools/build_jmdict_sqlite/README.md`.
+
 ## Checks
 
 ```bash
+python3 tools/build_jmdict_sqlite/test_smoke.py
 flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs `build_runner`, then `flutter analyze`, then `flutter test`. `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**` and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test`. `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**` and `build/**`.
 
 ## Cloud Agents environment
 
