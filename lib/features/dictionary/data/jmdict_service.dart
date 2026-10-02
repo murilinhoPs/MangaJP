@@ -49,4 +49,12 @@ class JmdictService {
     );
     return [for (final row in rows) row['pos'] as String];
   }
+
+  /// Exact surface in `forms` (kanji or kana). Used to score deinflect lemmas.
+  bool hasForm(String text) {
+    final rows = database.select('SELECT 1 FROM forms WHERE text = ? LIMIT 1', [
+      text,
+    ]);
+    return rows.isNotEmpty;
+  }
 }

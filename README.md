@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. **M0.8** is the share-intent + crop smoke (`/capture`, not a tab). OCR, Drift `pages`/`crops`, and deinflect rules are still later M0.
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M0.8** is the share-intent + crop smoke (`/capture`, not a tab). Drift `pages`/`crops` and lookup UI are still later M0.
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 

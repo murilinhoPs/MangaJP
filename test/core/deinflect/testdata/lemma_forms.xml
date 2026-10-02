@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dictionary forms for M0.7 deinflect lemma vectors. Not a substitute for JMdict. -->
+<!DOCTYPE JMdict [
+<!ENTITY v1 "Ichidan verb">
+<!ENTITY v5k "Godan verb with 'ku' ending">
+<!ENTITY v5k-s "Godan verb - Iku/Yuku special class">
+<!ENTITY v5g "Godan verb with 'gu' ending">
+<!ENTITY v5s "Godan verb with 'su' ending">
+<!ENTITY v5t "Godan verb with 'tsu' ending">
+<!ENTITY v5n "Godan verb with 'nu' ending">
+<!ENTITY v5b "Godan verb with 'bu' ending">
+<!ENTITY v5m "Godan verb with 'mu' ending">
+<!ENTITY v5r "Godan verb with 'ru' ending">
+<!ENTITY v5u "Godan verb with 'u' ending">
+<!ENTITY vk "Kuru verb - special class">
+<!ENTITY vs-i "suru verb - included">
+<!ENTITY adj-i "adjective (keiyoushi)">
+<!ENTITY vt "transitive verb">
+<!ENTITY vi "intransitive verb">
+]>
+<JMdict>
+<entry>
+<ent_seq>1358280</ent_seq>
+<k_ele><keb>食べる</keb></k_ele>
+<r_ele><reb>たべる</reb></r_ele>
+<sense><pos>&v1;</pos><pos>&vt;</pos><gloss>to eat</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1259290</ent_seq>
+<k_ele><keb>見る</keb></k_ele>
+<r_ele><reb>みる</reb></r_ele>
+<sense><pos>&v1;</pos><pos>&vt;</pos><gloss>to see</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1547720</ent_seq>
+<k_ele><keb>起きる</keb></k_ele>
+<r_ele><reb>おきる</reb></r_ele>
+<sense><pos>&v1;</pos><pos>&vi;</pos><gloss>to get up</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1436820</ent_seq>
+<k_ele><keb>閉じる</keb></k_ele>
+<r_ele><reb>とじる</reb></r_ele>
+<sense><pos>&v1;</pos><pos>&vt;</pos><gloss>to close</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1596650</ent_seq>
+<k_ele><keb>書く</keb></k_ele>
+<r_ele><reb>かく</reb></r_ele>
+<sense><pos>&v5k;</pos><pos>&vt;</pos><gloss>to write</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1545340</ent_seq>
+<k_ele><keb>泳ぐ</keb></k_ele>
+<r_ele><reb>およぐ</reb></r_ele>
+<sense><pos>&v5g;</pos><pos>&vi;</pos><gloss>to swim</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1600100</ent_seq>
+<k_ele><keb>話す</keb></k_ele>
+<r_ele><reb>はなす</reb></r_ele>
+<sense><pos>&v5s;</pos><pos>&vt;</pos><gloss>to talk</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1526690</ent_seq>
+<k_ele><keb>待つ</keb></k_ele>
+<r_ele><reb>まつ</reb></r_ele>
+<sense><pos>&v5t;</pos><pos>&vt;</pos><gloss>to wait</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1311120</ent_seq>
+<k_ele><keb>死ぬ</keb></k_ele>
+<r_ele><reb>しぬ</reb></r_ele>
+<sense><pos>&v5n;</pos><pos>&vi;</pos><gloss>to die</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1576160</ent_seq>
+<k_ele><keb>遊ぶ</keb></k_ele>
+<r_ele><reb>あそぶ</reb></r_ele>
+<sense><pos>&v5b;</pos><pos>&vi;</pos><gloss>to play</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1465620</ent_seq>
+<k_ele><keb>飲む</keb></k_ele>
+<r_ele><reb>のむ</reb></r_ele>
+<sense><pos>&v5m;</pos><pos>&vt;</pos><gloss>to drink</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1333450</ent_seq>
+<k_ele><keb>取る</keb></k_ele>
+<r_ele><reb>とる</reb></r_ele>
+<sense><pos>&v5r;</pos><pos>&vt;</pos><gloss>to take</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1583300</ent_seq>
+<k_ele><keb>買う</keb></k_ele>
+<r_ele><reb>かう</reb></r_ele>
+<sense><pos>&v5u;</pos><pos>&vt;</pos><gloss>to buy</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1548450</ent_seq>
+<k_ele><keb>読む</keb></k_ele>
+<r_ele><reb>よむ</reb></r_ele>
+<sense><pos>&v5m;</pos><pos>&vt;</pos><gloss>to read</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1247110</ent_seq>
+<k_ele><keb>聞く</keb></k_ele>
+<r_ele><reb>きく</reb></r_ele>
+<sense><pos>&v5k;</pos><pos>&vt;</pos><gloss>to hear</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1326980</ent_seq>
+<k_ele><keb>持つ</keb></k_ele>
+<r_ele><reb>もつ</reb></r_ele>
+<sense><pos>&v5t;</pos><pos>&vt;</pos><gloss>to hold</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1157170</ent_seq>
+<r_ele><reb>する</reb></r_ele>
+<sense><pos>&vs-i;</pos><pos>&vt;</pos><gloss>to do</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1307500</ent_seq>
+<k_ele><keb>来る</keb></k_ele>
+<r_ele><reb>くる</reb></r_ele>
+<sense><pos>&vk;</pos><pos>&vi;</pos><gloss>to come</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1578850</ent_seq>
+<k_ele><keb>行く</keb></k_ele>
+<r_ele><reb>いく</reb></r_ele>
+<sense><pos>&v5k-s;</pos><pos>&vi;</pos><gloss>to go</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1411580</ent_seq>
+<k_ele><keb>高い</keb></k_ele>
+<r_ele><reb>たかい</reb></r_ele>
+<sense><pos>&adj-i;</pos><gloss>high</gloss></sense>
+</entry>
+<entry>
+<ent_seq>1580900</ent_seq>
+<k_ele><keb>新しい</keb></k_ele>
+<r_ele><reb>あたらしい</reb></r_ele>
+<sense><pos>&adj-i;</pos><gloss>new</gloss></sense>
+</entry>
+</JMdict>
