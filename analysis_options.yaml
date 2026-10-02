@@ -8,6 +8,7 @@ analyzer:
     - android/**
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - ios/**
 
 linter:
   rules:
