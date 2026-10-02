@@ -28,6 +28,20 @@ The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; H
 
 See `lib/features/capture/README.md` for AndroidManifest filters and emulator steps (share from Photos, or gallery pick on `/capture`). Confirm crop prints `Crop PNG: N bytes` with N > 0. CI: `flutter test test/features/capture/`.
 
+## Run on Linux desktop
+
+Linux is a **dev convenience** for the crop/gallery UI. Share intent (`ACTION_SEND`) is Android-only.
+
+Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
+
+```bash
+flutter run -d linux
+```
+
+Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0. `/capture` has no bottom tabs.
+
+iOS / macOS runners are not in this repo (PRD: Android first).
+
 ## Dictionary (`jmdict.sqlite`)
 
 Bake the read-only JMdict DB (PRD §9.2: `entries` / `forms` / `sense_pos` / `kanji`):
@@ -54,7 +68,7 @@ flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test`. `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**` and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test`. `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `linux/**`, and `build/**`.
 
 ## Cloud Agents environment
 

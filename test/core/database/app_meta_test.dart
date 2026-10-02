@@ -19,4 +19,10 @@ void main() {
     await db.appMetaDao.upsert('hello', 'updated');
     expect(await db.appMetaDao.getValue('hello'), 'updated');
   });
+
+  test('databaseDirectory resolves to a real directory', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final dir = await databaseDirectory();
+    expect(dir.existsSync(), isTrue);
+  });
 }

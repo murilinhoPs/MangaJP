@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'daos/app_meta_dao.dart';
 import 'tables/app_meta.dart';
@@ -30,6 +33,25 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'mangajp');
+    return driftDatabase(
+      name: 'mangajp',
+      native: const DriftNativeOptions(databaseDirectory: databaseDirectory),
+    );
+  }
+}
+
+/// Directory for `mangajp.sqlite`.
+///
+/// `getApplicationDocumentsDirectory()` fails on some Linux desktops (no XDG
+/// Documents). Prefer support dir, then documents, then system temp.
+Future<Directory> databaseDirectory() async {
+  try {
+    return await getApplicationSupportDirectory();
+  } catch (_) {
+    try {
+      return await getApplicationDocumentsDirectory();
+    } catch (_) {
+      return Directory.systemTemp;
+    }
   }
 }
