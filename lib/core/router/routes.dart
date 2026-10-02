@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/capture/domain/incoming_image.dart';
 import '../../features/capture/presentation/capture_page.dart';
 import '../../features/flashcards/presentation/deck_page.dart';
 import '../../features/home/presentation/home_page.dart';
@@ -18,9 +19,7 @@ part 'routes.g.dart';
 @TypedStatefulShellRoute<AppShellRoute>(
   branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
     TypedStatefulShellBranch<HomeBranch>(
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<HomeRoute>(path: '/home'),
-      ],
+      routes: <TypedRoute<RouteData>>[TypedGoRoute<HomeRoute>(path: '/home')],
     ),
     TypedStatefulShellBranch<PagesBranch>(
       routes: <TypedRoute<RouteData>>[
@@ -148,10 +147,15 @@ class MoreRoute extends GoRouteData with $MoreRoute {
 
 @TypedGoRoute<CaptureRoute>(path: '/capture')
 class CaptureRoute extends GoRouteData with $CaptureRoute {
-  const CaptureRoute();
+  const CaptureRoute({this.$extra});
+
+  /// Share / gallery / test fixture. Not a URL param (bytes are not serializable).
+  final IncomingImage? $extra;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => const CapturePage();
+  Widget build(BuildContext context, GoRouterState state) {
+    return CapturePage(image: $extra);
+  }
 }
 
 @TypedGoRoute<SettingsRoute>(path: '/settings')
