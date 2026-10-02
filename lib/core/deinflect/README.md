@@ -17,3 +17,6 @@ lemmas are the dictionary headword **as written** (kanji when the verb is
 usually kanji, kana for `する`). The suite also bakes those lemmas into
 `forms` via `tools/build_jmdict_sqlite` so a hit is a real dictionary form, not
 an invented spelling.
+
+Measured on this tree: **100.0% (72/72)** — every vector’s expected lemma is
+among `Deinflector.candidates` and exists in `forms`. Gate is ≥80%.
