@@ -69,15 +69,27 @@ python3 tools/build_jmdict_sqlite/test_smoke.py
 
 Details: `tools/build_jmdict_sqlite/README.md`.
 
+## OCR CER bake-off (M0.3 / Q-B1)
+
+Score ML Kit, Cloud Vision, and manga-ocr against the M0.2 kanji GT (44 crops). Glyph-as-drawn CER (no NFKC). Linux can run **manga-ocr**; ML Kit and Cloud Vision skip unless you pass a device dump or GCP key.
+
+```bash
+python3 tools/cer_bakeoff/test_cer.py
+python3 tools/cer_bakeoff/bakeoff.py --gt-dir tools/cer_bakeoff/gt
+```
+
+See `tools/cer_bakeoff/README.md` and `docs/m0.3-cer-bakeoff.md`.
+
 ## Checks
 
 ```bash
 python3 tools/build_jmdict_sqlite/test_smoke.py
+python3 tools/cer_bakeoff/test_cer.py
 flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, the CER-protocol unit tests (no OCR models), then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, and `build/**`.
 
 ## Cloud Agents environment
 
