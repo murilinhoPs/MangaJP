@@ -1,0 +1,4 @@
+{
+  "name": "MangaJP Flutter",
+  "install": "./scripts/cloud-agent-install.sh"
+}

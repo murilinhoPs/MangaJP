@@ -13,6 +13,22 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (m) async {
+        await m.createAll();
+        await batch((batch) {
+          batch.insertAll(appMeta, [
+            AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '1'),
+            AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
+          ]);
+        });
+      },
+    );
+  }
+
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'mangajp');
   }

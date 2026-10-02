@@ -8,15 +8,15 @@ part of 'home_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Riverpod codegen hello: read/write a trivial `app_meta` key via Drift.
+/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
 
 @ProviderFor(HelloMeta)
 final helloMetaProvider = HelloMetaProvider._();
 
-/// Riverpod codegen hello: read/write a trivial `app_meta` key via Drift.
+/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
 final class HelloMetaProvider
     extends $AsyncNotifierProvider<HelloMeta, String> {
-  /// Riverpod codegen hello: read/write a trivial `app_meta` key via Drift.
+  /// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
   HelloMetaProvider._()
     : super(
         from: null,
@@ -36,9 +36,9 @@ final class HelloMetaProvider
   HelloMeta create() => HelloMeta();
 }
 
-String _$helloMetaHash() => r'd8cfa886850083062f9e2c6dd0e20800f6c5b20f';
+String _$helloMetaHash() => r'2430771fd64876e190d37eef934ae6a1440c298c';
 
-/// Riverpod codegen hello: read/write a trivial `app_meta` key via Drift.
+/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
 
 abstract class _$HelloMeta extends $AsyncNotifier<String> {
   FutureOr<String> build();
