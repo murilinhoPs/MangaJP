@@ -104,5 +104,21 @@ void main() {
       expect(review.easeFactor, closeTo(2.6, 1e-9));
       expect(review.interval, 16);
     });
+
+    test('hard (q=3) interval uses Math.round not ceil', () {
+      // q=3 → EF' = 2.5 + (0.1 - 2*(0.08 + 2*0.02)) = 2.36
+      // 6 * 2.36 = 14.16 → round 14; ceil would be 15.
+      final review = nextReview(
+        interval: 6,
+        repetitions: 2,
+        easeFactor: 2.5,
+        quality: 3,
+        now: now,
+      );
+      expect(review.easeFactor, closeTo(2.36, 1e-9));
+      expect(review.interval, 14);
+      expect(review.repetitions, 3);
+      expect(review.status.name, 'learned');
+    });
   });
 }
