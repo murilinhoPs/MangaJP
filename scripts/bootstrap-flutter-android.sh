@@ -29,6 +29,7 @@ ensure_path_symlinks() {
 
 android_sdk_ready() {
   [[ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]] &&
+    [[ -d "$ANDROID_SDK_ROOT/platforms/android-37.0" ]] &&
     [[ -d "$ANDROID_SDK_ROOT/platforms/android-36" ]] &&
     [[ -d "$ANDROID_SDK_ROOT/platforms/android-35" ]] &&
     [[ -d "$ANDROID_SDK_ROOT/build-tools/36.0.0" ]] &&
@@ -77,6 +78,7 @@ if ! android_sdk_ready; then
   yes | "$sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
   "$sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" \
     "platform-tools" \
+    "platforms;android-37.0" \
     "platforms;android-36" \
     "platforms;android-35" \
     "build-tools;36.0.0" \
