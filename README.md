@@ -39,7 +39,9 @@ Needs a Mac with Xcode. Bundle ID / display name match Android: `dev.murilinhops
 
 ## Run on Linux desktop
 
-Linux is a **dev convenience** for the crop/gallery UI. There is no Linux share target.
+Linux is a **dev convenience** for the crop/gallery UI. There is no Linux share
+target. Drift uses a Linux-only directory fallback (app-support → documents →
+temp); Android and iOS keep Drift’s default documents path.
 
 Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
 
@@ -48,8 +50,6 @@ flutter run -d linux
 ```
 
 Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0. `/capture` has no bottom tabs.
-
-Linux has no share target. Drift uses a Linux-only directory fallback (app-support → documents → temp); Android and iOS keep Drift’s default documents path.
 
 ## Dictionary (`jmdict.sqlite`)
 
