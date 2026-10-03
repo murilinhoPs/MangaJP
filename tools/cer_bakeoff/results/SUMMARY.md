@@ -1,7 +1,7 @@
 # M0.3 CER bake-off results
 
-Generated: `2026-10-03T19:33:25.723852+00:00`
-GT: `/tmp/mangajp-m0.2-gt` (`manifest-kanji.csv`, glyph-as-drawn).
+Generated: merged tables (cloud_vision live `2026-10-03T19:33:25.723852+00:00`; mlkit_ja dump `2026-10-03T20:29:32.175665+00:00`).
+GT: M0.2 `manifest-kanji.csv` (glyph-as-drawn).
 
 Protocol: OCR vs GT **code points as drawn**. Strip whitespace only. No NFKC, no kana folding, no ASCII/fullwidth digit folding (`1` ≠ `１`, `よぉ` ≠ `よお`).
 
@@ -9,18 +9,150 @@ Headline CER is **corpus** = Σ edits / Σ GT length (successful crops only). Sk
 
 | Engine | Status | Corpus CER | Macro CER | Exact | Crops ok | GT chars | Edits | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `mlkit_ja` | SKIPPED | — | — | — | — | — | — | SKIPPED (google_mlkit_text_recognition is Android/iOS-only; this Linux agent has no emulator. Re-run with --predictions mlkit_ja=dump.json — see tools/cer_bakeoff/README.md) |
+| `mlkit_ja` | ok | 95.47% | 94.28% | 1/44 | 44/44 | 530 | 506 | com.google.mlkit:text-recognition-japanese:16.0.1 (bundled); decode=Android BitmapFactory; API 30 |
 | `cloud_vision` | ok | 44.53% | 55.04% | 4/44 | 44/44 | 530 | 236 | DOCUMENT_TEXT_DETECTION languageHints=[ja] |
 | `manga_ocr` | ok | 20.75% | 22.76% | 25/44 | 44/44 | 530 | 110 | manga-ocr 0.1.16; model=kha-white/manga-ocr-base; device=cpu |
 
 ## Q-B1 gate (corpus CER ≤ 10%)
 
-**None ≤ 10%.** Best measured: `manga_ocr` at **20.75%** (110/530). Do not invent numbers for skipped engines. Working default = best measured (PRD: Cloud/manga) until the skipped engines are scored on this same GT.
-
-Skipped:
-- `mlkit_ja`: SKIPPED (google_mlkit_text_recognition is Android/iOS-only; this Linux agent has no emulator. Re-run with --predictions mlkit_ja=dump.json — see tools/cer_bakeoff/README.md)
+**None ≤ 10%.** Best measured: `manga_ocr` at **20.75%** (110/530). Do not invent numbers for skipped engines. Working default = best measured (PRD: Cloud/manga).
 
 ## Per-crop (measured engines)
+
+### `mlkit_ja`
+
+| crop_id | CER % | edits | gt_len | GT | OCR |
+| --- | ---: | ---: | ---: | --- | --- |
+| `page_0_b1` | 88.52 | 54 | 61 | 全世界累計出荷本数１００万本突破の大人気サイコロジカルホラー、竜騎士０７描き下ろしの「新たなエンディング」でコミカライズ！ | コロカルホラープ
+、栗計出荷本 数 |
+| `page_0_b2` | 78.57 | 11 | 14 | 美しいがゆえに、おぞましい。 | おぞ争し
+美 |
+| `page_1_b1` | 133.33 | 4 | 3 | 痛い… | 南い... |
+| `page_1_b2` | 100.00 | 3 | 3 | 誰か… | だれ
+誰か |
+| `page_1_b3` | 20.00 | 1 | 5 | 止めてくれ | 上めてくれ |
+| `page_1_b4` | 100.00 | 3 | 3 | 雛子… | ひな リ |
+| `page_3_b1` | 112.50 | 9 | 8 | 狐に噛まれたんだ | 響まれたんだ、
+狐に
+のつね |
+| `page_3_b2` | 14.29 | 1 | 7 | だいじょうぶ？ | だいじょうぶ? |
+| `page_3_b3` | 100.00 | 9 | 9 | ありがとう…でも… | でも...
+ありがとう... |
+| `page_4_b1` | 70.59 | 12 | 17 | ぼ、ぼくは、ことゆきっていいます！ | いいます!.
+ことゆきって
+ぼ、ほくは、 |
+| `page_4_b2` | 50.00 | 2 | 4 | 君は―― | 君は,
+み |
+| `page_4_b3` | 160.00 | 8 | 5 | 私の名前は | 私の名前は
+わたし、
+なまえ、 |
+| `page_4_b4` | 166.67 | 5 | 3 | 雛子！ | 灘子!
+ひなリ |
+| `page_5_b1` | 88.24 | 15 | 17 | 親に向かって、その言い草は何だぁ！ | 何だあ !
+なん
+その言い草は
+第に向かって、
+お |
+| `page_5_b2` | 73.91 | 17 | 23 | そんなにお母さんの作るご飯が気にくわないなら、 | 気にくわないなら
+お母きんの作る飯が
+はん
+そんなに |
+| `page_5_b3` | 100.00 | 10 | 10 | 食べなきゃいいでしょ | いいでしょ
+食べなきや |
+| `page_5_b4` | 77.78 | 14 | 18 | なんだと……もういっぺん言ってみろ！ | rつてみろ!
+もういつべん
+なんだと |
+| `page_6.1_b1` | 81.82 | 9 | 11 | ひどいことを言われて、 | 恒われて
+ことを |
+| `page_6.1_b2` | 106.25 | 17 | 16 | なんでへらへら笑っていられるの？ | 笑っていられるの?
+わら
+なんでへらへら |
+| `page_6.1_b3` | 200.00 | 4 | 2 | 雛子 | 蓋子
+ひなこ |
+| `page_6.b1` | 60.00 | 3 | 5 | お母さん、 | お母きん、
+かあ |
+| `page_6_b2` | 84.21 | 16 | 19 | こんな人にご飯なんて作らなくっていいよ | いよ
+作らなくって
+ご飯なんて
+はん
+こんな人に |
+| `page_6_b3` | 90.91 | 20 | 22 | 雛子、やめて。お父さんにそんな言い方しないで | 智い方しないで
+かた
+お父きんにそんな
+織子、やめて。
+ひなこ |
+| `page_6_b4` | 90.00 | 9 | 10 | お母さんもお母さんだ | わ母さんだか
+かあ
+お母さんも。
+かあ |
+| `page_6_b5` | 91.67 | 11 | 12 | こんなひどいことされて、 | リAされで
+なひどい |
+| `page_7_b1` | 118.18 | 13 | 11 | お父さんに、謝りなさい | 祇りなさい
+あやま
+お父さんに、
+とう |
+| `page_7_b2` | 33.33 | 2 | 6 | ……どうして | どうして |
+| `page_7_b3` | 106.67 | 16 | 15 | …もうすぐ、大切な日なんだから | 大切な日なんだから
+たいせつ
+·もうすぐ、 |
+| `page_7_b4` | 87.50 | 14 | 16 | 私、お母さんみたいになりたくない | なみお私き
+りた長母
+なりたくない
+たいさ
+くにん |
+| `page_8_b1` | 16.67 | 1 | 6 | どこ行くの？ | どこ行くの? |
+| `page_8_b2` | 100.00 | 10 | 10 | こっち通るの珍しいね |  |
+| `page_8_b3` | 100.00 | 3 | 3 | 咲子！ | さくこ |
+| `page_8_b4` | 100.00 | 4 | 4 | 千鶴屋？ | ちづるや |
+| `page_8_b5` | 145.45 | 16 | 11 | うん…誰かと喋りたくて | Kりたくて
+しゃべ
+だれ
+推かと
+うん.. |
+| `page_9_b1` | 100.00 | 8 | 8 | 私も後から行くね | 行くね、
+私も後から
+わたし、 |
+| `page_9_b2` | 85.71 | 6 | 7 | ……うんじゃあ | じゃあ
+うん |
+| `page_9_b3` | 125.00 | 5 | 4 | 裏切り者 | うらぎ
+裏切り者
+もの |
+| `page_9_b4` | 111.11 | 10 | 9 | 咲子――五十嵐咲子 | ー五十属咲子
+がらしさくリ
+咲子 |
+| `page_9_b5` | 100.00 | 36 | 36 | 昔から、「ずっと一緒」と私のことをそれなりに好きでいてくれている…はず。 | はず。
+好きでいてくれている
+私のことをそれなりに
+わたし
+昔から、「すっと一緒」と、
+かし、
+いっしょ |
+| `page_9_b6` | 133.33 | 28 | 21 | だが…なぜか私のことを「裏切り者」と呼ぶ。 | 「裏切り者」と呼ぶ。
+うらぎ
+もの
+だが...
+なぜか私のことを
+わたし |
+| `page_9_b7` | 129.17 | 31 | 24 | 少し天然…なのか、人とは違う不思議な部分がある… | 部分がある...
+人とは違う不思議な
+ひと
+ちが
+ダし天際..なのか、
+てんねん
+思しの
+議か |
+| `page_10_b1` | 60.00 | 3 | 5 | よぉ、相棒 | よ
+棒 |
+| `page_10_b2` | 0.00 | 0 | 6 | 来てたんだな | 来てたんだな |
+| `page_10_b3` | 157.14 | 33 | 21 | 宇宙軍団から戎ヶ丘を守らないといけないだろ | いけないだろ
+守らないと
+だと
+まも
+えびす
+抗ヶ丘を
+おか
+宇宙軍団から
+うちゅうぐん だん |
 
 ### `cloud_vision`
 

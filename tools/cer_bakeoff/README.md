@@ -5,11 +5,11 @@ Reads the M0.2 GT package (`manifest-kanji.csv` + `crops/*.png`) and scores:
 
 | Engine id | Implementation | Typical Linux Cloud Agent |
 | --- | --- | --- |
-| `mlkit_ja` | ML Kit Japanese (`google_mlkit_text_recognition`, `TextRecognitionScript.japanese`) | **SKIPPED** — Android/iOS only. Replay a device dump with `--predictions`. |
-| `cloud_vision` | Cloud Vision `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]` | Runnable with `CLOUD_VISION_API_KEY`. This corpus: **44.53%** (236/530), 44/44. |
+| `mlkit_ja` | ML Kit Japanese (`TextRecognition` + bundled `com.google.mlkit:text-recognition-japanese`). Device dump via `tools/cer_bakeoff/mlkit_harness/` + `--predictions`. | Replay `results/predictions_mlkit_ja.json` (measured **95.47%**, 506/530, 44/44). Live engine is Android/iOS only. |
+| `cloud_vision` | Cloud Vision `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]` | This corpus: **44.53%** (236/530), 44/44. |
 | `manga_ocr` | [kha-white/manga-ocr](https://github.com/kha-white/manga-ocr) `MangaOcr()`, model `kha-white/manga-ocr-base` | Runnable on Linux CPU. This corpus: **20.75%** (110/530), 44/44. |
 
-Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables: `results/` (`manga_ocr` **20.75%**; `cloud_vision` **44.53%**; ML Kit `SKIPPED`). Unofficial Vision ruby-box filter (size+position, not a rescore): `ruby_boxes.py` + `results/cloud_vision_boxes.json` → **21.32%** (113/530), 44/44.
+Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables: `results/` (`manga_ocr` **20.75%**; `cloud_vision` **44.53%**; `mlkit_ja` **95.47%**). Unofficial Vision ruby-box filter (size+position, not a rescore): `ruby_boxes.py` + `results/cloud_vision_boxes.json` → **21.32%** (113/530), 44/44.
 
 ## CER protocol (glyph-as-drawn)
 
@@ -105,7 +105,15 @@ Write JSON (UTF-8):
 
 Do **not** NFKC the dump. Then `--predictions mlkit_ja=that.json`.
 
-Do not add `google_mlkit_text_recognition` to `pubspec.yaml` until Q-B1 picks an on-device engine — it is not a Linux plugin and would break the desktop runner.
+Device runner (Android emulator, bundled Japanese model, BitmapFactory PNG decode — not Dart zlib):
+
+```bash
+bash tools/cer_bakeoff/run_mlkit_emulator.sh \
+  --gt-dir tools/cer_bakeoff/gt \
+  --out tools/cer_bakeoff/results/predictions_mlkit_ja.json
+```
+
+Do not add `google_mlkit_text_recognition` to the app `pubspec.yaml` until Q-B1 picks an on-device engine — it is not a Linux plugin and would break the desktop runner. The bake-off APK is a separate project under `mlkit_harness/`.
 
 ## License
 

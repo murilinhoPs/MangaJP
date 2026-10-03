@@ -1,0 +1,19 @@
+name: mlkit_harness
+description: Device-only ML Kit Japanese OCR runner for the M0.3 CER bake-off.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

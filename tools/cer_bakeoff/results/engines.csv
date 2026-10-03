@@ -1,4 +1,4 @@
 engine_id,status,n_crops,n_ok,n_exact,n_error,gt_chars,edits,cer_corpus,cer_corpus_pct,cer_macro,cer_macro_pct,version,skip_reason
-mlkit_ja,skipped,44,0,,0,,,,,,,,SKIPPED (google_mlkit_text_recognition is Android/iOS-only; this Linux agent has no emulator. Re-run with --predictions mlkit_ja=dump.json — see tools/cer_bakeoff/README.md)
+mlkit_ja,ok,44,44,1,0,530,506,0.954717,95.47,0.942846,94.28,com.google.mlkit:text-recognition-japanese:16.0.1 (bundled); decode=Android BitmapFactory; API 30,
 cloud_vision,ok,44,44,4,0,530,236,0.445283,44.53,0.550405,55.04,DOCUMENT_TEXT_DETECTION languageHints=[ja],
 manga_ocr,ok,44,44,25,0,530,110,0.207547,20.75,0.227575,22.76,manga-ocr 0.1.16; model=kha-white/manga-ocr-base; device=cpu,
