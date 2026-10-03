@@ -15,6 +15,7 @@ sys.path.insert(0, str(TOOL_DIR))
 import bakeoff  # noqa: E402
 import cer  # noqa: E402
 import engines  # noqa: E402
+import ruby_boxes  # noqa: E402
 
 
 class StripAndDistance(unittest.TestCase):
@@ -154,6 +155,81 @@ class HarnessSkipAndReplay(unittest.TestCase):
             self.assertIn("SKIPPED", engine.reason)
         info = engine.info()
         self.assertEqual(info.engine_id, "cloud_vision")
+
+
+class RubyBoxFilter(unittest.TestCase):
+    """Unofficial size+position filter. Not hiragana-line drop."""
+
+    def test_narrow_word_to_the_right_is_ruby(self) -> None:
+        body = {"text": "雛子", "x": 100, "y": 100, "w": 120, "h": 200}
+        ruby = {"text": "ひなこ", "x": 230, "y": 110, "w": 40, "h": 160}
+        words = [ruby, body]
+        self.assertTrue(ruby_boxes.is_ruby_word(ruby, words))
+        self.assertFalse(ruby_boxes.is_ruby_word(body, words))
+        kept, dropped = ruby_boxes.filter_words(words)
+        self.assertEqual(dropped, ["ひなこ"])
+        self.assertEqual(kept, "雛子")
+
+    def test_same_column_punctuation_not_ruby(self) -> None:
+        # Vertical stack: comma is above the next glyph (smaller y), same width.
+        comma = {"text": "、", "x": 100, "y": 100, "w": 120, "h": 40}
+        te = {"text": "て", "x": 100, "y": 150, "w": 120, "h": 100}
+        words = [comma, te]
+        self.assertFalse(ruby_boxes.is_ruby_word(comma, words))
+        kept, dropped = ruby_boxes.filter_words(words)
+        self.assertEqual(dropped, [])
+        self.assertEqual(kept, "、て")
+
+    def test_wide_hiragana_body_is_kept(self) -> None:
+        # Proves the filter is geometry, not "drop hiragana-only lines".
+        hira = {"text": "だいじょうぶ", "x": 80, "y": 40, "w": 70, "h": 400}
+        q = {"text": "?", "x": 80, "y": 450, "w": 68, "h": 60}
+        words = [hira, q]
+        kept, dropped = ruby_boxes.filter_words(words)
+        self.assertEqual(dropped, [])
+        self.assertIn("だいじょうぶ", kept)
+
+    def test_committed_dump_is_44_of_44_and_not_the_official_cer(self) -> None:
+        boxes_path = TOOL_DIR / "results" / "cloud_vision_boxes.json"
+        engines_csv = (TOOL_DIR / "results" / "engines.csv").read_text(encoding="utf-8")
+        self.assertIn("0.445283", engines_csv)
+        self.assertIn("44.53", engines_csv)
+        data = ruby_boxes.load_boxes(boxes_path)
+        crops = data["crops"]
+        self.assertEqual(len(crops), 44)
+        for cid, crop in crops.items():
+            self.assertTrue(crop["raw_text"], cid)
+            self.assertTrue(crop["words"], cid)
+            kept, _dropped = ruby_boxes.filter_words(crop["words"])
+            self.assertIsInstance(kept, str)
+        # Official raw CER against committed predictions file (not this filter).
+        pred = json.loads(
+            (TOOL_DIR / "results" / "predictions_cloud_vision.json").read_text(
+                encoding="utf-8"
+            )
+        )["predictions"]
+        self.assertEqual(len(pred), 44)
+        self.assertEqual(set(pred), set(crops))
+        for cid, crop in crops.items():
+            self.assertEqual(pred[cid], crop["raw_text"], cid)
+
+    def test_variant_json_matches_filter_on_committed_boxes(self) -> None:
+        boxes = ruby_boxes.load_boxes(TOOL_DIR / "results" / "cloud_vision_boxes.json")
+        variant = json.loads(
+            (TOOL_DIR / "results" / "cloud_vision_ruby_filter.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(variant["unofficial"])
+        self.assertEqual(variant["n_ok"], 44)
+        self.assertEqual(variant["n_crops"], 44)
+        self.assertEqual(variant["edits"], 113)
+        self.assertEqual(variant["gt_chars"], 530)
+        self.assertEqual(variant["cer_corpus_pct"], "21.32")
+        for cid, crop in boxes["crops"].items():
+            kept, dropped = ruby_boxes.filter_words(crop["words"])
+            self.assertEqual(variant["predictions"][cid], kept, cid)
+            self.assertEqual(variant["dropped"][cid], dropped, cid)
 
 
 if __name__ == "__main__":

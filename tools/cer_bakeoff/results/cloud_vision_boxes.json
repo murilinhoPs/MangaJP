@@ -1,0 +1,5500 @@
+{
+  "engine_id": "cloud_vision",
+  "feature": "DOCUMENT_TEXT_DETECTION",
+  "languageHints": [
+    "ja"
+  ],
+  "unofficial_filter": "tools/cer_bakeoff/ruby_boxes.py",
+  "note": "Word and paragraph bounding boxes from fullTextAnnotation. No API key and no request URL. Official CER uses each crop's raw_text (whitespace strip only) = 44.53% (236/530), 44/44. Do not treat this dump as a rescore of that number.",
+  "n_crops": 44,
+  "crops": {
+    "page_0_b1": {
+      "raw_text": "全世界累計出荷本数\n100万本突破の\n気サイコロジカルホラ\n描き下ろし\nm\nデ",
+      "page_width": 944,
+      "page_height": 1374,
+      "n_blocks": 4,
+      "n_paragraphs": 6,
+      "n_words": 17,
+      "paragraphs": [
+        {
+          "text": "全世界累計出荷本数\n",
+          "x": 799,
+          "y": 32,
+          "w": 115,
+          "h": 938,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "100万本突破の\n",
+          "x": 629,
+          "y": 104,
+          "w": 119,
+          "h": 748,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 5
+        },
+        {
+          "text": "気サイコロジカルホラ\n",
+          "x": 486,
+          "y": 258,
+          "w": 95,
+          "h": 943,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "描き下ろし\n",
+          "x": 325,
+          "y": 566,
+          "w": 127,
+          "h": 502,
+          "block": 1,
+          "paragraph": 1,
+          "n_words": 2
+        },
+        {
+          "text": "m\n",
+          "x": 756,
+          "y": 1224,
+          "w": 39,
+          "h": 52,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "デ\n",
+          "x": 191,
+          "y": 587,
+          "w": 76,
+          "h": 77,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "全",
+          "x": 800,
+          "y": 32,
+          "w": 100,
+          "h": 81,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "世界",
+          "x": 801,
+          "y": 140,
+          "w": 102,
+          "h": 192,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "累計",
+          "x": 805,
+          "y": 355,
+          "w": 102,
+          "h": 192,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "出荷",
+          "x": 808,
+          "y": 568,
+          "w": 102,
+          "h": 189,
+          "block": 0,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "本数\n",
+          "x": 812,
+          "y": 782,
+          "w": 102,
+          "h": 188,
+          "block": 0,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "100",
+          "x": 629,
+          "y": 104,
+          "w": 98,
+          "h": 221,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "万",
+          "x": 640,
+          "y": 357,
+          "w": 91,
+          "h": 87,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "本",
+          "x": 644,
+          "y": 449,
+          "w": 92,
+          "h": 99,
+          "block": 0,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "突破",
+          "x": 648,
+          "y": 562,
+          "w": 96,
+          "h": 197,
+          "block": 0,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "の\n",
+          "x": 657,
+          "y": 786,
+          "w": 90,
+          "h": 66,
+          "block": 0,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "気",
+          "x": 492,
+          "y": 258,
+          "w": 88,
+          "h": 89,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "サイコロジカル",
+          "x": 487,
+          "y": 374,
+          "w": 93,
+          "h": 623,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ホラ\n",
+          "x": 487,
+          "y": 1030,
+          "w": 88,
+          "h": 171,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "描き",
+          "x": 326,
+          "y": 566,
+          "w": 108,
+          "h": 187,
+          "block": 1,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "下ろし\n",
+          "x": 338,
+          "y": 786,
+          "w": 114,
+          "h": 283,
+          "block": 1,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "m\n",
+          "x": 756,
+          "y": 1224,
+          "w": 39,
+          "h": 52,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "デ\n",
+          "x": 191,
+          "y": 587,
+          "w": 76,
+          "h": 77,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_0_b2": {
+      "raw_text": ")\n美しいがゆえに、\nおぞましい。",
+      "page_width": 544,
+      "page_height": 1766,
+      "n_blocks": 2,
+      "n_paragraphs": 3,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": ")\n",
+          "x": 83,
+          "y": 5,
+          "w": 31,
+          "h": 24,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "美しいがゆえに、\n",
+          "x": 356,
+          "y": 41,
+          "w": 139,
+          "h": 1258,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 4
+        },
+        {
+          "text": "おぞましい。\n",
+          "x": 120,
+          "y": 784,
+          "w": 133,
+          "h": 922,
+          "block": 1,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": ")\n",
+          "x": 83,
+          "y": 5,
+          "w": 31,
+          "h": 24,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "美しい",
+          "x": 356,
+          "y": 41,
+          "w": 137,
+          "h": 481,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "が",
+          "x": 358,
+          "y": 565,
+          "w": 134,
+          "h": 115,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ゆえに",
+          "x": 358,
+          "y": 741,
+          "w": 136,
+          "h": 472,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "、\n",
+          "x": 360,
+          "y": 1255,
+          "w": 134,
+          "h": 44,
+          "block": 1,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "おぞましい",
+          "x": 120,
+          "y": 784,
+          "w": 132,
+          "h": 824,
+          "block": 1,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "。\n",
+          "x": 130,
+          "y": 1661,
+          "w": 123,
+          "h": 45,
+          "block": 1,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_1_b1": {
+      "raw_text": "いた\n痛い…",
+      "page_width": 552,
+      "page_height": 820,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "いた\n",
+          "x": 336,
+          "y": 273,
+          "w": 32,
+          "h": 78,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "痛い…\n",
+          "x": 221,
+          "y": 255,
+          "w": 134,
+          "h": 294,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "い",
+          "x": 337,
+          "y": 273,
+          "w": 31,
+          "h": 32,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "た\n",
+          "x": 337,
+          "y": 310,
+          "w": 31,
+          "h": 41,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "痛い",
+          "x": 221,
+          "y": 255,
+          "w": 127,
+          "h": 204,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "…\n",
+          "x": 237,
+          "y": 478,
+          "w": 117,
+          "h": 71,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_1_b2": {
+      "raw_text": "誰か…",
+      "page_width": 540,
+      "page_height": 858,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "誰か…\n",
+          "x": 204,
+          "y": 267,
+          "w": 105,
+          "h": 283,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "誰",
+          "x": 205,
+          "y": 267,
+          "w": 100,
+          "h": 105,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "か",
+          "x": 208,
+          "y": 389,
+          "w": 99,
+          "h": 78,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "…\n",
+          "x": 210,
+          "y": 491,
+          "w": 98,
+          "h": 59,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_1_b3": {
+      "raw_text": "止めてくれ",
+      "page_width": 584,
+      "page_height": 1060,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "止めてくれ\n",
+          "x": 222,
+          "y": 214,
+          "w": 117,
+          "h": 529,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "止め",
+          "x": 223,
+          "y": 214,
+          "w": 110,
+          "h": 201,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "て",
+          "x": 226,
+          "y": 446,
+          "w": 108,
+          "h": 79,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "くれ\n",
+          "x": 228,
+          "y": 545,
+          "w": 110,
+          "h": 198,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_1_b4": {
+      "raw_text": "ひなこ\n雛子･･･",
+      "page_width": 742,
+      "page_height": 1118,
+      "n_blocks": 1,
+      "n_paragraphs": 2,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "ひなこ\n",
+          "x": 423,
+          "y": 399,
+          "w": 50,
+          "h": 220,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "雛子･･･\n",
+          "x": 290,
+          "y": 387,
+          "w": 128,
+          "h": 406,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "ひなこ\n",
+          "x": 423,
+          "y": 399,
+          "w": 50,
+          "h": 220,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "雛子",
+          "x": 291,
+          "y": 387,
+          "w": 127,
+          "h": 274,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "･･･\n",
+          "x": 291,
+          "y": 675,
+          "w": 127,
+          "h": 118,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_3_b1": {
+      "raw_text": "狐に\n噛か 狐 2\n噛まれたんだ",
+      "page_width": 830,
+      "page_height": 1014,
+      "n_blocks": 3,
+      "n_paragraphs": 3,
+      "n_words": 11,
+      "paragraphs": [
+        {
+          "text": "狐に\n",
+          "x": 445,
+          "y": 120,
+          "w": 106,
+          "h": 218,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "噛か 狐 2\n",
+          "x": 278,
+          "y": 133,
+          "w": 317,
+          "h": 97,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 4
+        },
+        {
+          "text": "噛まれたんだ\n",
+          "x": 268,
+          "y": 124,
+          "w": 110,
+          "h": 668,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 5
+        }
+      ],
+      "words": [
+        {
+          "text": "狐",
+          "x": 446,
+          "y": 121,
+          "w": 103,
+          "h": 114,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "に\n",
+          "x": 448,
+          "y": 239,
+          "w": 102,
+          "h": 99,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "噛",
+          "x": 278,
+          "y": 133,
+          "w": 84,
+          "h": 97,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "か ",
+          "x": 388,
+          "y": 133,
+          "w": 32,
+          "h": 97,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "狐 ",
+          "x": 445,
+          "y": 133,
+          "w": 86,
+          "h": 97,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "2\n",
+          "x": 556,
+          "y": 133,
+          "w": 39,
+          "h": 97,
+          "block": 1,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "噛ま",
+          "x": 268,
+          "y": 124,
+          "w": 107,
+          "h": 217,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "れ",
+          "x": 270,
+          "y": 353,
+          "w": 106,
+          "h": 104,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "た",
+          "x": 271,
+          "y": 467,
+          "w": 106,
+          "h": 103,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "ん",
+          "x": 272,
+          "y": 580,
+          "w": 106,
+          "h": 102,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "だ\n",
+          "x": 272,
+          "y": 691,
+          "w": 106,
+          "h": 101,
+          "block": 2,
+          "paragraph": 0,
+          "word": 4
+        }
+      ]
+    },
+    "page_3_b2": {
+      "raw_text": "だいじょうぶ?",
+      "page_width": 700,
+      "page_height": 808,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 2,
+      "paragraphs": [
+        {
+          "text": "だいじょうぶ?\n",
+          "x": 303,
+          "y": 119,
+          "w": 72,
+          "h": 540,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "だいじょうぶ",
+          "x": 303,
+          "y": 119,
+          "w": 72,
+          "h": 466,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "?\n",
+          "x": 304,
+          "y": 590,
+          "w": 68,
+          "h": 69,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_3_b3": {
+      "raw_text": "ありがとう...\nでも...",
+      "page_width": 758,
+      "page_height": 796,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "ありがとう...\n",
+          "x": 460,
+          "y": 166,
+          "w": 76,
+          "h": 462,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "でも...\n",
+          "x": 170,
+          "y": 478,
+          "w": 65,
+          "h": 223,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "ありがとう",
+          "x": 460,
+          "y": 166,
+          "w": 76,
+          "h": 382,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "...\n",
+          "x": 460,
+          "y": 562,
+          "w": 73,
+          "h": 66,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "でも",
+          "x": 171,
+          "y": 478,
+          "w": 64,
+          "h": 148,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "...\n",
+          "x": 170,
+          "y": 636,
+          "w": 63,
+          "h": 65,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_4_b1": {
+      "raw_text": "ぼ、ぼくは、\nことゆきって\nいいます!",
+      "page_width": 612,
+      "page_height": 964,
+      "n_blocks": 1,
+      "n_paragraphs": 2,
+      "n_words": 12,
+      "paragraphs": [
+        {
+          "text": "ぼ、ぼくは、\n",
+          "x": 457,
+          "y": 167,
+          "w": 82,
+          "h": 462,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "ことゆきって\nいいます!\n",
+          "x": 164,
+          "y": 169,
+          "w": 226,
+          "h": 567,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 7
+        }
+      ],
+      "words": [
+        {
+          "text": "ぼ",
+          "x": 459,
+          "y": 167,
+          "w": 80,
+          "h": 89,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "、",
+          "x": 459,
+          "y": 267,
+          "w": 80,
+          "h": 24,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ぼく",
+          "x": 458,
+          "y": 313,
+          "w": 81,
+          "h": 179,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "は",
+          "x": 458,
+          "y": 507,
+          "w": 80,
+          "h": 81,
+          "block": 0,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "、\n",
+          "x": 458,
+          "y": 603,
+          "w": 80,
+          "h": 26,
+          "block": 0,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "こ",
+          "x": 310,
+          "y": 169,
+          "w": 79,
+          "h": 75,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "と",
+          "x": 310,
+          "y": 265,
+          "w": 79,
+          "h": 89,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "ゆき",
+          "x": 310,
+          "y": 358,
+          "w": 79,
+          "h": 185,
+          "block": 0,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "って\n",
+          "x": 310,
+          "y": 571,
+          "w": 79,
+          "h": 165,
+          "block": 0,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "いい",
+          "x": 164,
+          "y": 175,
+          "w": 80,
+          "h": 169,
+          "block": 0,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "ます",
+          "x": 164,
+          "y": 362,
+          "w": 80,
+          "h": 186,
+          "block": 0,
+          "paragraph": 1,
+          "word": 5
+        },
+        {
+          "text": "!\n",
+          "x": 164,
+          "y": 554,
+          "w": 80,
+          "h": 67,
+          "block": 0,
+          "paragraph": 1,
+          "word": 6
+        }
+      ]
+    },
+    "page_4_b2": {
+      "raw_text": "きみ\n君は",
+      "page_width": 490,
+      "page_height": 764,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "きみ\n",
+          "x": 275,
+          "y": 194,
+          "w": 28,
+          "h": 76,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "君は\n",
+          "x": 179,
+          "y": 193,
+          "w": 93,
+          "h": 177,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "きみ\n",
+          "x": 275,
+          "y": 194,
+          "w": 28,
+          "h": 76,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "君",
+          "x": 181,
+          "y": 193,
+          "w": 91,
+          "h": 85,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "は\n",
+          "x": 178,
+          "y": 284,
+          "w": 91,
+          "h": 86,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_4_b3": {
+      "raw_text": "私た\nなまえ\n私の名前は",
+      "page_width": 560,
+      "page_height": 804,
+      "n_blocks": 3,
+      "n_paragraphs": 3,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "私た\n",
+          "x": 178,
+          "y": 148,
+          "w": 123,
+          "h": 75,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "なまえ\n",
+          "x": 265,
+          "y": 343,
+          "w": 26,
+          "h": 142,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "私の名前は\n",
+          "x": 175,
+          "y": 144,
+          "w": 81,
+          "h": 426,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 4
+        }
+      ],
+      "words": [
+        {
+          "text": "私",
+          "x": 178,
+          "y": 149,
+          "w": 81,
+          "h": 74,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "た\n",
+          "x": 260,
+          "y": 149,
+          "w": 41,
+          "h": 73,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "なまえ\n",
+          "x": 265,
+          "y": 343,
+          "w": 26,
+          "h": 142,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "私",
+          "x": 176,
+          "y": 144,
+          "w": 77,
+          "h": 83,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "の",
+          "x": 176,
+          "y": 240,
+          "w": 77,
+          "h": 66,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "名前",
+          "x": 177,
+          "y": 322,
+          "w": 77,
+          "h": 166,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "は\n",
+          "x": 179,
+          "y": 496,
+          "w": 77,
+          "h": 74,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        }
+      ]
+    },
+    "page_4_b4": {
+      "raw_text": "ひなこ\n雛子!",
+      "page_width": 778,
+      "page_height": 998,
+      "n_blocks": 1,
+      "n_paragraphs": 2,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "ひなこ\n",
+          "x": 507,
+          "y": 321,
+          "w": 50,
+          "h": 231,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "雛子!\n",
+          "x": 360,
+          "y": 304,
+          "w": 140,
+          "h": 409,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "ひなこ\n",
+          "x": 507,
+          "y": 321,
+          "w": 50,
+          "h": 231,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "雛子",
+          "x": 360,
+          "y": 304,
+          "w": 140,
+          "h": 311,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "!\n",
+          "x": 360,
+          "y": 613,
+          "w": 140,
+          "h": 100,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_5_b1": {
+      "raw_text": "おや\nなん\n親に向かって、\nぐさ\nその言い草は\n何だあ!",
+      "page_width": 658,
+      "page_height": 1004,
+      "n_blocks": 5,
+      "n_paragraphs": 6,
+      "n_words": 15,
+      "paragraphs": [
+        {
+          "text": "おや\n",
+          "x": 493,
+          "y": 265,
+          "w": 23,
+          "h": 64,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "なん\n",
+          "x": 248,
+          "y": 265,
+          "w": 24,
+          "h": 64,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "親に向かって、\n",
+          "x": 406,
+          "y": 257,
+          "w": 84,
+          "h": 518,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "ぐさ\n",
+          "x": 373,
+          "y": 589,
+          "w": 24,
+          "h": 62,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "その言い草は\n",
+          "x": 286,
+          "y": 259,
+          "w": 78,
+          "h": 481,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "何だあ!\n",
+          "x": 172,
+          "y": 257,
+          "w": 71,
+          "h": 305,
+          "block": 4,
+          "paragraph": 1,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "おや\n",
+          "x": 493,
+          "y": 265,
+          "w": 23,
+          "h": 64,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "なん\n",
+          "x": 248,
+          "y": 265,
+          "w": 24,
+          "h": 64,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "親",
+          "x": 407,
+          "y": 257,
+          "w": 79,
+          "h": 76,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "に",
+          "x": 407,
+          "y": 342,
+          "w": 79,
+          "h": 71,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "向かっ",
+          "x": 408,
+          "y": 418,
+          "w": 80,
+          "h": 233,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "て",
+          "x": 410,
+          "y": 667,
+          "w": 79,
+          "h": 76,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "、\n",
+          "x": 411,
+          "y": 742,
+          "w": 78,
+          "h": 33,
+          "block": 2,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "ぐ",
+          "x": 373,
+          "y": 589,
+          "w": 24,
+          "h": 31,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "さ\n",
+          "x": 373,
+          "y": 622,
+          "w": 24,
+          "h": 29,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "その",
+          "x": 287,
+          "y": 259,
+          "w": 76,
+          "h": 154,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "言い草",
+          "x": 286,
+          "y": 423,
+          "w": 77,
+          "h": 242,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "は\n",
+          "x": 287,
+          "y": 665,
+          "w": 75,
+          "h": 75,
+          "block": 4,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "何",
+          "x": 173,
+          "y": 257,
+          "w": 68,
+          "h": 86,
+          "block": 4,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "だあ",
+          "x": 173,
+          "y": 336,
+          "w": 69,
+          "h": 152,
+          "block": 4,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "!\n",
+          "x": 175,
+          "y": 503,
+          "w": 68,
+          "h": 59,
+          "block": 4,
+          "paragraph": 1,
+          "word": 2
+        }
+      ]
+    },
+    "page_5_b2": {
+      "raw_text": "そんなに\nかあ\nはん\nお母さんの作るご飯が\n気にくわないなら、",
+      "page_width": 584,
+      "page_height": 1268,
+      "n_blocks": 4,
+      "n_paragraphs": 5,
+      "n_words": 14,
+      "paragraphs": [
+        {
+          "text": "そんなに\n",
+          "x": 372,
+          "y": 33,
+          "w": 73,
+          "h": 400,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "かあ\n",
+          "x": 303,
+          "y": 144,
+          "w": 40,
+          "h": 88,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "はん\n",
+          "x": 307,
+          "y": 879,
+          "w": 35,
+          "h": 81,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お母さんの作るご飯が\n",
+          "x": 200,
+          "y": 39,
+          "w": 102,
+          "h": 1026,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "気にくわないなら、\n",
+          "x": 44,
+          "y": 28,
+          "w": 94,
+          "h": 874,
+          "block": 3,
+          "paragraph": 1,
+          "n_words": 6
+        }
+      ],
+      "words": [
+        {
+          "text": "そんなに\n",
+          "x": 372,
+          "y": 33,
+          "w": 73,
+          "h": 400,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "かあ\n",
+          "x": 303,
+          "y": 144,
+          "w": 40,
+          "h": 88,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "はん\n",
+          "x": 307,
+          "y": 879,
+          "w": 35,
+          "h": 81,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お母さん",
+          "x": 201,
+          "y": 39,
+          "w": 100,
+          "h": 393,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "の",
+          "x": 201,
+          "y": 464,
+          "w": 100,
+          "h": 77,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "作る",
+          "x": 201,
+          "y": 554,
+          "w": 100,
+          "h": 195,
+          "block": 3,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "ご飯",
+          "x": 201,
+          "y": 777,
+          "w": 100,
+          "h": 194,
+          "block": 3,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "が\n",
+          "x": 201,
+          "y": 981,
+          "w": 100,
+          "h": 84,
+          "block": 3,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "気",
+          "x": 45,
+          "y": 28,
+          "w": 89,
+          "h": 100,
+          "block": 3,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "に",
+          "x": 45,
+          "y": 148,
+          "w": 89,
+          "h": 76,
+          "block": 3,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "くわ",
+          "x": 45,
+          "y": 246,
+          "w": 91,
+          "h": 188,
+          "block": 3,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "ない",
+          "x": 46,
+          "y": 456,
+          "w": 91,
+          "h": 183,
+          "block": 3,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "なら",
+          "x": 47,
+          "y": 666,
+          "w": 90,
+          "h": 196,
+          "block": 3,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "、\n",
+          "x": 48,
+          "y": 874,
+          "w": 89,
+          "h": 28,
+          "block": 3,
+          "paragraph": 1,
+          "word": 5
+        }
+      ]
+    },
+    "page_5_b3": {
+      "raw_text": "食べなきゃ\nいいでしょ\nよや",
+      "page_width": 488,
+      "page_height": 874,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 6,
+      "paragraphs": [
+        {
+          "text": "食べなきゃ\nいいでしょ\n",
+          "x": 80,
+          "y": 41,
+          "w": 264,
+          "h": 501,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 4
+        },
+        {
+          "text": "よや\n",
+          "x": 114,
+          "y": 470,
+          "w": 216,
+          "h": 59,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "食べ",
+          "x": 233,
+          "y": 45,
+          "w": 101,
+          "h": 169,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "なきゃ\n",
+          "x": 235,
+          "y": 244,
+          "w": 102,
+          "h": 294,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "いい",
+          "x": 80,
+          "y": 45,
+          "w": 89,
+          "h": 177,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "でしょ\n",
+          "x": 87,
+          "y": 249,
+          "w": 93,
+          "h": 285,
+          "block": 0,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "よ",
+          "x": 114,
+          "y": 471,
+          "w": 62,
+          "h": 58,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "や\n",
+          "x": 255,
+          "y": 470,
+          "w": 75,
+          "h": 58,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_5_b4": {
+      "raw_text": "なんだと......\nもういっぺん\n言ってみろ!",
+      "page_width": 586,
+      "page_height": 922,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 10,
+      "paragraphs": [
+        {
+          "text": "なんだと......\nもういっぺん\n言ってみろ!\n",
+          "x": 162,
+          "y": 291,
+          "w": 278,
+          "h": 415,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 10
+        }
+      ],
+      "words": [
+        {
+          "text": "なん",
+          "x": 371,
+          "y": 291,
+          "w": 66,
+          "h": 133,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "だ",
+          "x": 373,
+          "y": 431,
+          "w": 65,
+          "h": 59,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "と",
+          "x": 374,
+          "y": 501,
+          "w": 65,
+          "h": 63,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "......\n",
+          "x": 374,
+          "y": 568,
+          "w": 66,
+          "h": 138,
+          "block": 0,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "もう",
+          "x": 271,
+          "y": 293,
+          "w": 63,
+          "h": 133,
+          "block": 0,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "いっぺん\n",
+          "x": 270,
+          "y": 435,
+          "w": 64,
+          "h": 267,
+          "block": 0,
+          "paragraph": 0,
+          "word": 5
+        },
+        {
+          "text": "言っ",
+          "x": 163,
+          "y": 293,
+          "w": 72,
+          "h": 125,
+          "block": 0,
+          "paragraph": 0,
+          "word": 6
+        },
+        {
+          "text": "て",
+          "x": 163,
+          "y": 435,
+          "w": 72,
+          "h": 63,
+          "block": 0,
+          "paragraph": 0,
+          "word": 7
+        },
+        {
+          "text": "みろ",
+          "x": 163,
+          "y": 502,
+          "w": 72,
+          "h": 136,
+          "block": 0,
+          "paragraph": 0,
+          "word": 8
+        },
+        {
+          "text": "!\n",
+          "x": 163,
+          "y": 641,
+          "w": 72,
+          "h": 49,
+          "block": 0,
+          "paragraph": 0,
+          "word": 9
+        }
+      ]
+    },
+    "page_6.1_b1": {
+      "raw_text": "一言いひ\nわど\nれい\nこことを\n3-2",
+      "page_width": 536,
+      "page_height": 870,
+      "n_blocks": 3,
+      "n_paragraphs": 5,
+      "n_words": 9,
+      "paragraphs": [
+        {
+          "text": "一言いひ\n",
+          "x": 0,
+          "y": 63,
+          "w": 388,
+          "h": 137,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "わど\n",
+          "x": 90,
+          "y": 195,
+          "w": 325,
+          "h": 109,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 2
+        },
+        {
+          "text": "れい\n",
+          "x": 86,
+          "y": 319,
+          "w": 297,
+          "h": 109,
+          "block": 0,
+          "paragraph": 2,
+          "n_words": 1
+        },
+        {
+          "text": "こことを\n",
+          "x": 275,
+          "y": 394,
+          "w": 108,
+          "h": 420,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "3-2\n",
+          "x": 102,
+          "y": 444,
+          "w": 287,
+          "h": 122,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "一言",
+          "x": 0,
+          "y": 78,
+          "w": 199,
+          "h": 122,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "いひ\n",
+          "x": 203,
+          "y": 63,
+          "w": 184,
+          "h": 122,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "わ",
+          "x": 90,
+          "y": 195,
+          "w": 127,
+          "h": 109,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "ど\n",
+          "x": 292,
+          "y": 194,
+          "w": 123,
+          "h": 109,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "れい\n",
+          "x": 86,
+          "y": 319,
+          "w": 297,
+          "h": 109,
+          "block": 0,
+          "paragraph": 2,
+          "word": 0
+        },
+        {
+          "text": "ここ",
+          "x": 275,
+          "y": 394,
+          "w": 108,
+          "h": 150,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "と",
+          "x": 275,
+          "y": 568,
+          "w": 108,
+          "h": 111,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "を\n",
+          "x": 275,
+          "y": 694,
+          "w": 108,
+          "h": 120,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "3-2\n",
+          "x": 102,
+          "y": 444,
+          "w": 287,
+          "h": 122,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_6.1_b2": {
+      "raw_text": "なんでへらへら\n笑っていられるの?",
+      "page_width": 408,
+      "page_height": 910,
+      "n_blocks": 1,
+      "n_paragraphs": 2,
+      "n_words": 8,
+      "paragraphs": [
+        {
+          "text": "なんでへらへら\n",
+          "x": 204,
+          "y": 67,
+          "w": 80,
+          "h": 572,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "笑っていられるの?\n",
+          "x": 79,
+          "y": 63,
+          "w": 78,
+          "h": 737,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 6
+        }
+      ],
+      "words": [
+        {
+          "text": "なんで",
+          "x": 204,
+          "y": 67,
+          "w": 80,
+          "h": 239,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "へらへら\n",
+          "x": 204,
+          "y": 330,
+          "w": 80,
+          "h": 309,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "笑っ",
+          "x": 80,
+          "y": 63,
+          "w": 75,
+          "h": 145,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "て",
+          "x": 80,
+          "y": 239,
+          "w": 75,
+          "h": 70,
+          "block": 0,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "い",
+          "x": 80,
+          "y": 328,
+          "w": 75,
+          "h": 57,
+          "block": 0,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "られる",
+          "x": 80,
+          "y": 399,
+          "w": 76,
+          "h": 235,
+          "block": 0,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "の",
+          "x": 81,
+          "y": 658,
+          "w": 75,
+          "h": 60,
+          "block": 0,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "?\n",
+          "x": 81,
+          "y": 737,
+          "w": 75,
+          "h": 63,
+          "block": 0,
+          "paragraph": 1,
+          "word": 5
+        }
+      ]
+    },
+    "page_6.1_b3": {
+      "raw_text": "ひなこ\n雛子",
+      "page_width": 556,
+      "page_height": 638,
+      "n_blocks": 1,
+      "n_paragraphs": 2,
+      "n_words": 2,
+      "paragraphs": [
+        {
+          "text": "ひなこ\n",
+          "x": 307,
+          "y": 263,
+          "w": 34,
+          "h": 159,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "雛子\n",
+          "x": 207,
+          "y": 255,
+          "w": 94,
+          "h": 196,
+          "block": 0,
+          "paragraph": 1,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "ひなこ\n",
+          "x": 307,
+          "y": 263,
+          "w": 34,
+          "h": 159,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "雛子\n",
+          "x": 207,
+          "y": 255,
+          "w": 94,
+          "h": 196,
+          "block": 0,
+          "paragraph": 1,
+          "word": 0
+        }
+      ]
+    },
+    "page_6.b1": {
+      "raw_text": "かあ\nお母さ",
+      "page_width": 842,
+      "page_height": 910,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "かあ\n",
+          "x": 277,
+          "y": 295,
+          "w": 40,
+          "h": 97,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お母さ\n",
+          "x": 147,
+          "y": 164,
+          "w": 132,
+          "h": 365,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "かあ\n",
+          "x": 277,
+          "y": 295,
+          "w": 40,
+          "h": 97,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お",
+          "x": 147,
+          "y": 164,
+          "w": 125,
+          "h": 102,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "母",
+          "x": 150,
+          "y": 287,
+          "w": 125,
+          "h": 116,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "さ\n",
+          "x": 154,
+          "y": 420,
+          "w": 125,
+          "h": 109,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_6_b2": {
+      "raw_text": "ひと\nこんな人に\nはん\nご飯なんて\n作らなくって\nいいよ",
+      "page_width": 876,
+      "page_height": 1034,
+      "n_blocks": 4,
+      "n_paragraphs": 5,
+      "n_words": 12,
+      "paragraphs": [
+        {
+          "text": "ひと\n",
+          "x": 757,
+          "y": 428,
+          "w": 46,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "こんな人に\n",
+          "x": 623,
+          "y": 48,
+          "w": 124,
+          "h": 614,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "はん\n",
+          "x": 563,
+          "y": 168,
+          "w": 45,
+          "h": 104,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "ご飯なんて\n",
+          "x": 438,
+          "y": 43,
+          "w": 119,
+          "h": 621,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "作らなくって\nいいよ\n",
+          "x": 62,
+          "y": 29,
+          "w": 307,
+          "h": 758,
+          "block": 3,
+          "paragraph": 1,
+          "n_words": 5
+        }
+      ],
+      "words": [
+        {
+          "text": "ひと\n",
+          "x": 757,
+          "y": 428,
+          "w": 46,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "こんな",
+          "x": 625,
+          "y": 48,
+          "w": 122,
+          "h": 351,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "人",
+          "x": 624,
+          "y": 419,
+          "w": 120,
+          "h": 124,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "に\n",
+          "x": 623,
+          "y": 562,
+          "w": 120,
+          "h": 100,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "はん\n",
+          "x": 563,
+          "y": 168,
+          "w": 45,
+          "h": 104,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "ご飯",
+          "x": 441,
+          "y": 43,
+          "w": 116,
+          "h": 247,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "なんて\n",
+          "x": 439,
+          "y": 291,
+          "w": 116,
+          "h": 373,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "作ら",
+          "x": 250,
+          "y": 29,
+          "w": 119,
+          "h": 242,
+          "block": 3,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "なくっ",
+          "x": 249,
+          "y": 292,
+          "w": 120,
+          "h": 349,
+          "block": 3,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "て\n",
+          "x": 249,
+          "y": 686,
+          "w": 119,
+          "h": 100,
+          "block": 3,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "いい",
+          "x": 63,
+          "y": 51,
+          "w": 90,
+          "h": 210,
+          "block": 3,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "よ\n",
+          "x": 63,
+          "y": 295,
+          "w": 90,
+          "h": 99,
+          "block": 3,
+          "paragraph": 1,
+          "word": 4
+        }
+      ]
+    },
+    "page_6_b3": {
+      "raw_text": "ひなこ\n言いお\n雛子、やめて。\nとう\nお父さんにそんな\nかた\n言い方しないで",
+      "page_width": 1146,
+      "page_height": 1756,
+      "n_blocks": 7,
+      "n_paragraphs": 7,
+      "n_words": 17,
+      "paragraphs": [
+        {
+          "text": "ひなこ\n",
+          "x": 917,
+          "y": 337,
+          "w": 49,
+          "h": 215,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "言いお\n",
+          "x": 377,
+          "y": 325,
+          "w": 328,
+          "h": 128,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "雛子、やめて。\n",
+          "x": 780,
+          "y": 323,
+          "w": 133,
+          "h": 795,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "とう\n",
+          "x": 719,
+          "y": 471,
+          "w": 35,
+          "h": 109,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お父さんにそんな\n",
+          "x": 579,
+          "y": 339,
+          "w": 129,
+          "h": 1052,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "かた\n",
+          "x": 512,
+          "y": 609,
+          "w": 41,
+          "h": 105,
+          "block": 5,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "言い方しないで\n",
+          "x": 373,
+          "y": 328,
+          "w": 135,
+          "h": 928,
+          "block": 6,
+          "paragraph": 0,
+          "n_words": 4
+        }
+      ],
+      "words": [
+        {
+          "text": "ひなこ\n",
+          "x": 917,
+          "y": 337,
+          "w": 49,
+          "h": 215,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "言い",
+          "x": 377,
+          "y": 325,
+          "w": 193,
+          "h": 127,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お\n",
+          "x": 592,
+          "y": 327,
+          "w": 113,
+          "h": 126,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "雛子",
+          "x": 781,
+          "y": 323,
+          "w": 128,
+          "h": 277,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "、",
+          "x": 783,
+          "y": 595,
+          "w": 126,
+          "h": 44,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "やめ",
+          "x": 783,
+          "y": 674,
+          "w": 128,
+          "h": 244,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "て",
+          "x": 786,
+          "y": 949,
+          "w": 127,
+          "h": 111,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "。\n",
+          "x": 787,
+          "y": 1071,
+          "w": 126,
+          "h": 47,
+          "block": 2,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "とう\n",
+          "x": 719,
+          "y": 471,
+          "w": 35,
+          "h": 109,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お父さん",
+          "x": 579,
+          "y": 339,
+          "w": 128,
+          "h": 507,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "に",
+          "x": 580,
+          "y": 884,
+          "w": 126,
+          "h": 98,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "そんな\n",
+          "x": 581,
+          "y": 1011,
+          "w": 127,
+          "h": 380,
+          "block": 4,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "かた\n",
+          "x": 512,
+          "y": 609,
+          "w": 41,
+          "h": 105,
+          "block": 5,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "言い方",
+          "x": 373,
+          "y": 328,
+          "w": 133,
+          "h": 398,
+          "block": 6,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "し",
+          "x": 375,
+          "y": 740,
+          "w": 131,
+          "h": 107,
+          "block": 6,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ない",
+          "x": 375,
+          "y": 872,
+          "w": 132,
+          "h": 242,
+          "block": 6,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "で\n",
+          "x": 376,
+          "y": 1151,
+          "w": 131,
+          "h": 105,
+          "block": 6,
+          "paragraph": 0,
+          "word": 3
+        }
+      ]
+    },
+    "page_6_b4": {
+      "raw_text": "かあ\nお母さんも\nおーお\nかあ\nお母さんだ",
+      "page_width": 394,
+      "page_height": 654,
+      "n_blocks": 5,
+      "n_paragraphs": 5,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "かあ\n",
+          "x": 324,
+          "y": 163,
+          "w": 48,
+          "h": 88,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お母さんも\n",
+          "x": 217,
+          "y": 43,
+          "w": 105,
+          "h": 560,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "おーお\n",
+          "x": 51,
+          "y": 47,
+          "w": 270,
+          "h": 95,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "かあ\n",
+          "x": 159,
+          "y": 165,
+          "w": 36,
+          "h": 87,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お母さんだ\n",
+          "x": 40,
+          "y": 40,
+          "w": 110,
+          "h": 562,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "かあ\n",
+          "x": 324,
+          "y": 163,
+          "w": 48,
+          "h": 88,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お母さん",
+          "x": 217,
+          "y": 43,
+          "w": 105,
+          "h": 434,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "も\n",
+          "x": 219,
+          "y": 501,
+          "w": 102,
+          "h": 102,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "おーお\n",
+          "x": 51,
+          "y": 47,
+          "w": 270,
+          "h": 95,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "かあ\n",
+          "x": 159,
+          "y": 165,
+          "w": 36,
+          "h": 87,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お母さん",
+          "x": 40,
+          "y": 40,
+          "w": 109,
+          "h": 445,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "だ\n",
+          "x": 43,
+          "y": 501,
+          "w": 106,
+          "h": 101,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        }
+      ]
+    },
+    "page_6_b5": {
+      "raw_text": "こんなひどい\nことされて、",
+      "page_width": 562,
+      "page_height": 840,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 8,
+      "paragraphs": [
+        {
+          "text": "こんなひどい\nことされて、\n",
+          "x": 120,
+          "y": 44,
+          "w": 281,
+          "h": 690,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 8
+        }
+      ],
+      "words": [
+        {
+          "text": "こんな",
+          "x": 291,
+          "y": 51,
+          "w": 105,
+          "h": 334,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "ひどい\n",
+          "x": 294,
+          "y": 406,
+          "w": 105,
+          "h": 326,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "こ",
+          "x": 121,
+          "y": 46,
+          "w": 103,
+          "h": 97,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "と",
+          "x": 122,
+          "y": 167,
+          "w": 103,
+          "h": 106,
+          "block": 0,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "さ",
+          "x": 123,
+          "y": 286,
+          "w": 103,
+          "h": 101,
+          "block": 0,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "れ",
+          "x": 125,
+          "y": 403,
+          "w": 103,
+          "h": 97,
+          "block": 0,
+          "paragraph": 0,
+          "word": 5
+        },
+        {
+          "text": "て",
+          "x": 126,
+          "y": 523,
+          "w": 103,
+          "h": 101,
+          "block": 0,
+          "paragraph": 0,
+          "word": 6
+        },
+        {
+          "text": "、\n",
+          "x": 127,
+          "y": 624,
+          "w": 103,
+          "h": 50,
+          "block": 0,
+          "paragraph": 0,
+          "word": 7
+        }
+      ]
+    },
+    "page_7_b1": {
+      "raw_text": "謝\nとう\nお父さんに、\n謝りなさい",
+      "page_width": 896,
+      "page_height": 960,
+      "n_blocks": 3,
+      "n_paragraphs": 4,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "謝\n",
+          "x": 265,
+          "y": 156,
+          "w": 85,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "とう\n",
+          "x": 548,
+          "y": 278,
+          "w": 29,
+          "h": 93,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お父さんに、\n",
+          "x": 433,
+          "y": 168,
+          "w": 106,
+          "h": 591,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "謝りなさい\n",
+          "x": 266,
+          "y": 195,
+          "w": 94,
+          "h": 513,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "謝\n",
+          "x": 265,
+          "y": 156,
+          "w": 85,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "とう\n",
+          "x": 548,
+          "y": 278,
+          "w": 29,
+          "h": 93,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お父さん",
+          "x": 433,
+          "y": 168,
+          "w": 106,
+          "h": 428,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "に",
+          "x": 435,
+          "y": 625,
+          "w": 104,
+          "h": 83,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "、\n",
+          "x": 435,
+          "y": 726,
+          "w": 104,
+          "h": 33,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "謝り",
+          "x": 266,
+          "y": 195,
+          "w": 91,
+          "h": 181,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "なさい\n",
+          "x": 268,
+          "y": 389,
+          "w": 92,
+          "h": 319,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_7_b2": {
+      "raw_text": "どうして",
+      "page_width": 554,
+      "page_height": 620,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 1,
+      "paragraphs": [
+        {
+          "text": "どうして\n",
+          "x": 166,
+          "y": 159,
+          "w": 49,
+          "h": 269,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "どうして\n",
+          "x": 166,
+          "y": 159,
+          "w": 49,
+          "h": 269,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_7_b3": {
+      "raw_text": "たいせつ\n・もうすぐ、\n大切な日なんだから",
+      "page_width": 1108,
+      "page_height": 1308,
+      "n_blocks": 2,
+      "n_paragraphs": 3,
+      "n_words": 11,
+      "paragraphs": [
+        {
+          "text": "たいせつ\n",
+          "x": 586,
+          "y": 130,
+          "w": 46,
+          "h": 213,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "・もうすぐ、\n",
+          "x": 662,
+          "y": 204,
+          "w": 95,
+          "h": 552,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "大切な日なんだから\n",
+          "x": 471,
+          "y": 124,
+          "w": 119,
+          "h": 1063,
+          "block": 1,
+          "paragraph": 1,
+          "n_words": 7
+        }
+      ],
+      "words": [
+        {
+          "text": "たいせつ\n",
+          "x": 586,
+          "y": 130,
+          "w": 46,
+          "h": 213,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "・",
+          "x": 662,
+          "y": 204,
+          "w": 91,
+          "h": 73,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "もうすぐ",
+          "x": 662,
+          "y": 242,
+          "w": 94,
+          "h": 472,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "、\n",
+          "x": 666,
+          "y": 706,
+          "w": 90,
+          "h": 50,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "大切",
+          "x": 472,
+          "y": 124,
+          "w": 110,
+          "h": 246,
+          "block": 1,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "な",
+          "x": 474,
+          "y": 366,
+          "w": 108,
+          "h": 99,
+          "block": 1,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "日",
+          "x": 475,
+          "y": 486,
+          "w": 108,
+          "h": 101,
+          "block": 1,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "な",
+          "x": 476,
+          "y": 603,
+          "w": 108,
+          "h": 102,
+          "block": 1,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "ん",
+          "x": 478,
+          "y": 724,
+          "w": 108,
+          "h": 96,
+          "block": 1,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "だ",
+          "x": 479,
+          "y": 845,
+          "w": 108,
+          "h": 92,
+          "block": 1,
+          "paragraph": 1,
+          "word": 5
+        },
+        {
+          "text": "から\n",
+          "x": 480,
+          "y": 969,
+          "w": 109,
+          "h": 218,
+          "block": 1,
+          "paragraph": 1,
+          "word": 6
+        }
+      ]
+    },
+    "page_7_b4": {
+      "raw_text": "わたし\nかあ\nお母さん\nみたいに\nなりたくない",
+      "page_width": 814,
+      "page_height": 936,
+      "n_blocks": 4,
+      "n_paragraphs": 5,
+      "n_words": 8,
+      "paragraphs": [
+        {
+          "text": "わたし\n",
+          "x": 549,
+          "y": 249,
+          "w": 24,
+          "h": 75,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "かあ\n",
+          "x": 421,
+          "y": 335,
+          "w": 27,
+          "h": 63,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "お母さん\n",
+          "x": 339,
+          "y": 249,
+          "w": 75,
+          "h": 317,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "みたいに\n",
+          "x": 216,
+          "y": 250,
+          "w": 63,
+          "h": 317,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 2
+        },
+        {
+          "text": "なりたくない\n",
+          "x": 87,
+          "y": 244,
+          "w": 61,
+          "h": 486,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "わたし\n",
+          "x": 549,
+          "y": 249,
+          "w": 24,
+          "h": 75,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "かあ\n",
+          "x": 421,
+          "y": 335,
+          "w": 27,
+          "h": 63,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "お母さん\n",
+          "x": 339,
+          "y": 249,
+          "w": 75,
+          "h": 317,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "みたい",
+          "x": 216,
+          "y": 250,
+          "w": 63,
+          "h": 230,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "に\n",
+          "x": 217,
+          "y": 505,
+          "w": 61,
+          "h": 62,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "なり",
+          "x": 88,
+          "y": 244,
+          "w": 59,
+          "h": 162,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "たく",
+          "x": 88,
+          "y": 419,
+          "w": 60,
+          "h": 154,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ない\n",
+          "x": 89,
+          "y": 584,
+          "w": 59,
+          "h": 146,
+          "block": 3,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_8_b1": {
+      "raw_text": "どこ行くの\n?",
+      "page_width": 678,
+      "page_height": 928,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "どこ行くの\n",
+          "x": 302,
+          "y": 138,
+          "w": 95,
+          "h": 460,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "?\n",
+          "x": 331,
+          "y": 630,
+          "w": 36,
+          "h": 70,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "どこ",
+          "x": 304,
+          "y": 138,
+          "w": 93,
+          "h": 179,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "行く",
+          "x": 303,
+          "y": 330,
+          "w": 93,
+          "h": 186,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "の\n",
+          "x": 303,
+          "y": 536,
+          "w": 91,
+          "h": 62,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "?\n",
+          "x": 331,
+          "y": 630,
+          "w": 36,
+          "h": 70,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_8_b2": {
+      "raw_text": "めずら\nとお\nこっち通るの\n珍しいね",
+      "page_width": 790,
+      "page_height": 1026,
+      "n_blocks": 3,
+      "n_paragraphs": 4,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "めずら\n",
+          "x": 335,
+          "y": 206,
+          "w": 35,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "とお\n",
+          "x": 495,
+          "y": 526,
+          "w": 31,
+          "h": 75,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "こっち通るの\n",
+          "x": 387,
+          "y": 219,
+          "w": 98,
+          "h": 596,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "珍しいね\n",
+          "x": 231,
+          "y": 208,
+          "w": 98,
+          "h": 393,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "めずら\n",
+          "x": 335,
+          "y": 206,
+          "w": 35,
+          "h": 102,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "とお\n",
+          "x": 495,
+          "y": 526,
+          "w": 31,
+          "h": 75,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "こっち",
+          "x": 390,
+          "y": 219,
+          "w": 95,
+          "h": 292,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "通る",
+          "x": 388,
+          "y": 518,
+          "w": 94,
+          "h": 197,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "の\n",
+          "x": 387,
+          "y": 737,
+          "w": 93,
+          "h": 78,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "珍しい",
+          "x": 231,
+          "y": 208,
+          "w": 98,
+          "h": 287,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "ね\n",
+          "x": 231,
+          "y": 520,
+          "w": 98,
+          "h": 81,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_8_b3": {
+      "raw_text": "さくこ\n咲子!",
+      "page_width": 804,
+      "page_height": 1118,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "さくこ\n",
+          "x": 449,
+          "y": 324,
+          "w": 40,
+          "h": 232,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "咲子!\n",
+          "x": 291,
+          "y": 304,
+          "w": 150,
+          "h": 412,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "さくこ\n",
+          "x": 449,
+          "y": 324,
+          "w": 40,
+          "h": 232,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "咲",
+          "x": 292,
+          "y": 304,
+          "w": 148,
+          "h": 149,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "子",
+          "x": 292,
+          "y": 462,
+          "w": 148,
+          "h": 160,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "!\n",
+          "x": 292,
+          "y": 614,
+          "w": 148,
+          "h": 102,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_8_b4": {
+      "raw_text": "づるや\n千鶴屋の\n?",
+      "page_width": 1074,
+      "page_height": 1148,
+      "n_blocks": 3,
+      "n_paragraphs": 3,
+      "n_words": 4,
+      "paragraphs": [
+        {
+          "text": "づるや\n",
+          "x": 569,
+          "y": 454,
+          "w": 58,
+          "h": 236,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "千鶴屋の\n",
+          "x": 430,
+          "y": 297,
+          "w": 137,
+          "h": 514,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "?\n",
+          "x": 470,
+          "y": 753,
+          "w": 59,
+          "h": 109,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "づるや\n",
+          "x": 569,
+          "y": 454,
+          "w": 58,
+          "h": 236,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "千鶴屋",
+          "x": 430,
+          "y": 297,
+          "w": 137,
+          "h": 427,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "の\n",
+          "x": 432,
+          "y": 750,
+          "w": 135,
+          "h": 61,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "?\n",
+          "x": 470,
+          "y": 753,
+          "w": 59,
+          "h": 109,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_8_b5": {
+      "raw_text": "うん…..\nだれ\n誰かと\nしゃべ\n喋りたくて",
+      "page_width": 1068,
+      "page_height": 1150,
+      "n_blocks": 5,
+      "n_paragraphs": 5,
+      "n_words": 11,
+      "paragraphs": [
+        {
+          "text": "うん…..\n",
+          "x": 577,
+          "y": 186,
+          "w": 106,
+          "h": 418,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "だれ\n",
+          "x": 487,
+          "y": 189,
+          "w": 50,
+          "h": 116,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "誰かと\n",
+          "x": 344,
+          "y": 180,
+          "w": 130,
+          "h": 417,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 3
+        },
+        {
+          "text": "しゃべ\n",
+          "x": 269,
+          "y": 175,
+          "w": 56,
+          "h": 141,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "喋りたくて\n",
+          "x": 127,
+          "y": 174,
+          "w": 139,
+          "h": 712,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "うん",
+          "x": 577,
+          "y": 186,
+          "w": 102,
+          "h": 260,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "…",
+          "x": 584,
+          "y": 463,
+          "w": 97,
+          "h": 103,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "..\n",
+          "x": 585,
+          "y": 489,
+          "w": 98,
+          "h": 115,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "だれ\n",
+          "x": 487,
+          "y": 189,
+          "w": 50,
+          "h": 116,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "誰",
+          "x": 345,
+          "y": 180,
+          "w": 127,
+          "h": 146,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "か",
+          "x": 346,
+          "y": 341,
+          "w": 127,
+          "h": 106,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "と\n",
+          "x": 346,
+          "y": 475,
+          "w": 127,
+          "h": 122,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "しゃべ\n",
+          "x": 269,
+          "y": 175,
+          "w": 56,
+          "h": 141,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "喋り",
+          "x": 127,
+          "y": 174,
+          "w": 135,
+          "h": 287,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "たく",
+          "x": 131,
+          "y": 483,
+          "w": 134,
+          "h": 260,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "て\n",
+          "x": 134,
+          "y": 777,
+          "w": 132,
+          "h": 109,
+          "block": 4,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_9_b1": {
+      "raw_text": "わたし\nあと\n私も後から\n行くね",
+      "page_width": 884,
+      "page_height": 1152,
+      "n_blocks": 3,
+      "n_paragraphs": 4,
+      "n_words": 8,
+      "paragraphs": [
+        {
+          "text": "わたし\n",
+          "x": 561,
+          "y": 212,
+          "w": 35,
+          "h": 119,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "あと\n",
+          "x": 560,
+          "y": 468,
+          "w": 39,
+          "h": 95,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "私も後から\n",
+          "x": 429,
+          "y": 208,
+          "w": 124,
+          "h": 604,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 4
+        },
+        {
+          "text": "行くね\n",
+          "x": 246,
+          "y": 209,
+          "w": 130,
+          "h": 357,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "わたし\n",
+          "x": 561,
+          "y": 212,
+          "w": 35,
+          "h": 119,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "あと\n",
+          "x": 560,
+          "y": 468,
+          "w": 39,
+          "h": 95,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "私",
+          "x": 430,
+          "y": 208,
+          "w": 118,
+          "h": 122,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "も",
+          "x": 431,
+          "y": 339,
+          "w": 118,
+          "h": 105,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "後",
+          "x": 432,
+          "y": 459,
+          "w": 118,
+          "h": 111,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "から\n",
+          "x": 433,
+          "y": 593,
+          "w": 119,
+          "h": 219,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "行く",
+          "x": 247,
+          "y": 209,
+          "w": 129,
+          "h": 252,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "ね\n",
+          "x": 247,
+          "y": 460,
+          "w": 128,
+          "h": 106,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_9_b2": {
+      "raw_text": "じゃあ\nん",
+      "page_width": 742,
+      "page_height": 954,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 2,
+      "paragraphs": [
+        {
+          "text": "じゃあ\n",
+          "x": 202,
+          "y": 250,
+          "w": 78,
+          "h": 287,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "ん\n",
+          "x": 355,
+          "y": 561,
+          "w": 80,
+          "h": 78,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "じゃあ\n",
+          "x": 202,
+          "y": 250,
+          "w": 78,
+          "h": 287,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "ん\n",
+          "x": 355,
+          "y": 561,
+          "w": 80,
+          "h": 78,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_9_b3": {
+      "raw_text": "もの\n裏切り者",
+      "page_width": 768,
+      "page_height": 1188,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 2,
+      "paragraphs": [
+        {
+          "text": "もの\n",
+          "x": 394,
+          "y": 627,
+          "w": 41,
+          "h": 106,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "裏切り者\n",
+          "x": 256,
+          "y": 219,
+          "w": 131,
+          "h": 520,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        }
+      ],
+      "words": [
+        {
+          "text": "もの\n",
+          "x": 394,
+          "y": 627,
+          "w": 41,
+          "h": 106,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "裏切り者\n",
+          "x": 256,
+          "y": 219,
+          "w": 131,
+          "h": 520,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        }
+      ]
+    },
+    "page_9_b4": {
+      "raw_text": "さくこ\n咲子\nいがらしさくこ\n五十嵐咲子",
+      "page_width": 610,
+      "page_height": 1228,
+      "n_blocks": 3,
+      "n_paragraphs": 4,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "さくこ\n",
+          "x": 446,
+          "y": 175,
+          "w": 32,
+          "h": 188,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "咲子\n",
+          "x": 321,
+          "y": 162,
+          "w": 112,
+          "h": 237,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "いがらしさくこ\n",
+          "x": 262,
+          "y": 430,
+          "w": 39,
+          "h": 533,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "五十嵐咲子\n",
+          "x": 139,
+          "y": 408,
+          "w": 111,
+          "h": 589,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 2
+        }
+      ],
+      "words": [
+        {
+          "text": "さくこ\n",
+          "x": 446,
+          "y": 175,
+          "w": 32,
+          "h": 188,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "咲",
+          "x": 321,
+          "y": 162,
+          "w": 111,
+          "h": 111,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "子\n",
+          "x": 322,
+          "y": 284,
+          "w": 111,
+          "h": 115,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "いがらし",
+          "x": 262,
+          "y": 430,
+          "w": 39,
+          "h": 311,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "さくこ\n",
+          "x": 262,
+          "y": 772,
+          "w": 39,
+          "h": 191,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "五十嵐",
+          "x": 139,
+          "y": 408,
+          "w": 110,
+          "h": 354,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "咲子\n",
+          "x": 140,
+          "y": 765,
+          "w": 109,
+          "h": 232,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        }
+      ]
+    },
+    "page_9_b5": {
+      "raw_text": "むかし\nたし\nいっしょ\n昔から、「ずっと一緒」と\n私のことをそれなりに\n好きでいてくれている\n...はず。",
+      "page_width": 928,
+      "page_height": 1658,
+      "n_blocks": 4,
+      "n_paragraphs": 6,
+      "n_words": 26,
+      "paragraphs": [
+        {
+          "text": "むかし\n",
+          "x": 774,
+          "y": 278,
+          "w": 33,
+          "h": 108,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "たし\n",
+          "x": 608,
+          "y": 326,
+          "w": 34,
+          "h": 62,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "いっしょ\n",
+          "x": 773,
+          "y": 1063,
+          "w": 36,
+          "h": 181,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "昔から、「ずっと一緒」と\n",
+          "x": 658,
+          "y": 279,
+          "w": 122,
+          "h": 1145,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 7
+        },
+        {
+          "text": "私のことをそれなりに\n",
+          "x": 495,
+          "y": 277,
+          "w": 101,
+          "h": 1086,
+          "block": 3,
+          "paragraph": 1,
+          "n_words": 6
+        },
+        {
+          "text": "好きでいてくれている\n...はず。\n",
+          "x": 161,
+          "y": 276,
+          "w": 289,
+          "h": 1083,
+          "block": 3,
+          "paragraph": 2,
+          "n_words": 10
+        }
+      ],
+      "words": [
+        {
+          "text": "むかし\n",
+          "x": 774,
+          "y": 278,
+          "w": 33,
+          "h": 108,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "たし\n",
+          "x": 608,
+          "y": 326,
+          "w": 34,
+          "h": 62,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "いっしょ\n",
+          "x": 773,
+          "y": 1063,
+          "w": 36,
+          "h": 181,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "昔",
+          "x": 660,
+          "y": 279,
+          "w": 119,
+          "h": 104,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "から",
+          "x": 660,
+          "y": 394,
+          "w": 119,
+          "h": 205,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "、",
+          "x": 660,
+          "y": 613,
+          "w": 119,
+          "h": 28,
+          "block": 3,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "「",
+          "x": 660,
+          "y": 668,
+          "w": 119,
+          "h": 41,
+          "block": 3,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "ずっと一緒",
+          "x": 659,
+          "y": 715,
+          "w": 120,
+          "h": 547,
+          "block": 3,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "」",
+          "x": 659,
+          "y": 1266,
+          "w": 119,
+          "h": 48,
+          "block": 3,
+          "paragraph": 0,
+          "word": 5
+        },
+        {
+          "text": "と\n",
+          "x": 659,
+          "y": 1325,
+          "w": 119,
+          "h": 99,
+          "block": 3,
+          "paragraph": 0,
+          "word": 6
+        },
+        {
+          "text": "私",
+          "x": 497,
+          "y": 277,
+          "w": 98,
+          "h": 105,
+          "block": 3,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "の",
+          "x": 497,
+          "y": 403,
+          "w": 98,
+          "h": 81,
+          "block": 3,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "こと",
+          "x": 497,
+          "y": 508,
+          "w": 98,
+          "h": 195,
+          "block": 3,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "を",
+          "x": 497,
+          "y": 718,
+          "w": 98,
+          "h": 97,
+          "block": 3,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "それなり",
+          "x": 495,
+          "y": 831,
+          "w": 100,
+          "h": 431,
+          "block": 3,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "に\n",
+          "x": 495,
+          "y": 1275,
+          "w": 98,
+          "h": 88,
+          "block": 3,
+          "paragraph": 1,
+          "word": 5
+        },
+        {
+          "text": "好き",
+          "x": 334,
+          "y": 277,
+          "w": 107,
+          "h": 211,
+          "block": 3,
+          "paragraph": 2,
+          "word": 0
+        },
+        {
+          "text": "で",
+          "x": 333,
+          "y": 509,
+          "w": 105,
+          "h": 93,
+          "block": 3,
+          "paragraph": 2,
+          "word": 1
+        },
+        {
+          "text": "い",
+          "x": 332,
+          "y": 625,
+          "w": 105,
+          "h": 77,
+          "block": 3,
+          "paragraph": 2,
+          "word": 2
+        },
+        {
+          "text": "て",
+          "x": 331,
+          "y": 727,
+          "w": 105,
+          "h": 93,
+          "block": 3,
+          "paragraph": 2,
+          "word": 3
+        },
+        {
+          "text": "くれ",
+          "x": 328,
+          "y": 827,
+          "w": 107,
+          "h": 208,
+          "block": 3,
+          "paragraph": 2,
+          "word": 4
+        },
+        {
+          "text": "て",
+          "x": 327,
+          "y": 1057,
+          "w": 105,
+          "h": 89,
+          "block": 3,
+          "paragraph": 2,
+          "word": 5
+        },
+        {
+          "text": "いる\n",
+          "x": 325,
+          "y": 1174,
+          "w": 106,
+          "h": 183,
+          "block": 3,
+          "paragraph": 2,
+          "word": 6
+        },
+        {
+          "text": "...",
+          "x": 161,
+          "y": 292,
+          "w": 107,
+          "h": 98,
+          "block": 3,
+          "paragraph": 2,
+          "word": 7
+        },
+        {
+          "text": "はず",
+          "x": 164,
+          "y": 393,
+          "w": 108,
+          "h": 210,
+          "block": 3,
+          "paragraph": 2,
+          "word": 8
+        },
+        {
+          "text": "。\n",
+          "x": 170,
+          "y": 607,
+          "w": 104,
+          "h": 41,
+          "block": 3,
+          "paragraph": 2,
+          "word": 9
+        }
+      ]
+    },
+    "page_9_b6": {
+      "raw_text": "だが･･･\nわたし\nなぜか私のことを\nもの\n「裏切り者」と呼ぶ。",
+      "page_width": 728,
+      "page_height": 1418,
+      "n_blocks": 5,
+      "n_paragraphs": 5,
+      "n_words": 15,
+      "paragraphs": [
+        {
+          "text": "だが･･･\n",
+          "x": 492,
+          "y": 282,
+          "w": 95,
+          "h": 316,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "わたし\n",
+          "x": 432,
+          "y": 608,
+          "w": 31,
+          "h": 106,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "なぜか私のことを\n",
+          "x": 317,
+          "y": 283,
+          "w": 104,
+          "h": 868,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 5
+        },
+        {
+          "text": "もの\n",
+          "x": 264,
+          "y": 672,
+          "w": 35,
+          "h": 86,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "「裏切り者」と呼ぶ。\n",
+          "x": 150,
+          "y": 285,
+          "w": 111,
+          "h": 911,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 6
+        }
+      ],
+      "words": [
+        {
+          "text": "だが",
+          "x": 492,
+          "y": 282,
+          "w": 95,
+          "h": 202,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "･･･\n",
+          "x": 492,
+          "y": 511,
+          "w": 95,
+          "h": 87,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "わたし\n",
+          "x": 432,
+          "y": 608,
+          "w": 31,
+          "h": 106,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "なぜか",
+          "x": 318,
+          "y": 283,
+          "w": 102,
+          "h": 311,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "私",
+          "x": 318,
+          "y": 611,
+          "w": 102,
+          "h": 101,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "の",
+          "x": 318,
+          "y": 733,
+          "w": 102,
+          "h": 82,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "こと",
+          "x": 318,
+          "y": 839,
+          "w": 102,
+          "h": 191,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "を\n",
+          "x": 318,
+          "y": 1046,
+          "w": 102,
+          "h": 105,
+          "block": 2,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "もの\n",
+          "x": 264,
+          "y": 672,
+          "w": 35,
+          "h": 86,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "「",
+          "x": 153,
+          "y": 285,
+          "w": 107,
+          "h": 45,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "裏切り者",
+          "x": 152,
+          "y": 337,
+          "w": 109,
+          "h": 429,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "」",
+          "x": 152,
+          "y": 778,
+          "w": 107,
+          "h": 42,
+          "block": 4,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "と",
+          "x": 152,
+          "y": 835,
+          "w": 107,
+          "h": 93,
+          "block": 4,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "呼ぶ",
+          "x": 150,
+          "y": 940,
+          "w": 108,
+          "h": 203,
+          "block": 4,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "。\n",
+          "x": 150,
+          "y": 1157,
+          "w": 107,
+          "h": 39,
+          "block": 4,
+          "paragraph": 0,
+          "word": 5
+        }
+      ]
+    },
+    "page_9_b7": {
+      "raw_text": "ひと\nてんねん\n少し天然・・・なのか、\n人とは違う不思議\nぶぶん\n部分がある...",
+      "page_width": 810,
+      "page_height": 1340,
+      "n_blocks": 5,
+      "n_paragraphs": 6,
+      "n_words": 19,
+      "paragraphs": [
+        {
+          "text": "ひと\n",
+          "x": 457,
+          "y": 177,
+          "w": 41,
+          "h": 89,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "てんねん\n",
+          "x": 625,
+          "y": 402,
+          "w": 40,
+          "h": 196,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "少し天然・・・なのか、\n",
+          "x": 495,
+          "y": 159,
+          "w": 158,
+          "h": 948,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 7
+        },
+        {
+          "text": "人とは違う不思議\n",
+          "x": 340,
+          "y": 169,
+          "w": 109,
+          "h": 898,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 5
+        },
+        {
+          "text": "ぶぶん\n",
+          "x": 283,
+          "y": 197,
+          "w": 44,
+          "h": 180,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "部分がある...\n",
+          "x": 174,
+          "y": 168,
+          "w": 109,
+          "h": 667,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 4
+        }
+      ],
+      "words": [
+        {
+          "text": "ひと\n",
+          "x": 457,
+          "y": 177,
+          "w": 41,
+          "h": 89,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "てんねん\n",
+          "x": 625,
+          "y": 402,
+          "w": 40,
+          "h": 196,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "少し",
+          "x": 517,
+          "y": 159,
+          "w": 136,
+          "h": 227,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "天然",
+          "x": 510,
+          "y": 384,
+          "w": 136,
+          "h": 226,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "・・・",
+          "x": 507,
+          "y": 624,
+          "w": 132,
+          "h": 98,
+          "block": 2,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "な",
+          "x": 504,
+          "y": 729,
+          "w": 132,
+          "h": 98,
+          "block": 2,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "の",
+          "x": 501,
+          "y": 852,
+          "w": 131,
+          "h": 84,
+          "block": 2,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "か",
+          "x": 497,
+          "y": 956,
+          "w": 132,
+          "h": 97,
+          "block": 2,
+          "paragraph": 0,
+          "word": 5
+        },
+        {
+          "text": "、\n",
+          "x": 496,
+          "y": 1066,
+          "w": 130,
+          "h": 42,
+          "block": 2,
+          "paragraph": 0,
+          "word": 6
+        },
+        {
+          "text": "人",
+          "x": 341,
+          "y": 169,
+          "w": 107,
+          "h": 104,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "と",
+          "x": 341,
+          "y": 283,
+          "w": 107,
+          "h": 99,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "は",
+          "x": 341,
+          "y": 399,
+          "w": 107,
+          "h": 98,
+          "block": 2,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "違う",
+          "x": 341,
+          "y": 505,
+          "w": 107,
+          "h": 226,
+          "block": 2,
+          "paragraph": 1,
+          "word": 3
+        },
+        {
+          "text": "不思議\n",
+          "x": 341,
+          "y": 735,
+          "w": 107,
+          "h": 332,
+          "block": 2,
+          "paragraph": 1,
+          "word": 4
+        },
+        {
+          "text": "ぶぶん\n",
+          "x": 283,
+          "y": 197,
+          "w": 44,
+          "h": 180,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "部分",
+          "x": 174,
+          "y": 168,
+          "w": 109,
+          "h": 222,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "が",
+          "x": 174,
+          "y": 395,
+          "w": 109,
+          "h": 99,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "ある",
+          "x": 174,
+          "y": 507,
+          "w": 109,
+          "h": 209,
+          "block": 4,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "...\n",
+          "x": 174,
+          "y": 736,
+          "w": 109,
+          "h": 99,
+          "block": 4,
+          "paragraph": 0,
+          "word": 3
+        }
+      ]
+    },
+    "page_10_b1": {
+      "raw_text": "よぉ、相棒",
+      "page_width": 636,
+      "page_height": 988,
+      "n_blocks": 1,
+      "n_paragraphs": 1,
+      "n_words": 3,
+      "paragraphs": [
+        {
+          "text": "よぉ、相棒\n",
+          "x": 190,
+          "y": 220,
+          "w": 118,
+          "h": 482,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "よぉ",
+          "x": 196,
+          "y": 220,
+          "w": 112,
+          "h": 184,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "、",
+          "x": 196,
+          "y": 432,
+          "w": 108,
+          "h": 25,
+          "block": 0,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "相棒\n",
+          "x": 191,
+          "y": 485,
+          "w": 112,
+          "h": 217,
+          "block": 0,
+          "paragraph": 0,
+          "word": 2
+        }
+      ]
+    },
+    "page_10_b2": {
+      "raw_text": "き\n来てたんだな",
+      "page_width": 704,
+      "page_height": 944,
+      "n_blocks": 2,
+      "n_paragraphs": 2,
+      "n_words": 7,
+      "paragraphs": [
+        {
+          "text": "き\n",
+          "x": 450,
+          "y": 124,
+          "w": 24,
+          "h": 41,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "来てたんだな\n",
+          "x": 334,
+          "y": 97,
+          "w": 104,
+          "h": 657,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 6
+        }
+      ],
+      "words": [
+        {
+          "text": "き\n",
+          "x": 450,
+          "y": 124,
+          "w": 24,
+          "h": 41,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "来",
+          "x": 335,
+          "y": 97,
+          "w": 99,
+          "h": 106,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "て",
+          "x": 336,
+          "y": 223,
+          "w": 99,
+          "h": 83,
+          "block": 1,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "た",
+          "x": 336,
+          "y": 332,
+          "w": 99,
+          "h": 83,
+          "block": 1,
+          "paragraph": 0,
+          "word": 2
+        },
+        {
+          "text": "ん",
+          "x": 337,
+          "y": 440,
+          "w": 99,
+          "h": 88,
+          "block": 1,
+          "paragraph": 0,
+          "word": 3
+        },
+        {
+          "text": "だ",
+          "x": 338,
+          "y": 552,
+          "w": 99,
+          "h": 84,
+          "block": 1,
+          "paragraph": 0,
+          "word": 4
+        },
+        {
+          "text": "な\n",
+          "x": 339,
+          "y": 661,
+          "w": 99,
+          "h": 93,
+          "block": 1,
+          "paragraph": 0,
+          "word": 5
+        }
+      ]
+    },
+    "page_10_b3": {
+      "raw_text": "えびす\nまも\nうちゅうぐんだん\n宇宙軍団から\nおか\n戎ヶ丘を\n守らないと\nいけないだろ",
+      "page_width": 1232,
+      "page_height": 1230,
+      "n_blocks": 5,
+      "n_paragraphs": 8,
+      "n_words": 17,
+      "paragraphs": [
+        {
+          "text": "えびす\n",
+          "x": 777,
+          "y": 232,
+          "w": 47,
+          "h": 126,
+          "block": 0,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "まも\n",
+          "x": 592,
+          "y": 245,
+          "w": 30,
+          "h": 105,
+          "block": 1,
+          "paragraph": 0,
+          "n_words": 1
+        },
+        {
+          "text": "うちゅうぐんだん\n",
+          "x": 970,
+          "y": 270,
+          "w": 45,
+          "h": 457,
+          "block": 2,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "宇宙軍団から\n",
+          "x": 844,
+          "y": 240,
+          "w": 114,
+          "h": 749,
+          "block": 2,
+          "paragraph": 1,
+          "n_words": 3
+        },
+        {
+          "text": "おか\n",
+          "x": 779,
+          "y": 504,
+          "w": 38,
+          "h": 95,
+          "block": 3,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "戎ヶ丘を\n",
+          "x": 645,
+          "y": 236,
+          "w": 126,
+          "h": 497,
+          "block": 4,
+          "paragraph": 0,
+          "n_words": 2
+        },
+        {
+          "text": "守らないと\n",
+          "x": 462,
+          "y": 233,
+          "w": 117,
+          "h": 624,
+          "block": 4,
+          "paragraph": 1,
+          "n_words": 3
+        },
+        {
+          "text": "いけないだろ\n",
+          "x": 271,
+          "y": 259,
+          "w": 106,
+          "h": 734,
+          "block": 4,
+          "paragraph": 2,
+          "n_words": 3
+        }
+      ],
+      "words": [
+        {
+          "text": "えびす\n",
+          "x": 777,
+          "y": 232,
+          "w": 47,
+          "h": 126,
+          "block": 0,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "まも\n",
+          "x": 592,
+          "y": 245,
+          "w": 30,
+          "h": 105,
+          "block": 1,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "うちゅう",
+          "x": 971,
+          "y": 270,
+          "w": 44,
+          "h": 220,
+          "block": 2,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "ぐんだん\n",
+          "x": 970,
+          "y": 501,
+          "w": 44,
+          "h": 226,
+          "block": 2,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "宇宙",
+          "x": 845,
+          "y": 240,
+          "w": 112,
+          "h": 246,
+          "block": 2,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "軍団",
+          "x": 845,
+          "y": 499,
+          "w": 113,
+          "h": 242,
+          "block": 2,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "から\n",
+          "x": 846,
+          "y": 765,
+          "w": 112,
+          "h": 224,
+          "block": 2,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "お",
+          "x": 780,
+          "y": 504,
+          "w": 37,
+          "h": 41,
+          "block": 3,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "か\n",
+          "x": 780,
+          "y": 557,
+          "w": 37,
+          "h": 42,
+          "block": 3,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "戎ヶ丘",
+          "x": 646,
+          "y": 236,
+          "w": 125,
+          "h": 367,
+          "block": 4,
+          "paragraph": 0,
+          "word": 0
+        },
+        {
+          "text": "を\n",
+          "x": 646,
+          "y": 624,
+          "w": 123,
+          "h": 109,
+          "block": 4,
+          "paragraph": 0,
+          "word": 1
+        },
+        {
+          "text": "守ら",
+          "x": 462,
+          "y": 233,
+          "w": 112,
+          "h": 239,
+          "block": 4,
+          "paragraph": 1,
+          "word": 0
+        },
+        {
+          "text": "ない",
+          "x": 466,
+          "y": 495,
+          "w": 111,
+          "h": 229,
+          "block": 4,
+          "paragraph": 1,
+          "word": 1
+        },
+        {
+          "text": "と\n",
+          "x": 469,
+          "y": 752,
+          "w": 109,
+          "h": 105,
+          "block": 4,
+          "paragraph": 1,
+          "word": 2
+        },
+        {
+          "text": "いけ",
+          "x": 271,
+          "y": 259,
+          "w": 102,
+          "h": 219,
+          "block": 4,
+          "paragraph": 2,
+          "word": 0
+        },
+        {
+          "text": "ない",
+          "x": 273,
+          "y": 497,
+          "w": 102,
+          "h": 229,
+          "block": 4,
+          "paragraph": 2,
+          "word": 1
+        },
+        {
+          "text": "だろ\n",
+          "x": 276,
+          "y": 756,
+          "w": 101,
+          "h": 237,
+          "block": 4,
+          "paragraph": 2,
+          "word": 2
+        }
+      ]
+    }
+  }
+}

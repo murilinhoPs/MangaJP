@@ -6,10 +6,10 @@ Reads the M0.2 GT package (`manifest-kanji.csv` + `crops/*.png`) and scores:
 | Engine id | Implementation | Typical Linux Cloud Agent |
 | --- | --- | --- |
 | `mlkit_ja` | ML Kit Japanese (`google_mlkit_text_recognition`, `TextRecognitionScript.japanese`) | **SKIPPED** — Android/iOS only. Replay a device dump with `--predictions`. |
-| `cloud_vision` | Cloud Vision `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]` | **SKIPPED** unless GCP credentials exist. |
-| `manga_ocr` | [kha-white/manga-ocr](https://github.com/kha-white/manga-ocr) `MangaOcr()`, model `kha-white/manga-ocr-base` | Runnable on Linux CPU. |
+| `cloud_vision` | Cloud Vision `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]` | Runnable with `CLOUD_VISION_API_KEY`. This corpus: **44.53%** (236/530), 44/44. |
+| `manga_ocr` | [kha-white/manga-ocr](https://github.com/kha-white/manga-ocr) `MangaOcr()`, model `kha-white/manga-ocr-base` | Runnable on Linux CPU. This corpus: **20.75%** (110/530), 44/44. |
 
-Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables from the Linux Cloud Agent run: `results/` (`manga_ocr` corpus CER **20.75%**; ML Kit and Cloud Vision `SKIPPED`).
+Q-B1 write-up (measured numbers + recommendation): [`docs/m0.3-cer-bakeoff.md`](../../docs/m0.3-cer-bakeoff.md). Committed tables: `results/` (`manga_ocr` **20.75%**; `cloud_vision` **44.53%**; ML Kit `SKIPPED`). Unofficial Vision ruby-box filter (size+position, not a rescore): `ruby_boxes.py` + `results/cloud_vision_boxes.json` → **21.32%** (113/530), 44/44.
 
 ## CER protocol (glyph-as-drawn)
 
@@ -122,3 +122,15 @@ python3 tools/cer_bakeoff/test_cer.py
 ```
 
 CI runs the same command. It does not download weights or the GT zip.
+
+## Unofficial Cloud Vision ruby-box filter
+
+Not the official CER. Official `cloud_vision` stays **44.53%** (raw `fullTextAnnotation`). Word/paragraph boxes are in `results/cloud_vision_boxes.json` (no API key). Filter: narrower word to the **right** of a larger neighbor with y-overlap (`ruby_boxes.py`). Recompute against the kanji GT:
+
+```bash
+python3 tools/cer_bakeoff/ruby_boxes.py \
+  --boxes tools/cer_bakeoff/results/cloud_vision_boxes.json \
+  --gt-dir tools/cer_bakeoff/gt
+```
+
+Do not treat the 31.13% hiragana-line diagnostic in the Q-B1 doc as this number.

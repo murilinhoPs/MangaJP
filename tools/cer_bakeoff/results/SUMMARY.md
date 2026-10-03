@@ -1,6 +1,6 @@
 # M0.3 CER bake-off results
 
-Generated: `2026-10-02T22:10:53.212083+00:00`
+Generated: `2026-10-03T19:33:25.723852+00:00`
 GT: `/tmp/mangajp-m0.2-gt` (`manifest-kanji.csv`, glyph-as-drawn).
 
 Protocol: OCR vs GT **code points as drawn**. Strip whitespace only. No NFKC, no kana folding, no ASCII/fullwidth digit folding (`1` ≠ `１`, `よぉ` ≠ `よお`).
@@ -10,7 +10,7 @@ Headline CER is **corpus** = Σ edits / Σ GT length (successful crops only). Sk
 | Engine | Status | Corpus CER | Macro CER | Exact | Crops ok | GT chars | Edits | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | `mlkit_ja` | SKIPPED | — | — | — | — | — | — | SKIPPED (google_mlkit_text_recognition is Android/iOS-only; this Linux agent has no emulator. Re-run with --predictions mlkit_ja=dump.json — see tools/cer_bakeoff/README.md) |
-| `cloud_vision` | SKIPPED | — | — | — | — | — | — | SKIPPED (no GCP credentials: set CLOUD_VISION_API_KEY or GOOGLE_APPLICATION_CREDENTIALS, or `gcloud auth application-default login`) |
+| `cloud_vision` | ok | 44.53% | 55.04% | 4/44 | 44/44 | 530 | 236 | DOCUMENT_TEXT_DETECTION languageHints=[ja] |
 | `manga_ocr` | ok | 20.75% | 22.76% | 25/44 | 44/44 | 530 | 110 | manga-ocr 0.1.16; model=kha-white/manga-ocr-base; device=cpu |
 
 ## Q-B1 gate (corpus CER ≤ 10%)
@@ -19,9 +19,162 @@ Headline CER is **corpus** = Σ edits / Σ GT length (successful crops only). Sk
 
 Skipped:
 - `mlkit_ja`: SKIPPED (google_mlkit_text_recognition is Android/iOS-only; this Linux agent has no emulator. Re-run with --predictions mlkit_ja=dump.json — see tools/cer_bakeoff/README.md)
-- `cloud_vision`: SKIPPED (no GCP credentials: set CLOUD_VISION_API_KEY or GOOGLE_APPLICATION_CREDENTIALS, or `gcloud auth application-default login`)
 
 ## Per-crop (measured engines)
+
+### `cloud_vision`
+
+| crop_id | CER % | edits | gt_len | GT | OCR |
+| --- | ---: | ---: | ---: | --- | --- |
+| `page_0_b1` | 50.82 | 31 | 61 | 全世界累計出荷本数１００万本突破の大人気サイコロジカルホラー、竜騎士０７描き下ろしの「新たなエンディング」でコミカライズ！ | 全世界累計出荷本数
+100万本突破の
+気サイコロジカルホラ
+描き下ろし
+m
+デ |
+| `page_0_b2` | 7.14 | 1 | 14 | 美しいがゆえに、おぞましい。 | )
+美しいがゆえに、
+おぞましい。 |
+| `page_1_b1` | 66.67 | 2 | 3 | 痛い… | いた
+痛い… |
+| `page_1_b2` | 0.00 | 0 | 3 | 誰か… | 誰か… |
+| `page_1_b3` | 0.00 | 0 | 5 | 止めてくれ | 止めてくれ |
+| `page_1_b4` | 200.00 | 6 | 3 | 雛子… | ひなこ
+雛子･･･ |
+| `page_3_b1` | 50.00 | 4 | 8 | 狐に噛まれたんだ | 狐に
+噛か 狐 2
+噛まれたんだ |
+| `page_3_b2` | 14.29 | 1 | 7 | だいじょうぶ？ | だいじょうぶ? |
+| `page_3_b3` | 66.67 | 6 | 9 | ありがとう…でも… | ありがとう...
+でも... |
+| `page_4_b1` | 5.88 | 1 | 17 | ぼ、ぼくは、ことゆきっていいます！ | ぼ、ぼくは、
+ことゆきって
+いいます! |
+| `page_4_b2` | 100.00 | 4 | 4 | 君は―― | きみ
+君は |
+| `page_4_b3` | 100.00 | 5 | 5 | 私の名前は | 私た
+なまえ
+私の名前は |
+| `page_4_b4` | 133.33 | 4 | 3 | 雛子！ | ひなこ
+雛子! |
+| `page_5_b1` | 47.06 | 8 | 17 | 親に向かって、その言い草は何だぁ！ | おや
+なん
+親に向かって、
+ぐさ
+その言い草は
+何だあ! |
+| `page_5_b2` | 17.39 | 4 | 23 | そんなにお母さんの作るご飯が気にくわないなら、 | そんなに
+かあ
+はん
+お母さんの作るご飯が
+気にくわないなら、 |
+| `page_5_b3` | 20.00 | 2 | 10 | 食べなきゃいいでしょ | 食べなきゃ
+いいでしょ
+よや |
+| `page_5_b4` | 38.89 | 7 | 18 | なんだと……もういっぺん言ってみろ！ | なんだと......
+もういっぺん
+言ってみろ! |
+| `page_6.1_b1` | 100.00 | 11 | 11 | ひどいことを言われて、 | 一言いひ
+わど
+れい
+こことを
+3-2 |
+| `page_6.1_b2` | 6.25 | 1 | 16 | なんでへらへら笑っていられるの？ | なんでへらへら
+笑っていられるの? |
+| `page_6.1_b3` | 150.00 | 3 | 2 | 雛子 | ひなこ
+雛子 |
+| `page_6.b1` | 80.00 | 4 | 5 | お母さん、 | かあ
+お母さ |
+| `page_6_b2` | 21.05 | 4 | 19 | こんな人にご飯なんて作らなくっていいよ | ひと
+こんな人に
+はん
+ご飯なんて
+作らなくって
+いいよ |
+| `page_6_b3` | 45.45 | 10 | 22 | 雛子、やめて。お父さんにそんな言い方しないで | ひなこ
+言いお
+雛子、やめて。
+とう
+お父さんにそんな
+かた
+言い方しないで |
+| `page_6_b4` | 70.00 | 7 | 10 | お母さんもお母さんだ | かあ
+お母さんも
+おーお
+かあ
+お母さんだ |
+| `page_6_b5` | 0.00 | 0 | 12 | こんなひどいことされて、 | こんなひどい
+ことされて、 |
+| `page_7_b1` | 27.27 | 3 | 11 | お父さんに、謝りなさい | 謝
+とう
+お父さんに、
+謝りなさい |
+| `page_7_b2` | 33.33 | 2 | 6 | ……どうして | どうして |
+| `page_7_b3` | 33.33 | 5 | 15 | …もうすぐ、大切な日なんだから | たいせつ
+・もうすぐ、
+大切な日なんだから |
+| `page_7_b4` | 31.25 | 5 | 16 | 私、お母さんみたいになりたくない | わたし
+かあ
+お母さん
+みたいに
+なりたくない |
+| `page_8_b1` | 16.67 | 1 | 6 | どこ行くの？ | どこ行くの
+? |
+| `page_8_b2` | 50.00 | 5 | 10 | こっち通るの珍しいね | めずら
+とお
+こっち通るの
+珍しいね |
+| `page_8_b3` | 133.33 | 4 | 3 | 咲子！ | さくこ
+咲子! |
+| `page_8_b4` | 125.00 | 5 | 4 | 千鶴屋？ | づるや
+千鶴屋の
+? |
+| `page_8_b5` | 63.64 | 7 | 11 | うん…誰かと喋りたくて | うん…..
+だれ
+誰かと
+しゃべ
+喋りたくて |
+| `page_9_b1` | 62.50 | 5 | 8 | 私も後から行くね | わたし
+あと
+私も後から
+行くね |
+| `page_9_b2` | 71.43 | 5 | 7 | ……うんじゃあ | じゃあ
+ん |
+| `page_9_b3` | 50.00 | 2 | 4 | 裏切り者 | もの
+裏切り者 |
+| `page_9_b4` | 111.11 | 10 | 9 | 咲子――五十嵐咲子 | さくこ
+咲子
+いがらしさくこ
+五十嵐咲子 |
+| `page_9_b5` | 33.33 | 12 | 36 | 昔から、「ずっと一緒」と私のことをそれなりに好きでいてくれている…はず。 | むかし
+たし
+いっしょ
+昔から、「ずっと一緒」と
+私のことをそれなりに
+好きでいてくれている
+...はず。 |
+| `page_9_b6` | 38.10 | 8 | 21 | だが…なぜか私のことを「裏切り者」と呼ぶ。 | だが･･･
+わたし
+なぜか私のことを
+もの
+「裏切り者」と呼ぶ。 |
+| `page_9_b7` | 62.50 | 15 | 24 | 少し天然…なのか、人とは違う不思議な部分がある… | ひと
+てんねん
+少し天然・・・なのか、
+人とは違う不思議
+ぶぶん
+部分がある... |
+| `page_10_b1` | 0.00 | 0 | 5 | よぉ、相棒 | よぉ、相棒 |
+| `page_10_b2` | 16.67 | 1 | 6 | 来てたんだな | き
+来てたんだな |
+| `page_10_b3` | 71.43 | 15 | 21 | 宇宙軍団から戎ヶ丘を守らないといけないだろ | えびす
+まも
+うちゅうぐんだん
+宇宙軍団から
+おか
+戎ヶ丘を
+守らないと
+いけないだろ |
 
 ### `manga_ocr`
 
