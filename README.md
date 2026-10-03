@@ -71,7 +71,7 @@ Details: `tools/build_jmdict_sqlite/README.md`.
 
 ## OCR CER bake-off (M0.3 / Q-B1)
 
-Score ML Kit, Cloud Vision, and manga-ocr against the M0.2 kanji GT (44 crops). Glyph-as-drawn CER (no NFKC). Measured: **manga-ocr 20.75%**, **Cloud Vision 44.53%** (44/44). ML Kit skips unless you pass a device dump.
+Score ML Kit, Cloud Vision, and manga-ocr against the M0.2 kanji GT (44 crops). Glyph-as-drawn CER (no NFKC). Measured: **manga-ocr 20.75%**, **Cloud Vision 44.53%** (44/44). An unofficial Vision ruby-box filter (size+position) is **21.32%** and is not the official CER. ML Kit skips unless you pass a device dump.
 
 ```bash
 python3 tools/cer_bakeoff/test_cer.py
