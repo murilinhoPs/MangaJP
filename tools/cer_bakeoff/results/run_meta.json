@@ -1,22 +1,12 @@
 {
-  "generated_at": "2026-10-03T19:33:25.723852+00:00",
-  "gt_dir": "/tmp/mangajp-m0.2-gt",
-  "argv": [
-    "/workspace/tools/cer_bakeoff/bakeoff.py",
-    "--gt-dir",
-    "/tmp/mangajp-m0.2-gt",
-    "--out-dir",
-    "/workspace/tools/cer_bakeoff/results",
-    "--engines",
-    "mlkit_ja,cloud_vision,manga_ocr",
-    "--predictions",
-    "manga_ocr=/tmp/predictions_manga_ocr.json",
-    "--predictions",
-    "cloud_vision=/tmp/predictions_cloud_vision.json"
-  ],
-  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
-  "platform": "Linux-6.12.94+-x86_64-with-glibc2.39",
-  "machine": "x86_64",
+  "generated_at": "merged-2026-10-03",
+  "note": "Tables merged on rebase onto main 69abf40. cloud_vision from live dump 2026-10-03T19:33:25.723852+00:00 (not re-run). mlkit_ja from device dump 2026-10-03T20:29:32.175665+00:00 (not re-run). manga_ocr replay unchanged.",
+  "gt_dir": "M0.2 manifest-kanji.csv + crops",
+  "dumps": {
+    "mlkit_ja": "tools/cer_bakeoff/results/predictions_mlkit_ja.json",
+    "cloud_vision": "tools/cer_bakeoff/results/predictions_cloud_vision.json",
+    "manga_ocr": "tools/cer_bakeoff/results/predictions_manga_ocr.json"
+  },
   "cer_protocol": {
     "metric": "Levenshtein / len(GT)",
     "unit": "Unicode code points",
