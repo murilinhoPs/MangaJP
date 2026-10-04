@@ -39,11 +39,15 @@ class Deinflector {
   /// Full transform trace, matching Yomitan `LanguageTransformer.transform`.
   List<DeinflectedText> transform(String surface) =>
       _japanese.transform(surface);
+
+  /// Bitflags for Yomitan condition ids (`v1`, `v5`, `adj-i`, …).
+  int flagsFor(Iterable<String> conditionIds) =>
+      _japanese.flagsFor(conditionIds);
 }
 
 /// Compiled transform table + BFS deinflection (Yomitan `LanguageTransformer`).
 class LanguageTransformer {
-  LanguageTransformer._(this._transforms);
+  LanguageTransformer._(this._transforms, this.conditionFlags);
 
   factory LanguageTransformer.japanese() {
     return LanguageTransformer.fromSpecs(
@@ -73,10 +77,14 @@ class LanguageTransformer {
       }
       compiled.add(_CompiledTransform(id: spec.id, rules: rules));
     }
-    return LanguageTransformer._(compiled);
+    return LanguageTransformer._(compiled, flags);
   }
 
   final List<_CompiledTransform> _transforms;
+  final Map<String, int> conditionFlags;
+
+  /// Combined bitflags for condition ids. Unknown ids contribute 0.
+  int flagsFor(Iterable<String> ids) => _flagsFor(conditionFlags, ids);
 
   List<DeinflectedText> transform(String sourceText) {
     final results = <_Work>[

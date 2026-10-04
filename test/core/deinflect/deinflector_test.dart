@@ -43,6 +43,12 @@ void main() {
     expect(deinflector.candidates('食べた').first, '食べた');
   });
 
+  test('flagsFor maps dictionary POS ids to distinct bits', () {
+    expect(deinflector.flagsFor(['v1']), isNot(0));
+    expect(deinflector.flagsFor(['adj-i']), isNot(0));
+    expect(deinflector.flagsFor(['v1']) & deinflector.flagsFor(['adj-i']), 0);
+  });
+
   group('lemma hit rate', () {
     late Directory tmp;
     late String dbPath;

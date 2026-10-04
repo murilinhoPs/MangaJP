@@ -1,4 +1,4 @@
-/// One persisted crop + OCR text (M1.1). Lookup / Caderno are later M1.
+/// One persisted crop + OCR text (M1.1). Tap-to-lookup is M1.3 (no Caderno).
 class PageCrop {
   const PageCrop({
     required this.id,

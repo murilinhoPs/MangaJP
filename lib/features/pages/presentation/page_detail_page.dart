@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../dictionary/data/jmdict_provider.dart';
+import '../../dictionary/presentation/lookup_sheet.dart';
 import '../domain/page_crop.dart';
 import 'page_detail_controller.dart';
 
@@ -9,7 +11,7 @@ abstract final class PageDetailKeys {
   static const ocrText = Key('page-detail-ocr-text');
 }
 
-/// `/pages/:id` — shows OCR text already saved on the page's crops (M1.2).
+/// `/pages/:id` — OCR text from Drift; tap looks up JMdict via deinflect (M1.3).
 class PageDetailPage extends ConsumerWidget {
   const PageDetailPage({super.key, required this.pageId});
 
@@ -36,13 +38,13 @@ class PageDetailPage extends ConsumerWidget {
   }
 }
 
-class _PageOcrBody extends StatelessWidget {
+class _PageOcrBody extends ConsumerWidget {
   const _PageOcrBody({required this.crops});
 
   final List<PageCrop> crops;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (crops.isEmpty) {
       return const Center(
         child: Padding(
@@ -62,15 +64,86 @@ class _PageOcrBody extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(
-                crop.ocrText,
-                key: PageDetailKeys.ocrText,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
+              child: _TappableOcrText(
+                text: crop.ocrText,
+                onTapCharacter: (index) {
+                  _lookup(context, ref, crop.ocrText, index);
+                },
               ),
             ),
           ),
       ],
+    );
+  }
+
+  Future<void> _lookup(
+    BuildContext context,
+    WidgetRef ref,
+    String text,
+    int tapIndex,
+  ) async {
+    try {
+      final lookup = await ref.read(dictionaryLookupProvider.future);
+      final result = lookup.findAt(text, tapIndex: tapIndex);
+      if (!context.mounted) {
+        return;
+      }
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nenhuma entrada no dicionário.')),
+        );
+        return;
+      }
+      await showLookupSheet(context, result);
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Dicionário indisponível: $error')),
+      );
+    }
+  }
+}
+
+/// OCR string; tap position maps to a UTF-16 index for longest-cover lookup.
+class _TappableOcrText extends StatelessWidget {
+  const _TappableOcrText({required this.text, required this.onTapCharacter});
+
+  final String text;
+  final ValueChanged<int> onTapCharacter;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTapDown: (details) {
+            if (text.isEmpty) {
+              return;
+            }
+            final painter = TextPainter(
+              text: TextSpan(text: text, style: style),
+              textAlign: TextAlign.center,
+              textDirection: Directionality.of(context),
+            )..layout(maxWidth: constraints.maxWidth);
+            final offset = painter
+                .getPositionForOffset(details.localPosition)
+                .offset;
+            final index = offset < 0
+                ? 0
+                : (offset >= text.length ? text.length - 1 : offset);
+            onTapCharacter(index);
+          },
+          child: Text(
+            text,
+            key: PageDetailKeys.ocrText,
+            textAlign: TextAlign.center,
+            style: style,
+          ),
+        );
+      },
     );
   }
 }
