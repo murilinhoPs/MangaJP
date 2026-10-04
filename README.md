@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M0.8** is the share-intent + crop smoke (`/capture`, not a tab). Drift `pages`/`crops` and lookup UI are still later M0.
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M1.1** is share/import → `/capture` → ≥1 crop → manga-ocr sidecar → persisted Drift text. Lookup UI is later M1.
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
@@ -22,11 +22,11 @@ flutter devices
 flutter run
 ```
 
-The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`.
+The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar and writes `crops.ocr_text`.
 
-### Share + crop (M0.8)
+### Share + crop + OCR (M1.1)
 
-See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, and device steps (share from Photos, or gallery pick on `/capture`). Confirm crop prints `Crop PNG: N bytes` with N > 0. CI: `flutter test test/features/capture/`.
+See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, the manga-ocr sidecar, and device steps. Confirm crop prints `Crop PNG: N bytes` with N > 0 and `OCR (manga_ocr): …`. CI: `flutter test test/features/capture/`.
 
 ## Run on iOS
 
@@ -49,7 +49,7 @@ Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
 flutter run -d linux
 ```
 
-Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0. `/capture` has no bottom tabs.
+Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. Expect `Crop PNG: N bytes` with N > 0, then `OCR (manga_ocr): …` if `tools/manga_ocr_sidecar/serve.py` is running. `/capture` has no bottom tabs.
 
 ## Dictionary (`jmdict.sqlite`)
 

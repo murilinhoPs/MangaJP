@@ -5,16 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../core/utils/hashing.dart';
+import '../../../core/utils/ids.dart';
+import '../../ocr/data/ocr_repository.dart';
+import '../../ocr/domain/ocr_result.dart';
+import '../../pages/data/pages_repository.dart';
 import '../data/image_source_service.dart';
 import '../domain/crop_image.dart';
 import '../domain/crop_rect.dart';
 import '../domain/incoming_image.dart';
 import 'crop_overlay.dart';
 
-/// Keys for the M0.8 smoke test (fixture → 1 rect → bytes).
+/// Keys for the capture path test (fixture → 1 rect → OCR → persisted text).
 abstract final class CaptureKeys {
   static const confirm = Key('capture-confirm');
   static const cropBytes = Key('capture-crop-bytes');
+  static const ocrText = Key('capture-ocr-text');
   static const pickGallery = Key('capture-pick-gallery');
 }
 
@@ -35,6 +41,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
   Size _imageSize = Size.zero;
   CropRect _rect = CropRect.initial;
   CropPng? _cropped;
+  OcrResult? _ocr;
+  String? _pageId;
   String? _error;
   bool _busy = false;
 
@@ -62,6 +70,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       setState(() {
         _bytes = null;
         _cropped = null;
+        _ocr = null;
+        _pageId = null;
         _error = null;
         _imageSize = Size.zero;
       });
@@ -79,6 +89,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         _imageSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
         _rect = CropRect.initial;
         _cropped = null;
+        _ocr = null;
+        _pageId = null;
         _error = null;
       });
     } catch (error) {
@@ -97,7 +109,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     await _load();
   }
 
-  void _confirm() {
+  Future<void> _confirm() async {
     final bytes = _bytes;
     if (bytes == null) return;
     setState(() {
@@ -106,13 +118,35 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     });
     try {
       final cropped = cropToPng(bytes, _rect);
-      setState(() {
-        _cropped = cropped;
-        _busy = false;
-      });
       debugPrint('M0.8 crop PNG bytes.length=${cropped.bytes.length}');
       widget.onCropped?.call(cropped.bytes);
+      if (!mounted) return;
+      setState(() => _cropped = cropped);
+
+      final ocr = await ref
+          .read(ocrRepositoryProvider)
+          .recognize(cropped.bytes);
+      final pageId = _pageId ??= newId();
+      await ref
+          .read(pagesRepositoryProvider)
+          .saveRecognizedCrop(
+            pageId: pageId,
+            sourceSha256: sha256Hex(bytes),
+            left: _rect.left,
+            top: _rect.top,
+            width: _rect.width,
+            height: _rect.height,
+            ocrText: ocr.fullText,
+            engineId: ocr.engineId,
+          );
+      debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');
+      if (!mounted) return;
+      setState(() {
+        _ocr = ocr;
+        _busy = false;
+      });
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _busy = false;
         _error = '$error';
@@ -135,6 +169,15 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                 'Crop PNG: ${cropped.bytes.length} bytes '
                 '(${cropped.width}×${cropped.height})',
                 key: CaptureKeys.cropBytes,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          if (_ocr != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
+                key: CaptureKeys.ocrText,
                 textAlign: TextAlign.center,
               ),
             ),

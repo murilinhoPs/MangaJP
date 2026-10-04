@@ -8,8 +8,9 @@ void main() {
     addTearDown(db.close);
 
     expect(await db.appMetaDao.getValue('hello'), 'MangaJP M0.1');
-    expect(await db.appMetaDao.getValue('schema_version'), '1');
+    expect(await db.appMetaDao.getValue('schema_version'), '2');
     expect(await db.appMetaDao.getValue('engine_id'), 'sm2-jr@1');
+    expect(await db.appMetaDao.getValue('ocr_engine_id'), 'manga_ocr');
   });
 
   test('app_meta roundtrip', () async {
@@ -18,6 +19,19 @@ void main() {
 
     await db.appMetaDao.upsert('hello', 'updated');
     expect(await db.appMetaDao.getValue('hello'), 'updated');
+  });
+
+  test('onCreate creates pages and crops tables', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    final rows = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+        )
+        .get();
+    final names = {for (final row in rows) row.read<String>('name')};
+    expect(names, containsAll(<String>['app_meta', 'pages', 'crops']));
   });
 
   test('linuxDatabaseDirectory resolves to a real directory', () async {

@@ -54,7 +54,7 @@ class HomePage extends ConsumerWidget {
         ),
         _StubBlock(
           title: 'Galeria',
-          subtitle: 'Import → /capture (crop)',
+          subtitle: 'Import → /capture (crop → OCR)',
           icon: Icons.add_photo_alternate_outlined,
           onTap: () => const CaptureRoute().push<void>(context),
         ),
