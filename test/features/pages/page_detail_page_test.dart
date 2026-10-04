@@ -41,7 +41,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    PageDetailRoute(id: pageId).go(tester.element(find.byType(HomePage)));
+    const PageDetailRoute(id: pageId).go(tester.element(find.byType(HomePage)));
     await tester.pumpAndSettle();
 
     expect(find.byType(PageDetailPage), findsOneWidget);
