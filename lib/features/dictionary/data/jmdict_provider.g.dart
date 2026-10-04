@@ -50,7 +50,7 @@ final class JmdictServiceProvider
   }
 }
 
-String _$jmdictServiceHash() => r'ed5f13b4e7563849be1f2c2b3a091e8621504206';
+String _$jmdictServiceHash() => r'bab3a8d9a01d78fcf8ad2e495a2f820796ccb839';
 
 @ProviderFor(dictionaryLookup)
 final dictionaryLookupProvider = DictionaryLookupProvider._();

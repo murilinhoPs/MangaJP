@@ -52,7 +52,7 @@ final class OcrEngineProvider
   }
 }
 
-String _$ocrEngineHash() => r'18187ab2f1a4c6e521f2b521b19649d8b1b6c2d1';
+String _$ocrEngineHash() => r'e71f27b109c77a75fb61850764f73a0a79565d99';
 
 @ProviderFor(ocrRepository)
 final ocrRepositoryProvider = OcrRepositoryProvider._();

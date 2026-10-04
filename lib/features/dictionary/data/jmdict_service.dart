@@ -1,8 +1,9 @@
 import 'dart:convert';
 
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 
 import '../domain/dict_entry.dart';
+import 'jmdict_open.dart';
 
 /// One `forms` row joined to `entries.data_json`.
 class FormHit {
@@ -23,20 +24,20 @@ class FormHit {
 
 /// Read-only JMdict (`jmdict.sqlite`, PRD §9.2).
 ///
-/// Bake the DB with `tools/build_jmdict_sqlite`. Copy the Flutter asset to a
-/// real filesystem path before [openFile] (sqlite cannot open the bundle).
+/// Bake the DB with `tools/build_jmdict_sqlite`. Native copies the Flutter
+/// asset to a filesystem path; web loads sqlite3.wasm and opens the bytes
+/// in memory (`openJmdictFromAsset`).
 class JmdictService {
   JmdictService();
 
-  Database? _db;
+  CommonDatabase? _db;
 
-  /// Flutter asset path listed in `pubspec.yaml`. Copy out of the bundle
-  /// before [openFile]; sqlite needs a real filesystem path.
+  /// Flutter asset path listed in `pubspec.yaml`.
   static const assetPath = 'assets/dict/jmdict.sqlite';
 
   bool get isOpen => _db != null;
 
-  Database get database {
+  CommonDatabase get database {
     final db = _db;
     if (db == null) {
       throw StateError('JmdictService is not open');
@@ -44,10 +45,16 @@ class JmdictService {
     return db;
   }
 
-  /// Opens [path] read-only. Caller owns copying the Flutter asset to disk.
-  void openFile(String path) {
+  /// Attaches an already-open read-only JMdict connection.
+  void open(CommonDatabase db) {
     close();
-    _db = sqlite3.open(path, mode: OpenMode.readOnly);
+    _db = db;
+  }
+
+  /// Opens [path] read-only (native / `flutter test`). Web has no filesystem
+  /// sqlite path — use [open] after `openJmdictFromAsset()`.
+  void openFile(String path) {
+    open(openJmdictFile(path));
   }
 
   void close() {

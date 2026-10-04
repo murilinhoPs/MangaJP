@@ -51,6 +51,20 @@ flutter run -d linux
 
 Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running. `/capture` has no bottom tabs.
 
+## Run on Chrome (Flutter web)
+
+Web is a **dev convenience** for the crop/gallery UI in Cloud Agents / desktops without an emulator. There is no share target. `receive_sharing_intent` stays Android + iOS.
+
+Drift uses `sqlite3.wasm` + `drift_worker.js` in `web/` (from the drift **2.35.1** release). JMdict lookup loads the same wasm module and opens `assets/dict/jmdict.sqlite` in memory.
+
+```bash
+flutter run -d chrome
+```
+
+Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running (the sidecar sends CORS headers for the Chrome origin). `/capture` has no bottom tabs.
+
+Override the sidecar URL with `--dart-define=MANGA_OCR_URL=http://127.0.0.1:8765` if needed.
+
 ## Dictionary (`jmdict.sqlite`)
 
 Bake the read-only JMdict DB (PRD §9.2: `entries` / `forms` / `sense_pos` / `kanji`):
@@ -89,7 +103,7 @@ flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, the CER-protocol unit tests (no OCR models), then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, and `build/**`.
+CI (GitHub Actions) runs the JMdict fixture smoke, the CER-protocol unit tests (no OCR models), then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, `web/**`, `lib/**/*_web.dart`, and `build/**`.
 
 ## Cloud Agents environment
 

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -6,13 +5,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/ocr_engine.dart';
 import '../domain/ocr_result.dart';
 import 'manga_ocr_engine.dart';
+import 'manga_ocr_url.dart';
 
 part 'ocr_repository.g.dart';
 
 /// Default OCR is the manga-ocr sidecar (`docs/m0.3-cer-bakeoff.md`, 20.75% CER).
 @Riverpod(keepAlive: true)
 OcrEngine ocrEngine(Ref ref) {
-  final url = Platform.environment['MANGA_OCR_URL'];
+  final url = mangaOcrUrl();
   return MangaOcrEngine(
     baseUrl: (url == null || url.isEmpty) ? MangaOcrEngine.defaultBaseUrl : url,
   );

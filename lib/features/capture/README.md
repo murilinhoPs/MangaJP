@@ -123,6 +123,20 @@ Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirm
 crop**. The app goes to `/pages/:id` with the persisted OCR text when the
 sidecar is up. `/capture` is not a bottom tab.
 
+## Verify on Chrome (Flutter web)
+
+Web has no share target. Gallery uses the browser file picker; Drift uses
+`web/sqlite3.wasm` + `web/drift_worker.js`. The sidecar must send CORS
+headers (already in `serve.py`) so Chrome can POST crop PNG bytes:
+
+```bash
+flutter run -d chrome
+```
+
+Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
+crop**. Same `/pages/:id` check when the sidecar is up. `/capture` is not a
+bottom tab.
+
 ## CI
 
 ```bash

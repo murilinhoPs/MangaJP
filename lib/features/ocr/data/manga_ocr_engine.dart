@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
 
 import '../domain/ocr_engine.dart';
 import '../domain/ocr_result.dart';
@@ -9,13 +10,15 @@ import '../domain/ocr_result.dart';
 ///
 /// Calls the local sidecar in `tools/manga_ocr_sidecar/serve.py` (same Python
 /// package scored at 20.75% CER). Does not embed torch in the Flutter app.
+/// Uses `package:http` so Chrome / Flutter web can POST as well as native.
 class MangaOcrEngine implements OcrEngine {
-  const MangaOcrEngine({this.baseUrl = defaultBaseUrl});
+  const MangaOcrEngine({this.baseUrl = defaultBaseUrl, this.client});
 
   static const defaultBaseUrl = 'http://127.0.0.1:8765';
   static const engineName = 'manga_ocr';
 
   final String baseUrl;
+  final http.Client? client;
 
   @override
   String get engineId => engineName;
@@ -23,22 +26,21 @@ class MangaOcrEngine implements OcrEngine {
   @override
   Future<OcrResult> recognize(Uint8List image) async {
     final uri = Uri.parse(baseUrl).resolve('/ocr');
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+    final httpClient = client ?? http.Client();
     try {
-      final request = await client.postUrl(uri);
-      request.headers.contentType = ContentType('image', 'png');
-      request.contentLength = image.lengthInBytes;
-      request.add(image);
-      final response = await request.close().timeout(
-        const Duration(seconds: 120),
-      );
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
+      final response = await httpClient
+          .post(
+            uri,
+            headers: {'Content-Type': 'image/png'},
+            body: image,
+          )
+          .timeout(const Duration(seconds: 120));
+      if (response.statusCode != 200) {
         throw StateError(
-          'manga-ocr sidecar HTTP ${response.statusCode}: $body',
+          'manga-ocr sidecar HTTP ${response.statusCode}: ${response.body}',
         );
       }
-      final decoded = jsonDecode(body);
+      final decoded = jsonDecode(response.body);
       if (decoded is! Map) {
         throw const FormatException(
           'manga-ocr sidecar returned non-object JSON',
@@ -50,13 +52,19 @@ class MangaOcrEngine implements OcrEngine {
         blocks: [if (text.isNotEmpty) OcrBlock(text: text)],
         engineId: engineId,
       );
-    } on SocketException catch (error) {
+    } on StateError {
+      rethrow;
+    } on FormatException {
+      rethrow;
+    } catch (error) {
       throw StateError(
         'manga-ocr sidecar is not reachable at $baseUrl. '
         'Start tools/manga_ocr_sidecar/serve.py. ($error)',
       );
     } finally {
-      client.close(force: true);
+      if (client == null) {
+        httpClient.close();
+      }
     }
   }
 }

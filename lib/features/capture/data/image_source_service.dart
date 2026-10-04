@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -15,13 +13,15 @@ ImageSourceService imageSourceService(Ref ref) => ImageSourceService();
 /// Share intent + gallery pick (camera is Could / F28, not M0.8).
 ///
 /// Native share is Android + iOS. `flutter test` on desktop never touches the
-/// plugin (`Platform.isAndroid` / `Platform.isIOS` are false on the CI host).
+/// plugin (`defaultTargetPlatform` is not Android/iOS on the CI host). Web
+/// has no share target either (`kIsWeb`).
 class ImageSourceService {
   ImageSourceService();
 
   bool get _nativeShare {
     if (kIsWeb) return false;
-    return Platform.isAndroid || Platform.isIOS;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
   }
 
   /// Cold-start share (app launched as the SEND / Share Extension target).
@@ -54,7 +54,7 @@ class ImageSourceService {
   Future<IncomingImage?> pickFromGallery() async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (file == null) return null;
-    return IncomingImage(path: file.path);
+    return IncomingImage(bytes: await file.readAsBytes());
   }
 
   IncomingImage? _firstImage(List<SharedMediaFile> files) {

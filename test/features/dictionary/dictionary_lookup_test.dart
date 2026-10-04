@@ -41,8 +41,12 @@ void main() {
     final providerSrc = File(
       'lib/features/dictionary/data/jmdict_provider.dart',
     ).readAsStringSync();
-    expect(providerSrc, contains('JmdictService.assetPath'));
-    expect(providerSrc, contains('ensureJmdictFile'));
+    expect(providerSrc, contains('openJmdictFromAsset'));
+    final nativeOpenSrc = File(
+      'lib/features/dictionary/data/jmdict_open_io.dart',
+    ).readAsStringSync();
+    expect(nativeOpenSrc, contains('ensureJmdictFile'));
+    expect(nativeOpenSrc, contains('JmdictService.assetPath'));
     for (final path in [
       'lib/features/dictionary/data/dictionary_lookup.dart',
       'lib/features/dictionary/data/jmdict_provider.dart',

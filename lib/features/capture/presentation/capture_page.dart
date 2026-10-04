@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/utils/hashing.dart';
@@ -80,7 +80,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       return;
     }
     try {
-      final bytes = incoming.bytes ?? await File(incoming.path!).readAsBytes();
+      final bytes =
+          incoming.bytes ?? await XFile(incoming.path!).readAsBytes();
       final decoded = img.decodeImage(bytes);
       if (decoded == null) {
         throw const FormatException('Could not decode image');
