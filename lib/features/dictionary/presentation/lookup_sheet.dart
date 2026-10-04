@@ -20,6 +20,7 @@ Future<void> showLookupSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     builder: (context) => LookupSheet(result: result, onSave: onSave),
   );
 }
@@ -53,22 +54,19 @@ class _LookupSheetState extends State<LookupSheet> {
       return;
     }
     setState(() => _saving = true);
-    final messenger = ScaffoldMessenger.of(context);
     try {
       await widget.onSave(_selected);
       if (!mounted) {
         return;
       }
       Navigator.of(context).pop();
-      messenger.showSnackBar(const SnackBar(content: Text('Salvo.')));
     } catch (error) {
       if (!mounted) {
         return;
       }
       setState(() => _saving = false);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Falha ao salvar: $error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Falha ao salvar: $error')));
     }
   }
 
@@ -76,51 +74,59 @@ class _LookupSheetState extends State<LookupSheet> {
   Widget build(BuildContext context) {
     final entries = widget.result.entries;
     final selected = _selected;
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.6;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        child: Column(
-          key: LookupSheetKeys.sheet,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (entries.length == 1)
-              _LemmaHeader(entry: selected)
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 220),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final entry in entries)
-                      ListTile(
-                        key: LookupSheetKeys.option(entry.seq),
-                        selected: entry.seq == _selectedSeq,
-                        title: Text(entry.lemma),
-                        subtitle: Text(
-                          [
-                            if (entry.reading != entry.lemma) entry.reading,
-                            if (entry.glosses.isNotEmpty) entry.glosses.first,
-                          ].join(' · '),
-                        ),
-                        onTap: () => setState(() => _selectedSeq = entry.seq),
-                      ),
-                  ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: Column(
+              key: LookupSheetKeys.sheet,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (entries.length == 1)
+                  _LemmaHeader(entry: selected)
+                else
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final entry in entries)
+                          ListTile(
+                            key: LookupSheetKeys.option(entry.seq),
+                            selected: entry.seq == _selectedSeq,
+                            title: Text(entry.lemma),
+                            subtitle: Text(
+                              [
+                                if (entry.reading != entry.lemma) entry.reading,
+                                if (entry.glosses.isNotEmpty)
+                                  entry.glosses.first,
+                              ].join(' · '),
+                            ),
+                            onTap: () =>
+                                setState(() => _selectedSeq = entry.seq),
+                          ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  selected.glossText,
+                  key: LookupSheetKeys.gloss,
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
-              ),
-            const SizedBox(height: 12),
-            Text(
-              selected.glossText,
-              key: LookupSheetKeys.gloss,
-              style: Theme.of(context).textTheme.bodyLarge,
+                const SizedBox(height: 16),
+                FilledButton(
+                  key: LookupSheetKeys.save,
+                  onPressed: _saving ? null : _save,
+                  child: const Text('Salvar'),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            FilledButton(
-              key: LookupSheetKeys.save,
-              onPressed: _saving ? null : _save,
-              child: const Text('Salvar'),
-            ),
-          ],
+          ),
         ),
       ),
     );

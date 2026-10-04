@@ -118,8 +118,7 @@ void main() {
 
     await tester.tap(find.byKey(PageDetailKeys.ocrText));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LookupSheetKeys.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
     expect(find.byType(PageDetailPage), findsOneWidget);
     expect(find.byType(NotebookPage), findsNothing);
@@ -164,13 +163,11 @@ void main() {
 
     await tester.tap(find.byKey(PageDetailKeys.ocrText));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LookupSheetKeys.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
     await tester.tap(find.byKey(PageDetailKeys.ocrText));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LookupSheetKeys.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
     expect(await db.select(db.userWords).get(), hasLength(1));
     expect(await db.select(db.userWordStates).get(), hasLength(1));
@@ -196,8 +193,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(LookupSheetKeys.option(_lowHomographSeq)));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LookupSheetKeys.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
     final words = await db.select(db.userWords).get();
     expect(words, hasLength(1));
@@ -276,4 +272,11 @@ Future<AppDatabase> _openPage(
   PageDetailRoute(id: pageId).go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
   return db;
+}
+
+Future<void> _tapSave(WidgetTester tester) async {
+  final save = find.byKey(LookupSheetKeys.save);
+  await tester.ensureVisible(save);
+  await tester.tap(save);
+  await tester.pumpAndSettle();
 }
