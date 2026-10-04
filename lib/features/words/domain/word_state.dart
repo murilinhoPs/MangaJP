@@ -5,6 +5,9 @@ enum WordState {
   known,
   ignored;
 
+  /// Caderno lists these (every stored study state except [unknown]).
+  static const listed = <WordState>[saved, learning, known, ignored];
+
   /// Save must not move these back to [saved].
   bool get isProtected => this == learning || this == known || this == ignored;
 

@@ -46,4 +46,44 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   Future<void> insertCropWord(CropWordsCompanion row) {
     return into(cropWords).insert(row, mode: InsertMode.insertOrIgnore);
   }
+
+  /// Words that have a listed study state, newest [UserWords.createdAt] first.
+  ///
+  /// [createdAt] is first-saved time: Save inserts the word once and never
+  /// rewrites it. Optional [search] matches lemma or reading; optional
+  /// [state] keeps a single listed state.
+  Future<List<(UserWord, UserWordState)>> listWithStates({
+    String search = '',
+    String? state,
+  }) async {
+    final query = select(userWords).join([
+      innerJoin(userWordStates, userWordStates.wordId.equalsExp(userWords.id)),
+    ]);
+
+    Expression<bool> predicate = userWordStates.state.isIn(const [
+      'saved',
+      'learning',
+      'known',
+      'ignored',
+    ]);
+    final trimmed = search.trim();
+    if (trimmed.isNotEmpty) {
+      final pattern = '%$trimmed%';
+      predicate =
+          predicate &
+          (userWords.lemma.like(pattern) | userWords.reading.like(pattern));
+    }
+    if (state != null) {
+      predicate = predicate & userWordStates.state.equals(state);
+    }
+
+    query.where(predicate);
+    query.orderBy([OrderingTerm.desc(userWords.createdAt)]);
+
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        (row.readTable(userWords), row.readTable(userWordStates)),
+    ];
+  }
 }
