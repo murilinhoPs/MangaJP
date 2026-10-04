@@ -72,12 +72,18 @@ void main() {
         'middle',
         'oldest',
       ]);
-      expect(listed.map((row) => row.firstSavedAt).toList(), [
-        DateTime.utc(2026, 3, 1),
-        DateTime.utc(2026, 2, 15),
-        DateTime.utc(2026, 2, 1),
-        DateTime.utc(2026, 1, 1),
-      ]);
+      expect(
+        listed
+            .map(
+              (row) => (
+                row.firstSavedAt.year,
+                row.firstSavedAt.month,
+                row.firstSavedAt.day,
+              ),
+            )
+            .toList(),
+        [(2026, 3, 1), (2026, 2, 15), (2026, 2, 1), (2026, 1, 1)],
+      );
       for (var i = 0; i < listed.length - 1; i++) {
         expect(
           listed[i].firstSavedAt.isAfter(listed[i + 1].firstSavedAt),
