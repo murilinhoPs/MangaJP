@@ -3,8 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../core/router/routes.dart';
 import '../../../core/utils/hashing.dart';
 import '../../../core/utils/ids.dart';
 import '../../ocr/data/ocr_repository.dart';
@@ -16,7 +18,7 @@ import '../domain/crop_rect.dart';
 import '../domain/incoming_image.dart';
 import 'crop_overlay.dart';
 
-/// Keys for the capture path test (fixture → 1 rect → OCR → persisted text).
+/// Keys for the capture path test (fixture → 1 rect → OCR → `/pages/:id`).
 abstract final class CaptureKeys {
   static const confirm = Key('capture-confirm');
   static const cropBytes = Key('capture-crop-bytes');
@@ -141,6 +143,10 @@ class _CapturePageState extends ConsumerState<CapturePage> {
           );
       debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');
       if (!mounted) return;
+      if (GoRouter.maybeOf(context) != null) {
+        PageDetailRoute(id: pageId).go(context);
+        return;
+      }
       setState(() {
         _ocr = ocr;
         _busy = false;
