@@ -1,6 +1,6 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M1.1** is share/import → `/capture` → ≥1 crop → manga-ocr sidecar → persisted Drift text. **M1.2** opens `/pages/:id` with that `ocr_text`. **M1.3** taps a form on that page, deinflects it, and shows the local JMdict gloss (highest `forms.priority` when several entries match).
+Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M1.1** is share/import → `/capture` → ≥1 crop → manga-ocr sidecar → persisted Drift text. **M1.2** opens `/pages/:id` with that `ocr_text`. **M1.3** taps a form on that page, deinflects it, and shows the local JMdict gloss (highest `forms.priority` when several entries match). **M1.4** Save on that sheet writes `words` + `word_states=saved` + `crop_words` (no card, no Caderno).
 
 License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
 
@@ -22,7 +22,7 @@ flutter devices
 flutter run
 ```
 
-The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar, writes `crops.ocr_text`, and goes to `/pages/:id`. Tapping OCR text there looks up the lemma in the local JMdict (`assets/dict/jmdict.sqlite`).
+The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar, writes `crops.ocr_text`, and goes to `/pages/:id`. Tapping OCR text there looks up the lemma in the local JMdict (`assets/dict/jmdict.sqlite`). **Salvar** persists the chosen entry without creating a flashcard.
 
 ### Share + crop + OCR (M1.1)
 
