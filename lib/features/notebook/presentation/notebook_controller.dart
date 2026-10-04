@@ -1,10 +1,22 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../dictionary/data/jmdict_provider.dart';
 import '../../words/domain/word_state.dart';
 import '../data/notebook_repository.dart';
 import '../domain/notebook_entry.dart';
+import '../domain/notebook_word_detail.dart';
 
 part 'notebook_controller.g.dart';
+
+/// Drift word + first crop, with JMdict gloss loaded by seq (not stored).
+class NotebookWordView {
+  const NotebookWordView({required this.detail, required this.glossText});
+
+  final NotebookWordDetail detail;
+
+  /// Copied from JMdict `entries.data_json` for [NotebookWordDetail.seq].
+  final String glossText;
+}
 
 /// Search text + optional state filter for `/notebook`.
 class NotebookQuery {
@@ -41,4 +53,16 @@ Future<List<NotebookEntry>> notebookEntries(Ref ref) {
   return ref
       .watch(notebookRepositoryProvider)
       .list(search: query.search, state: query.state);
+}
+
+/// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+@riverpod
+Future<NotebookWordView?> notebookWord(Ref ref, String wordId) async {
+  final detail = await ref.watch(notebookRepositoryProvider).byId(wordId);
+  if (detail == null) {
+    return null;
+  }
+  final jmdict = await ref.watch(jmdictServiceProvider.future);
+  final entry = jmdict.entryBySeq(detail.seq);
+  return NotebookWordView(detail: detail, glossText: entry?.glossText ?? '');
 }

@@ -1,15 +1,12 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
-import 'package:manga_jp/features/flashcards/presentation/deck_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
-import 'package:manga_jp/features/notebook/presentation/notebook_word_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
 void main() {
@@ -142,49 +139,6 @@ void main() {
     expect(find.byKey(NotebookKeys.row('ignored')), findsNothing);
     expect(_listLemmas(tester), ['既知']);
   });
-
-  testWidgets(
-    '/notebook does not navigate to detail, Aprender, remove, or a card',
-    (tester) async {
-      await _openNotebook(
-        tester,
-        words: [
-          _Seed(
-            id: 'eat',
-            seq: 10,
-            lemma: '食べる',
-            reading: 'たべる',
-            state: WordState.saved,
-            createdAt: DateTime.utc(2026, 1, 1),
-          ),
-        ],
-      );
-
-      expect(find.byType(NotebookPage), findsOneWidget);
-      expect(find.byType(NotebookWordPage), findsNothing);
-      expect(find.byType(DeckPage), findsNothing);
-      expect(find.text('Aprender'), findsNothing);
-      expect(find.text('Remover'), findsNothing);
-      expect(find.text('Remove'), findsNothing);
-      expect(find.text('Add card'), findsNothing);
-      expect(find.byIcon(Icons.delete_outline), findsNothing);
-      expect(find.byIcon(Icons.style), findsNothing);
-
-      await tester.tap(find.byKey(NotebookKeys.row('eat')));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(NotebookPage), findsOneWidget);
-      expect(find.byType(NotebookWordPage), findsNothing);
-      expect(find.byType(DeckPage), findsNothing);
-      expect(
-        GoRouter.of(tester.element(find.byType(NotebookPage))).state.uri.path,
-        '/notebook',
-      );
-      expect(find.text('Aprender'), findsNothing);
-      expect(find.text('Remover'), findsNothing);
-      expect(find.text('Add card'), findsNothing);
-    },
-  );
 }
 
 class _Seed {
