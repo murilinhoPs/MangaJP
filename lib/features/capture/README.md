@@ -1,6 +1,6 @@
 # Capture (M1.1)
 
-Path: **share or import → `/capture` → ≥1 crop → OCR → persisted text**. Capture is
+Path: **share or import → `/capture` → ≥1 crop → OCR → persist → `/pages/:id`**. Capture is
 **not** a bottom tab (PRD §11 / F2 / F3). Default OCR is **manga-ocr** as a local
 sidecar (`docs/m0.3-cer-bakeoff.md`, official CER **20.75%**). Lookup / Caderno /
 Android share-intent device smoke are later M1.
@@ -67,8 +67,7 @@ flutter run
 
 **Gallery (no share sheet):** Home → **Galeria** → `/capture` → **Escolher da
 galeria** → pick any image → (optional) drag the rect / corners → **Confirmar
-crop**. The screen must show `Crop PNG: N bytes (W×H)` with N > 0 and
-`OCR (manga_ocr): …` once the sidecar has recognized the crop. Logcat:
+crop**. The app must go to `/pages/:id` and show the persisted OCR text. Logcat:
 `M0.8 crop PNG bytes.length=…` then `M1.1 OCR manga_ocr: …`.
 
 **Share:** in Photos / Files / a screenshot, **Share** → **MangaJP**. The app
@@ -91,8 +90,9 @@ adb shell am start -a android.intent.action.SEND -t image/jpeg \
   content://media/external/images/media/$ID -n dev.murilinhops.mangajp/.MainActivity
 ```
 
-Then tap **Confirmar crop**; logcat shows `M0.8 crop PNG bytes.length=…` and
-`M1.1 OCR manga_ocr: …` when the sidecar is running.
+Then tap **Confirmar crop**; the app goes to `/pages/:id` with the saved OCR
+text. Logcat shows `M0.8 crop PNG bytes.length=…` and `M1.1 OCR manga_ocr: …`
+when the sidecar is running.
 
 ## manga-ocr sidecar (M1.1)
 
@@ -120,7 +120,7 @@ flutter run -d linux
 ```
 
 Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
-crop**. Same `Crop PNG: N bytes` check, plus `OCR (manga_ocr): …` when the
+crop**. The app goes to `/pages/:id` with the persisted OCR text when the
 sidecar is up. `/capture` is not a bottom tab.
 
 ## CI
@@ -130,5 +130,5 @@ flutter test test/features/capture/ test/features/ocr/ test/features/pages/
 ```
 
 Fixture PNG → `CapturePage` / share extra / Home Galeria stub → default rect →
-crop bytes + OCR text persisted in Drift `crops` (fake `OcrEngine`; default
-wiring is still `manga_ocr`).
+crop bytes, OCR text persisted in Drift `crops`, then `/pages/:id` shows that
+text (fake `OcrEngine`; default wiring is still `manga_ocr`).
