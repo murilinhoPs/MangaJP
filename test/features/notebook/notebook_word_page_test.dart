@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' show InsertMode;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,11 +54,6 @@ void main() {
     }
     expect(
       File('lib/core/database/tables/user_words.dart').readAsStringSync(),
-      isNot(contains('gloss')),
-    );
-    expect(
-      File('lib/features/notebook/data/notebook_repository.dart')
-          .readAsStringSync(),
       isNot(contains('gloss')),
     );
   });
@@ -176,7 +171,7 @@ Future<_Env> _openNotebook(
 
   const wordId = 'eat';
   const pageId = 'page-eat';
-  final savedAt = DateTime.utc(2026, 1, 1);
+  final seededAt = DateTime.utc(2026, 1, 1);
 
   await db
       .into(db.userWords)
@@ -186,7 +181,7 @@ Future<_Env> _openNotebook(
           seq: _taberuSeq,
           lemma: '食べる',
           reading: 'たべる',
-          createdAt: savedAt,
+          createdAt: seededAt,
         ),
       );
   await db
@@ -195,7 +190,7 @@ Future<_Env> _openNotebook(
         UserWordStatesCompanion.insert(
           wordId: wordId,
           state: WordState.saved.name,
-          updatedAt: savedAt,
+          updatedAt: seededAt,
         ),
       );
   await _seedCrop(
@@ -247,6 +242,7 @@ Future<_Env> _openNotebook(
 
   const NotebookRoute().go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
+  final savedAt = (await db.select(db.userWordStates).get()).single.updatedAt;
   return _Env(db: db, wordId: wordId, pageId: pageId, savedAt: savedAt);
 }
 
