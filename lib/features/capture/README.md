@@ -1,8 +1,9 @@
-# Capture (M0.8)
+# Capture (M1.1)
 
-Smoke path: **image → `/capture` crop UI → 1 rect → PNG bytes**. Capture is **not** a
-bottom tab (PRD §11 / F2 / F3). OCR, Drift `pages`/`crops`, and dedupe are out of
-scope here.
+Path: **share or import → `/capture` → ≥1 crop → OCR → persisted text**. Capture is
+**not** a bottom tab (PRD §11 / F2 / F3). Default OCR is **manga-ocr** as a local
+sidecar (`docs/m0.3-cer-bakeoff.md`, official CER **20.75%**). Lookup / Caderno /
+Android share-intent device smoke are later M1.
 
 ## Packages
 
@@ -12,8 +13,10 @@ scope here.
 | `image_picker` | Gallery stub (Home **Galeria** → `/capture` → pick) |
 | `image` | Decode + `copyCrop` + encode PNG (PRD §9.4) |
 
-Crop UI is a Flutter `CustomPainter` rect (not `image_cropper`) so `flutter test`
-can prove `bytes.length > 0` in CI.
+OCR talks to `tools/manga_ocr_sidecar/serve.py` (kha-white/manga-ocr). Crop UI is a
+Flutter `CustomPainter` rect (not `image_cropper`) so `flutter test` can prove the
+path with a fake `OcrEngine`. `google_mlkit_*` and Cloud Vision are **not** in
+`pubspec.yaml`.
 
 ## AndroidManifest (real device / emulator)
 
@@ -64,8 +67,9 @@ flutter run
 
 **Gallery (no share sheet):** Home → **Galeria** → `/capture` → **Escolher da
 galeria** → pick any image → (optional) drag the rect / corners → **Confirmar
-crop**. The screen must show `Crop PNG: N bytes (W×H)` with N > 0. Logcat:
-`M0.8 crop PNG bytes.length=…`.
+crop**. The screen must show `Crop PNG: N bytes (W×H)` with N > 0 and
+`OCR (manga_ocr): …` once the sidecar has recognized the crop. Logcat:
+`M0.8 crop PNG bytes.length=…` then `M1.1 OCR manga_ocr: …`.
 
 **Share:** in Photos / Files / a screenshot, **Share** → **MangaJP**. The app
 opens `/capture` with the image (no Home hop, no Capture tab). Confirm crop as
@@ -87,7 +91,23 @@ adb shell am start -a android.intent.action.SEND -t image/jpeg \
   content://media/external/images/media/$ID -n dev.murilinhops.mangajp/.MainActivity
 ```
 
-Then tap **Confirmar crop**; logcat shows `M0.8 crop PNG bytes.length=…`.
+Then tap **Confirmar crop**; logcat shows `M0.8 crop PNG bytes.length=…` and
+`M1.1 OCR manga_ocr: …` when the sidecar is running.
+
+## manga-ocr sidecar (M1.1)
+
+Product OCR is the same Python [manga-ocr](https://github.com/kha-white/manga-ocr)
+scored in `tools/cer_bakeoff/` (working default, **20.75%** CER). Run it as a
+local HTTP service — do not embed torch in Flutter:
+
+```bash
+source tools/cer_bakeoff/.venv/bin/activate
+python3 tools/manga_ocr_sidecar/serve.py
+```
+
+The app POSTs crop PNG bytes to `http://127.0.0.1:8765/ocr` (`MANGA_OCR_URL` to
+override). Android emulator share-intent device smoke is a follow-up (`--host
+0.0.0.0` + `MANGA_OCR_URL=http://10.0.2.2:8765`).
 
 ## Verify on Linux desktop
 
@@ -100,13 +120,15 @@ flutter run -d linux
 ```
 
 Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
-crop**. Same `Crop PNG: N bytes` check. `/capture` is not a bottom tab.
+crop**. Same `Crop PNG: N bytes` check, plus `OCR (manga_ocr): …` when the
+sidecar is up. `/capture` is not a bottom tab.
 
 ## CI
 
 ```bash
-flutter test test/features/capture/
+flutter test test/features/capture/ test/features/ocr/ test/features/pages/
 ```
 
 Fixture PNG → `CapturePage` / share extra / Home Galeria stub → default rect →
-`bytes.length > 0`.
+crop bytes + OCR text persisted in Drift `crops` (fake `OcrEngine`; default
+wiring is still `manga_ocr`).

@@ -1,5 +1,5 @@
 name: manga_jp
-description: MangaJP Study — personal manga Japanese study tool (M0.8 share + crop smoke).
+description: MangaJP Study — personal manga Japanese study tool (M1.1 share/import → crop → manga-ocr).
 publish_to: "none"
 version: 0.1.0+1
 

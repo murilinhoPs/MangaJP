@@ -5,16 +5,22 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'daos/app_meta_dao.dart';
+import 'daos/pages_dao.dart';
 import 'tables/app_meta.dart';
+import 'tables/captured_crops.dart';
+import 'tables/captured_pages.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [AppMeta], daos: [AppMetaDao])
+@DriftDatabase(
+  tables: [AppMeta, CapturedPages, CapturedCrops],
+  daos: [AppMetaDao, PagesDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -24,10 +30,32 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '1'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '2'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
+            AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
         });
+      },
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await m.createTable(capturedPages);
+          await m.createTable(capturedCrops);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '2'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('2')),
+            ),
+          );
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('manga_ocr')),
+            ),
+          );
+        }
+      },
+      beforeOpen: (details) async {
+        await customStatement('PRAGMA foreign_keys = ON');
       },
     );
   }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
@@ -10,7 +11,9 @@ import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
+import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
 
+import '../ocr/fake_ocr_engine.dart';
 import 'fixture_png.dart';
 
 class FakeImageSourceService extends ImageSourceService {
@@ -29,6 +32,19 @@ class FakeImageSourceService extends ImageSourceService {
   Future<IncomingImage?> pickFromGallery() async => galleryImage;
 }
 
+List<Override> _harness({
+  required AppDatabase db,
+  ImageSourceService? source,
+  FakeOcrEngine ocr = const FakeOcrEngine(),
+}) {
+  return [
+    appDatabaseProvider.overrideWith((ref) => db),
+    ocrEngineProvider.overrideWithValue(ocr),
+    if (source != null)
+      imageSourceServiceProvider.overrideWith((ref) => source),
+  ];
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -41,12 +57,14 @@ void main() {
   testWidgets('fixture image → crop screen → 1 rect → non-empty PNG bytes', (
     tester,
   ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
     Uint8List? cropped;
     await tester.pumpWidget(
       CapturePage(
         image: IncomingImage(bytes: png),
         onCropped: (bytes) => cropped = bytes,
-      ).wrap(),
+      ).wrap(overrides: _harness(db: db)),
     );
     await tester.pumpAndSettle();
 
@@ -71,12 +89,10 @@ void main() {
 
     await tester.pumpWidget(
       MangaJpApp(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-          imageSourceServiceProvider.overrideWith(
-            (ref) => FakeImageSourceService(initial: IncomingImage(bytes: png)),
-          ),
-        ],
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(initial: IncomingImage(bytes: png)),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -99,13 +115,12 @@ void main() {
 
     await tester.pumpWidget(
       MangaJpApp(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-          imageSourceServiceProvider.overrideWith(
-            (ref) =>
-                FakeImageSourceService(galleryImage: IncomingImage(bytes: png)),
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(
+            galleryImage: IncomingImage(bytes: png),
           ),
-        ],
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -123,10 +138,79 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(CaptureKeys.cropBytes), findsOneWidget);
   });
+
+  testWidgets('share extra → /capture → crop → OCR text is persisted', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    const recognized = 'よぉ、相棒';
+
+    await tester.pumpWidget(
+      MangaJpApp(
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(initial: IncomingImage(bytes: png)),
+          ocr: const FakeOcrEngine(text: recognized),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CapturePage), findsOneWidget);
+
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(CaptureKeys.cropBytes), findsOneWidget);
+    expect(find.byKey(CaptureKeys.ocrText), findsOneWidget);
+    expect(find.textContaining(recognized), findsOneWidget);
+
+    final crops = await db.pagesDao.listCrops();
+    expect(crops, hasLength(1));
+    expect(crops.single.ocrText, recognized);
+    expect(crops.single.engineId, 'fake');
+  });
+
+  testWidgets('gallery import → /capture → crop → OCR text is persisted', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    const recognized = '千鶴屋？';
+
+    await tester.pumpWidget(
+      MangaJpApp(
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(
+            galleryImage: IncomingImage(bytes: png),
+          ),
+          ocr: const FakeOcrEngine(text: recognized),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Galeria'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(CaptureKeys.pickGallery));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(recognized), findsOneWidget);
+    final crops = await db.pagesDao.listCrops();
+    expect(crops, hasLength(1));
+    expect(crops.single.ocrText, recognized);
+  });
 }
 
 extension on CapturePage {
-  Widget wrap() {
-    return ProviderScope(child: MaterialApp(home: this));
+  Widget wrap({List<Override> overrides = const []}) {
+    return ProviderScope(
+      overrides: overrides,
+      child: MaterialApp(home: this),
+    );
   }
 }

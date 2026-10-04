@@ -1,5 +1,5 @@
 # Feature tests
 
-Capture M0.8 smoke lives in `test/features/capture/` (fixture PNG → `/capture` →
-one rect → non-empty PNG bytes). Add OCR / SRS feature tests alongside as they
-land.
+Capture path tests live in `test/features/capture/` (fixture PNG → `/capture` →
+one rect → OCR → persisted `crops.ocr_text`). Default `OcrEngine` wiring
+(`manga_ocr` sidecar) is in `test/features/ocr/`.
