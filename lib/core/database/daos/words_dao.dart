@@ -1,20 +1,40 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
+import '../tables/captured_crops.dart';
 import '../tables/crop_words.dart';
 import '../tables/user_word_states.dart';
 import '../tables/user_words.dart';
 
 part 'words_dao.g.dart';
 
-@DriftAccessor(tables: [UserWords, UserWordStates, CropWords])
+@DriftAccessor(tables: [UserWords, UserWordStates, CropWords, CapturedCrops])
 class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   WordsDao(super.db);
+
+  Future<UserWord?> wordById(String id) {
+    return (select(userWords)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
 
   Future<UserWord?> wordBySeq(int seq) {
     return (select(
       userWords,
     )..where((t) => t.seq.equals(seq))).getSingleOrNull();
+  }
+
+  /// Earliest `crop_words` link for [wordId], with that crop's OCR sentence.
+  Future<CapturedCrop?> firstCropFor(String wordId) async {
+    final query = select(capturedCrops).join([
+      innerJoin(cropWords, cropWords.cropId.equalsExp(capturedCrops.id)),
+    ]);
+    query.where(cropWords.wordId.equals(wordId));
+    query.orderBy([
+      OrderingTerm.asc(cropWords.createdAt),
+      OrderingTerm.asc(cropWords.cropId),
+    ]);
+    query.limit(1);
+    final row = await query.getSingleOrNull();
+    return row?.readTable(capturedCrops);
   }
 
   Future<UserWordState?> stateFor(String wordId) {

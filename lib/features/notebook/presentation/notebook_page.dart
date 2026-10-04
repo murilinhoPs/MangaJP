@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/router/routes.dart';
 import '../../words/domain/word_state.dart';
 import '../domain/notebook_entry.dart';
 import 'notebook_controller.dart';
+import 'notebook_labels.dart';
 
-/// Keys for `/notebook` (list + search + state filter only).
+/// Keys for `/notebook` (list + search + state filter; tap opens word detail).
 abstract final class NotebookKeys {
   static const search = Key('notebook-search');
   static const stateAll = Key('notebook-state-all');
@@ -64,7 +66,7 @@ class NotebookPage extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     key: NotebookKeys.stateFilter(state),
-                    label: Text(_stateLabel(state)),
+                    label: Text(notebookStateLabel(state)),
                     selected: query.state == state,
                     onSelected: (_) {
                       ref
@@ -123,19 +125,10 @@ class _NotebookList extends StatelessWidget {
           key: NotebookKeys.row(entry.wordId),
           title: Text(entry.lemma),
           subtitle: Text(entry.reading),
-          trailing: Text(_stateLabel(entry.state)),
+          trailing: Text(notebookStateLabel(entry.state)),
+          onTap: () => NotebookWordRoute(id: entry.wordId).go(context),
         );
       },
     );
   }
-}
-
-String _stateLabel(WordState state) {
-  return switch (state) {
-    WordState.saved => 'Salvo',
-    WordState.learning => 'Aprendendo',
-    WordState.known => 'Conhecido',
-    WordState.ignored => 'Ignorado',
-    WordState.unknown => '',
-  };
 }

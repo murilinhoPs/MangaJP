@@ -105,6 +105,21 @@ class JmdictService {
     ];
   }
 
+  /// One `entries` row by JMdict seq. Gloss comes from `data_json`, never invented.
+  DictEntry? entryBySeq(int seq) {
+    final rows = database.select(
+      'SELECT data_json FROM entries WHERE seq = ?',
+      [seq],
+    );
+    if (rows.isEmpty) {
+      return null;
+    }
+    return entryFromDataJson(
+      seq: seq,
+      dataJson: rows.single['data_json'] as String,
+    );
+  }
+
   /// Parse glosses / lemma / reading from one `entries.data_json` blob.
   static DictEntry entryFromDataJson({
     required int seq,

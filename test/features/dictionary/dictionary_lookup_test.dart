@@ -47,6 +47,9 @@ void main() {
       'lib/features/dictionary/data/dictionary_lookup.dart',
       'lib/features/dictionary/data/jmdict_provider.dart',
       'lib/features/dictionary/presentation/lookup_sheet.dart',
+      'lib/features/notebook/presentation/notebook_word_page.dart',
+      'lib/features/notebook/presentation/notebook_controller.dart',
+      'lib/features/notebook/data/notebook_repository.dart',
     ]) {
       final src = File(path).readAsStringSync();
       expect(src, isNot(contains('to eat')), reason: path);

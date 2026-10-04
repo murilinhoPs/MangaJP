@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
@@ -179,6 +180,67 @@ void main() {
     expect(known.map((row) => row.state), isNot(contains(WordState.learning)));
     expect(known.map((row) => row.state), isNot(contains(WordState.ignored)));
   });
+
+  test(
+    'byId returns lemma, reading, state, and the first crop sentence',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+
+      await _seedWord(
+        env.db,
+        id: 'eat',
+        seq: 1358280,
+        lemma: '食べる',
+        reading: 'たべる',
+        state: WordState.saved,
+        createdAt: DateTime.utc(2026, 1, 1),
+      );
+      await _seedCrop(
+        env.db,
+        cropId: 'crop-second',
+        pageId: 'page-later',
+        ocrText: 'second sentence',
+        createdAt: DateTime.utc(2026, 1, 3),
+      );
+      await _seedCrop(
+        env.db,
+        cropId: 'crop-first',
+        pageId: 'page-first',
+        ocrText: '食べたよ',
+        createdAt: DateTime.utc(2026, 1, 4),
+      );
+      await _linkCrop(
+        env.db,
+        cropId: 'crop-first',
+        wordId: 'eat',
+        createdAt: DateTime.utc(2026, 1, 2),
+      );
+      await _linkCrop(
+        env.db,
+        cropId: 'crop-second',
+        wordId: 'eat',
+        createdAt: DateTime.utc(2026, 1, 5),
+      );
+
+      final detail = await env.notebook.byId('eat');
+      expect(detail, isNotNull);
+      expect(detail!.wordId, 'eat');
+      expect(detail.seq, 1358280);
+      expect(detail.lemma, '食べる');
+      expect(detail.reading, 'たべる');
+      expect(detail.state, WordState.saved);
+      expect(detail.sentence, '食べたよ');
+      expect(detail.pageId, 'page-first');
+      expect(detail.sentence, isNot('second sentence'));
+    },
+  );
+
+  test('byId is null when the word does not exist', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    expect(await env.notebook.byId('missing'), isNull);
+  });
 }
 
 class _Env {
@@ -223,6 +285,57 @@ Future<void> _seedWord(
           wordId: id,
           state: state.name,
           updatedAt: createdAt,
+        ),
+      );
+}
+
+Future<void> _seedCrop(
+  AppDatabase db, {
+  required String cropId,
+  required String pageId,
+  required String ocrText,
+  required DateTime createdAt,
+}) async {
+  await db
+      .into(db.capturedPages)
+      .insert(
+        CapturedPagesCompanion.insert(
+          id: pageId,
+          sha256: pageId,
+          createdAt: createdAt,
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+  await db
+      .into(db.capturedCrops)
+      .insert(
+        CapturedCropsCompanion.insert(
+          id: cropId,
+          pageId: pageId,
+          ocrText: ocrText,
+          engineId: 'fake',
+          left: 0.1,
+          top: 0.1,
+          width: 0.5,
+          height: 0.5,
+          createdAt: createdAt,
+        ),
+      );
+}
+
+Future<void> _linkCrop(
+  AppDatabase db, {
+  required String cropId,
+  required String wordId,
+  required DateTime createdAt,
+}) async {
+  await db
+      .into(db.cropWords)
+      .insert(
+        CropWordsCompanion.insert(
+          cropId: cropId,
+          wordId: wordId,
+          createdAt: createdAt,
         ),
       );
 }

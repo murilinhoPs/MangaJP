@@ -52,4 +52,24 @@ void main() {
     );
     expect(jmdict.posForSeq(taberuSeq), containsAll(<String>['v1', 'vt']));
   });
+
+  test('entryBySeq copies gloss from fixture data_json', () {
+    final entry = jmdict.entryBySeq(taberuSeq);
+    expect(entry, isNotNull);
+    expect(entry!.seq, taberuSeq);
+    expect(entry.lemma, '食べる');
+    expect(entry.glosses, contains('to eat'));
+    expect(entry.glossText, contains('to live on (e.g. a salary)'));
+
+    final rows = jmdict.database.select(
+      'SELECT data_json FROM entries WHERE seq = ?',
+      [taberuSeq],
+    );
+    expect(rows, hasLength(1));
+    final dataJson = rows.single['data_json'] as String;
+    for (final gloss in entry.glosses) {
+      expect(dataJson, contains(gloss));
+    }
+    expect(jmdict.entryBySeq(0), isNull);
+  });
 }
