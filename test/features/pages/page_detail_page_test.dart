@@ -13,8 +13,10 @@ import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
+import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
+import 'package:manga_jp/features/words/domain/word_state.dart';
 
 import '../capture/fixture_png.dart';
 import '../dictionary/bake_jmdict_fixture.dart';
@@ -100,6 +102,106 @@ void main() {
       findsNothing,
     );
     expect(find.text('Add card'), findsNothing);
+    expect(find.byKey(LookupSheetKeys.save), findsOneWidget);
+  });
+
+  testWidgets('Salvar persists word + saved state + crop link, not a card', (
+    tester,
+  ) async {
+    const pageId = 'page-save';
+    final db = await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: pageId,
+      ocrText: '食べた',
+    );
+
+    await tester.tap(find.byKey(PageDetailKeys.ocrText));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LookupSheetKeys.save));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.byType(NotebookPage), findsNothing);
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(
+      GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
+      '/pages/$pageId',
+    );
+
+    final words = await db.select(db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.lemma, '食べる');
+    expect(words.single.seq, 1358280);
+
+    final states = await db.select(db.userWordStates).get();
+    expect(states, hasLength(1));
+    expect(states.single.state, WordState.saved.name);
+    expect(states.single.wordId, words.single.id);
+
+    final crops = await db.select(db.capturedCrops).get();
+    final links = await db.select(db.cropWords).get();
+    expect(links, hasLength(1));
+    expect(links.single.wordId, words.single.id);
+    expect(links.single.cropId, crops.single.id);
+
+    final tableRows = await db
+        .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+        .get();
+    final names = {for (final row in tableRows) row.read<String>('name')};
+    expect(names.where((name) => name.contains('card')), isEmpty);
+  });
+
+  testWidgets('Salvar again from the sheet does not duplicate rows', (
+    tester,
+  ) async {
+    final db = await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-save-twice',
+      ocrText: '食べた',
+    );
+
+    await tester.tap(find.byKey(PageDetailKeys.ocrText));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LookupSheetKeys.save));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(PageDetailKeys.ocrText));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LookupSheetKeys.save));
+    await tester.pumpAndSettle();
+
+    expect(await db.select(db.userWords).get(), hasLength(1));
+    expect(await db.select(db.userWordStates).get(), hasLength(1));
+    expect(await db.select(db.cropWords).get(), hasLength(1));
+    expect(
+      (await db.select(db.userWordStates).get()).single.state,
+      WordState.saved.name,
+    );
+    expect(find.byType(NotebookPage), findsNothing);
+  });
+
+  testWidgets('Salvar writes the chosen homograph seq, not the default', (
+    tester,
+  ) async {
+    final db = await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-save-homograph',
+      ocrText: '優先語',
+    );
+
+    await tester.tap(find.byKey(PageDetailKeys.ocrText));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LookupSheetKeys.option(_lowHomographSeq)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LookupSheetKeys.save));
+    await tester.pumpAndSettle();
+
+    final words = await db.select(db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.seq, _lowHomographSeq);
   });
 
   testWidgets('several JMdict hits: list options, default highest priority', (
@@ -137,7 +239,7 @@ void main() {
   });
 }
 
-Future<void> _openPage(
+Future<AppDatabase> _openPage(
   WidgetTester tester, {
   required String jmdictPath,
   required String pageId,
@@ -173,4 +275,5 @@ Future<void> _openPage(
 
   PageDetailRoute(id: pageId).go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
+  return db;
 }

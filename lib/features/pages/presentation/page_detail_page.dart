@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
+import '../../words/data/words_repository.dart';
 import '../domain/page_crop.dart';
 import 'page_detail_controller.dart';
 
@@ -11,7 +12,7 @@ abstract final class PageDetailKeys {
   static const ocrText = Key('page-detail-ocr-text');
 }
 
-/// `/pages/:id` — OCR text from Drift; tap looks up JMdict via deinflect (M1.3).
+/// `/pages/:id` — OCR text from Drift; tap looks up JMdict; Save persists the word.
 class PageDetailPage extends ConsumerWidget {
   const PageDetailPage({super.key, required this.pageId});
 
@@ -67,7 +68,7 @@ class _PageOcrBody extends ConsumerWidget {
               child: _TappableOcrText(
                 text: crop.ocrText,
                 onTapCharacter: (index) {
-                  _lookup(context, ref, crop.ocrText, index);
+                  _lookup(context, ref, crop, index);
                 },
               ),
             ),
@@ -79,12 +80,12 @@ class _PageOcrBody extends ConsumerWidget {
   Future<void> _lookup(
     BuildContext context,
     WidgetRef ref,
-    String text,
+    PageCrop crop,
     int tapIndex,
   ) async {
     try {
       final lookup = await ref.read(dictionaryLookupProvider.future);
-      final result = lookup.findAt(text, tapIndex: tapIndex);
+      final result = lookup.findAt(crop.ocrText, tapIndex: tapIndex);
       if (!context.mounted) {
         return;
       }
@@ -94,7 +95,20 @@ class _PageOcrBody extends ConsumerWidget {
         );
         return;
       }
-      await showLookupSheet(context, result);
+      await showLookupSheet(
+        context,
+        result,
+        onSave: (entry) {
+          return ref
+              .read(wordsRepositoryProvider)
+              .saveFromLookup(
+                cropId: crop.id,
+                seq: entry.seq,
+                lemma: entry.lemma,
+                reading: entry.reading,
+              );
+        },
+      );
     } catch (error) {
       if (!context.mounted) {
         return;

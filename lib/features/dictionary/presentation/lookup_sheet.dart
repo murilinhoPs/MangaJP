@@ -3,27 +3,33 @@ import 'package:flutter/material.dart';
 import '../domain/dict_entry.dart';
 import '../domain/lookup_result.dart';
 
-/// Keys for the M1.3 lookup sheet (gloss from JMdict, no Caderno / card).
+/// Keys for the lookup sheet (gloss + Save; no Caderno / card).
 abstract final class LookupSheetKeys {
   static const sheet = Key('lookup-sheet');
   static const gloss = Key('lookup-gloss');
+  static const save = Key('lookup-save');
 
   static Key option(int seq) => Key('lookup-option-$seq');
 }
 
-Future<void> showLookupSheet(BuildContext context, LookupResult result) {
+Future<void> showLookupSheet(
+  BuildContext context,
+  LookupResult result, {
+  required Future<void> Function(DictEntry selected) onSave,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (context) => LookupSheet(result: result),
+    builder: (context) => LookupSheet(result: result, onSave: onSave),
   );
 }
 
 /// Homograph list + selected entry gloss (default = highest `forms.priority`).
 class LookupSheet extends StatefulWidget {
-  const LookupSheet({super.key, required this.result});
+  const LookupSheet({super.key, required this.result, required this.onSave});
 
   final LookupResult result;
+  final Future<void> Function(DictEntry selected) onSave;
 
   @override
   State<LookupSheet> createState() => _LookupSheetState();
@@ -31,6 +37,7 @@ class LookupSheet extends StatefulWidget {
 
 class _LookupSheetState extends State<LookupSheet> {
   late int _selectedSeq;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -40,6 +47,30 @@ class _LookupSheetState extends State<LookupSheet> {
 
   DictEntry get _selected =>
       widget.result.entries.firstWhere((entry) => entry.seq == _selectedSeq);
+
+  Future<void> _save() async {
+    if (_saving) {
+      return;
+    }
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.onSave(_selected);
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
+      messenger.showSnackBar(const SnackBar(content: Text('Salvo.')));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _saving = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Falha ao salvar: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +113,12 @@ class _LookupSheetState extends State<LookupSheet> {
               selected.glossText,
               key: LookupSheetKeys.gloss,
               style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: LookupSheetKeys.save,
+              onPressed: _saving ? null : _save,
+              child: const Text('Salvar'),
             ),
           ],
         ),
