@@ -83,4 +83,33 @@
 <gloss>cat (esp. the domestic cat, Felis catus)</gloss>
 </sense>
 </entry>
+<!-- Two seqs, same surface, different ke_pri — M1.3 default = highest priority. -->
+<entry>
+<ent_seq>9990001</ent_seq>
+<k_ele>
+<keb>優先語</keb>
+<ke_pri>ichi1</ke_pri>
+</k_ele>
+<r_ele>
+<reb>ゆうせんご</reb>
+<re_pri>ichi1</re_pri>
+</r_ele>
+<sense>
+<pos>&n;</pos>
+<gloss>high-priority fixture homograph</gloss>
+</sense>
+</entry>
+<entry>
+<ent_seq>9990002</ent_seq>
+<k_ele>
+<keb>優先語</keb>
+</k_ele>
+<r_ele>
+<reb>ゆうせんご</reb>
+</r_ele>
+<sense>
+<pos>&n;</pos>
+<gloss>low-priority fixture homograph</gloss>
+</sense>
+</entry>
 </JMdict>

@@ -44,7 +44,7 @@ Builds a throwaway DB from `testdata/jmdict_fixture.xml` and asserts:
 - PRD column names
 - `sense_pos` for seq **1358280** (`食べる`) includes `v1`
 
-CI runs the same command. `flutter test` also rebuilds the fixture and opens it through `JmdictService`.
+CI runs the same command. `flutter test` also rebuilds the fixture and opens it through `JmdictService` / `DictionaryLookup`.
 
 ## Schema (PRD §9.2)
 

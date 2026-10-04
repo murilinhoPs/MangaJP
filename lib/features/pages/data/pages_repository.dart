@@ -13,7 +13,7 @@ PagesRepository pagesRepository(Ref ref) {
   return PagesRepository(ref.watch(appDatabaseProvider));
 }
 
-/// Pages + crops persistence (M1.1: OCR text; lookup UI is later M1).
+/// Pages + crops persistence (M1.1: OCR text; M1.3 lookup is dictionary).
 class PagesRepository {
   const PagesRepository(this._db);
 
