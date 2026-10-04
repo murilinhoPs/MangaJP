@@ -8,6 +8,25 @@ void main() {
   // Frozen calendar date so due-date asserts do not flake across midnight.
   final now = DateTime(2026, 10, 2);
 
+  test('initialCardSrsState is the golden prev, not a scheduled review', () {
+    final initial = initialCardSrsState(now);
+    expect(initial.easeFactor, kDefaultEaseFactor);
+    expect(initial.intervalDays, 0);
+    expect(initial.repetitions, 0);
+    expect(initial.dueAt, now);
+    expect(initial.phase.name, 'neu');
+    expect(initial.engineId, kSm2JrEngineId);
+    final afterGood = nextReview(
+      interval: 0,
+      repetitions: 0,
+      easeFactor: 2.5,
+      quality: 4,
+      now: now,
+    );
+    expect(afterGood.interval, 1);
+    expect(initial.intervalDays, isNot(afterGood.interval));
+  });
+
   group('quality-score-test', () {
     test('normalizes supported answer shapes', () {
       expect(qualityScore(rating: 'again'), 0);

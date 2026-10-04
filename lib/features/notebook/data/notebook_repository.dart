@@ -13,7 +13,7 @@ NotebookRepository notebookRepository(Ref ref) {
   return NotebookRepository(ref.watch(appDatabaseProvider));
 }
 
-/// Caderno queries (list / search / filter / word detail). Read-only.
+/// Caderno queries (list / search / filter / word detail).
 class NotebookRepository {
   const NotebookRepository(this._db);
 

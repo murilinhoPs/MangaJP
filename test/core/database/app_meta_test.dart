@@ -8,7 +8,7 @@ void main() {
     addTearDown(db.close);
 
     expect(await db.appMetaDao.getValue('hello'), 'MangaJP M0.1');
-    expect(await db.appMetaDao.getValue('schema_version'), '3');
+    expect(await db.appMetaDao.getValue('schema_version'), '4');
     expect(await db.appMetaDao.getValue('engine_id'), 'sm2-jr@1');
     expect(await db.appMetaDao.getValue('ocr_engine_id'), 'manga_ocr');
   });
@@ -40,9 +40,12 @@ void main() {
         'words',
         'word_states',
         'crop_words',
+        'cards',
+        'card_srs',
       ]),
     );
-    expect(names.where((name) => name.contains('card')), isEmpty);
+    expect(await db.select(db.userCards).get(), isEmpty);
+    expect(await db.select(db.userCardSrs).get(), isEmpty);
   });
 
   test('linuxDatabaseDirectory resolves to a real directory', () async {

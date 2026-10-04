@@ -107,12 +107,12 @@ final class NotebookEntriesProvider
 
 String _$notebookEntriesHash() => r'd1e61f2b3eaef104590467bc7b36605d634f497b';
 
-/// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 
 @ProviderFor(notebookWord)
 final notebookWordProvider = NotebookWordFamily._();
 
-/// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 
 final class NotebookWordProvider
     extends
@@ -124,7 +124,7 @@ final class NotebookWordProvider
     with
         $FutureModifier<NotebookWordView?>,
         $FutureProvider<NotebookWordView?> {
-  /// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+  /// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
   NotebookWordProvider._({
     required NotebookWordFamily super.from,
     required String super.argument,
@@ -171,7 +171,7 @@ final class NotebookWordProvider
 
 String _$notebookWordHash() => r'831b249e6f8060321483e5f81ce2c907f1de918b';
 
-/// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 
 final class NotebookWordFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NotebookWordView?>, String> {
@@ -184,7 +184,7 @@ final class NotebookWordFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+  /// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 
   NotebookWordProvider call(String wordId) =>
       NotebookWordProvider._(argument: wordId, from: this);

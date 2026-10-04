@@ -1911,6 +1911,793 @@ class CropWordsCompanion extends UpdateCompanion<CropWord> {
   }
 }
 
+class $UserCardsTable extends UserCards
+    with TableInfo<$UserCardsTable, UserCard> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserCardsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wordIdMeta = const VerificationMeta('wordId');
+  @override
+  late final GeneratedColumn<String> wordId = GeneratedColumn<String>(
+    'word_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'UNIQUE REFERENCES words (id)',
+    ),
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, wordId, kind, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cards';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserCard> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('word_id')) {
+      context.handle(
+        _wordIdMeta,
+        wordId.isAcceptableOrUnknown(data['word_id']!, _wordIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wordIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserCard map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserCard(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      wordId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}word_id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UserCardsTable createAlias(String alias) {
+    return $UserCardsTable(attachedDatabase, alias);
+  }
+}
+
+class UserCard extends DataClass implements Insertable<UserCard> {
+  final String id;
+  final String wordId;
+  final String kind;
+  final DateTime createdAt;
+  const UserCard({
+    required this.id,
+    required this.wordId,
+    required this.kind,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['word_id'] = Variable<String>(wordId);
+    map['kind'] = Variable<String>(kind);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  UserCardsCompanion toCompanion(bool nullToAbsent) {
+    return UserCardsCompanion(
+      id: Value(id),
+      wordId: Value(wordId),
+      kind: Value(kind),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory UserCard.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserCard(
+      id: serializer.fromJson<String>(json['id']),
+      wordId: serializer.fromJson<String>(json['wordId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'wordId': serializer.toJson<String>(wordId),
+      'kind': serializer.toJson<String>(kind),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  UserCard copyWith({
+    String? id,
+    String? wordId,
+    String? kind,
+    DateTime? createdAt,
+  }) => UserCard(
+    id: id ?? this.id,
+    wordId: wordId ?? this.wordId,
+    kind: kind ?? this.kind,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  UserCard copyWithCompanion(UserCardsCompanion data) {
+    return UserCard(
+      id: data.id.present ? data.id.value : this.id,
+      wordId: data.wordId.present ? data.wordId.value : this.wordId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserCard(')
+          ..write('id: $id, ')
+          ..write('wordId: $wordId, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, wordId, kind, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserCard &&
+          other.id == this.id &&
+          other.wordId == this.wordId &&
+          other.kind == this.kind &&
+          other.createdAt == this.createdAt);
+}
+
+class UserCardsCompanion extends UpdateCompanion<UserCard> {
+  final Value<String> id;
+  final Value<String> wordId;
+  final Value<String> kind;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const UserCardsCompanion({
+    this.id = const Value.absent(),
+    this.wordId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserCardsCompanion.insert({
+    required String id,
+    required String wordId,
+    required String kind,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       wordId = Value(wordId),
+       kind = Value(kind),
+       createdAt = Value(createdAt);
+  static Insertable<UserCard> custom({
+    Expression<String>? id,
+    Expression<String>? wordId,
+    Expression<String>? kind,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (wordId != null) 'word_id': wordId,
+      if (kind != null) 'kind': kind,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserCardsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? wordId,
+    Value<String>? kind,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return UserCardsCompanion(
+      id: id ?? this.id,
+      wordId: wordId ?? this.wordId,
+      kind: kind ?? this.kind,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (wordId.present) {
+      map['word_id'] = Variable<String>(wordId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserCardsCompanion(')
+          ..write('id: $id, ')
+          ..write('wordId: $wordId, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UserCardSrsTable extends UserCardSrs
+    with TableInfo<$UserCardSrsTable, CardSrsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserCardSrsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cardIdMeta = const VerificationMeta('cardId');
+  @override
+  late final GeneratedColumn<String> cardId = GeneratedColumn<String>(
+    'card_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cards (id)',
+    ),
+  );
+  static const VerificationMeta _easeFactorMeta = const VerificationMeta(
+    'easeFactor',
+  );
+  @override
+  late final GeneratedColumn<double> easeFactor = GeneratedColumn<double>(
+    'ease_factor',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _intervalDaysMeta = const VerificationMeta(
+    'intervalDays',
+  );
+  @override
+  late final GeneratedColumn<double> intervalDays = GeneratedColumn<double>(
+    'interval_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repetitionsMeta = const VerificationMeta(
+    'repetitions',
+  );
+  @override
+  late final GeneratedColumn<int> repetitions = GeneratedColumn<int>(
+    'repetitions',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dueAtMeta = const VerificationMeta('dueAt');
+  @override
+  late final GeneratedColumn<DateTime> dueAt = GeneratedColumn<DateTime>(
+    'due_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phaseMeta = const VerificationMeta('phase');
+  @override
+  late final GeneratedColumn<String> phase = GeneratedColumn<String>(
+    'phase',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _engineIdMeta = const VerificationMeta(
+    'engineId',
+  );
+  @override
+  late final GeneratedColumn<String> engineId = GeneratedColumn<String>(
+    'engine_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    cardId,
+    easeFactor,
+    intervalDays,
+    repetitions,
+    dueAt,
+    phase,
+    engineId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'card_srs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CardSrsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('card_id')) {
+      context.handle(
+        _cardIdMeta,
+        cardId.isAcceptableOrUnknown(data['card_id']!, _cardIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cardIdMeta);
+    }
+    if (data.containsKey('ease_factor')) {
+      context.handle(
+        _easeFactorMeta,
+        easeFactor.isAcceptableOrUnknown(data['ease_factor']!, _easeFactorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_easeFactorMeta);
+    }
+    if (data.containsKey('interval_days')) {
+      context.handle(
+        _intervalDaysMeta,
+        intervalDays.isAcceptableOrUnknown(
+          data['interval_days']!,
+          _intervalDaysMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_intervalDaysMeta);
+    }
+    if (data.containsKey('repetitions')) {
+      context.handle(
+        _repetitionsMeta,
+        repetitions.isAcceptableOrUnknown(
+          data['repetitions']!,
+          _repetitionsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_repetitionsMeta);
+    }
+    if (data.containsKey('due_at')) {
+      context.handle(
+        _dueAtMeta,
+        dueAt.isAcceptableOrUnknown(data['due_at']!, _dueAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dueAtMeta);
+    }
+    if (data.containsKey('phase')) {
+      context.handle(
+        _phaseMeta,
+        phase.isAcceptableOrUnknown(data['phase']!, _phaseMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_phaseMeta);
+    }
+    if (data.containsKey('engine_id')) {
+      context.handle(
+        _engineIdMeta,
+        engineId.isAcceptableOrUnknown(data['engine_id']!, _engineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_engineIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {cardId};
+  @override
+  CardSrsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CardSrsRow(
+      cardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}card_id'],
+      )!,
+      easeFactor: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}ease_factor'],
+      )!,
+      intervalDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}interval_days'],
+      )!,
+      repetitions: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repetitions'],
+      )!,
+      dueAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_at'],
+      )!,
+      phase: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phase'],
+      )!,
+      engineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}engine_id'],
+      )!,
+    );
+  }
+
+  @override
+  $UserCardSrsTable createAlias(String alias) {
+    return $UserCardSrsTable(attachedDatabase, alias);
+  }
+}
+
+class CardSrsRow extends DataClass implements Insertable<CardSrsRow> {
+  final String cardId;
+  final double easeFactor;
+  final double intervalDays;
+  final int repetitions;
+  final DateTime dueAt;
+  final String phase;
+  final String engineId;
+  const CardSrsRow({
+    required this.cardId,
+    required this.easeFactor,
+    required this.intervalDays,
+    required this.repetitions,
+    required this.dueAt,
+    required this.phase,
+    required this.engineId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['card_id'] = Variable<String>(cardId);
+    map['ease_factor'] = Variable<double>(easeFactor);
+    map['interval_days'] = Variable<double>(intervalDays);
+    map['repetitions'] = Variable<int>(repetitions);
+    map['due_at'] = Variable<DateTime>(dueAt);
+    map['phase'] = Variable<String>(phase);
+    map['engine_id'] = Variable<String>(engineId);
+    return map;
+  }
+
+  UserCardSrsCompanion toCompanion(bool nullToAbsent) {
+    return UserCardSrsCompanion(
+      cardId: Value(cardId),
+      easeFactor: Value(easeFactor),
+      intervalDays: Value(intervalDays),
+      repetitions: Value(repetitions),
+      dueAt: Value(dueAt),
+      phase: Value(phase),
+      engineId: Value(engineId),
+    );
+  }
+
+  factory CardSrsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CardSrsRow(
+      cardId: serializer.fromJson<String>(json['cardId']),
+      easeFactor: serializer.fromJson<double>(json['easeFactor']),
+      intervalDays: serializer.fromJson<double>(json['intervalDays']),
+      repetitions: serializer.fromJson<int>(json['repetitions']),
+      dueAt: serializer.fromJson<DateTime>(json['dueAt']),
+      phase: serializer.fromJson<String>(json['phase']),
+      engineId: serializer.fromJson<String>(json['engineId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'cardId': serializer.toJson<String>(cardId),
+      'easeFactor': serializer.toJson<double>(easeFactor),
+      'intervalDays': serializer.toJson<double>(intervalDays),
+      'repetitions': serializer.toJson<int>(repetitions),
+      'dueAt': serializer.toJson<DateTime>(dueAt),
+      'phase': serializer.toJson<String>(phase),
+      'engineId': serializer.toJson<String>(engineId),
+    };
+  }
+
+  CardSrsRow copyWith({
+    String? cardId,
+    double? easeFactor,
+    double? intervalDays,
+    int? repetitions,
+    DateTime? dueAt,
+    String? phase,
+    String? engineId,
+  }) => CardSrsRow(
+    cardId: cardId ?? this.cardId,
+    easeFactor: easeFactor ?? this.easeFactor,
+    intervalDays: intervalDays ?? this.intervalDays,
+    repetitions: repetitions ?? this.repetitions,
+    dueAt: dueAt ?? this.dueAt,
+    phase: phase ?? this.phase,
+    engineId: engineId ?? this.engineId,
+  );
+  CardSrsRow copyWithCompanion(UserCardSrsCompanion data) {
+    return CardSrsRow(
+      cardId: data.cardId.present ? data.cardId.value : this.cardId,
+      easeFactor: data.easeFactor.present
+          ? data.easeFactor.value
+          : this.easeFactor,
+      intervalDays: data.intervalDays.present
+          ? data.intervalDays.value
+          : this.intervalDays,
+      repetitions: data.repetitions.present
+          ? data.repetitions.value
+          : this.repetitions,
+      dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
+      phase: data.phase.present ? data.phase.value : this.phase,
+      engineId: data.engineId.present ? data.engineId.value : this.engineId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CardSrsRow(')
+          ..write('cardId: $cardId, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('phase: $phase, ')
+          ..write('engineId: $engineId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    cardId,
+    easeFactor,
+    intervalDays,
+    repetitions,
+    dueAt,
+    phase,
+    engineId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CardSrsRow &&
+          other.cardId == this.cardId &&
+          other.easeFactor == this.easeFactor &&
+          other.intervalDays == this.intervalDays &&
+          other.repetitions == this.repetitions &&
+          other.dueAt == this.dueAt &&
+          other.phase == this.phase &&
+          other.engineId == this.engineId);
+}
+
+class UserCardSrsCompanion extends UpdateCompanion<CardSrsRow> {
+  final Value<String> cardId;
+  final Value<double> easeFactor;
+  final Value<double> intervalDays;
+  final Value<int> repetitions;
+  final Value<DateTime> dueAt;
+  final Value<String> phase;
+  final Value<String> engineId;
+  final Value<int> rowid;
+  const UserCardSrsCompanion({
+    this.cardId = const Value.absent(),
+    this.easeFactor = const Value.absent(),
+    this.intervalDays = const Value.absent(),
+    this.repetitions = const Value.absent(),
+    this.dueAt = const Value.absent(),
+    this.phase = const Value.absent(),
+    this.engineId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserCardSrsCompanion.insert({
+    required String cardId,
+    required double easeFactor,
+    required double intervalDays,
+    required int repetitions,
+    required DateTime dueAt,
+    required String phase,
+    required String engineId,
+    this.rowid = const Value.absent(),
+  }) : cardId = Value(cardId),
+       easeFactor = Value(easeFactor),
+       intervalDays = Value(intervalDays),
+       repetitions = Value(repetitions),
+       dueAt = Value(dueAt),
+       phase = Value(phase),
+       engineId = Value(engineId);
+  static Insertable<CardSrsRow> custom({
+    Expression<String>? cardId,
+    Expression<double>? easeFactor,
+    Expression<double>? intervalDays,
+    Expression<int>? repetitions,
+    Expression<DateTime>? dueAt,
+    Expression<String>? phase,
+    Expression<String>? engineId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (cardId != null) 'card_id': cardId,
+      if (easeFactor != null) 'ease_factor': easeFactor,
+      if (intervalDays != null) 'interval_days': intervalDays,
+      if (repetitions != null) 'repetitions': repetitions,
+      if (dueAt != null) 'due_at': dueAt,
+      if (phase != null) 'phase': phase,
+      if (engineId != null) 'engine_id': engineId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserCardSrsCompanion copyWith({
+    Value<String>? cardId,
+    Value<double>? easeFactor,
+    Value<double>? intervalDays,
+    Value<int>? repetitions,
+    Value<DateTime>? dueAt,
+    Value<String>? phase,
+    Value<String>? engineId,
+    Value<int>? rowid,
+  }) {
+    return UserCardSrsCompanion(
+      cardId: cardId ?? this.cardId,
+      easeFactor: easeFactor ?? this.easeFactor,
+      intervalDays: intervalDays ?? this.intervalDays,
+      repetitions: repetitions ?? this.repetitions,
+      dueAt: dueAt ?? this.dueAt,
+      phase: phase ?? this.phase,
+      engineId: engineId ?? this.engineId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (cardId.present) {
+      map['card_id'] = Variable<String>(cardId.value);
+    }
+    if (easeFactor.present) {
+      map['ease_factor'] = Variable<double>(easeFactor.value);
+    }
+    if (intervalDays.present) {
+      map['interval_days'] = Variable<double>(intervalDays.value);
+    }
+    if (repetitions.present) {
+      map['repetitions'] = Variable<int>(repetitions.value);
+    }
+    if (dueAt.present) {
+      map['due_at'] = Variable<DateTime>(dueAt.value);
+    }
+    if (phase.present) {
+      map['phase'] = Variable<String>(phase.value);
+    }
+    if (engineId.present) {
+      map['engine_id'] = Variable<String>(engineId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserCardSrsCompanion(')
+          ..write('cardId: $cardId, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('phase: $phase, ')
+          ..write('engineId: $engineId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1920,9 +2707,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UserWordsTable userWords = $UserWordsTable(this);
   late final $UserWordStatesTable userWordStates = $UserWordStatesTable(this);
   late final $CropWordsTable cropWords = $CropWordsTable(this);
+  late final $UserCardsTable userCards = $UserCardsTable(this);
+  late final $UserCardSrsTable userCardSrs = $UserCardSrsTable(this);
   late final AppMetaDao appMetaDao = AppMetaDao(this as AppDatabase);
   late final PagesDao pagesDao = PagesDao(this as AppDatabase);
   late final WordsDao wordsDao = WordsDao(this as AppDatabase);
+  late final CardsDao cardsDao = CardsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1934,6 +2724,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     userWords,
     userWordStates,
     cropWords,
+    userCards,
+    userCardSrs,
   ];
 }
 
@@ -2882,6 +3674,24 @@ final class $$UserWordsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$UserCardsTable, List<UserCard>>
+  _userCardsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.userCards,
+    aliasName: 'words__id__cards__word_id',
+  );
+
+  $$UserCardsTableProcessedTableManager get userCardsRefs {
+    final manager = $$UserCardsTableTableManager(
+      $_db,
+      $_db.userCards,
+    ).filter((f) => f.wordId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_userCardsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$UserWordsTableFilterComposer
@@ -2959,6 +3769,31 @@ class $$UserWordsTableFilterComposer
           }) => $$CropWordsTableFilterComposer(
             $db: $db,
             $table: $db.cropWords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> userCardsRefs(
+    Expression<bool> Function($$UserCardsTableFilterComposer f) f,
+  ) {
+    final $$UserCardsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.wordId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableFilterComposer(
+            $db: $db,
+            $table: $db.userCards,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3077,6 +3912,31 @@ class $$UserWordsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> userCardsRefs<T extends Object>(
+    Expression<T> Function($$UserCardsTableAnnotationComposer a) f,
+  ) {
+    final $$UserCardsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.wordId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$UserWordsTableTableManager
@@ -3092,7 +3952,11 @@ class $$UserWordsTableTableManager
           $$UserWordsTableUpdateCompanionBuilder,
           (UserWord, $$UserWordsTableReferences),
           UserWord,
-          PrefetchHooks Function({bool userWordStatesRefs, bool cropWordsRefs})
+          PrefetchHooks Function({
+            bool userWordStatesRefs,
+            bool cropWordsRefs,
+            bool userCardsRefs,
+          })
         > {
   $$UserWordsTableTableManager(_$AppDatabase db, $UserWordsTable table)
     : super(
@@ -3146,12 +4010,17 @@ class $$UserWordsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({userWordStatesRefs = false, cropWordsRefs = false}) {
+              ({
+                userWordStatesRefs = false,
+                cropWordsRefs = false,
+                userCardsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (userWordStatesRefs) db.userWordStates,
                     if (cropWordsRefs) db.cropWords,
+                    if (userCardsRefs) db.userCards,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3198,6 +4067,27 @@ class $$UserWordsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (userCardsRefs)
+                        await $_getPrefetchedData<
+                          UserWord,
+                          $UserWordsTable,
+                          UserCard
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UserWordsTableReferences
+                              ._userCardsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UserWordsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).userCardsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.wordId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3218,7 +4108,11 @@ typedef $$UserWordsTableProcessedTableManager =
       $$UserWordsTableUpdateCompanionBuilder,
       (UserWord, $$UserWordsTableReferences),
       UserWord,
-      PrefetchHooks Function({bool userWordStatesRefs, bool cropWordsRefs})
+      PrefetchHooks Function({
+        bool userWordStatesRefs,
+        bool cropWordsRefs,
+        bool userCardsRefs,
+      })
     >;
 typedef $$UserWordStatesTableCreateCompanionBuilder =
     UserWordStatesCompanion Function({
@@ -3862,6 +4756,747 @@ typedef $$CropWordsTableProcessedTableManager =
       CropWord,
       PrefetchHooks Function({bool cropId, bool wordId})
     >;
+typedef $$UserCardsTableCreateCompanionBuilder = UserCardsCompanion Function({
+  required String id,
+  required String wordId,
+  required String kind,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$UserCardsTableUpdateCompanionBuilder = UserCardsCompanion Function({
+  Value<String> id,
+  Value<String> wordId,
+  Value<String> kind,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+final class $$UserCardsTableReferences
+    extends BaseReferences<_$AppDatabase, $UserCardsTable, UserCard> {
+  $$UserCardsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $UserWordsTable _wordIdTable(_$AppDatabase db) =>
+      db.userWords.createAlias('cards__word_id__words__id');
+
+  $$UserWordsTableProcessedTableManager get wordId {
+    final $_column = $_itemColumn<String>('word_id')!;
+
+    final manager = $$UserWordsTableTableManager(
+      $_db,
+      $_db.userWords,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_wordIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$UserCardSrsTable, List<CardSrsRow>>
+  _userCardSrsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.userCardSrs,
+    aliasName: 'cards__id__card_srs__card_id',
+  );
+
+  $$UserCardSrsTableProcessedTableManager get userCardSrsRefs {
+    final manager = $$UserCardSrsTableTableManager(
+      $_db,
+      $_db.userCardSrs,
+    ).filter((f) => f.cardId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_userCardSrsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$UserCardsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserCardsTable> {
+  $$UserCardsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$UserWordsTableFilterComposer get wordId {
+    final $$UserWordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.wordId,
+      referencedTable: $db.userWords,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserWordsTableFilterComposer(
+            $db: $db,
+            $table: $db.userWords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> userCardSrsRefs(
+    Expression<bool> Function($$UserCardSrsTableFilterComposer f) f,
+  ) {
+    final $$UserCardSrsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userCardSrs,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardSrsTableFilterComposer(
+            $db: $db,
+            $table: $db.userCardSrs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$UserCardsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserCardsTable> {
+  $$UserCardsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$UserWordsTableOrderingComposer get wordId {
+    final $$UserWordsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.wordId,
+      referencedTable: $db.userWords,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserWordsTableOrderingComposer(
+            $db: $db,
+            $table: $db.userWords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserCardsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserCardsTable> {
+  $$UserCardsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$UserWordsTableAnnotationComposer get wordId {
+    final $$UserWordsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.wordId,
+      referencedTable: $db.userWords,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserWordsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userWords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> userCardSrsRefs<T extends Object>(
+    Expression<T> Function($$UserCardSrsTableAnnotationComposer a) f,
+  ) {
+    final $$UserCardSrsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userCardSrs,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardSrsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userCardSrs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$UserCardsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserCardsTable,
+          UserCard,
+          $$UserCardsTableFilterComposer,
+          $$UserCardsTableOrderingComposer,
+          $$UserCardsTableAnnotationComposer,
+          $$UserCardsTableCreateCompanionBuilder,
+          $$UserCardsTableUpdateCompanionBuilder,
+          (UserCard, $$UserCardsTableReferences),
+          UserCard,
+          PrefetchHooks Function({bool wordId, bool userCardSrsRefs})
+        > {
+  $$UserCardsTableTableManager(_$AppDatabase db, $UserCardsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserCardsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserCardsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserCardsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> wordId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserCardsCompanion(
+                id: id,
+                wordId: wordId,
+                kind: kind,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String wordId,
+                required String kind,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => UserCardsCompanion.insert(
+                id: id,
+                wordId: wordId,
+                kind: kind,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UserCardsTable, UserCard>(table),
+                  $$UserCardsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({wordId = false, userCardSrsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (userCardSrsRefs) db.userCardSrs],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (wordId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.wordId,
+                        referencedTable: $$UserCardsTableReferences
+                            ._wordIdTable(db),
+                        referencedColumn: $$UserCardsTableReferences
+                            ._wordIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (userCardSrsRefs)
+                    await $_getPrefetchedData<
+                      UserCard,
+                      $UserCardsTable,
+                      CardSrsRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$UserCardsTableReferences
+                          ._userCardSrsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$UserCardsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).userCardSrsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.cardId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$UserCardsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserCardsTable,
+      UserCard,
+      $$UserCardsTableFilterComposer,
+      $$UserCardsTableOrderingComposer,
+      $$UserCardsTableAnnotationComposer,
+      $$UserCardsTableCreateCompanionBuilder,
+      $$UserCardsTableUpdateCompanionBuilder,
+      (UserCard, $$UserCardsTableReferences),
+      UserCard,
+      PrefetchHooks Function({bool wordId, bool userCardSrsRefs})
+    >;
+typedef $$UserCardSrsTableCreateCompanionBuilder =
+    UserCardSrsCompanion Function({
+      required String cardId,
+      required double easeFactor,
+      required double intervalDays,
+      required int repetitions,
+      required DateTime dueAt,
+      required String phase,
+      required String engineId,
+      Value<int> rowid,
+    });
+typedef $$UserCardSrsTableUpdateCompanionBuilder =
+    UserCardSrsCompanion Function({
+      Value<String> cardId,
+      Value<double> easeFactor,
+      Value<double> intervalDays,
+      Value<int> repetitions,
+      Value<DateTime> dueAt,
+      Value<String> phase,
+      Value<String> engineId,
+      Value<int> rowid,
+    });
+
+final class $$UserCardSrsTableReferences
+    extends BaseReferences<_$AppDatabase, $UserCardSrsTable, CardSrsRow> {
+  $$UserCardSrsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $UserCardsTable _cardIdTable(_$AppDatabase db) =>
+      db.userCards.createAlias('card_srs__card_id__cards__id');
+
+  $$UserCardsTableProcessedTableManager get cardId {
+    final $_column = $_itemColumn<String>('card_id')!;
+
+    final manager = $$UserCardsTableTableManager(
+      $_db,
+      $_db.userCards,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cardIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$UserCardSrsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserCardSrsTable> {
+  $$UserCardSrsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repetitions => $composableBuilder(
+    column: $table.repetitions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dueAt => $composableBuilder(
+    column: $table.dueAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phase => $composableBuilder(
+    column: $table.phase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get engineId => $composableBuilder(
+    column: $table.engineId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$UserCardsTableFilterComposer get cardId {
+    final $$UserCardsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableFilterComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserCardSrsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserCardSrsTable> {
+  $$UserCardSrsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repetitions => $composableBuilder(
+    column: $table.repetitions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dueAt => $composableBuilder(
+    column: $table.dueAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phase => $composableBuilder(
+    column: $table.phase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get engineId => $composableBuilder(
+    column: $table.engineId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$UserCardsTableOrderingComposer get cardId {
+    final $$UserCardsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableOrderingComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserCardSrsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserCardSrsTable> {
+  $$UserCardSrsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<double> get easeFactor => $composableBuilder(
+    column: $table.easeFactor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get repetitions => $composableBuilder(
+    column: $table.repetitions,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dueAt =>
+      $composableBuilder(column: $table.dueAt, builder: (column) => column);
+
+  GeneratedColumn<String> get phase =>
+      $composableBuilder(column: $table.phase, builder: (column) => column);
+
+  GeneratedColumn<String> get engineId =>
+      $composableBuilder(column: $table.engineId, builder: (column) => column);
+
+  $$UserCardsTableAnnotationComposer get cardId {
+    final $$UserCardsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserCardSrsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserCardSrsTable,
+          CardSrsRow,
+          $$UserCardSrsTableFilterComposer,
+          $$UserCardSrsTableOrderingComposer,
+          $$UserCardSrsTableAnnotationComposer,
+          $$UserCardSrsTableCreateCompanionBuilder,
+          $$UserCardSrsTableUpdateCompanionBuilder,
+          (CardSrsRow, $$UserCardSrsTableReferences),
+          CardSrsRow,
+          PrefetchHooks Function({bool cardId})
+        > {
+  $$UserCardSrsTableTableManager(_$AppDatabase db, $UserCardSrsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserCardSrsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserCardSrsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserCardSrsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> cardId = const Value.absent(),
+                Value<double> easeFactor = const Value.absent(),
+                Value<double> intervalDays = const Value.absent(),
+                Value<int> repetitions = const Value.absent(),
+                Value<DateTime> dueAt = const Value.absent(),
+                Value<String> phase = const Value.absent(),
+                Value<String> engineId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserCardSrsCompanion(
+                cardId: cardId,
+                easeFactor: easeFactor,
+                intervalDays: intervalDays,
+                repetitions: repetitions,
+                dueAt: dueAt,
+                phase: phase,
+                engineId: engineId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String cardId,
+                required double easeFactor,
+                required double intervalDays,
+                required int repetitions,
+                required DateTime dueAt,
+                required String phase,
+                required String engineId,
+                Value<int> rowid = const Value.absent(),
+              }) => UserCardSrsCompanion.insert(
+                cardId: cardId,
+                easeFactor: easeFactor,
+                intervalDays: intervalDays,
+                repetitions: repetitions,
+                dueAt: dueAt,
+                phase: phase,
+                engineId: engineId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UserCardSrsTable, CardSrsRow>(table),
+                  $$UserCardSrsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cardId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (cardId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.cardId,
+                        referencedTable: $$UserCardSrsTableReferences
+                            ._cardIdTable(db),
+                        referencedColumn: $$UserCardSrsTableReferences
+                            ._cardIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$UserCardSrsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserCardSrsTable,
+      CardSrsRow,
+      $$UserCardSrsTableFilterComposer,
+      $$UserCardSrsTableOrderingComposer,
+      $$UserCardSrsTableAnnotationComposer,
+      $$UserCardSrsTableCreateCompanionBuilder,
+      $$UserCardSrsTableUpdateCompanionBuilder,
+      (CardSrsRow, $$UserCardSrsTableReferences),
+      CardSrsRow,
+      PrefetchHooks Function({bool cardId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3878,4 +5513,8 @@ class $AppDatabaseManager {
       $$UserWordStatesTableTableManager(_db, _db.userWordStates);
   $$CropWordsTableTableManager get cropWords =>
       $$CropWordsTableTableManager(_db, _db.cropWords);
+  $$UserCardsTableTableManager get userCards =>
+      $$UserCardsTableTableManager(_db, _db.userCards);
+  $$UserCardSrsTableTableManager get userCardSrs =>
+      $$UserCardSrsTableTableManager(_db, _db.userCardSrs);
 }

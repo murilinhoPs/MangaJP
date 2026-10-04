@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../flashcards/data/flashcards_repository.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
-/// Keys for `/notebook/word/:id` (read-only lemma / gloss / first crop).
+/// Keys for `/notebook/word/:id` (lemma / gloss / first crop / Aprender).
 abstract final class NotebookWordKeys {
   static const lemma = Key('notebook-word-lemma');
   static const reading = Key('notebook-word-reading');
@@ -13,9 +14,10 @@ abstract final class NotebookWordKeys {
   static const gloss = Key('notebook-word-gloss');
   static const sentence = Key('notebook-word-sentence');
   static const pageLink = Key('notebook-word-page-link');
+  static const learn = Key('notebook-word-learn');
 }
 
-/// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop.
+/// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop, Aprender.
 class NotebookWordPage extends ConsumerWidget {
   const NotebookWordPage({super.key, required this.wordId});
 
@@ -35,7 +37,7 @@ class NotebookWordPage extends ConsumerWidget {
             ),
           );
         }
-        return _NotebookWordBody(view: item);
+        return _NotebookWordBody(wordId: wordId, view: item);
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
@@ -52,13 +54,14 @@ class NotebookWordPage extends ConsumerWidget {
   }
 }
 
-class _NotebookWordBody extends StatelessWidget {
-  const _NotebookWordBody({required this.view});
+class _NotebookWordBody extends ConsumerWidget {
+  const _NotebookWordBody({required this.wordId, required this.view});
 
+  final String wordId;
   final NotebookWordView view;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final detail = view.detail;
     final sentence = detail.sentence;
@@ -109,6 +112,16 @@ class _NotebookWordBody extends StatelessWidget {
               child: const Text('Ver página'),
             ),
           ),
+        const SizedBox(height: 16),
+        FilledButton(
+          key: NotebookWordKeys.learn,
+          onPressed: () async {
+            await ref.read(flashcardsRepositoryProvider).learn(wordId);
+            ref.invalidate(notebookWordProvider(wordId));
+            ref.invalidate(notebookEntriesProvider);
+          },
+          child: const Text('Aprender'),
+        ),
       ],
     );
   }
