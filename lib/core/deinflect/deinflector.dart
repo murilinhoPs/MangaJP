@@ -214,7 +214,7 @@ class LanguageTransformer {
     return flags;
   }
 
-  static int _flagsFor(Map<String, int> map, List<String> types) {
+  static int _flagsFor(Map<String, int> map, Iterable<String> types) {
     var flags = 0;
     for (final type in types) {
       flags |= map[type] ?? 0;
