@@ -115,7 +115,7 @@ void main() {
   });
 }
 
-const _progressedSrs = (
+final _progressedSrs = (
   easeFactor: 2.36,
   intervalDays: 14.0,
   repetitions: 3,

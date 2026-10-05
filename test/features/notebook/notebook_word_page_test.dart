@@ -24,7 +24,7 @@ import 'package:manga_jp/features/words/domain/word_state.dart';
 import '../dictionary/bake_jmdict_fixture.dart';
 
 const _taberuSeq = 1358280;
-const _progressedDue = DateTime.utc(2026, 6, 15);
+final _progressedDue = DateTime.utc(2026, 6, 15);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
