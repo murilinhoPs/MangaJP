@@ -2758,6 +2758,462 @@ class UserCardSrsCompanion extends UpdateCompanion<CardSrsRow> {
   }
 }
 
+class $UserReviewLogsTable extends UserReviewLogs
+    with TableInfo<$UserReviewLogsTable, ReviewLogRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserReviewLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cardIdMeta = const VerificationMeta('cardId');
+  @override
+  late final GeneratedColumn<String> cardId = GeneratedColumn<String>(
+    'card_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cards (id)',
+    ),
+  );
+  static const VerificationMeta _ratedAtMeta = const VerificationMeta(
+    'ratedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> ratedAt = GeneratedColumn<DateTime>(
+    'rated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
+  @override
+  late final GeneratedColumn<int> rating = GeneratedColumn<int>(
+    'rating',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _qualityMeta = const VerificationMeta(
+    'quality',
+  );
+  @override
+  late final GeneratedColumn<int> quality = GeneratedColumn<int>(
+    'quality',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _engineIdMeta = const VerificationMeta(
+    'engineId',
+  );
+  @override
+  late final GeneratedColumn<String> engineId = GeneratedColumn<String>(
+    'engine_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isDrillMeta = const VerificationMeta(
+    'isDrill',
+  );
+  @override
+  late final GeneratedColumn<int> isDrill = GeneratedColumn<int>(
+    'is_drill',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    cardId,
+    ratedAt,
+    rating,
+    quality,
+    engineId,
+    isDrill,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'review_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReviewLogRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('card_id')) {
+      context.handle(
+        _cardIdMeta,
+        cardId.isAcceptableOrUnknown(data['card_id']!, _cardIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cardIdMeta);
+    }
+    if (data.containsKey('rated_at')) {
+      context.handle(
+        _ratedAtMeta,
+        ratedAt.isAcceptableOrUnknown(data['rated_at']!, _ratedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ratedAtMeta);
+    }
+    if (data.containsKey('rating')) {
+      context.handle(
+        _ratingMeta,
+        rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ratingMeta);
+    }
+    if (data.containsKey('quality')) {
+      context.handle(
+        _qualityMeta,
+        quality.isAcceptableOrUnknown(data['quality']!, _qualityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_qualityMeta);
+    }
+    if (data.containsKey('engine_id')) {
+      context.handle(
+        _engineIdMeta,
+        engineId.isAcceptableOrUnknown(data['engine_id']!, _engineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_engineIdMeta);
+    }
+    if (data.containsKey('is_drill')) {
+      context.handle(
+        _isDrillMeta,
+        isDrill.isAcceptableOrUnknown(data['is_drill']!, _isDrillMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isDrillMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReviewLogRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReviewLogRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      cardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}card_id'],
+      )!,
+      ratedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}rated_at'],
+      )!,
+      rating: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rating'],
+      )!,
+      quality: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quality'],
+      )!,
+      engineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}engine_id'],
+      )!,
+      isDrill: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_drill'],
+      )!,
+    );
+  }
+
+  @override
+  $UserReviewLogsTable createAlias(String alias) {
+    return $UserReviewLogsTable(attachedDatabase, alias);
+  }
+}
+
+class ReviewLogRow extends DataClass implements Insertable<ReviewLogRow> {
+  final String id;
+  final String cardId;
+  final DateTime ratedAt;
+  final int rating;
+  final int quality;
+  final String engineId;
+  final int isDrill;
+  const ReviewLogRow({
+    required this.id,
+    required this.cardId,
+    required this.ratedAt,
+    required this.rating,
+    required this.quality,
+    required this.engineId,
+    required this.isDrill,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['card_id'] = Variable<String>(cardId);
+    map['rated_at'] = Variable<DateTime>(ratedAt);
+    map['rating'] = Variable<int>(rating);
+    map['quality'] = Variable<int>(quality);
+    map['engine_id'] = Variable<String>(engineId);
+    map['is_drill'] = Variable<int>(isDrill);
+    return map;
+  }
+
+  UserReviewLogsCompanion toCompanion(bool nullToAbsent) {
+    return UserReviewLogsCompanion(
+      id: Value(id),
+      cardId: Value(cardId),
+      ratedAt: Value(ratedAt),
+      rating: Value(rating),
+      quality: Value(quality),
+      engineId: Value(engineId),
+      isDrill: Value(isDrill),
+    );
+  }
+
+  factory ReviewLogRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReviewLogRow(
+      id: serializer.fromJson<String>(json['id']),
+      cardId: serializer.fromJson<String>(json['cardId']),
+      ratedAt: serializer.fromJson<DateTime>(json['ratedAt']),
+      rating: serializer.fromJson<int>(json['rating']),
+      quality: serializer.fromJson<int>(json['quality']),
+      engineId: serializer.fromJson<String>(json['engineId']),
+      isDrill: serializer.fromJson<int>(json['isDrill']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'cardId': serializer.toJson<String>(cardId),
+      'ratedAt': serializer.toJson<DateTime>(ratedAt),
+      'rating': serializer.toJson<int>(rating),
+      'quality': serializer.toJson<int>(quality),
+      'engineId': serializer.toJson<String>(engineId),
+      'isDrill': serializer.toJson<int>(isDrill),
+    };
+  }
+
+  ReviewLogRow copyWith({
+    String? id,
+    String? cardId,
+    DateTime? ratedAt,
+    int? rating,
+    int? quality,
+    String? engineId,
+    int? isDrill,
+  }) => ReviewLogRow(
+    id: id ?? this.id,
+    cardId: cardId ?? this.cardId,
+    ratedAt: ratedAt ?? this.ratedAt,
+    rating: rating ?? this.rating,
+    quality: quality ?? this.quality,
+    engineId: engineId ?? this.engineId,
+    isDrill: isDrill ?? this.isDrill,
+  );
+  ReviewLogRow copyWithCompanion(UserReviewLogsCompanion data) {
+    return ReviewLogRow(
+      id: data.id.present ? data.id.value : this.id,
+      cardId: data.cardId.present ? data.cardId.value : this.cardId,
+      ratedAt: data.ratedAt.present ? data.ratedAt.value : this.ratedAt,
+      rating: data.rating.present ? data.rating.value : this.rating,
+      quality: data.quality.present ? data.quality.value : this.quality,
+      engineId: data.engineId.present ? data.engineId.value : this.engineId,
+      isDrill: data.isDrill.present ? data.isDrill.value : this.isDrill,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewLogRow(')
+          ..write('id: $id, ')
+          ..write('cardId: $cardId, ')
+          ..write('ratedAt: $ratedAt, ')
+          ..write('rating: $rating, ')
+          ..write('quality: $quality, ')
+          ..write('engineId: $engineId, ')
+          ..write('isDrill: $isDrill')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, cardId, ratedAt, rating, quality, engineId, isDrill);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReviewLogRow &&
+          other.id == this.id &&
+          other.cardId == this.cardId &&
+          other.ratedAt == this.ratedAt &&
+          other.rating == this.rating &&
+          other.quality == this.quality &&
+          other.engineId == this.engineId &&
+          other.isDrill == this.isDrill);
+}
+
+class UserReviewLogsCompanion extends UpdateCompanion<ReviewLogRow> {
+  final Value<String> id;
+  final Value<String> cardId;
+  final Value<DateTime> ratedAt;
+  final Value<int> rating;
+  final Value<int> quality;
+  final Value<String> engineId;
+  final Value<int> isDrill;
+  final Value<int> rowid;
+  const UserReviewLogsCompanion({
+    this.id = const Value.absent(),
+    this.cardId = const Value.absent(),
+    this.ratedAt = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.quality = const Value.absent(),
+    this.engineId = const Value.absent(),
+    this.isDrill = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserReviewLogsCompanion.insert({
+    required String id,
+    required String cardId,
+    required DateTime ratedAt,
+    required int rating,
+    required int quality,
+    required String engineId,
+    required int isDrill,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       cardId = Value(cardId),
+       ratedAt = Value(ratedAt),
+       rating = Value(rating),
+       quality = Value(quality),
+       engineId = Value(engineId),
+       isDrill = Value(isDrill);
+  static Insertable<ReviewLogRow> custom({
+    Expression<String>? id,
+    Expression<String>? cardId,
+    Expression<DateTime>? ratedAt,
+    Expression<int>? rating,
+    Expression<int>? quality,
+    Expression<String>? engineId,
+    Expression<int>? isDrill,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cardId != null) 'card_id': cardId,
+      if (ratedAt != null) 'rated_at': ratedAt,
+      if (rating != null) 'rating': rating,
+      if (quality != null) 'quality': quality,
+      if (engineId != null) 'engine_id': engineId,
+      if (isDrill != null) 'is_drill': isDrill,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserReviewLogsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? cardId,
+    Value<DateTime>? ratedAt,
+    Value<int>? rating,
+    Value<int>? quality,
+    Value<String>? engineId,
+    Value<int>? isDrill,
+    Value<int>? rowid,
+  }) {
+    return UserReviewLogsCompanion(
+      id: id ?? this.id,
+      cardId: cardId ?? this.cardId,
+      ratedAt: ratedAt ?? this.ratedAt,
+      rating: rating ?? this.rating,
+      quality: quality ?? this.quality,
+      engineId: engineId ?? this.engineId,
+      isDrill: isDrill ?? this.isDrill,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (cardId.present) {
+      map['card_id'] = Variable<String>(cardId.value);
+    }
+    if (ratedAt.present) {
+      map['rated_at'] = Variable<DateTime>(ratedAt.value);
+    }
+    if (rating.present) {
+      map['rating'] = Variable<int>(rating.value);
+    }
+    if (quality.present) {
+      map['quality'] = Variable<int>(quality.value);
+    }
+    if (engineId.present) {
+      map['engine_id'] = Variable<String>(engineId.value);
+    }
+    if (isDrill.present) {
+      map['is_drill'] = Variable<int>(isDrill.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserReviewLogsCompanion(')
+          ..write('id: $id, ')
+          ..write('cardId: $cardId, ')
+          ..write('ratedAt: $ratedAt, ')
+          ..write('rating: $rating, ')
+          ..write('quality: $quality, ')
+          ..write('engineId: $engineId, ')
+          ..write('isDrill: $isDrill, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2769,6 +3225,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CropWordsTable cropWords = $CropWordsTable(this);
   late final $UserCardsTable userCards = $UserCardsTable(this);
   late final $UserCardSrsTable userCardSrs = $UserCardSrsTable(this);
+  late final $UserReviewLogsTable userReviewLogs = $UserReviewLogsTable(this);
   late final AppMetaDao appMetaDao = AppMetaDao(this as AppDatabase);
   late final PagesDao pagesDao = PagesDao(this as AppDatabase);
   late final WordsDao wordsDao = WordsDao(this as AppDatabase);
@@ -2786,6 +3243,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cropWords,
     userCards,
     userCardSrs,
+    userReviewLogs,
   ];
 }
 
@@ -4871,6 +5329,24 @@ final class $$UserCardsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$UserReviewLogsTable, List<ReviewLogRow>>
+  _userReviewLogsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.userReviewLogs,
+    aliasName: 'cards__id__review_logs__card_id',
+  );
+
+  $$UserReviewLogsTableProcessedTableManager get userReviewLogsRefs {
+    final manager = $$UserReviewLogsTableTableManager(
+      $_db,
+      $_db.userReviewLogs,
+    ).filter((f) => f.cardId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_userReviewLogsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$UserCardsTableFilterComposer
@@ -4941,6 +5417,31 @@ class $$UserCardsTableFilterComposer
           }) => $$UserCardSrsTableFilterComposer(
             $db: $db,
             $table: $db.userCardSrs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> userReviewLogsRefs(
+    Expression<bool> Function($$UserReviewLogsTableFilterComposer f) f,
+  ) {
+    final $$UserReviewLogsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userReviewLogs,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserReviewLogsTableFilterComposer(
+            $db: $db,
+            $table: $db.userReviewLogs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5074,6 +5575,31 @@ class $$UserCardsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> userReviewLogsRefs<T extends Object>(
+    Expression<T> Function($$UserReviewLogsTableAnnotationComposer a) f,
+  ) {
+    final $$UserReviewLogsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.userReviewLogs,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserReviewLogsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userReviewLogs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$UserCardsTableTableManager
@@ -5089,7 +5615,11 @@ class $$UserCardsTableTableManager
           $$UserCardsTableUpdateCompanionBuilder,
           (UserCard, $$UserCardsTableReferences),
           UserCard,
-          PrefetchHooks Function({bool wordId, bool userCardSrsRefs})
+          PrefetchHooks Function({
+            bool wordId,
+            bool userCardSrsRefs,
+            bool userReviewLogsRefs,
+          })
         > {
   $$UserCardsTableTableManager(_$AppDatabase db, $UserCardsTable table)
     : super(
@@ -5142,65 +5672,96 @@ class $$UserCardsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({wordId = false, userCardSrsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (userCardSrsRefs) db.userCardSrs],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (wordId) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.wordId,
-                        referencedTable: $$UserCardsTableReferences
-                            ._wordIdTable(db),
-                        referencedColumn: $$UserCardsTableReferences
-                            ._wordIdTable(db)
-                            .id,
-                      ) as T;
-                    }
+          prefetchHooksCallback:
+              ({
+                wordId = false,
+                userCardSrsRefs = false,
+                userReviewLogsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (userCardSrsRefs) db.userCardSrs,
+                    if (userReviewLogsRefs) db.userReviewLogs,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (wordId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.wordId,
+                            referencedTable: $$UserCardsTableReferences
+                                ._wordIdTable(db),
+                            referencedColumn: $$UserCardsTableReferences
+                                ._wordIdTable(db)
+                                .id,
+                          ) as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (userCardSrsRefs)
+                        await $_getPrefetchedData<
+                          UserCard,
+                          $UserCardsTable,
+                          CardSrsRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UserCardsTableReferences
+                              ._userCardSrsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UserCardsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).userCardSrsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cardId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (userReviewLogsRefs)
+                        await $_getPrefetchedData<
+                          UserCard,
+                          $UserCardsTable,
+                          ReviewLogRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UserCardsTableReferences
+                              ._userReviewLogsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UserCardsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).userReviewLogsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cardId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (userCardSrsRefs)
-                    await $_getPrefetchedData<
-                      UserCard,
-                      $UserCardsTable,
-                      CardSrsRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$UserCardsTableReferences
-                          ._userCardSrsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$UserCardsTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).userCardSrsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.cardId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -5217,7 +5778,11 @@ typedef $$UserCardsTableProcessedTableManager =
       $$UserCardsTableUpdateCompanionBuilder,
       (UserCard, $$UserCardsTableReferences),
       UserCard,
-      PrefetchHooks Function({bool wordId, bool userCardSrsRefs})
+      PrefetchHooks Function({
+        bool wordId,
+        bool userCardSrsRefs,
+        bool userReviewLogsRefs,
+      })
     >;
 typedef $$UserCardSrsTableCreateCompanionBuilder =
     UserCardSrsCompanion Function({
@@ -5578,6 +6143,365 @@ typedef $$UserCardSrsTableProcessedTableManager =
       CardSrsRow,
       PrefetchHooks Function({bool cardId})
     >;
+typedef $$UserReviewLogsTableCreateCompanionBuilder =
+    UserReviewLogsCompanion Function({
+      required String id,
+      required String cardId,
+      required DateTime ratedAt,
+      required int rating,
+      required int quality,
+      required String engineId,
+      required int isDrill,
+      Value<int> rowid,
+    });
+typedef $$UserReviewLogsTableUpdateCompanionBuilder =
+    UserReviewLogsCompanion Function({
+      Value<String> id,
+      Value<String> cardId,
+      Value<DateTime> ratedAt,
+      Value<int> rating,
+      Value<int> quality,
+      Value<String> engineId,
+      Value<int> isDrill,
+      Value<int> rowid,
+    });
+
+final class $$UserReviewLogsTableReferences
+    extends BaseReferences<_$AppDatabase, $UserReviewLogsTable, ReviewLogRow> {
+  $$UserReviewLogsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $UserCardsTable _cardIdTable(_$AppDatabase db) =>
+      db.userCards.createAlias('review_logs__card_id__cards__id');
+
+  $$UserCardsTableProcessedTableManager get cardId {
+    final $_column = $_itemColumn<String>('card_id')!;
+
+    final manager = $$UserCardsTableTableManager(
+      $_db,
+      $_db.userCards,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cardIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$UserReviewLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserReviewLogsTable> {
+  $$UserReviewLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get ratedAt => $composableBuilder(
+    column: $table.ratedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get quality => $composableBuilder(
+    column: $table.quality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get engineId => $composableBuilder(
+    column: $table.engineId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isDrill => $composableBuilder(
+    column: $table.isDrill,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$UserCardsTableFilterComposer get cardId {
+    final $$UserCardsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableFilterComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserReviewLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserReviewLogsTable> {
+  $$UserReviewLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get ratedAt => $composableBuilder(
+    column: $table.ratedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get quality => $composableBuilder(
+    column: $table.quality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get engineId => $composableBuilder(
+    column: $table.engineId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isDrill => $composableBuilder(
+    column: $table.isDrill,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$UserCardsTableOrderingComposer get cardId {
+    final $$UserCardsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableOrderingComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserReviewLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserReviewLogsTable> {
+  $$UserReviewLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get ratedAt =>
+      $composableBuilder(column: $table.ratedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rating =>
+      $composableBuilder(column: $table.rating, builder: (column) => column);
+
+  GeneratedColumn<int> get quality =>
+      $composableBuilder(column: $table.quality, builder: (column) => column);
+
+  GeneratedColumn<String> get engineId =>
+      $composableBuilder(column: $table.engineId, builder: (column) => column);
+
+  GeneratedColumn<int> get isDrill =>
+      $composableBuilder(column: $table.isDrill, builder: (column) => column);
+
+  $$UserCardsTableAnnotationComposer get cardId {
+    final $$UserCardsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.userCards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UserCardsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.userCards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UserReviewLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserReviewLogsTable,
+          ReviewLogRow,
+          $$UserReviewLogsTableFilterComposer,
+          $$UserReviewLogsTableOrderingComposer,
+          $$UserReviewLogsTableAnnotationComposer,
+          $$UserReviewLogsTableCreateCompanionBuilder,
+          $$UserReviewLogsTableUpdateCompanionBuilder,
+          (ReviewLogRow, $$UserReviewLogsTableReferences),
+          ReviewLogRow,
+          PrefetchHooks Function({bool cardId})
+        > {
+  $$UserReviewLogsTableTableManager(
+    _$AppDatabase db,
+    $UserReviewLogsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserReviewLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserReviewLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserReviewLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> cardId = const Value.absent(),
+                Value<DateTime> ratedAt = const Value.absent(),
+                Value<int> rating = const Value.absent(),
+                Value<int> quality = const Value.absent(),
+                Value<String> engineId = const Value.absent(),
+                Value<int> isDrill = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserReviewLogsCompanion(
+                id: id,
+                cardId: cardId,
+                ratedAt: ratedAt,
+                rating: rating,
+                quality: quality,
+                engineId: engineId,
+                isDrill: isDrill,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String cardId,
+                required DateTime ratedAt,
+                required int rating,
+                required int quality,
+                required String engineId,
+                required int isDrill,
+                Value<int> rowid = const Value.absent(),
+              }) => UserReviewLogsCompanion.insert(
+                id: id,
+                cardId: cardId,
+                ratedAt: ratedAt,
+                rating: rating,
+                quality: quality,
+                engineId: engineId,
+                isDrill: isDrill,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UserReviewLogsTable, ReviewLogRow>(table),
+                  $$UserReviewLogsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cardId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (cardId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.cardId,
+                        referencedTable: $$UserReviewLogsTableReferences
+                            ._cardIdTable(db),
+                        referencedColumn: $$UserReviewLogsTableReferences
+                            ._cardIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$UserReviewLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserReviewLogsTable,
+      ReviewLogRow,
+      $$UserReviewLogsTableFilterComposer,
+      $$UserReviewLogsTableOrderingComposer,
+      $$UserReviewLogsTableAnnotationComposer,
+      $$UserReviewLogsTableCreateCompanionBuilder,
+      $$UserReviewLogsTableUpdateCompanionBuilder,
+      (ReviewLogRow, $$UserReviewLogsTableReferences),
+      ReviewLogRow,
+      PrefetchHooks Function({bool cardId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5598,4 +6522,6 @@ class $AppDatabaseManager {
       $$UserCardsTableTableManager(_db, _db.userCards);
   $$UserCardSrsTableTableManager get userCardSrs =>
       $$UserCardSrsTableTableManager(_db, _db.userCardSrs);
+  $$UserReviewLogsTableTableManager get userReviewLogs =>
+      $$UserReviewLogsTableTableManager(_db, _db.userReviewLogs);
 }
