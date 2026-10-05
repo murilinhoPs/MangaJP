@@ -14,14 +14,17 @@ const _highHomographSeq = 9990001;
 const _lowHomographSeq = 9990002;
 
 void main() {
-  test('onCreate has words / word_states / crop_words and no cards', () async {
+  test('onCreate has words / word_states / crop_words / cards', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '3');
+    expect(await db.appMetaDao.getValue('schema_version'), '4');
     final names = await _tableNames(db);
-    expect(names, containsAll(<String>['words', 'word_states', 'crop_words']));
-    expect(names.where((name) => name.contains('card')), isEmpty);
+    expect(
+      names,
+      containsAll(<String>['words', 'word_states', 'crop_words', 'cards', 'card_srs']),
+    );
+    expect(await _cardRowCount(db), 0);
   });
 
   test(
@@ -54,8 +57,6 @@ void main() {
       expect(links.single.wordId, words.single.id);
 
       expect(await _cardRowCount(env.db), 0);
-      final names = await _tableNames(env.db);
-      expect(names.where((name) => name.contains('card')), isEmpty);
     },
   );
 

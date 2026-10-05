@@ -55,7 +55,7 @@ Future<List<NotebookEntry>> notebookEntries(Ref ref) {
       .list(search: query.search, state: query.state);
 }
 
-/// Read-only `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 @riverpod
 Future<NotebookWordView?> notebookWord(Ref ref, String wordId) async {
   final detail = await ref.watch(notebookRepositoryProvider).byId(wordId);

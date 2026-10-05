@@ -1,6 +1,6 @@
 import '../../words/domain/word_state.dart';
 
-/// Read-only Caderno word: Drift fields plus the first crop's sentence / page.
+/// Caderno word: Drift fields plus the first crop's sentence / page.
 ///
 /// Gloss is not stored here. Load it from JMdict with [seq].
 class NotebookWordDetail {

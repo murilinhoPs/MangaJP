@@ -5,12 +5,15 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'daos/app_meta_dao.dart';
+import 'daos/cards_dao.dart';
 import 'daos/pages_dao.dart';
 import 'daos/words_dao.dart';
 import 'tables/app_meta.dart';
 import 'tables/captured_crops.dart';
 import 'tables/captured_pages.dart';
 import 'tables/crop_words.dart';
+import 'tables/user_card_srs.dart';
+import 'tables/user_cards.dart';
 import 'tables/user_word_states.dart';
 import 'tables/user_words.dart';
 
@@ -24,14 +27,16 @@ part 'app_database.g.dart';
     UserWords,
     UserWordStates,
     CropWords,
+    UserCards,
+    UserCardSrs,
   ],
-  daos: [AppMetaDao, PagesDao, WordsDao],
+  daos: [AppMetaDao, PagesDao, WordsDao, CardsDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -41,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '3'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '4'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -72,6 +77,16 @@ class AppDatabase extends _$AppDatabase {
             AppMetaCompanion.insert(key: 'schema_version', value: '3'),
             onConflict: DoUpdate(
               (_) => const AppMetaCompanion(value: Value('3')),
+            ),
+          );
+        }
+        if (from < 4) {
+          await m.createTable(userCards);
+          await m.createTable(userCardSrs);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '4'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('4')),
             ),
           );
         }

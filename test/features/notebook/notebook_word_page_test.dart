@@ -9,8 +9,11 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/srs/card_srs_state.dart';
+import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
+import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/flashcards/presentation/deck_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
@@ -21,6 +24,7 @@ import 'package:manga_jp/features/words/domain/word_state.dart';
 import '../dictionary/bake_jmdict_fixture.dart';
 
 const _taberuSeq = 1358280;
+final _progressedDue = DateTime.utc(2026, 6, 15);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -116,12 +120,13 @@ void main() {
       );
       expect(find.text('later sentence'), findsNothing);
       expect(find.byKey(NotebookWordKeys.pageLink), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
 
-      _expectReadOnly(tester);
+      _expectNoOutOfScopeControls(tester);
       final states = await env.db.select(env.db.userWordStates).get();
       expect(states, hasLength(1));
       expect(states.single.state, WordState.saved.name);
-      expect(states.single.updatedAt, env.savedAt);
+      expect(states.single.updatedAt, env.stateUpdatedAt);
     },
   );
 
@@ -141,11 +146,145 @@ void main() {
     expect(find.text('食べたよ、相棒'), findsOneWidget);
     expect(find.text('later sentence'), findsNothing);
 
-    _expectReadOnly(tester);
+    _expectNoOutOfScopeControls(tester);
     final states = await env.db.select(env.db.userWordStates).get();
     expect(states.single.state, WordState.saved.name);
-    expect(states.single.updatedAt, env.savedAt);
+    expect(states.single.updatedAt, env.stateUpdatedAt);
   });
+
+  testWidgets('Aprender with no card sets learning and creates golden SRS', (
+    tester,
+  ) async {
+    final env = await _openWord(tester, jmdictPath: jmdictPath);
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
+    await tester.tap(find.byKey(NotebookWordKeys.learn));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Aprendendo',
+    );
+    expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
+    _expectNoOutOfScopeControls(tester);
+
+    final state = (await env.db.select(env.db.userWordStates).get()).single;
+    expect(state.state, WordState.learning.name);
+
+    final card = (await env.db.select(env.db.userCards).get()).single;
+    expect(card.wordId, env.wordId);
+    expect(card.kind, FlashcardKind.vocab.name);
+    final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+    expect(srs.cardId, card.id);
+    expect(srs.easeFactor, kDefaultEaseFactor);
+    expect(srs.intervalDays, 0);
+    expect(srs.repetitions, 0);
+    expect(srs.phase, CardPhase.neu.name);
+    expect(srs.engineId, kSm2JrEngineId);
+  });
+
+  testWidgets('second Aprender tap is a no-op when already learning', (
+    tester,
+  ) async {
+    final env = await _openWord(
+      tester,
+      jmdictPath: jmdictPath,
+      state: WordState.learning,
+      card: true,
+    );
+    final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+    final beforeSrs = await _srsSnapshot(env.db);
+    final beforeState = (await env.db.select(env.db.userWordStates).get())
+        .single;
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
+    await tester.tap(find.byKey(NotebookWordKeys.learn));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(NotebookWordKeys.learn));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Aprendendo',
+    );
+    final cards = await env.db.select(env.db.userCards).get();
+    expect(cards, hasLength(1));
+    expect(cards.single.id, beforeCard.id);
+    expect(cards.single.createdAt, beforeCard.createdAt);
+    expect(await _srsSnapshot(env.db), beforeSrs);
+    final state = (await env.db.select(env.db.userWordStates).get()).single;
+    expect(state.state, WordState.learning.name);
+    expect(state.updatedAt, beforeState.updatedAt);
+  });
+
+  testWidgets('Aprender from known returns to learning without resetting SRS', (
+    tester,
+  ) async {
+    final env = await _openWord(
+      tester,
+      jmdictPath: jmdictPath,
+      state: WordState.known,
+      card: true,
+    );
+    final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+    final beforeSrs = await _srsSnapshot(env.db);
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Conhecido',
+    );
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
+    await tester.tap(find.byKey(NotebookWordKeys.learn));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Aprendendo',
+    );
+    final cards = await env.db.select(env.db.userCards).get();
+    expect(cards, hasLength(1));
+    expect(cards.single.id, beforeCard.id);
+    expect(await _srsSnapshot(env.db), beforeSrs);
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.learning.name,
+    );
+  });
+
+  testWidgets(
+    'Aprender from ignored returns to learning without resetting SRS',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.ignored,
+        card: true,
+      );
+      final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+      final beforeSrs = await _srsSnapshot(env.db);
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Ignorado',
+      );
+      await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
+      await tester.tap(find.byKey(NotebookWordKeys.learn));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Aprendendo',
+      );
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, beforeCard.id);
+      expect(await _srsSnapshot(env.db), beforeSrs);
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.state,
+        WordState.learning.name,
+      );
+    },
+  );
 }
 
 class _Env {
@@ -153,18 +292,29 @@ class _Env {
     required this.db,
     required this.wordId,
     required this.pageId,
-    required this.savedAt,
+    required this.stateUpdatedAt,
   });
 
   final AppDatabase db;
   final String wordId;
   final String pageId;
-  final DateTime savedAt;
+  final DateTime stateUpdatedAt;
 }
+
+typedef _SrsSnapshot = ({
+  double easeFactor,
+  double intervalDays,
+  int repetitions,
+  DateTime dueAt,
+  String phase,
+  String engineId,
+});
 
 Future<_Env> _openNotebook(
   WidgetTester tester, {
   required String jmdictPath,
+  WordState state = WordState.saved,
+  bool card = false,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
@@ -189,10 +339,35 @@ Future<_Env> _openNotebook(
       .insert(
         UserWordStatesCompanion.insert(
           wordId: wordId,
-          state: WordState.saved.name,
+          state: state.name,
           updatedAt: seededAt,
         ),
       );
+  if (card) {
+    await db
+        .into(db.userCards)
+        .insert(
+          UserCardsCompanion.insert(
+            id: 'card-eat',
+            wordId: wordId,
+            kind: FlashcardKind.vocab.name,
+            createdAt: DateTime.utc(2026, 2, 1),
+          ),
+        );
+    await db
+        .into(db.userCardSrs)
+        .insert(
+          UserCardSrsCompanion.insert(
+            cardId: 'card-eat',
+            easeFactor: 2.36,
+            intervalDays: 14,
+            repetitions: 3,
+            dueAt: _progressedDue,
+            phase: CardPhase.review.name,
+            engineId: kSm2JrEngineId,
+          ),
+        );
+  }
   await _seedCrop(
     db,
     cropId: 'crop-later',
@@ -242,8 +417,44 @@ Future<_Env> _openNotebook(
 
   const NotebookRoute().go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
-  final savedAt = (await db.select(db.userWordStates).get()).single.updatedAt;
-  return _Env(db: db, wordId: wordId, pageId: pageId, savedAt: savedAt);
+  final stateUpdatedAt = (await db.select(db.userWordStates).get())
+      .single
+      .updatedAt;
+  return _Env(
+    db: db,
+    wordId: wordId,
+    pageId: pageId,
+    stateUpdatedAt: stateUpdatedAt,
+  );
+}
+
+Future<_Env> _openWord(
+  WidgetTester tester, {
+  required String jmdictPath,
+  WordState state = WordState.saved,
+  bool card = false,
+}) async {
+  final env = await _openNotebook(
+    tester,
+    jmdictPath: jmdictPath,
+    state: state,
+    card: card,
+  );
+  await tester.tap(find.byKey(NotebookKeys.row(env.wordId)));
+  await tester.pumpAndSettle();
+  return env;
+}
+
+Future<_SrsSnapshot> _srsSnapshot(AppDatabase db) async {
+  final row = (await db.select(db.userCardSrs).get()).single;
+  return (
+    easeFactor: row.easeFactor,
+    intervalDays: row.intervalDays,
+    repetitions: row.repetitions,
+    dueAt: row.dueAt,
+    phase: row.phase,
+    engineId: row.engineId,
+  );
 }
 
 Future<void> _seedCrop(
@@ -280,10 +491,13 @@ Future<void> _seedCrop(
       );
 }
 
-void _expectReadOnly(WidgetTester tester) {
-  expect(find.text('Aprender'), findsNothing);
+void _expectNoOutOfScopeControls(WidgetTester tester) {
   expect(find.text('Remover'), findsNothing);
   expect(find.text('Remove'), findsNothing);
+  expect(find.widgetWithText(FilledButton, 'Conhecido'), findsNothing);
+  expect(find.widgetWithText(FilledButton, 'Ignorar'), findsNothing);
+  expect(find.widgetWithText(TextButton, 'Conhecido'), findsNothing);
+  expect(find.widgetWithText(TextButton, 'Ignorar'), findsNothing);
   expect(find.text('Add card'), findsNothing);
   expect(find.text('Salvar'), findsNothing);
   expect(find.byType(DeckPage), findsNothing);
