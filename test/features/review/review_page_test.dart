@@ -103,20 +103,13 @@ void main() {
   testWidgets(
     'front is the lemma; Revelar shows reading and fixture JMdict gloss',
     (tester) async {
-      await _openReview(
-        tester,
-        jmdictPath: jmdictPath,
-        cards: [_taberuCard],
-      );
+      await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
 
       expect(
         GoRouter.of(tester.element(find.byType(ReviewPage))).state.uri.path,
         '/review',
       );
-      expect(
-        tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data,
-        '食べる',
-      );
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
       expect(find.byKey(ReviewKeys.reading), findsNothing);
       expect(find.byKey(ReviewKeys.gloss), findsNothing);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsNothing);
@@ -125,10 +118,7 @@ void main() {
       await tester.tap(find.byKey(ReviewKeys.reveal));
       await tester.pumpAndSettle();
 
-      expect(
-        tester.widget<Text>(find.byKey(ReviewKeys.reading)).data,
-        'たべる',
-      );
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'たべる');
       final gloss = tester.widget<Text>(find.byKey(ReviewKeys.gloss)).data!;
       final jmdict = JmdictService()..openFile(jmdictPath);
       addTearDown(jmdict.close);
@@ -154,54 +144,53 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Good writes rating 3 / quality 4, updates SRS, keeps learning',
-    (tester) async {
-      final env = await _openReview(
-        tester,
-        jmdictPath: jmdictPath,
-        cards: [_taberuCard],
-      );
-      final prev = CardSrsState(
-        easeFactor: kDefaultEaseFactor,
-        intervalDays: 0,
-        repetitions: 0,
-        dueAt: _now,
-        phase: CardPhase.neu,
-        engineId: kSm2JrEngineId,
-      );
+  testWidgets('Good writes rating 3 / quality 4, updates SRS, keeps learning', (
+    tester,
+  ) async {
+    final env = await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+    );
+    final prev = CardSrsState(
+      easeFactor: kDefaultEaseFactor,
+      intervalDays: 0,
+      repetitions: 0,
+      dueAt: _now,
+      phase: CardPhase.neu,
+      engineId: kSm2JrEngineId,
+    );
 
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.good)));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ReviewKeys.reveal));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.good)));
+    await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(ReviewKeys.empty), findsOneWidget);
 
-      final log = (await env.db.select(env.db.userReviewLogs).get()).single;
-      expect(log.cardId, 'card-eat');
-      expect(log.rating, 3);
-      expect(log.quality, 4);
-      expect(log.engineId, kSm2JrEngineId);
-      expect(log.isDrill, 0);
+    final log = (await env.db.select(env.db.userReviewLogs).get()).single;
+    expect(log.cardId, 'card-eat');
+    expect(log.rating, 3);
+    expect(log.quality, 4);
+    expect(log.engineId, kSm2JrEngineId);
+    expect(log.isDrill, 0);
 
-      final expected = const Sm2JrEngine().schedule(prev, 4, log.ratedAt);
-      final srs = (await env.db.select(env.db.userCardSrs).get()).single;
-      expect(srs.easeFactor, expected.easeFactor);
-      expect(srs.intervalDays, expected.intervalDays);
-      expect(srs.repetitions, expected.repetitions);
-      expect(srs.dueAt, expected.dueAt);
-      expect(srs.phase, expected.phase.name);
-      expect(srs.engineId, kSm2JrEngineId);
+    final expected = const Sm2JrEngine().schedule(prev, 4, log.ratedAt);
+    final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+    expect(srs.easeFactor, expected.easeFactor);
+    expect(srs.intervalDays, expected.intervalDays);
+    expect(srs.repetitions, expected.repetitions);
+    expect(srs.dueAt, expected.dueAt);
+    expect(srs.phase, expected.phase.name);
+    expect(srs.engineId, kSm2JrEngineId);
 
-      expect(
-        (await env.db.select(env.db.userWordStates).get()).single.state,
-        WordState.learning.name,
-      );
-      _expectNoOutOfScopeControls(tester);
-    },
-  );
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.learning.name,
+    );
+    _expectNoOutOfScopeControls(tester);
+  });
 
   testWidgets(
     'Again puts the card at the back, resets the front, and the next tap is drill',
@@ -277,14 +266,11 @@ void main() {
       final logs = await env.db.select(env.db.userReviewLogs).get();
       expect(
         {for (final log in logs) (log.cardId, log.isDrill, log.rating)},
-        {
-          ('card-early', 0, 2),
-          ('card-review', 0, 3),
-          ('card-early', 1, 4),
-        },
+        {('card-early', 0, 2), ('card-review', 0, 3), ('card-early', 1, 4)},
       );
-      final early = (await env.db.select(env.db.userCardSrs).get())
-          .singleWhere((row) => row.cardId == 'card-early');
+      final early = (await env.db.select(env.db.userCardSrs).get()).singleWhere(
+        (row) => row.cardId == 'card-early',
+      );
       final firstHard = logs.firstWhere(
         (log) => log.cardId == 'card-early' && log.isDrill == 0,
       );
@@ -305,6 +291,91 @@ void main() {
       expect(early.repetitions, expected.repetitions);
       expect(early.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
       expect(early.phase, expected.phase.name);
+    },
+  );
+
+  testWidgets(
+    'after 15 new cards leftover neu stay out and due learning still shows',
+    (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [
+          for (var i = 0; i < 16; i++)
+            (
+              id: 'new-$i',
+              lemma: '新$i',
+              reading: 'よみ',
+              seq: i + 10,
+              phase: CardPhase.neu,
+              dueAt: DateTime.utc(2026, 10, 1, 0, i),
+              suspendReason: null,
+              state: WordState.learning,
+            ),
+          (
+            id: 'learn',
+            lemma: '学ぶ',
+            reading: 'まなぶ',
+            seq: 100,
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            suspendReason: null,
+            state: WordState.learning,
+          ),
+        ],
+        prepare: (review) async {
+          for (var i = 0; i < 15; i++) {
+            await review.answer('card-new-$i', ReviewRating.good);
+          }
+        },
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '学ぶ');
+      expect(find.text('新15'), findsNothing);
+      await _revealAndRate(tester, ReviewRating.good);
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.text('新15'), findsNothing);
+      _expectNoOutOfScopeControls(tester);
+    },
+  );
+
+  testWidgets(
+    'a neu already in the session stays after the cap fills; extra neu never join',
+    (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [
+          for (var i = 0; i < 16; i++)
+            (
+              id: 'new-$i',
+              lemma: '新$i',
+              reading: 'よみ',
+              seq: i + 10,
+              phase: CardPhase.neu,
+              dueAt: DateTime.utc(2026, 10, 1, 0, i),
+              suspendReason: null,
+              state: WordState.learning,
+            ),
+        ],
+        prepare: (review) async {
+          for (var i = 0; i < 14; i++) {
+            await review.answer('card-new-$i', ReviewRating.good);
+          }
+        },
+      );
+
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新14');
+      await _revealAndRate(tester, ReviewRating.again);
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新14');
+      expect(find.text('新15'), findsNothing);
+
+      await _revealAndRate(tester, ReviewRating.good);
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.text('新15'), findsNothing);
     },
   );
 }
@@ -363,6 +434,7 @@ Future<_Env> _openReview(
   WidgetTester tester, {
   required String jmdictPath,
   List<_SeedCard> cards = const [],
+  Future<void> Function(ReviewRepository review)? prepare,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
@@ -414,13 +486,16 @@ Future<_Env> _openReview(
         );
   }
 
+  final review = ReviewRepository(db, clock: () => _now);
+  if (prepare != null) {
+    await prepare(review);
+  }
+
   await tester.pumpWidget(
     MangaJpApp(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => db),
-        reviewRepositoryProvider.overrideWith(
-          (ref) => ReviewRepository(db, clock: () => _now),
-        ),
+        reviewRepositoryProvider.overrideWith((ref) => review),
         jmdictServiceProvider.overrideWith((ref) async {
           final service = JmdictService()..openFile(jmdictPath);
           ref.onDispose(service.close);
@@ -447,5 +522,6 @@ void _expectNoOutOfScopeControls(WidgetTester tester) {
   expect(find.text('Drill'), findsNothing);
   expect(find.text('Remover palavra'), findsNothing);
   expect(find.text('Remover card'), findsNothing);
+  expect(find.text('Novos por dia'), findsNothing);
   expect(find.byType(DeckPage), findsNothing);
 }

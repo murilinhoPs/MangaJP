@@ -15,9 +15,10 @@ abstract final class ReviewKeys {
   static Key rating(ReviewRating rating) => Key('review-${rating.name}');
 }
 
-/// `/review` — session snapshot of the due queue. Front is the lemma;
-/// Revelar shows reading + JMdict gloss, then Again / Hard / Good / Easy.
-/// Again/Hard go to the back of this session; Good/Easy leave it.
+/// `/review` — session snapshot of the due queue (at most 15 new cards
+/// per study-day). Front is the lemma; Revelar shows reading + JMdict
+/// gloss, then Again / Hard / Good / Easy. Again/Hard go to the back of
+/// this session; Good/Easy leave it.
 class ReviewPage extends ConsumerWidget {
   const ReviewPage({super.key});
 

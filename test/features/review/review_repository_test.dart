@@ -144,7 +144,10 @@ void main() {
         ],
       );
       expect(queue.first.lemma, '早い');
-      expect(await env.review.nextDue().then((c) => c?.cardId), 'card-learn-early');
+      expect(
+        await env.review.nextDue().then((c) => c?.cardId),
+        'card-learn-early',
+      );
     },
   );
 
@@ -180,53 +183,57 @@ void main() {
     expect(queue.single.cardId, 'card-open');
   });
 
-  test('each rating writes rating, quality, engine_id and is_drill=0', () async {
-    const engine = Sm2JrEngine();
-    for (final rating in ReviewRating.values) {
-      final env = await _openRepo(now);
-      try {
-        await _seedPair(
-          env.db,
-          id: 'eat',
-          lemma: '食べる',
-          reading: 'たべる',
-          seq: 1358280,
-          phase: CardPhase.neu,
-          dueAt: now,
-          state: WordState.learning,
-        );
-        final prev = (await env.review.nextDue())!.srs;
+  test(
+    'each rating writes rating, quality, engine_id and is_drill=0',
+    () async {
+      const engine = Sm2JrEngine();
+      for (final rating in ReviewRating.values) {
+        final env = await _openRepo(now);
+        try {
+          await _seedPair(
+            env.db,
+            id: 'eat',
+            lemma: '食べる',
+            reading: 'たべる',
+            seq: 1358280,
+            phase: CardPhase.neu,
+            dueAt: now,
+            state: WordState.learning,
+          );
+          final prev = (await env.review.nextDue())!.srs;
 
-        await env.review.answer('card-eat', rating);
+          await env.review.answer('card-eat', rating);
 
-        final log = (await env.db.select(env.db.userReviewLogs).get()).single;
-        expect(log.cardId, 'card-eat');
-        expect(log.rating, ratingFor(rating));
-        expect(log.quality, qualityFor(rating));
-        expect(log.engineId, kSm2JrEngineId);
-        expect(log.isDrill, 0);
-        expect(log.ratedAt.isAtSameMomentAs(now), isTrue);
+          final log = (await env.db.select(env.db.userReviewLogs).get()).single;
+          expect(log.cardId, 'card-eat');
+          expect(log.rating, ratingFor(rating));
+          expect(log.quality, qualityFor(rating));
+          expect(log.engineId, kSm2JrEngineId);
+          expect(log.isDrill, 0);
+          expect(log.ratedAt.isAtSameMomentAs(now), isTrue);
 
-        final srs = (await env.db.select(env.db.userCardSrs).get()).single;
-        final expected = engine.schedule(prev, qualityFor(rating), now);
-        expect(srs.easeFactor, expected.easeFactor);
-        expect(srs.intervalDays, expected.intervalDays);
-        expect(srs.repetitions, expected.repetitions);
-        expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
-        expect(srs.phase, expected.phase.name);
-        expect(srs.engineId, expected.engineId);
+          final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+          final expected = engine.schedule(prev, qualityFor(rating), now);
+          expect(srs.easeFactor, expected.easeFactor);
+          expect(srs.intervalDays, expected.intervalDays);
+          expect(srs.repetitions, expected.repetitions);
+          expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
+          expect(srs.phase, expected.phase.name);
+          expect(srs.engineId, expected.engineId);
 
-        final state = (await env.db.select(env.db.userWordStates).get()).single;
-        expect(state.state, WordState.learning.name);
-        expect(
-          state.updatedAt.isAtSameMomentAs(DateTime.utc(2026, 1, 1)),
-          isTrue,
-        );
-      } finally {
-        await env.db.close();
+          final state =
+              (await env.db.select(env.db.userWordStates).get()).single;
+          expect(state.state, WordState.learning.name);
+          expect(
+            state.updatedAt.isAtSameMomentAs(DateTime.utc(2026, 1, 1)),
+            isTrue,
+          );
+        } finally {
+          await env.db.close();
+        }
       }
-    }
-  });
+    },
+  );
 
   test('answer updates SRS and log in the same transaction', () async {
     final env = await _openRepo(now);
@@ -274,104 +281,116 @@ void main() {
     expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(2));
   });
 
-  test('second answer on the same study-day is drill and does not change SRS', () async {
-    final env = await _openRepo(now);
-    addTearDown(env.db.close);
-    await _seedPair(
-      env.db,
-      id: 'eat',
-      lemma: '食べる',
-      phase: CardPhase.neu,
-      dueAt: now,
-      state: WordState.learning,
-    );
-    final prev = (await env.review.nextDue())!.srs;
+  test(
+    'second answer on the same study-day is drill and does not change SRS',
+    () async {
+      final env = await _openRepo(now);
+      addTearDown(env.db.close);
+      await _seedPair(
+        env.db,
+        id: 'eat',
+        lemma: '食べる',
+        phase: CardPhase.neu,
+        dueAt: now,
+        state: WordState.learning,
+      );
+      final prev = (await env.review.nextDue())!.srs;
 
-    await env.review.answer('card-eat', ReviewRating.good);
-    final afterFirst = await _srsSnapshot(env.db);
-    final expected = const Sm2JrEngine().schedule(prev, 4, now);
-    expect(afterFirst.intervalDays, expected.intervalDays);
-    expect(afterFirst.repetitions, expected.repetitions);
-    expect(afterFirst.phase, expected.phase.name);
+      await env.review.answer('card-eat', ReviewRating.good);
+      final afterFirst = await _srsSnapshot(env.db);
+      final expected = const Sm2JrEngine().schedule(prev, 4, now);
+      expect(afterFirst.intervalDays, expected.intervalDays);
+      expect(afterFirst.repetitions, expected.repetitions);
+      expect(afterFirst.phase, expected.phase.name);
 
-    env.clock.now = now.add(const Duration(seconds: 1));
-    await env.review.answer('card-eat', ReviewRating.again);
-    env.clock.now = now.add(const Duration(seconds: 2));
-    await env.review.answer('card-eat', ReviewRating.hard);
+      env.clock.now = now.add(const Duration(seconds: 1));
+      await env.review.answer('card-eat', ReviewRating.again);
+      env.clock.now = now.add(const Duration(seconds: 2));
+      await env.review.answer('card-eat', ReviewRating.hard);
 
-    final logs = await _logs(env.db);
-    expect(logs, hasLength(3));
-    expect(logs[0].isDrill, 0);
-    expect(logs[0].rating, 3);
-    expect(logs[0].quality, 4);
-    expect(logs[0].engineId, kSm2JrEngineId);
-    expect(logs[1].isDrill, 1);
-    expect(logs[1].rating, 1);
-    expect(logs[1].quality, 0);
-    expect(logs[1].engineId, kSm2JrEngineId);
-    expect(logs[2].isDrill, 1);
-    expect(logs[2].rating, 2);
-    expect(logs[2].quality, 3);
-    expect(await _srsSnapshot(env.db), afterFirst);
-    expect(
-      (await env.db.select(env.db.userWordStates).get()).single.state,
-      WordState.learning.name,
-    );
-  });
+      final logs = await _logs(env.db);
+      expect(logs, hasLength(3));
+      expect(logs[0].isDrill, 0);
+      expect(logs[0].rating, 3);
+      expect(logs[0].quality, 4);
+      expect(logs[0].engineId, kSm2JrEngineId);
+      expect(logs[1].isDrill, 1);
+      expect(logs[1].rating, 1);
+      expect(logs[1].quality, 0);
+      expect(logs[1].engineId, kSm2JrEngineId);
+      expect(logs[2].isDrill, 1);
+      expect(logs[2].rating, 2);
+      expect(logs[2].quality, 3);
+      expect(await _srsSnapshot(env.db), afterFirst);
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.state,
+        WordState.learning.name,
+      );
+    },
+  );
 
-  test('03:59 is drill after a same study-day answer; 04:00 schedules again', () async {
-    final env = await _openRepo(StudyDay.instant(2026, 10, 4, 12));
-    addTearDown(env.db.close);
-    await _seedPair(
-      env.db,
-      id: 'eat',
-      lemma: '食べる',
-      phase: CardPhase.neu,
-      dueAt: StudyDay.instant(2026, 10, 4, 12),
-      state: WordState.learning,
-    );
-    final prev = (await env.review.nextDue())!.srs;
+  test(
+    '03:59 is drill after a same study-day answer; 04:00 schedules again',
+    () async {
+      final env = await _openRepo(StudyDay.instant(2026, 10, 4, 12));
+      addTearDown(env.db.close);
+      await _seedPair(
+        env.db,
+        id: 'eat',
+        lemma: '食べる',
+        phase: CardPhase.neu,
+        dueAt: StudyDay.instant(2026, 10, 4, 12),
+        state: WordState.learning,
+      );
+      final prev = (await env.review.nextDue())!.srs;
 
-    await env.review.answer('card-eat', ReviewRating.good);
-    final afterFirst = await _srsSnapshot(env.db);
-    expect(
-      afterFirst.intervalDays,
-      const Sm2JrEngine()
-          .schedule(prev, 4, StudyDay.instant(2026, 10, 4, 12))
-          .intervalDays,
-    );
+      await env.review.answer('card-eat', ReviewRating.good);
+      final afterFirst = await _srsSnapshot(env.db);
+      expect(
+        afterFirst.intervalDays,
+        const Sm2JrEngine()
+            .schedule(prev, 4, StudyDay.instant(2026, 10, 4, 12))
+            .intervalDays,
+      );
 
-    env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
-    await env.review.answer('card-eat', ReviewRating.again);
-    expect(await _srsSnapshot(env.db), afterFirst);
+      env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
+      await env.review.answer('card-eat', ReviewRating.again);
+      expect(await _srsSnapshot(env.db), afterFirst);
 
-    env.clock.now = StudyDay.instant(2026, 10, 5, 4);
-    await env.review.answer('card-eat', ReviewRating.hard);
-    final afterRollover = await _srsSnapshot(env.db);
-    final expected = const Sm2JrEngine().schedule(
-      CardSrsState(
-        easeFactor: afterFirst.easeFactor,
-        intervalDays: afterFirst.intervalDays,
-        repetitions: afterFirst.repetitions,
-        dueAt: afterFirst.dueAt,
-        phase: CardPhase.values.byName(afterFirst.phase),
-        engineId: afterFirst.engineId,
-      ),
-      3,
-      StudyDay.instant(2026, 10, 5, 4),
-    );
-    expect(afterRollover.easeFactor, expected.easeFactor);
-    expect(afterRollover.intervalDays, expected.intervalDays);
-    expect(afterRollover.repetitions, expected.repetitions);
-    expect(afterRollover.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
-    expect(afterRollover.phase, expected.phase.name);
-    expect(afterRollover.engineId, expected.engineId);
+      env.clock.now = StudyDay.instant(2026, 10, 5, 4);
+      await env.review.answer('card-eat', ReviewRating.hard);
+      final afterRollover = await _srsSnapshot(env.db);
+      final expected = const Sm2JrEngine().schedule(
+        CardSrsState(
+          easeFactor: afterFirst.easeFactor,
+          intervalDays: afterFirst.intervalDays,
+          repetitions: afterFirst.repetitions,
+          dueAt: afterFirst.dueAt,
+          phase: CardPhase.values.byName(afterFirst.phase),
+          engineId: afterFirst.engineId,
+        ),
+        3,
+        StudyDay.instant(2026, 10, 5, 4),
+      );
+      expect(afterRollover.easeFactor, expected.easeFactor);
+      expect(afterRollover.intervalDays, expected.intervalDays);
+      expect(afterRollover.repetitions, expected.repetitions);
+      expect(afterRollover.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
+      expect(afterRollover.phase, expected.phase.name);
+      expect(afterRollover.engineId, expected.engineId);
 
-    final logs = await _logs(env.db);
-    expect([for (final log in logs) log.isDrill], [0, 1, 0]);
-    expect(logs[1].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 3, 59)), isTrue);
-    expect(logs[2].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 4)), isTrue);
-  });
+      final logs = await _logs(env.db);
+      expect([for (final log in logs) log.isDrill], [0, 1, 0]);
+      expect(
+        logs[1].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 3, 59)),
+        isTrue,
+      );
+      expect(
+        logs[2].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 4)),
+        isTrue,
+      );
+    },
+  );
 
   test('first answer at exactly 04:00 is not drill', () async {
     final at0400 = StudyDay.instant(2026, 10, 5, 4);
@@ -395,7 +414,7 @@ void main() {
     expect(srs.phase, CardPhase.review.name);
   });
 
-  test('due queue has no daily new-card limit', () async {
+  test('fewer than 15 neu all enter the due queue', () async {
     final env = await _openRepo(now);
     addTearDown(env.db.close);
     for (var i = 0; i < 5; i++) {
@@ -413,6 +432,198 @@ void main() {
     expect(
       [for (final card in queue) card.cardId],
       ['card-new-0', 'card-new-1', 'card-new-2', 'card-new-3', 'card-new-4'],
+    );
+  });
+
+  test('due queue takes at most 15 neu, oldest due first', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    for (var i = 0; i < 16; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, i),
+      );
+    }
+
+    final queue = await env.review.dueQueue();
+    expect(queue, hasLength(15));
+    expect(
+      [for (final card in queue) card.cardId],
+      [for (var i = 0; i < 15; i++) 'card-new-$i'],
+    );
+  });
+
+  test('first non-drill on a neu counts once; leftover neu stay out', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    for (var i = 0; i < 16; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, i),
+      );
+    }
+
+    for (var i = 0; i < 15; i++) {
+      await env.review.answer('card-new-$i', ReviewRating.good);
+    }
+
+    final queue = await env.review.dueQueue();
+    expect(queue, isEmpty);
+  });
+
+  test('drill on a neu does not consume another new slot', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    for (var i = 0; i < 16; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, i),
+      );
+    }
+
+    await env.review.answer('card-new-0', ReviewRating.again);
+    env.clock.now = now.add(const Duration(seconds: 1));
+    await env.review.answer('card-new-0', ReviewRating.again);
+    env.clock.now = now.add(const Duration(seconds: 2));
+    for (var i = 1; i < 15; i++) {
+      await env.review.answer('card-new-$i', ReviewRating.good);
+    }
+
+    final queue = await env.review.dueQueue();
+    expect([for (final card in queue) card.cardId], ['card-new-0']);
+    expect(queue.single.srs.phase, CardPhase.learning);
+    final logs = await _logs(env.db);
+    expect(
+      [
+        for (final log in logs.where((log) => log.cardId == 'card-new-0'))
+          log.isDrill,
+      ],
+      [0, 1],
+    );
+  });
+
+  test(
+    'learning, relearning and review still enter when the cap is full',
+    () async {
+      final env = await _openRepo(now);
+      addTearDown(env.db.close);
+      for (var i = 0; i < 16; i++) {
+        await _seedPair(
+          env.db,
+          id: 'new-$i',
+          lemma: '新$i',
+          phase: CardPhase.neu,
+          dueAt: DateTime.utc(2026, 10, 1, 0, i),
+        );
+      }
+      await _seedPair(
+        env.db,
+        id: 'learn',
+        lemma: '学ぶ',
+        phase: CardPhase.learning,
+        dueAt: DateTime.utc(2026, 9, 8),
+      );
+      await _seedPair(
+        env.db,
+        id: 'relearn',
+        lemma: '再',
+        phase: CardPhase.relearning,
+        dueAt: DateTime.utc(2026, 9, 10),
+      );
+      await _seedPair(
+        env.db,
+        id: 'review',
+        lemma: '復習',
+        phase: CardPhase.review,
+        dueAt: DateTime.utc(2026, 9, 1),
+      );
+
+      for (var i = 0; i < 15; i++) {
+        await env.review.answer('card-new-$i', ReviewRating.good);
+      }
+
+      final queue = await env.review.dueQueue();
+      expect(
+        [for (final card in queue) card.cardId],
+        ['card-learn', 'card-relearn', 'card-review'],
+      );
+      expect(queue.map((c) => c.srs.phase), isNot(contains(CardPhase.neu)));
+    },
+  );
+
+  test('answering a learning card does not consume a new slot', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    await _seedPair(
+      env.db,
+      id: 'learn',
+      lemma: '学ぶ',
+      phase: CardPhase.learning,
+      dueAt: DateTime.utc(2026, 9, 8),
+    );
+    await _seedLog(
+      env.db,
+      cardId: 'card-learn',
+      ratedAt: StudyDay.instant(2026, 10, 4, 12),
+    );
+    for (var i = 0; i < 16; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, i),
+      );
+    }
+
+    await env.review.answer('card-learn', ReviewRating.good);
+
+    final queue = await env.review.dueQueue();
+    expect(
+      [for (final card in queue) card.cardId],
+      [for (var i = 0; i < 15; i++) 'card-new-$i'],
+    );
+  });
+
+  test('after 04:00 leftover neu can enter again, up to 15', () async {
+    final env = await _openRepo(StudyDay.instant(2026, 10, 4, 12));
+    addTearDown(env.db.close);
+    for (var i = 0; i < 20; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: StudyDay.instant(2026, 10, 4, 4),
+      );
+    }
+
+    for (var i = 0; i < 15; i++) {
+      await env.review.answer('card-new-$i', ReviewRating.good);
+    }
+    expect([
+      for (final card in await env.review.dueQueue()) card.srs.phase,
+    ], isNot(contains(CardPhase.neu)));
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
+    expect([
+      for (final card in await env.review.dueQueue()) card.cardId,
+    ], isEmpty);
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 4);
+    final afterRollover = await env.review.dueQueue();
+    expect(
+      [for (final card in afterRollover) card.cardId],
+      [for (var i = 15; i < 20; i++) 'card-new-$i'],
     );
   });
 
@@ -556,6 +767,25 @@ Future<void> _seedCard(
           engineId: kSm2JrEngineId,
         ),
       );
+}
+
+Future<void> _seedLog(
+  AppDatabase db, {
+  required String cardId,
+  required DateTime ratedAt,
+  int isDrill = 0,
+}) async {
+  await db.cardsDao.insertLog(
+    UserReviewLogsCompanion.insert(
+      id: 'log-$cardId-${ratedAt.microsecondsSinceEpoch}',
+      cardId: cardId,
+      ratedAt: ratedAt,
+      rating: 3,
+      quality: 4,
+      engineId: kSm2JrEngineId,
+      isDrill: isDrill,
+    ),
+  );
 }
 
 typedef _SrsSnapshot = ({

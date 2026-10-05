@@ -7,6 +7,7 @@ import '../../../core/srs/card_srs_state.dart';
 import '../../../core/srs/sm2_jr.dart';
 import '../../../core/srs/srs_engine.dart';
 import '../../../core/utils/ids.dart';
+import '../domain/new_per_day.dart';
 import '../domain/review_card.dart';
 import '../domain/study_day.dart';
 
@@ -21,7 +22,10 @@ ReviewRepository reviewRepository(Ref ref) {
 ///
 /// Queue: unsuspended (`suspend_reason` null) cards with `card_srs.due_at`
 /// ≤ now. Order: learning/relearning, then review, then new (`neu`); oldest
-/// due first inside each group. No per-day new-card cap.
+/// due first inside each group. At most [NewPerDay.limit] `neu` cards per
+/// study-day (first non-drill answer counts once; leftover `neu` stay out
+/// until the next 04:00 America/Sao_Paulo). Learning / relearning / review
+/// due cards always enter.
 ///
 /// [answer] writes `review_logs` (rating 1–4, quality 0/3/4/5, `sm2-jr@1`)
 /// in one transaction. The first answer of the card on the current study-day
@@ -46,8 +50,16 @@ class ReviewRepository {
   }
 
   Future<List<ReviewCard>> dueQueue() async {
-    final rows = await _db.cardsDao.dueQueue(_nowUtc());
-    return [for (final row in rows) _toCard(row)];
+    final now = _nowUtc();
+    final rows = await _db.cardsDao.dueQueue(now);
+    final introduced = await _db.cardsDao.countNewIntroducedSince(
+      StudyDay.startOf(now),
+    );
+    return applyNewPerDayLimit(
+      [for (final row in rows) _toCard(row)],
+      introduced: introduced,
+      isNew: (card) => card.srs.phase == CardPhase.neu,
+    );
   }
 
   Future<ReviewCard?> nextDue() async {

@@ -27,8 +27,10 @@ class ReviewView {
 }
 
 /// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-/// first build. Again/Hard go to the back; Good/Easy leave. Persistence
-/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
+/// first build (already capped to leftover new-per-day slots). Again/Hard
+/// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
+/// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
+/// vs SRS) lives in [ReviewRepository.answer].
 @riverpod
 class ReviewSession extends _$ReviewSession {
   List<ReviewCard>? _remaining;
@@ -48,7 +50,9 @@ class ReviewSession extends _$ReviewSession {
     if (current == null || remaining == null || remaining.isEmpty) {
       return;
     }
-    await ref.read(reviewRepositoryProvider).answer(current.card.cardId, rating);
+    await ref
+        .read(reviewRepositoryProvider)
+        .answer(current.card.cardId, rating);
     _remaining = applySessionRating(remaining, rating);
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);
