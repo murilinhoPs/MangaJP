@@ -13,6 +13,7 @@ on a second tap), **Conhecido** / **Ignorar** (word_states + optional
 (confirm deletes card + SRS and returns to saved; cancel is a no-op; no card
 does not delete the word), is in
 `test/features/notebook/` plus `test/features/flashcards/`. `/review` (due
-queue, reveal, Again/Hard/Good/Easy → `review_logs` + `sm2-jr@1` schedule)
-is in `test/features/review/`. Default `OcrEngine` wiring (`manga_ocr`
+queue, study-day at 04:00 America/Sao_Paulo, first answer vs drill, session
+Again/Hard requeue, reveal, Again/Hard/Good/Easy → `review_logs` +
+`sm2-jr@1` schedule) is in `test/features/review/`. Default `OcrEngine` wiring (`manga_ocr`
 sidecar) is in `test/features/ocr/`.

@@ -54,6 +54,17 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
     return into(userReviewLogs).insert(row);
   }
 
+  Future<ReviewLogRow?> latestLogFor(String cardId) {
+    return (select(userReviewLogs)
+          ..where((t) => t.cardId.equals(cardId))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.ratedAt),
+            (t) => OrderingTerm.desc(t.id),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<void> deleteLogsFor(String cardId) {
     return (delete(
       userReviewLogs,

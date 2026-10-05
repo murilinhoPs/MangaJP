@@ -15,8 +15,9 @@ abstract final class ReviewKeys {
   static Key rating(ReviewRating rating) => Key('review-${rating.name}');
 }
 
-/// `/review` — one due card: lemma on the front, reading + JMdict gloss
-/// after Revelar, then Again / Hard / Good / Easy.
+/// `/review` — session snapshot of the due queue. Front is the lemma;
+/// Revelar shows reading + JMdict gloss, then Again / Hard / Good / Easy.
+/// Again/Hard go to the back of this session; Good/Easy leave it.
 class ReviewPage extends ConsumerWidget {
   const ReviewPage({super.key});
 
@@ -38,7 +39,10 @@ class ReviewPage extends ConsumerWidget {
             ),
           );
         }
-        return _ReviewCardBody(key: ValueKey(item.card.cardId), view: item);
+        return _ReviewCardBody(
+          key: ValueKey('${item.card.cardId}-${item.showSeq}'),
+          view: item,
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(

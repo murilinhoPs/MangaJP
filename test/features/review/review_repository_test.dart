@@ -6,6 +6,7 @@ import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
+import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
 void main() {
@@ -273,6 +274,148 @@ void main() {
     expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(2));
   });
 
+  test('second answer on the same study-day is drill and does not change SRS', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    await _seedPair(
+      env.db,
+      id: 'eat',
+      lemma: '食べる',
+      phase: CardPhase.neu,
+      dueAt: now,
+      state: WordState.learning,
+    );
+    final prev = (await env.review.nextDue())!.srs;
+
+    await env.review.answer('card-eat', ReviewRating.good);
+    final afterFirst = await _srsSnapshot(env.db);
+    final expected = const Sm2JrEngine().schedule(prev, 4, now);
+    expect(afterFirst.intervalDays, expected.intervalDays);
+    expect(afterFirst.repetitions, expected.repetitions);
+    expect(afterFirst.phase, expected.phase.name);
+
+    env.clock.now = now.add(const Duration(seconds: 1));
+    await env.review.answer('card-eat', ReviewRating.again);
+    env.clock.now = now.add(const Duration(seconds: 2));
+    await env.review.answer('card-eat', ReviewRating.hard);
+
+    final logs = await _logs(env.db);
+    expect(logs, hasLength(3));
+    expect(logs[0].isDrill, 0);
+    expect(logs[0].rating, 3);
+    expect(logs[0].quality, 4);
+    expect(logs[0].engineId, kSm2JrEngineId);
+    expect(logs[1].isDrill, 1);
+    expect(logs[1].rating, 1);
+    expect(logs[1].quality, 0);
+    expect(logs[1].engineId, kSm2JrEngineId);
+    expect(logs[2].isDrill, 1);
+    expect(logs[2].rating, 2);
+    expect(logs[2].quality, 3);
+    expect(await _srsSnapshot(env.db), afterFirst);
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.learning.name,
+    );
+  });
+
+  test('03:59 is drill after a same study-day answer; 04:00 schedules again', () async {
+    final env = await _openRepo(StudyDay.instant(2026, 10, 4, 12));
+    addTearDown(env.db.close);
+    await _seedPair(
+      env.db,
+      id: 'eat',
+      lemma: '食べる',
+      phase: CardPhase.neu,
+      dueAt: StudyDay.instant(2026, 10, 4, 12),
+      state: WordState.learning,
+    );
+    final prev = (await env.review.nextDue())!.srs;
+
+    await env.review.answer('card-eat', ReviewRating.good);
+    final afterFirst = await _srsSnapshot(env.db);
+    expect(
+      afterFirst.intervalDays,
+      const Sm2JrEngine()
+          .schedule(prev, 4, StudyDay.instant(2026, 10, 4, 12))
+          .intervalDays,
+    );
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
+    await env.review.answer('card-eat', ReviewRating.again);
+    expect(await _srsSnapshot(env.db), afterFirst);
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 4);
+    await env.review.answer('card-eat', ReviewRating.hard);
+    final afterRollover = await _srsSnapshot(env.db);
+    final expected = const Sm2JrEngine().schedule(
+      CardSrsState(
+        easeFactor: afterFirst.easeFactor,
+        intervalDays: afterFirst.intervalDays,
+        repetitions: afterFirst.repetitions,
+        dueAt: afterFirst.dueAt,
+        phase: CardPhase.values.byName(afterFirst.phase),
+        engineId: afterFirst.engineId,
+      ),
+      3,
+      StudyDay.instant(2026, 10, 5, 4),
+    );
+    expect(afterRollover.easeFactor, expected.easeFactor);
+    expect(afterRollover.intervalDays, expected.intervalDays);
+    expect(afterRollover.repetitions, expected.repetitions);
+    expect(afterRollover.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
+    expect(afterRollover.phase, expected.phase.name);
+    expect(afterRollover.engineId, expected.engineId);
+
+    final logs = await _logs(env.db);
+    expect([for (final log in logs) log.isDrill], [0, 1, 0]);
+    expect(logs[1].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 3, 59)), isTrue);
+    expect(logs[2].ratedAt.isAtSameMomentAs(StudyDay.instant(2026, 10, 5, 4)), isTrue);
+  });
+
+  test('first answer at exactly 04:00 is not drill', () async {
+    final at0400 = StudyDay.instant(2026, 10, 5, 4);
+    final env = await _openRepo(at0400);
+    addTearDown(env.db.close);
+    await _seedPair(
+      env.db,
+      id: 'eat',
+      lemma: '食べる',
+      phase: CardPhase.neu,
+      dueAt: at0400,
+    );
+
+    await env.review.answer('card-eat', ReviewRating.easy);
+    final log = (await env.db.select(env.db.userReviewLogs).get()).single;
+    expect(log.isDrill, 0);
+    expect(log.rating, 4);
+    expect(log.quality, 5);
+    final srs = await _srsSnapshot(env.db);
+    expect(srs.repetitions, 1);
+    expect(srs.phase, CardPhase.review.name);
+  });
+
+  test('due queue has no daily new-card limit', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    for (var i = 0; i < 5; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, i),
+      );
+    }
+
+    final queue = await env.review.dueQueue();
+    expect(queue, hasLength(5));
+    expect(
+      [for (final card in queue) card.cardId],
+      ['card-new-0', 'card-new-1', 'card-new-2', 'card-new-3', 'card-new-4'],
+    );
+  });
+
   test('answer on a suspended card is a no-op', () async {
     final env = await _openRepo(now);
     addTearDown(env.db.close);
@@ -298,16 +441,27 @@ void main() {
   });
 }
 
+class _Clock {
+  _Clock(this.now);
+  DateTime now;
+}
+
 class _Env {
-  const _Env({required this.db, required this.review});
+  const _Env({required this.db, required this.review, required this.clock});
 
   final AppDatabase db;
   final ReviewRepository review;
+  final _Clock clock;
 }
 
 Future<_Env> _openRepo(DateTime now) async {
   final db = AppDatabase(NativeDatabase.memory());
-  return _Env(db: db, review: ReviewRepository(db, clock: () => now));
+  final clock = _Clock(now);
+  return _Env(
+    db: db,
+    review: ReviewRepository(db, clock: () => clock.now),
+    clock: clock,
+  );
 }
 
 Future<void> _seedPair(
@@ -423,6 +577,12 @@ Future<_SrsSnapshot> _srsSnapshot(AppDatabase db) async {
     phase: row.phase,
     engineId: row.engineId,
   );
+}
+
+Future<List<ReviewLogRow>> _logs(AppDatabase db) async {
+  final rows = await db.select(db.userReviewLogs).get();
+  rows.sort((a, b) => a.ratedAt.compareTo(b.ratedAt));
+  return rows;
 }
 
 Future<Set<String>> _tableNames(AppDatabase db) async {
