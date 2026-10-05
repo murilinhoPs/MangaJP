@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database_provider.dart';
+import '../../review/data/review_repository.dart';
+import '../../review/domain/home_review_counts.dart';
 
 part 'home_controller.g.dart';
 
@@ -15,4 +17,10 @@ class HelloMeta extends _$HelloMeta {
     final dao = ref.watch(appDatabaseProvider).appMetaDao;
     return await dao.getValue(metaKey) ?? initialValue;
   }
+}
+
+/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+@riverpod
+Future<HomeReviewCounts> homeReviewCounts(Ref ref) {
+  return ref.watch(reviewRepositoryProvider).homeCounts();
 }

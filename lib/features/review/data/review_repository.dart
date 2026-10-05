@@ -7,6 +7,7 @@ import '../../../core/srs/card_srs_state.dart';
 import '../../../core/srs/sm2_jr.dart';
 import '../../../core/srs/srs_engine.dart';
 import '../../../core/utils/ids.dart';
+import '../domain/home_review_counts.dart';
 import '../domain/new_per_day.dart';
 import '../domain/review_card.dart';
 import '../domain/study_day.dart';
@@ -50,21 +51,38 @@ class ReviewRepository {
   }
 
   Future<List<ReviewCard>> dueQueue() async {
-    final now = _nowUtc();
-    final rows = await _db.cardsDao.dueQueue(now);
-    final introduced = await _db.cardsDao.countNewIntroducedSince(
-      StudyDay.startOf(now),
-    );
-    return applyNewPerDayLimit(
-      [for (final row in rows) _toCard(row)],
-      introduced: introduced,
-      isNew: (card) => card.srs.phase == CardPhase.neu,
-    );
+    return (await _dueSnapshot()).queue;
+  }
+
+  /// Home **Revisar** block: non-`neu` due now, and `neu` already counted today.
+  Future<HomeReviewCounts> homeCounts() async {
+    final snap = await _dueSnapshot();
+    var due = 0;
+    for (final card in snap.queue) {
+      if (card.srs.phase != CardPhase.neu) {
+        due++;
+      }
+    }
+    return HomeReviewCounts(due: due, newToday: snap.introduced);
   }
 
   Future<ReviewCard?> nextDue() async {
     final queue = await dueQueue();
     return queue.isEmpty ? null : queue.first;
+  }
+
+  Future<({List<ReviewCard> queue, int introduced})> _dueSnapshot() async {
+    final now = _nowUtc();
+    final rows = await _db.cardsDao.dueQueue(now);
+    final introduced = await _db.cardsDao.countNewIntroducedSince(
+      StudyDay.startOf(now),
+    );
+    final queue = applyNewPerDayLimit(
+      [for (final row in rows) _toCard(row)],
+      introduced: introduced,
+      isNew: (card) => card.srs.phase == CardPhase.neu,
+    );
+    return (queue: queue, introduced: introduced);
   }
 
   /// Record [rating]. First answer of the study-day reschedules; later ones

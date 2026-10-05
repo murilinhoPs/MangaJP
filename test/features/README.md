@@ -15,5 +15,7 @@ does not delete the word), is in
 `test/features/notebook/` plus `test/features/flashcards/`. `/review` (due
 queue, study-day at 04:00 America/Sao_Paulo, first answer vs drill, session
 Again/Hard requeue, reveal, Again/Hard/Good/Easy → `review_logs` +
-`sm2-jr@1` schedule, `new_per_day=15`) is in `test/features/review/`. Default `OcrEngine` wiring (`manga_ocr`
+`sm2-jr@1` schedule, `new_per_day=15`) is in `test/features/review/`. Home
+**Revisar** (due + novos hoje, tap → `/review`, 04:00 clock) is in
+`test/features/home/`. Default `OcrEngine` wiring (`manga_ocr`
 sidecar) is in `test/features/ocr/`.

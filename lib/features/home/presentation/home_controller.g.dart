@@ -57,3 +57,47 @@ abstract class _$HelloMeta extends $AsyncNotifier<String> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+
+@ProviderFor(homeReviewCounts)
+final homeReviewCountsProvider = HomeReviewCountsProvider._();
+
+/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+
+final class HomeReviewCountsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<HomeReviewCounts>,
+          HomeReviewCounts,
+          FutureOr<HomeReviewCounts>
+        >
+    with $FutureModifier<HomeReviewCounts>, $FutureProvider<HomeReviewCounts> {
+  /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+  HomeReviewCountsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeReviewCountsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeReviewCountsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<HomeReviewCounts> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<HomeReviewCounts> create(Ref ref) {
+    return homeReviewCounts(ref);
+  }
+}
+
+String _$homeReviewCountsHash() => r'1811d6ad9c18f0061263d7729749c5c9e17273c1';
