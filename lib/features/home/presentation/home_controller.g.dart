@@ -57,3 +57,59 @@ abstract class _$HelloMeta extends $AsyncNotifier<String> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+///
+/// Refetches when a `/review` answer persists, and again when the shell
+/// returns to `/home` (Home stays mounted as a branch, so a one-shot
+/// FutureProvider would otherwise stay stale).
+
+@ProviderFor(homeReviewCounts)
+final homeReviewCountsProvider = HomeReviewCountsProvider._();
+
+/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+///
+/// Refetches when a `/review` answer persists, and again when the shell
+/// returns to `/home` (Home stays mounted as a branch, so a one-shot
+/// FutureProvider would otherwise stay stale).
+
+final class HomeReviewCountsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<HomeReviewCounts>,
+          HomeReviewCounts,
+          FutureOr<HomeReviewCounts>
+        >
+    with $FutureModifier<HomeReviewCounts>, $FutureProvider<HomeReviewCounts> {
+  /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+  ///
+  /// Refetches when a `/review` answer persists, and again when the shell
+  /// returns to `/home` (Home stays mounted as a branch, so a one-shot
+  /// FutureProvider would otherwise stay stale).
+  HomeReviewCountsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeReviewCountsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeReviewCountsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<HomeReviewCounts> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<HomeReviewCounts> create(Ref ref) {
+    return homeReviewCounts(ref);
+  }
+}
+
+String _$homeReviewCountsHash() => r'a97e950a86bb928c0880f1fb9560ce794ecc274f';

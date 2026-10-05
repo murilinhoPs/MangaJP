@@ -53,6 +53,7 @@ class ReviewSession extends _$ReviewSession {
     await ref
         .read(reviewRepositoryProvider)
         .answer(current.card.cardId, rating);
+    ref.read(reviewRevisionProvider.notifier).bump();
     _remaining = applySessionRating(remaining, rating);
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);

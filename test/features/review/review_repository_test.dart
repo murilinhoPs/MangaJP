@@ -657,6 +657,141 @@ void main() {
       WordState.known.name,
     );
   });
+
+  test('homeCounts is 0 due and 0 new when the queue is empty', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+
+    final counts = await env.review.homeCounts();
+    expect(counts.due, 0);
+    expect(counts.newToday, 0);
+  });
+
+  test(
+    'homeCounts due is the non-neu queue; waiting neu are not newToday',
+    () async {
+      final env = await _openRepo(now);
+      addTearDown(env.db.close);
+      await _seedPair(
+        env.db,
+        id: 'learn',
+        lemma: '学ぶ',
+        phase: CardPhase.learning,
+        dueAt: DateTime.utc(2026, 9, 8),
+      );
+      await _seedPair(
+        env.db,
+        id: 'relearn',
+        lemma: '再',
+        phase: CardPhase.relearning,
+        dueAt: DateTime.utc(2026, 9, 10),
+      );
+      await _seedPair(
+        env.db,
+        id: 'review',
+        lemma: '復習',
+        phase: CardPhase.review,
+        dueAt: DateTime.utc(2026, 9, 1),
+      );
+      await _seedPair(
+        env.db,
+        id: 'new-0',
+        lemma: '新0',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1),
+      );
+      await _seedPair(
+        env.db,
+        id: 'new-1',
+        lemma: '新1',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+      );
+      await _seedPair(
+        env.db,
+        id: 'later',
+        lemma: '明日',
+        phase: CardPhase.learning,
+        dueAt: DateTime.utc(2026, 10, 6),
+      );
+      await _seedPair(
+        env.db,
+        id: 'known',
+        lemma: '既知',
+        phase: CardPhase.learning,
+        dueAt: DateTime.utc(2026, 8, 1),
+        suspendReason: WordState.known.name,
+      );
+
+      final counts = await env.review.homeCounts();
+      expect(counts.due, 3);
+      expect(counts.newToday, 0);
+    },
+  );
+
+  test(
+    'homeCounts newToday is first non-drill neu answers this study-day',
+    () async {
+      final env = await _openRepo(now);
+      addTearDown(env.db.close);
+      await _seedPair(
+        env.db,
+        id: 'learn',
+        lemma: '学ぶ',
+        phase: CardPhase.learning,
+        dueAt: DateTime.utc(2026, 9, 8),
+      );
+      await _seedPair(
+        env.db,
+        id: 'new-0',
+        lemma: '新0',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1),
+      );
+      await _seedPair(
+        env.db,
+        id: 'new-1',
+        lemma: '新1',
+        phase: CardPhase.neu,
+        dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+      );
+
+      await env.review.answer('card-new-0', ReviewRating.good);
+      env.clock.now = now.add(const Duration(seconds: 1));
+      await env.review.answer('card-new-1', ReviewRating.good);
+      env.clock.now = now.add(const Duration(seconds: 2));
+      await env.review.answer('card-new-0', ReviewRating.good);
+
+      final counts = await env.review.homeCounts();
+      expect(counts.newToday, 2);
+      expect(counts.due, 1);
+    },
+  );
+
+  test('homeCounts newToday resets at 04:00 America/Sao_Paulo', () async {
+    final env = await _openRepo(StudyDay.instant(2026, 10, 4, 12));
+    addTearDown(env.db.close);
+    for (var i = 0; i < 3; i++) {
+      await _seedPair(
+        env.db,
+        id: 'new-$i',
+        lemma: '新$i',
+        phase: CardPhase.neu,
+        dueAt: StudyDay.instant(2026, 10, 4, 4),
+      );
+    }
+    for (var i = 0; i < 3; i++) {
+      await env.review.answer('card-new-$i', ReviewRating.good);
+    }
+
+    expect((await env.review.homeCounts()).newToday, 3);
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
+    expect((await env.review.homeCounts()).newToday, 3);
+
+    env.clock.now = StudyDay.instant(2026, 10, 5, 4);
+    expect((await env.review.homeCounts()).newToday, 0);
+  });
 }
 
 class _Clock {
