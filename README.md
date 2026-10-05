@@ -1,8 +1,92 @@
 # MangaJP Study
 
-Personal Android-first Flutter app for studying Japanese from manga (share/crop → OCR → JMdict → Caderno → SM-2). Domain SM-2 (`sm2-jr@1`, a port of japanese-reader `sm2.clj`) lives in `lib/core/srs/`. Japanese deinflection (`lib/core/deinflect/`) is a GPL port of Yomitan transforms. **M1.1** is share/import → `/capture` → ≥1 crop → manga-ocr sidecar → persisted Drift text. **M1.2** opens `/pages/:id` with that `ocr_text`. **M1.3** taps a form on that page, deinflects it, and shows the local JMdict gloss (highest `forms.priority` when several entries match). **M1.4** Save on that sheet writes `words` + `word_states=saved` + `crop_words` (no card, no Caderno). **M1.5** `/notebook` lists every word with a `word_state` (saved / learning / known / ignored), newest `first_saved_at` first, with lemma/reading search and a state filter. **M1.6** taps a Caderno row to open `/notebook/word/:id` (lemma, reading, state, JMdict gloss by seq, first crop sentence + page link). **M1.7** **Aprender** on that detail sets `word_states=learning` and creates a `cards` + `card_srs` row with the golden `sm2-jr@1` initial state (no duplicate / no SRS reset if a card already exists). **M1.8** **Conhecido** / **Ignorar** on that detail set `word_states` to `known` / `ignored` and, when a card exists, `cards.suspend_reason` to the same value (no card create/delete, no SRS rewrite, word stays in the Caderno). **M1.9** **Remover card** on that detail asks for confirmation; confirm deletes `cards` + `card_srs` + that card's `review_logs` and sets `word_states=saved`. The word stays in the Caderno. Cancel is a no-op. No card → the word is not deleted and no card is created. **M1.10** `/review` shows one due unsuspended card (learning/relearning, then review, then new; oldest `card_srs.due_at` first). The front is the lemma; Revelar shows the reading and the JMdict gloss by seq. Again / Hard / Good / Easy write `review_logs` (rating 1/2/3/4, quality 0/3/4/5, `engine_id` `sm2-jr@1`) and, on the first answer of that card in the current study-day, update `card_srs` with the existing `schedule` in the same transaction. **M1.11** study-day rolls at 04:00 America/Sao_Paulo. A later answer of the same card on that study-day writes `is_drill=1` and does not change `card_srs`. Again / Hard go to the back of the in-memory session; Good / Easy leave it. `word_state` stays `learning`. **M1.12** `/review` takes at most 15 new (`neu`) cards per study-day (`new_per_day` constant, no settings screen). A `neu` card counts on its first non-drill answer that study-day; leftover `neu` stay out until the next 04:00 America/Sao_Paulo. Due learning / relearning / review still enter. A `neu` already in the session (Again/Hard) stays. **M1.13** Home **Revisar** shows due (learning / relearning / review that would enter the queue now) and **Novos hoje** (`N de 15`, `neu` already counted this study-day). Tap opens `/review`. The block stays with `0` / `0 de 15`. **M1.14** **Remover do Caderno** on `/notebook/word/:id` asks for confirmation (a second confirmation when the word has a card) and deletes the word, `word_states`, `crop_words`, and if a card exists `cards` + `card_srs` + that card's `review_logs`. Crops and pages stay. Cancel on either dialog is a no-op. **Remover card** (M1.9) is unchanged.
+A personal, Android-first Flutter app for learning Japanese vocabulary **from the manga you are actually reading**.
 
-License: **GPL-3.0** (Q-B3 / Yomitan deinflect).
+You share (or import) a manga page, crop a speech bubble, and the app reads the Japanese text with OCR. Tap any word to see its dictionary form and meaning, save it to your notebook (**Caderno**), and turn it into a spaced-repetition flashcard. Every word keeps a link back to the sentence and page where you found it.
+
+## Why this exists
+
+Reading raw manga is one of the most motivating ways to learn Japanese, but the lookup loop is slow: the text is vertical, stylized, full of kanji you can't type, and verbs are conjugated so they don't match a dictionary headword. Words you look up are then easy to forget, because they end up in a separate flashcard app with no memory of where they came from.
+
+MangaJP Study closes that loop in one place:
+
+1. **Get the text out of the image** without typing — crop the bubble and OCR it with a manga-specific model.
+2. **Look the word up correctly** — deinflect conjugated forms (食べた → 食べる) and match them against a local JMdict.
+3. **Decide what to do with it** — save it, learn it, mark it as known, or ignore it.
+4. **Remember it** — review learned words with an SM-2 scheduler, with the original manga sentence as context.
+
+It is a **single-user, local-first tool** built for the author's own study routine: no accounts, no server, no sync. All data lives in an on-device SQLite database. The UI is in Brazilian Portuguese and the study day follows the `America/Sao_Paulo` time zone.
+
+## How it works
+
+```
+Share / import image → crop bubble → OCR (manga-ocr) → page text
+      → tap a word → deinflect + JMdict lookup → Salvar → Caderno
+      → Aprender → flashcard (sm2-jr@1) → /review
+```
+
+| Step | Screen | What happens |
+| --- | --- | --- |
+| Capture | `/capture` | Share an image to MangaJP (Android / iOS) or use Home → **Galeria**. Draw one or more crop rectangles and confirm. |
+| OCR | — | Each crop is sent to the local manga-ocr sidecar; the recognized text is stored with the crop. |
+| Read | `/pages/:id` | Shows the page's OCR text. Tapping a form deinflects it and shows the JMdict gloss (highest `forms.priority` wins on ties). |
+| Save | lookup sheet | **Salvar** adds the word to the Caderno in the `saved` state, linked to the crop it came from. No flashcard yet. |
+| Notebook | `/notebook` | Lists every word you have touched, newest first, with lemma/reading search and a state filter. |
+| Word detail | `/notebook/word/:id` | Lemma, reading, state, gloss, first source sentence and a link to its page. Actions: **Aprender**, **Conhecido**, **Ignorar**, **Remover card**, **Remover do Caderno**. |
+| Review | `/review` | One due card at a time: front is the lemma, **Revelar** shows reading + gloss, then rate **Again / Hard / Good / Easy**. |
+| Home | `/home` | The **Revisar** block shows how many cards are due and **Novos hoje** (`N de 15`). |
+
+### Word states
+
+| State | Meaning | Flashcard |
+| --- | --- | --- |
+| `saved` | Collected while reading, not studying yet | none |
+| `learning` | **Aprender** — actively studying | created with the initial `sm2-jr@1` state |
+| `known` | **Conhecido** — already know it | kept but suspended |
+| `ignored` | **Ignorar** — not worth studying | kept but suspended |
+
+**Remover card** deletes only the flashcard and its review history (the word goes back to `saved`). **Remover do Caderno** deletes the word and everything attached to it, but keeps the captured pages and crops.
+
+### Review rules
+
+- The **study day** rolls over at **04:00 America/Sao_Paulo**.
+- Queue order: learning / relearning, then review, then new cards; oldest `due_at` first.
+- At most **15 new cards per study day** (`new_per_day`, no settings screen yet).
+- Only the **first answer** of a card in a study day updates its schedule. Later answers in the same day are logged as drills (`is_drill=1`).
+- **Again / Hard** send the card to the back of the current session; **Good / Easy** remove it from the session.
+
+## Project status
+
+The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet.
+
+See [Milestone history](#milestone-history) for the detailed behavior of each step.
+
+## Key technical decisions
+
+- **OCR: manga-ocr as a local sidecar.** ML Kit, Google Cloud Vision, and manga-ocr were scored on 44 hand-transcribed manga crops (M0.3 bake-off). manga-ocr had the lowest character error rate (**20.75%**, vs. Cloud Vision 44.53% and ML Kit 95.47%), so it is the working default. It runs as a Python HTTP service (`tools/manga_ocr_sidecar/`) instead of embedding torch in the app. None of the engines hit the 10% target, so the OCR choice (Q-B1) is still open. Details: [`docs/m0.3-cer-bakeoff.md`](docs/m0.3-cer-bakeoff.md).
+- **Dictionary: local JMdict.** A read-only `jmdict.sqlite` (plus optional KANJIDIC2) is baked by `tools/build_jmdict_sqlite/` and shipped as an asset, so lookups work offline.
+- **Deinflection: Yomitan port.** `lib/core/deinflect/` is a pure Dart port of Yomitan's Japanese transforms, which is why the project is **GPL-3.0**.
+- **SRS: `sm2-jr@1`.** `lib/core/srs/` is a pure Dart port of the SM-2 implementation in the `japanese-reader` project (`sm2.clj`), verified by golden tests ported from its Clojure test suite.
+- **Storage: Drift (SQLite)** for pages, crops, words, word states, cards, SRS state, and review logs.
+
+## Tech stack
+
+Flutter / Dart, Riverpod (codegen), go_router (typed routes), Drift, freezed / json_serializable, `receive_sharing_intent` (share target), `image_picker` + `image` (crop). Python tooling for the dictionary build, OCR sidecar, and OCR bake-off.
+
+## Project layout
+
+Feature-first + MVVM (PRD §12.2).
+
+| Path | Contents |
+| --- | --- |
+| `lib/core/` | `router`, `theme`, `widgets`, `utils`, `database` (Drift tables + DAOs), `srs` (`sm2-jr@1`), `deinflect` (Yomitan port) |
+| `lib/features/` | `home`, `capture`, `ocr`, `dictionary`, `pages`, `words`, `notebook`, `flashcards`, `review`, `settings` |
+| `tools/build_jmdict_sqlite/` | Builds `assets/dict/jmdict.sqlite` from JMdict / KANJIDIC2 |
+| `tools/manga_ocr_sidecar/` | Local HTTP OCR service used by the app |
+| `tools/cer_bakeoff/` | Reproducible OCR engine comparison (M0.3) |
+| `docs/` | Design write-ups (OCR bake-off) |
+| `scripts/` | Flutter / Android SDK bootstrap and Cloud Agents install |
+| `test/` | Unit, golden, and widget tests mirroring `lib/` |
 
 ## Setup
 
@@ -15,6 +99,18 @@ dart run build_runner build --delete-conflicting-outputs
 
 Regenerate after changing `@riverpod`, `@DriftDatabase` / DAOs, `@freezed`, or `@TypedGoRoute` types.
 
+To use the full loop you also need the dictionary and the OCR sidecar:
+
+1. Bake the dictionary — see [Dictionary](#dictionary-jmdictsqlite).
+2. Start the OCR sidecar (reuses the bake-off venv, see `tools/cer_bakeoff/README.md`):
+
+   ```bash
+   source tools/cer_bakeoff/.venv/bin/activate
+   python3 tools/manga_ocr_sidecar/serve.py
+   ```
+
+   The app POSTs crop PNG bytes to `http://127.0.0.1:8765/ocr`. Override with `--dart-define=MANGA_OCR_URL=...` if needed.
+
 ## Run on Android
 
 ```bash
@@ -24,9 +120,7 @@ flutter run
 
 The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar, writes `crops.ocr_text`, and goes to `/pages/:id`. Tapping OCR text there looks up the lemma in the local JMdict (`assets/dict/jmdict.sqlite`). **Salvar** persists the chosen entry without creating a flashcard.
 
-### Share + crop + OCR (M1.1)
-
-See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, the manga-ocr sidecar, and device steps. Confirm crop navigates to `/pages/:id` with the persisted OCR text. CI: `flutter test test/features/capture/ test/features/pages/`.
+See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, the manga-ocr sidecar, and device steps. CI: `flutter test test/features/capture/ test/features/pages/`.
 
 ## Run on iOS
 
@@ -128,6 +222,27 @@ flutter build apk --debug
 
 Cloud VMs typically have no nested Android emulator even when KVM is present; `flutter build apk` is the reliable Android check. `flutter run` needs a device or emulator you attach yourself.
 
-## Layout
+## Milestone history
 
-Feature-first + MVVM as in the PRD §12.2: `lib/core/{router,theme,widgets,utils,srs,deinflect,database}` and `lib/features/{home,capture,ocr,dictionary,words,flashcards,review,pages,notebook,settings}`.
+M0 set up the foundation: app shell and routing (M0.1), OCR ground truth and engine bake-off (M0.2–M0.3), the JMdict build (M0.5), and the share/gallery crop UI (M0.8). M1 builds the study loop on top of it:
+
+| Milestone | Behavior |
+| --- | --- |
+| **M1.1** | Share/import → `/capture` → ≥1 crop → manga-ocr sidecar → OCR text persisted in Drift. |
+| **M1.2** | `/pages/:id` shows that `ocr_text`. |
+| **M1.3** | Tapping a form on the page deinflects it and shows the local JMdict gloss (highest `forms.priority` when several entries match). |
+| **M1.4** | **Salvar** on the lookup sheet writes `words` + `word_states=saved` + `crop_words` (no card). |
+| **M1.5** | `/notebook` lists every word with a `word_state` (saved / learning / known / ignored), newest `first_saved_at` first, with lemma/reading search and a state filter. |
+| **M1.6** | Tapping a Caderno row opens `/notebook/word/:id` (lemma, reading, state, JMdict gloss by seq, first crop sentence + page link). |
+| **M1.7** | **Aprender** sets `word_states=learning` and creates `cards` + `card_srs` with the golden `sm2-jr@1` initial state. No duplicate and no SRS reset if a card already exists. |
+| **M1.8** | **Conhecido** / **Ignorar** set `word_states` to `known` / `ignored` and, when a card exists, `cards.suspend_reason` to the same value. No card create/delete, no SRS rewrite; the word stays in the Caderno. |
+| **M1.9** | **Remover card** asks for confirmation; confirm deletes `cards` + `card_srs` + that card's `review_logs` and sets `word_states=saved`. The word stays in the Caderno. Cancel is a no-op. Without a card, nothing is deleted or created. |
+| **M1.10** | `/review` shows one due, unsuspended card (learning/relearning, then review, then new; oldest `card_srs.due_at` first). Front is the lemma; **Revelar** shows reading + JMdict gloss. Again / Hard / Good / Easy write `review_logs` (rating 1/2/3/4, quality 0/3/4/5, `engine_id` `sm2-jr@1`) and, on the first answer of that card in the study day, update `card_srs` in the same transaction. |
+| **M1.11** | The study day rolls at 04:00 America/Sao_Paulo. Later answers of the same card that day write `is_drill=1` and don't change `card_srs`. Again / Hard go to the back of the in-memory session; Good / Easy leave it. `word_state` stays `learning`. |
+| **M1.12** | At most 15 new (`neu`) cards per study day (`new_per_day` constant). A `neu` card counts on its first non-drill answer; leftover `neu` cards wait for the next 04:00. Due learning / relearning / review cards still enter, and a `neu` card already in the session (Again/Hard) stays. |
+| **M1.13** | Home **Revisar** shows due cards (learning / relearning / review that would enter the queue now) and **Novos hoje** (`N de 15`). Tap opens `/review`. The block stays visible at `0` / `0 de 15`. |
+| **M1.14** | **Remover do Caderno** asks for confirmation (a second one when the word has a card) and deletes the word, `word_states`, `crop_words`, and, if present, `cards` + `card_srs` + that card's `review_logs`. Crops and pages stay. Cancel on either dialog is a no-op. |
+
+## License
+
+**GPL-3.0**, required by the Yomitan-derived deinflector (Q-B3). JMdict and KANJIDIC2 data are © EDRDG; see `tools/build_jmdict_sqlite/README.md` for attribution.
