@@ -226,21 +226,16 @@ Future<_SeededCard> _seedCard(
           engineId: srs.engineId,
         ),
       );
+  final card = (await db.select(db.userCards).get()).single;
+  final persisted = await _srsSnapshot(db);
   final stateUpdatedAt = (await db.select(db.userWordStates).get())
       .single
       .updatedAt;
   return _SeededCard(
-    cardId: cardId,
-    createdAt: createdAt,
+    cardId: card.id,
+    createdAt: card.createdAt,
     stateUpdatedAt: stateUpdatedAt,
-    srs: (
-      easeFactor: srs.easeFactor,
-      intervalDays: srs.intervalDays,
-      repetitions: srs.repetitions,
-      dueAt: dueAt,
-      phase: srs.phase,
-      engineId: srs.engineId,
-    ),
+    srs: persisted,
   );
 }
 
