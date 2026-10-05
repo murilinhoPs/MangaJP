@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
 import '../../flashcards/data/flashcards_repository.dart';
+import '../../words/data/words_repository.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
@@ -20,10 +21,23 @@ abstract final class NotebookWordKeys {
   static const deleteCard = Key('notebook-word-delete-card');
   static const deleteCardCancel = Key('notebook-word-delete-card-cancel');
   static const deleteCardConfirm = Key('notebook-word-delete-card-confirm');
+  static const removeFromNotebook = Key('notebook-word-remove-from-notebook');
+  static const removeFromNotebookCancel = Key(
+    'notebook-word-remove-from-notebook-cancel',
+  );
+  static const removeFromNotebookConfirm = Key(
+    'notebook-word-remove-from-notebook-confirm',
+  );
+  static const removeFromNotebookCardCancel = Key(
+    'notebook-word-remove-from-notebook-card-cancel',
+  );
+  static const removeFromNotebookCardConfirm = Key(
+    'notebook-word-remove-from-notebook-card-confirm',
+  );
 }
 
 /// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop,
-/// Aprender / Conhecido / Ignorar / Remover card.
+/// Aprender / Conhecido / Ignorar / Remover card / Remover do Caderno.
 class NotebookWordPage extends ConsumerWidget {
   const NotebookWordPage({super.key, required this.wordId});
 
@@ -147,6 +161,15 @@ class _NotebookWordBody extends ConsumerWidget {
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
+          const SizedBox(height: 8),
+          TextButton(
+            key: NotebookWordKeys.removeFromNotebook,
+            onPressed: () => _confirmRemoveFromNotebook(context, ref),
+            child: Text(
+              'Remover do Caderno',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
         ],
       ),
     );
@@ -181,6 +204,80 @@ class _NotebookWordBody extends ConsumerWidget {
       return;
     }
     await _runStudy(ref, (repo) => repo.deleteCard(wordId));
+  }
+
+  Future<void> _confirmRemoveFromNotebook(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final words = ref.read(wordsRepositoryProvider);
+    final hasCard = await words.hasCard(wordId);
+    if (!context.mounted) {
+      return;
+    }
+
+    final first = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Remover do Caderno?'),
+          content: const Text('A palavra será apagada do Caderno.'),
+          actions: [
+            TextButton(
+              key: NotebookWordKeys.removeFromNotebookCancel,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              key: NotebookWordKeys.removeFromNotebookConfirm,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Remover'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted || first != true) {
+      return;
+    }
+
+    if (hasCard) {
+      final second = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Apagar o card também?'),
+            content: const Text(
+              'O card, o progresso SRS e o histórico de revisão '
+              'também serão apagados.',
+            ),
+            actions: [
+              TextButton(
+                key: NotebookWordKeys.removeFromNotebookCardCancel,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                key: NotebookWordKeys.removeFromNotebookCardConfirm,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Remover'),
+              ),
+            ],
+          );
+        },
+      );
+      if (!context.mounted || second != true) {
+        return;
+      }
+    }
+
+    await words.removeFromNotebook(wordId);
+    ref.invalidate(notebookWordProvider(wordId));
+    ref.invalidate(notebookEntriesProvider);
+    if (!context.mounted) {
+      return;
+    }
+    const NotebookRoute().go(context);
   }
 
   Future<void> _runStudy(

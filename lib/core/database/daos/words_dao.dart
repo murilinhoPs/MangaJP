@@ -67,6 +67,18 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
     return into(cropWords).insert(row, mode: InsertMode.insertOrIgnore);
   }
 
+  Future<void> deleteCropWordsFor(String wordId) {
+    return (delete(cropWords)..where((t) => t.wordId.equals(wordId))).go();
+  }
+
+  Future<void> deleteState(String wordId) {
+    return (delete(userWordStates)..where((t) => t.wordId.equals(wordId))).go();
+  }
+
+  Future<void> deleteWord(String wordId) {
+    return (delete(userWords)..where((t) => t.id.equals(wordId))).go();
+  }
+
   /// Words that have a listed study state, newest [UserWords.createdAt] first.
   ///
   /// [createdAt] is first-saved time: Save inserts the word once and never

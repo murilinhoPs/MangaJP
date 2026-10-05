@@ -13,10 +13,20 @@ WordsRepository wordsRepository(Ref ref) {
 }
 
 /// Words + word_states + crop_words. Save never creates a card.
+///
+/// [removeFromNotebook] deletes the word and dependents (state, crop_words,
+/// and if a card exists: review_logs, card_srs, cards). Crops and pages stay.
+/// FKs have no ON DELETE CASCADE; dependents are deleted in the same
+/// transaction. Does not insert a leftover `word_states` row.
 class WordsRepository {
   const WordsRepository(this._db);
 
   final AppDatabase _db;
+
+  /// True when [wordId] has a `cards` row. Used by Caderno confirmations.
+  Future<bool> hasCard(String wordId) async {
+    return (await _db.cardsDao.cardForWord(wordId)) != null;
+  }
 
   /// Persist the chosen JMdict entry against [cropId].
   ///
@@ -71,6 +81,32 @@ class WordsRepository {
           createdAt: DateTime.now().toUtc(),
         ),
       );
+    });
+  }
+
+  /// Delete [wordId] from the Caderno.
+  ///
+  /// Missing word → no-op. Existing word → drop that word's `crop_words`,
+  /// `word_states`, and `words`. If a card exists, drop that card's
+  /// `review_logs`, then `card_srs`, then `cards` (FK order) first. Crops
+  /// and pages are not rewritten. No leftover `word_states` row is inserted.
+  Future<void> removeFromNotebook(String wordId) {
+    return _db.transaction(() async {
+      final word = await _db.wordsDao.wordById(wordId);
+      if (word == null) {
+        return;
+      }
+
+      final card = await _db.cardsDao.cardForWord(wordId);
+      if (card != null) {
+        await _db.cardsDao.deleteLogsFor(card.id);
+        await _db.cardsDao.deleteSrs(card.id);
+        await _db.cardsDao.deleteCard(card.id);
+      }
+
+      await _db.wordsDao.deleteCropWordsFor(wordId);
+      await _db.wordsDao.deleteState(wordId);
+      await _db.wordsDao.deleteWord(wordId);
     });
   }
 }
