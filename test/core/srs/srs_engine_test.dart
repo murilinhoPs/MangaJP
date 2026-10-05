@@ -73,6 +73,17 @@ void main() {
     );
   });
 
+  test('ratingFor is 1–4 and qualityFor is 0/3/4/5', () {
+    expect(ratingFor(ReviewRating.again), 1);
+    expect(ratingFor(ReviewRating.hard), 2);
+    expect(ratingFor(ReviewRating.good), 3);
+    expect(ratingFor(ReviewRating.easy), 4);
+    expect(qualityFor(ReviewRating.again), 0);
+    expect(qualityFor(ReviewRating.hard), 3);
+    expect(qualityFor(ReviewRating.good), 4);
+    expect(qualityFor(ReviewRating.easy), 5);
+  });
+
   test('preview schedules all four ratings from qualityFor', () {
     final prev = CardSrsState(
       easeFactor: 2.5,

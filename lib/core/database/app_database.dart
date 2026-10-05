@@ -14,6 +14,7 @@ import 'tables/captured_pages.dart';
 import 'tables/crop_words.dart';
 import 'tables/user_card_srs.dart';
 import 'tables/user_cards.dart';
+import 'tables/user_review_logs.dart';
 import 'tables/user_word_states.dart';
 import 'tables/user_words.dart';
 
@@ -29,6 +30,7 @@ part 'app_database.g.dart';
     CropWords,
     UserCards,
     UserCardSrs,
+    UserReviewLogs,
   ],
   daos: [AppMetaDao, PagesDao, WordsDao, CardsDao],
 )
@@ -36,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -46,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '5'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '6'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -96,6 +98,15 @@ class AppDatabase extends _$AppDatabase {
             AppMetaCompanion.insert(key: 'schema_version', value: '5'),
             onConflict: DoUpdate(
               (_) => const AppMetaCompanion(value: Value('5')),
+            ),
+          );
+        }
+        if (from < 6) {
+          await m.createTable(userReviewLogs);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '6'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('6')),
             ),
           );
         }

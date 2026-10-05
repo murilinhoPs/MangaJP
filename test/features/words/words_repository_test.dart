@@ -18,7 +18,7 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '5');
+    expect(await db.appMetaDao.getValue('schema_version'), '6');
     final names = await _tableNames(db);
     expect(
       names,

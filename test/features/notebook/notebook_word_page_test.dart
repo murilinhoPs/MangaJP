@@ -568,7 +568,8 @@ void main() {
       expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
       expect(await env.db.select(env.db.cropWords).get(), isNotEmpty);
       expect(await _tableNames(env.db), tablesBefore);
-      expect(tablesBefore, isNot(contains('review_logs')));
+      expect(tablesBefore, contains('review_logs'));
+      expect(await env.db.select(env.db.userReviewLogs).get(), isEmpty);
 
       const NotebookRoute().go(tester.element(find.byType(NotebookWordPage)));
       await tester.pumpAndSettle();

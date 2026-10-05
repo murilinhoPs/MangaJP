@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import 'user_cards.dart';
 
 /// SM-2 fields for a card (`card_srs`): ease, interval, repetitions, due, phase.
+///
+/// Due is [dueAt] (`due_at`). The review queue uses `due_at <= now`.
 @DataClassName('CardSrsRow')
 class UserCardSrs extends Table {
   @override
