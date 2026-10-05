@@ -1,8 +1,9 @@
-/// Study-day used to decide first-answer vs drill.
+/// Study-day used to decide first-answer vs drill and the new-card daily cap.
 ///
 /// Time zone is America/Sao_Paulo (fixed UTC−3; DST ended in 2019). The day
-/// rolls at 04:00 local. That boundary only names the study-day — it does
-/// not cap new cards or rewrite SRS by itself.
+/// rolls at 04:00 local. That boundary names the study-day. The new-card
+/// daily cap counts a `neu` card's first non-drill answer against this
+/// window.
 abstract final class StudyDay {
   static const String timeZoneName = 'America/Sao_Paulo';
   static const int rolloverHour = 4;
