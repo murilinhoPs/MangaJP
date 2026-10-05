@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
+import 'package:manga_jp/core/database/app_database_open_io.dart';
 
 void main() {
   test('onCreate seeds app_meta hello once', () async {

@@ -12,4 +12,4 @@ python3 tools/build_jmdict_sqlite/build_jmdict_sqlite.py \
 
 See `tools/build_jmdict_sqlite/README.md` for flags, schema, fixtures, and EDRDG attribution.
 
-After baking, the file is included via `pubspec.yaml` `assets/dict/`. At runtime the app copies it out of the bundle (`ensureJmdictFile`) and `JmdictService` opens that filesystem path read-only.
+After baking, the file is included via `pubspec.yaml` `assets/dict/`. Native copies it out of the Flutter bundle (`ensureJmdictFile` in `jmdict_open_io.dart`) because sqlite needs a real filesystem path. Flutter web loads `web/sqlite3.wasm` and opens the asset bytes in an in-memory VFS (`jmdict_open_web.dart`).
