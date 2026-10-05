@@ -6,7 +6,7 @@ import '../../flashcards/data/flashcards_repository.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
-/// Keys for `/notebook/word/:id` (lemma / gloss / first crop / Aprender).
+/// Keys for `/notebook/word/:id` (lemma / gloss / first crop / study actions).
 abstract final class NotebookWordKeys {
   static const lemma = Key('notebook-word-lemma');
   static const reading = Key('notebook-word-reading');
@@ -15,9 +15,12 @@ abstract final class NotebookWordKeys {
   static const sentence = Key('notebook-word-sentence');
   static const pageLink = Key('notebook-word-page-link');
   static const learn = Key('notebook-word-learn');
+  static const known = Key('notebook-word-known');
+  static const ignore = Key('notebook-word-ignore');
 }
 
-/// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop, Aprender.
+/// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop,
+/// Aprender / Conhecido / Ignorar.
 class NotebookWordPage extends ConsumerWidget {
   const NotebookWordPage({super.key, required this.wordId});
 
@@ -115,14 +118,31 @@ class _NotebookWordBody extends ConsumerWidget {
         const SizedBox(height: 16),
         FilledButton(
           key: NotebookWordKeys.learn,
-          onPressed: () async {
-            await ref.read(flashcardsRepositoryProvider).learn(wordId);
-            ref.invalidate(notebookWordProvider(wordId));
-            ref.invalidate(notebookEntriesProvider);
-          },
+          onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
           child: const Text('Aprender'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: NotebookWordKeys.known,
+          onPressed: () => _runStudy(ref, (repo) => repo.markKnown(wordId)),
+          child: const Text('Conhecido'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: NotebookWordKeys.ignore,
+          onPressed: () => _runStudy(ref, (repo) => repo.markIgnored(wordId)),
+          child: const Text('Ignorar'),
         ),
       ],
     );
+  }
+
+  Future<void> _runStudy(
+    WidgetRef ref,
+    Future<void> Function(FlashcardsRepository repo) action,
+  ) async {
+    await action(ref.read(flashcardsRepositoryProvider));
+    ref.invalidate(notebookWordProvider(wordId));
+    ref.invalidate(notebookEntriesProvider);
   }
 }

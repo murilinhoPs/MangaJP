@@ -1958,8 +1958,25 @@ class $UserCardsTable extends UserCards
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _suspendReasonMeta = const VerificationMeta(
+    'suspendReason',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, wordId, kind, createdAt];
+  late final GeneratedColumn<String> suspendReason = GeneratedColumn<String>(
+    'suspend_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    wordId,
+    kind,
+    createdAt,
+    suspendReason,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2001,6 +2018,15 @@ class $UserCardsTable extends UserCards
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('suspend_reason')) {
+      context.handle(
+        _suspendReasonMeta,
+        suspendReason.isAcceptableOrUnknown(
+          data['suspend_reason']!,
+          _suspendReasonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2026,6 +2052,10 @@ class $UserCardsTable extends UserCards
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      suspendReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}suspend_reason'],
+      ),
     );
   }
 
@@ -2040,11 +2070,13 @@ class UserCard extends DataClass implements Insertable<UserCard> {
   final String wordId;
   final String kind;
   final DateTime createdAt;
+  final String? suspendReason;
   const UserCard({
     required this.id,
     required this.wordId,
     required this.kind,
     required this.createdAt,
+    this.suspendReason,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2053,6 +2085,9 @@ class UserCard extends DataClass implements Insertable<UserCard> {
     map['word_id'] = Variable<String>(wordId);
     map['kind'] = Variable<String>(kind);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || suspendReason != null) {
+      map['suspend_reason'] = Variable<String>(suspendReason);
+    }
     return map;
   }
 
@@ -2062,6 +2097,9 @@ class UserCard extends DataClass implements Insertable<UserCard> {
       wordId: Value(wordId),
       kind: Value(kind),
       createdAt: Value(createdAt),
+      suspendReason: suspendReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(suspendReason),
     );
   }
 
@@ -2075,6 +2113,7 @@ class UserCard extends DataClass implements Insertable<UserCard> {
       wordId: serializer.fromJson<String>(json['wordId']),
       kind: serializer.fromJson<String>(json['kind']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      suspendReason: serializer.fromJson<String?>(json['suspendReason']),
     );
   }
   @override
@@ -2085,6 +2124,7 @@ class UserCard extends DataClass implements Insertable<UserCard> {
       'wordId': serializer.toJson<String>(wordId),
       'kind': serializer.toJson<String>(kind),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'suspendReason': serializer.toJson<String?>(suspendReason),
     };
   }
 
@@ -2093,11 +2133,15 @@ class UserCard extends DataClass implements Insertable<UserCard> {
     String? wordId,
     String? kind,
     DateTime? createdAt,
+    Value<String?> suspendReason = const Value.absent(),
   }) => UserCard(
     id: id ?? this.id,
     wordId: wordId ?? this.wordId,
     kind: kind ?? this.kind,
     createdAt: createdAt ?? this.createdAt,
+    suspendReason: suspendReason.present
+        ? suspendReason.value
+        : this.suspendReason,
   );
   UserCard copyWithCompanion(UserCardsCompanion data) {
     return UserCard(
@@ -2105,6 +2149,9 @@ class UserCard extends DataClass implements Insertable<UserCard> {
       wordId: data.wordId.present ? data.wordId.value : this.wordId,
       kind: data.kind.present ? data.kind.value : this.kind,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      suspendReason: data.suspendReason.present
+          ? data.suspendReason.value
+          : this.suspendReason,
     );
   }
 
@@ -2114,13 +2161,14 @@ class UserCard extends DataClass implements Insertable<UserCard> {
           ..write('id: $id, ')
           ..write('wordId: $wordId, ')
           ..write('kind: $kind, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('suspendReason: $suspendReason')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, wordId, kind, createdAt);
+  int get hashCode => Object.hash(id, wordId, kind, createdAt, suspendReason);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2128,7 +2176,8 @@ class UserCard extends DataClass implements Insertable<UserCard> {
           other.id == this.id &&
           other.wordId == this.wordId &&
           other.kind == this.kind &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.suspendReason == this.suspendReason);
 }
 
 class UserCardsCompanion extends UpdateCompanion<UserCard> {
@@ -2136,12 +2185,14 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
   final Value<String> wordId;
   final Value<String> kind;
   final Value<DateTime> createdAt;
+  final Value<String?> suspendReason;
   final Value<int> rowid;
   const UserCardsCompanion({
     this.id = const Value.absent(),
     this.wordId = const Value.absent(),
     this.kind = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.suspendReason = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UserCardsCompanion.insert({
@@ -2149,6 +2200,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
     required String wordId,
     required String kind,
     required DateTime createdAt,
+    this.suspendReason = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        wordId = Value(wordId),
@@ -2159,6 +2211,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
     Expression<String>? wordId,
     Expression<String>? kind,
     Expression<DateTime>? createdAt,
+    Expression<String>? suspendReason,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2166,6 +2219,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
       if (wordId != null) 'word_id': wordId,
       if (kind != null) 'kind': kind,
       if (createdAt != null) 'created_at': createdAt,
+      if (suspendReason != null) 'suspend_reason': suspendReason,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2175,6 +2229,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
     Value<String>? wordId,
     Value<String>? kind,
     Value<DateTime>? createdAt,
+    Value<String?>? suspendReason,
     Value<int>? rowid,
   }) {
     return UserCardsCompanion(
@@ -2182,6 +2237,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
       wordId: wordId ?? this.wordId,
       kind: kind ?? this.kind,
       createdAt: createdAt ?? this.createdAt,
+      suspendReason: suspendReason ?? this.suspendReason,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2201,6 +2257,9 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (suspendReason.present) {
+      map['suspend_reason'] = Variable<String>(suspendReason.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2214,6 +2273,7 @@ class UserCardsCompanion extends UpdateCompanion<UserCard> {
           ..write('wordId: $wordId, ')
           ..write('kind: $kind, ')
           ..write('createdAt: $createdAt, ')
+          ..write('suspendReason: $suspendReason, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4761,6 +4821,7 @@ typedef $$UserCardsTableCreateCompanionBuilder = UserCardsCompanion Function({
   required String wordId,
   required String kind,
   required DateTime createdAt,
+  Value<String?> suspendReason,
   Value<int> rowid,
 });
 typedef $$UserCardsTableUpdateCompanionBuilder = UserCardsCompanion Function({
@@ -4768,6 +4829,7 @@ typedef $$UserCardsTableUpdateCompanionBuilder = UserCardsCompanion Function({
   Value<String> wordId,
   Value<String> kind,
   Value<DateTime> createdAt,
+  Value<String?> suspendReason,
   Value<int> rowid,
 });
 
@@ -4832,6 +4894,11 @@ class $$UserCardsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get suspendReason => $composableBuilder(
+    column: $table.suspendReason,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4908,6 +4975,11 @@ class $$UserCardsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get suspendReason => $composableBuilder(
+    column: $table.suspendReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$UserWordsTableOrderingComposer get wordId {
     final $$UserWordsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4949,6 +5021,11 @@ class $$UserCardsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get suspendReason => $composableBuilder(
+    column: $table.suspendReason,
+    builder: (column) => column,
+  );
 
   $$UserWordsTableAnnotationComposer get wordId {
     final $$UserWordsTableAnnotationComposer composer = $composerBuilder(
@@ -5031,12 +5108,14 @@ class $$UserCardsTableTableManager
                 Value<String> wordId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> suspendReason = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UserCardsCompanion(
                 id: id,
                 wordId: wordId,
                 kind: kind,
                 createdAt: createdAt,
+                suspendReason: suspendReason,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5045,12 +5124,14 @@ class $$UserCardsTableTableManager
                 required String wordId,
                 required String kind,
                 required DateTime createdAt,
+                Value<String?> suspendReason = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UserCardsCompanion.insert(
                 id: id,
                 wordId: wordId,
                 kind: kind,
                 createdAt: createdAt,
+                suspendReason: suspendReason,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -18,11 +18,17 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '4');
+    expect(await db.appMetaDao.getValue('schema_version'), '5');
     final names = await _tableNames(db);
     expect(
       names,
-      containsAll(<String>['words', 'word_states', 'crop_words', 'cards', 'card_srs']),
+      containsAll(<String>[
+        'words',
+        'word_states',
+        'crop_words',
+        'cards',
+        'card_srs',
+      ]),
     );
     expect(await _cardRowCount(db), 0);
   });
