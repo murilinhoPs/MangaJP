@@ -144,11 +144,8 @@ void main() {
     expect(links.single.wordId, words.single.id);
     expect(links.single.cropId, crops.single.id);
 
-    final tableRows = await db
-        .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
-        .get();
-    final names = {for (final row in tableRows) row.read<String>('name')};
-    expect(names.where((name) => name.contains('card')), isEmpty);
+    expect(await db.select(db.userCards).get(), isEmpty);
+    expect(await db.select(db.userCardSrs).get(), isEmpty);
   });
 
   testWidgets('Salvar again from the sheet does not duplicate rows', (

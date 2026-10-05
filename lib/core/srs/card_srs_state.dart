@@ -17,6 +17,14 @@ int qualityFor(ReviewRating rating) => switch (rating) {
   ReviewRating.easy => 5,
 };
 
+/// Persisted `review_logs.rating` (1–4). Quality stays [qualityFor] (0/3/4/5).
+int ratingFor(ReviewRating rating) => switch (rating) {
+  ReviewRating.again => 1,
+  ReviewRating.hard => 2,
+  ReviewRating.good => 3,
+  ReviewRating.easy => 4,
+};
+
 /// Map JR status strings onto MangaJP [CardPhase] **without** changing SM-2 math.
 ///
 /// - failed (`JrReviewStatus.learning`) → [CardPhase.learning] or

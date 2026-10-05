@@ -1,8 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
+import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/core/utils/ids.dart';
+import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/words/data/words_repository.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
@@ -14,14 +16,23 @@ const _highHomographSeq = 9990001;
 const _lowHomographSeq = 9990002;
 
 void main() {
-  test('onCreate has words / word_states / crop_words and no cards', () async {
+  test('onCreate has words / word_states / crop_words / cards', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '3');
+    expect(await db.appMetaDao.getValue('schema_version'), '6');
     final names = await _tableNames(db);
-    expect(names, containsAll(<String>['words', 'word_states', 'crop_words']));
-    expect(names.where((name) => name.contains('card')), isEmpty);
+    expect(
+      names,
+      containsAll(<String>[
+        'words',
+        'word_states',
+        'crop_words',
+        'cards',
+        'card_srs',
+      ]),
+    );
+    expect(await _cardRowCount(db), 0);
   });
 
   test(
@@ -54,8 +65,6 @@ void main() {
       expect(links.single.wordId, words.single.id);
 
       expect(await _cardRowCount(env.db), 0);
-      final names = await _tableNames(env.db);
-      expect(names.where((name) => name.contains('card')), isEmpty);
     },
   );
 
@@ -164,6 +173,280 @@ void main() {
     expect(await env.db.select(env.db.cropWords).get(), hasLength(2));
     expect(await _cardRowCount(env.db), 0);
   });
+
+  test(
+    'crop_words / word_states / cards FKs are not ON DELETE CASCADE',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      Future<Set<String>> onDelete(String table) async {
+        final rows = await db
+            .customSelect('PRAGMA foreign_key_list($table)')
+            .get();
+        return {
+          for (final row in rows) row.read<String>('on_delete').toUpperCase(),
+        };
+      }
+
+      expect(await onDelete('crop_words'), isNot(contains('CASCADE')));
+      expect(await onDelete('word_states'), isNot(contains('CASCADE')));
+      expect(await onDelete('cards'), isNot(contains('CASCADE')));
+      expect(await onDelete('card_srs'), isNot(contains('CASCADE')));
+      expect(await onDelete('review_logs'), isNot(contains('CASCADE')));
+    },
+  );
+
+  test('removeFromNotebook without a card deletes word, state, crop_words; '
+      'crop and page stay unchanged', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await env.words.saveFromLookup(
+      cropId: env.cropId,
+      seq: _taberuSeq,
+      lemma: '食べる',
+      reading: 'たべる',
+    );
+    final wordId = (await env.db.select(env.db.userWords).get()).single.id;
+    final cropBefore = (await env.db.select(env.db.capturedCrops).get()).single;
+    final pageBefore = (await env.db.select(env.db.capturedPages).get()).single;
+
+    await env.words.removeFromNotebook(wordId);
+
+    expect(await env.db.select(env.db.userWords).get(), isEmpty);
+    expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+    expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+    expect(await env.db.select(env.db.userCards).get(), isEmpty);
+    expect(await env.db.wordsDao.wordBySeq(_taberuSeq), isNull);
+
+    final cropAfter = (await env.db.select(env.db.capturedCrops).get()).single;
+    final pageAfter = (await env.db.select(env.db.capturedPages).get()).single;
+    expect(_cropSnapshot(cropAfter), _cropSnapshot(cropBefore));
+    expect(_pageSnapshot(pageAfter), _pageSnapshot(pageBefore));
+  });
+
+  test(
+    'removeFromNotebook with a card also deletes card, SRS, and logs',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await env.words.saveFromLookup(
+        cropId: env.cropId,
+        seq: _taberuSeq,
+        lemma: '食べる',
+        reading: 'たべる',
+      );
+      final wordId = (await env.db.select(env.db.userWords).get()).single.id;
+      await _seedCardAndLog(env.db, wordId: wordId);
+      final cropBefore =
+          (await env.db.select(env.db.capturedCrops).get()).single;
+      final pageBefore =
+          (await env.db.select(env.db.capturedPages).get()).single;
+      expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(1));
+
+      await env.words.removeFromNotebook(wordId);
+
+      expect(await env.db.select(env.db.userWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+      expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+      expect(await env.db.select(env.db.userReviewLogs).get(), isEmpty);
+      expect(
+        _cropSnapshot((await env.db.select(env.db.capturedCrops).get()).single),
+        _cropSnapshot(cropBefore),
+      );
+      expect(
+        _pageSnapshot((await env.db.select(env.db.capturedPages).get()).single),
+        _pageSnapshot(pageBefore),
+      );
+    },
+  );
+
+  test('removeFromNotebook on a missing word is a no-op', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await env.words.saveFromLookup(
+      cropId: env.cropId,
+      seq: _taberuSeq,
+      lemma: '食べる',
+      reading: 'たべる',
+    );
+    final beforeWords = await env.db.select(env.db.userWords).get();
+    final beforeStates = await env.db.select(env.db.userWordStates).get();
+    final beforeLinks = await env.db.select(env.db.cropWords).get();
+
+    await env.words.removeFromNotebook('missing');
+
+    expect(
+      (await env.db.select(env.db.userWords).get()).single.id,
+      beforeWords.single.id,
+    );
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.updatedAt,
+      beforeStates.single.updatedAt,
+    );
+    expect(
+      (await env.db.select(env.db.cropWords).get()).single.createdAt,
+      beforeLinks.single.createdAt,
+    );
+  });
+
+  test(
+    'removeFromNotebook leaves a second word, its card, SRS, logs, and links',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await env.words.saveFromLookup(
+        cropId: env.cropId,
+        seq: _taberuSeq,
+        lemma: '食べる',
+        reading: 'たべる',
+      );
+      final eatId = (await env.db.select(env.db.userWords).get()).single.id;
+      await _seedCardAndLog(env.db, wordId: eatId);
+
+      await env.db
+          .into(env.db.userWords)
+          .insert(
+            UserWordsCompanion.insert(
+              id: 'drink',
+              seq: _highHomographSeq,
+              lemma: '飲む',
+              reading: 'のむ',
+              createdAt: DateTime.utc(2026, 1, 2),
+            ),
+          );
+      await env.db
+          .into(env.db.userWordStates)
+          .insert(
+            UserWordStatesCompanion.insert(
+              wordId: 'drink',
+              state: WordState.learning.name,
+              updatedAt: DateTime.utc(2026, 1, 2),
+            ),
+          );
+      await env.db
+          .into(env.db.userCards)
+          .insert(
+            UserCardsCompanion.insert(
+              id: 'card-drink',
+              wordId: 'drink',
+              kind: FlashcardKind.vocab.name,
+              createdAt: DateTime.utc(2026, 2, 2),
+            ),
+          );
+      await env.db
+          .into(env.db.userCardSrs)
+          .insert(
+            UserCardSrsCompanion.insert(
+              cardId: 'card-drink',
+              easeFactor: 2.5,
+              intervalDays: 7,
+              repetitions: 2,
+              dueAt: DateTime.utc(2026, 7, 1),
+              phase: 'review',
+              engineId: kSm2JrEngineId,
+            ),
+          );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-drink',
+              cardId: 'card-drink',
+              ratedAt: DateTime.utc(2026, 3, 2),
+              rating: 4,
+              quality: 5,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+      await env.db
+          .into(env.db.cropWords)
+          .insert(
+            CropWordsCompanion.insert(
+              cropId: env.cropId,
+              wordId: 'drink',
+              createdAt: DateTime.utc(2026, 1, 6),
+            ),
+          );
+
+      await env.words.removeFromNotebook(eatId);
+
+      expect((await env.db.select(env.db.userWords).get()).single.id, 'drink');
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.wordId,
+        'drink',
+      );
+      expect(
+        (await env.db.select(env.db.userCards).get()).single.id,
+        'card-drink',
+      );
+      expect(
+        (await env.db.select(env.db.userCardSrs).get()).single.cardId,
+        'card-drink',
+      );
+      expect(
+        (await env.db.select(env.db.userReviewLogs).get()).single.id,
+        'log-drink',
+      );
+      expect(
+        (await env.db.select(env.db.cropWords).get()).single.wordId,
+        'drink',
+      );
+    },
+  );
+
+  test('after removeFromNotebook, lookup of the same seq is unknown and Save '
+      'inserts a new word without leftover state', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await env.words.saveFromLookup(
+      cropId: env.cropId,
+      seq: _taberuSeq,
+      lemma: '食べる',
+      reading: 'たべる',
+    );
+    final oldId = (await env.db.select(env.db.userWords).get()).single.id;
+    await env.words.removeFromNotebook(oldId);
+
+    expect(await env.db.wordsDao.wordBySeq(_taberuSeq), isNull);
+    expect(await env.db.wordsDao.stateFor(oldId), isNull);
+    expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+
+    await env.words.saveFromLookup(
+      cropId: env.cropId,
+      seq: _taberuSeq,
+      lemma: '食べる',
+      reading: 'たべる',
+    );
+
+    final words = await env.db.select(env.db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.id, isNot(oldId));
+    expect(words.single.seq, _taberuSeq);
+    final states = await env.db.select(env.db.userWordStates).get();
+    expect(states, hasLength(1));
+    expect(states.single.wordId, words.single.id);
+    expect(states.single.state, WordState.saved.name);
+    expect(states.single.wordId, isNot(oldId));
+  });
+
+  test('hasCard is true only when a cards row exists', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await env.words.saveFromLookup(
+      cropId: env.cropId,
+      seq: _taberuSeq,
+      lemma: '食べる',
+      reading: 'たべる',
+    );
+    final wordId = (await env.db.select(env.db.userWords).get()).single.id;
+    expect(await env.words.hasCard(wordId), isFalse);
+    await _seedCardAndLog(env.db, wordId: wordId);
+    expect(await env.words.hasCard(wordId), isTrue);
+  });
 }
 
 class _Env {
@@ -226,6 +509,77 @@ Future<Set<String>> _tableNames(AppDatabase db) async {
       .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
       .get();
   return {for (final row in rows) row.read<String>('name')};
+}
+
+Future<void> _seedCardAndLog(AppDatabase db, {required String wordId}) async {
+  await db
+      .into(db.userCards)
+      .insert(
+        UserCardsCompanion.insert(
+          id: 'card-$wordId',
+          wordId: wordId,
+          kind: FlashcardKind.vocab.name,
+          createdAt: DateTime.utc(2026, 2, 1),
+        ),
+      );
+  await db
+      .into(db.userCardSrs)
+      .insert(
+        UserCardSrsCompanion.insert(
+          cardId: 'card-$wordId',
+          easeFactor: 2.36,
+          intervalDays: 14,
+          repetitions: 3,
+          dueAt: DateTime.utc(2026, 6, 15),
+          phase: 'review',
+          engineId: kSm2JrEngineId,
+        ),
+      );
+  await db
+      .into(db.userReviewLogs)
+      .insert(
+        UserReviewLogsCompanion.insert(
+          id: 'log-$wordId',
+          cardId: 'card-$wordId',
+          ratedAt: DateTime.utc(2026, 3, 1),
+          rating: 3,
+          quality: 4,
+          engineId: kSm2JrEngineId,
+          isDrill: 0,
+        ),
+      );
+}
+
+typedef _CropSnapshot = ({
+  String id,
+  String pageId,
+  String ocrText,
+  String engineId,
+  double left,
+  double top,
+  double width,
+  double height,
+  DateTime createdAt,
+});
+
+typedef _PageSnapshot = ({String id, String sha256, DateTime createdAt});
+
+_CropSnapshot _cropSnapshot(CapturedCrop row) {
+  return (
+    id: row.id,
+    pageId: row.pageId,
+    ocrText: row.ocrText,
+    engineId: row.engineId,
+    left: row.left,
+    top: row.top,
+    width: row.width,
+    height: row.height,
+    createdAt: row.createdAt,
+  );
+}
+
+_PageSnapshot _pageSnapshot(CapturedPage row) {
+  return (id: row.id, sha256: row.sha256, createdAt: row.createdAt);
 }
 
 Future<int> _cardRowCount(AppDatabase db) async {

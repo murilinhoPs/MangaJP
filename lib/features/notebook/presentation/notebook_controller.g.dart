@@ -106,3 +106,89 @@ final class NotebookEntriesProvider
 }
 
 String _$notebookEntriesHash() => r'd1e61f2b3eaef104590467bc7b36605d634f497b';
+
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+
+@ProviderFor(notebookWord)
+final notebookWordProvider = NotebookWordFamily._();
+
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+
+final class NotebookWordProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<NotebookWordView?>,
+          NotebookWordView?,
+          FutureOr<NotebookWordView?>
+        >
+    with
+        $FutureModifier<NotebookWordView?>,
+        $FutureProvider<NotebookWordView?> {
+  /// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+  NotebookWordProvider._({
+    required NotebookWordFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'notebookWordProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookWordHash();
+
+  @override
+  String toString() {
+    return r'notebookWordProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<NotebookWordView?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<NotebookWordView?> create(Ref ref) {
+    final argument = this.argument as String;
+    return notebookWord(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NotebookWordProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$notebookWordHash() => r'831b249e6f8060321483e5f81ce2c907f1de918b';
+
+/// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+
+final class NotebookWordFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<NotebookWordView?>, String> {
+  NotebookWordFamily._()
+    : super(
+        retry: null,
+        name: r'notebookWordProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
+
+  NotebookWordProvider call(String wordId) =>
+      NotebookWordProvider._(argument: wordId, from: this);
+
+  @override
+  String toString() => r'notebookWordProvider';
+}

@@ -15,6 +15,19 @@ const String kSm2JrEngineId = 'sm2-jr@1';
 const double kDefaultEaseFactor = 2.5;
 const double kMinimumEaseFactor = 1.3;
 
+/// New-card SRS before any review. Same `prev` the golden tests schedule from:
+/// EF 2.5, interval 0, repetitions 0, [CardPhase.neu], due [now].
+CardSrsState initialCardSrsState(DateTime now) {
+  return CardSrsState(
+    easeFactor: kDefaultEaseFactor,
+    intervalDays: 0,
+    repetitions: 0,
+    dueAt: now,
+    phase: CardPhase.neu,
+    engineId: kSm2JrEngineId,
+  );
+}
+
 /// Result of [nextReview], mirroring the map returned by Clojure `next-review`.
 class Sm2Review {
   const Sm2Review({
