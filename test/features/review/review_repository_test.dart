@@ -615,14 +615,21 @@ void main() {
     ], isNot(contains(CardPhase.neu)));
 
     env.clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
+    final beforeRollover = await env.review.dueQueue();
     expect([
-      for (final card in await env.review.dueQueue()) card.cardId,
-    ], isEmpty);
+      for (final card in beforeRollover) card.srs.phase,
+    ], everyElement(CardPhase.review));
+    expect([
+      for (final card in beforeRollover) card.cardId,
+    ], isNot(contains('card-new-15')));
 
     env.clock.now = StudyDay.instant(2026, 10, 5, 4);
     final afterRollover = await env.review.dueQueue();
     expect(
-      [for (final card in afterRollover) card.cardId],
+      [
+        for (final card in afterRollover)
+          if (card.srs.phase == CardPhase.neu) card.cardId,
+      ],
       [for (var i = 15; i < 20; i++) 'card-new-$i'],
     );
   });
