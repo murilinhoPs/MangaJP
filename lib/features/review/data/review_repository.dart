@@ -8,6 +8,7 @@ import '../../../core/srs/sm2_jr.dart';
 import '../../../core/srs/srs_engine.dart';
 import '../../../core/utils/ids.dart';
 import '../domain/review_card.dart';
+import '../domain/study_day.dart';
 
 part 'review_repository.g.dart';
 
@@ -16,15 +17,18 @@ ReviewRepository reviewRepository(Ref ref) {
   return ReviewRepository(ref.watch(appDatabaseProvider));
 }
 
-/// Due queue and first-answer write for `/review`.
+/// Due queue and answer write for `/review`.
 ///
 /// Queue: unsuspended (`suspend_reason` null) cards with `card_srs.due_at`
 /// ≤ now. Order: learning/relearning, then review, then new (`neu`); oldest
-/// due first inside each group.
+/// due first inside each group. No per-day new-card cap.
 ///
-/// [answer] writes `review_logs` (rating 1–4, quality 0/3/4/5, `sm2-jr@1`,
-/// `is_drill=0`) and updates `card_srs` via [SrsEngine.schedule] in one
-/// transaction. It does not change `word_states`.
+/// [answer] writes `review_logs` (rating 1–4, quality 0/3/4/5, `sm2-jr@1`)
+/// in one transaction. The first answer of the card on the current study-day
+/// (America/Sao_Paulo, rolls at 04:00) updates `card_srs` via
+/// [SrsEngine.schedule] and sets `is_drill=0`. A later answer that same
+/// study-day sets `is_drill=1` and leaves `card_srs` unchanged. It does not
+/// change `word_states`.
 class ReviewRepository {
   ReviewRepository(
     this._db, {
@@ -51,7 +55,8 @@ class ReviewRepository {
     return queue.isEmpty ? null : queue.first;
   }
 
-  /// Record [rating] and reschedule with the existing `sm2-jr@1` engine.
+  /// Record [rating]. First answer of the study-day reschedules; later ones
+  /// are drill.
   ///
   /// Missing or suspended card → no-op. `word_states` is not rewritten.
   Future<void> answer(String cardId, ReviewRating rating) {
@@ -66,9 +71,9 @@ class ReviewRepository {
       }
 
       final now = _nowUtc();
-      final prev = _srsFromRow(srsRow);
+      final last = await _db.cardsDao.latestLogFor(cardId);
+      final drill = StudyDay.isDrill(now, last?.ratedAt);
       final quality = qualityFor(rating);
-      final next = _engine.schedule(prev, quality, now);
 
       await _db.cardsDao.insertLog(
         UserReviewLogsCompanion.insert(
@@ -78,9 +83,15 @@ class ReviewRepository {
           rating: ratingFor(rating),
           quality: quality,
           engineId: _engine.engineId,
-          isDrill: 0,
+          isDrill: drill ? 1 : 0,
         ),
       );
+      if (drill) {
+        return;
+      }
+
+      final prev = _srsFromRow(srsRow);
+      final next = _engine.schedule(prev, quality, now);
       await _db.cardsDao.writeSrs(
         cardId,
         UserCardSrsCompanion(

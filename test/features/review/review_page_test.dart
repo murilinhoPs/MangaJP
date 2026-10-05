@@ -202,6 +202,111 @@ void main() {
       _expectNoOutOfScopeControls(tester);
     },
   );
+
+  testWidgets(
+    'Again puts the card at the back, resets the front, and the next tap is drill',
+    (tester) async {
+      final env = await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+      );
+      final prev = CardSrsState(
+        easeFactor: kDefaultEaseFactor,
+        intervalDays: 0,
+        repetitions: 0,
+        dueAt: _now,
+        phase: CardPhase.neu,
+        engineId: kSm2JrEngineId,
+      );
+
+      await _revealAndRate(tester, ReviewRating.again);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
+      expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+      expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsNothing);
+
+      await _revealAndRate(tester, ReviewRating.again);
+
+      final logs = await env.db.select(env.db.userReviewLogs).get();
+      expect(logs, hasLength(2));
+      expect(logs[0].isDrill, 0);
+      expect(logs[0].rating, 1);
+      expect(logs[0].quality, 0);
+      expect(logs[1].isDrill, 1);
+      expect(logs[1].rating, 1);
+      expect(logs[1].quality, 0);
+      expect(logs[1].engineId, kSm2JrEngineId);
+
+      final expected = const Sm2JrEngine().schedule(prev, 0, logs[0].ratedAt);
+      final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+      expect(srs.easeFactor, expected.easeFactor);
+      expect(srs.intervalDays, expected.intervalDays);
+      expect(srs.repetitions, expected.repetitions);
+      expect(srs.dueAt, expected.dueAt);
+      expect(srs.phase, expected.phase.name);
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.state,
+        WordState.learning.name,
+      );
+    },
+  );
+
+  testWidgets(
+    'Hard sends the card to the end; Good and Easy leave the session',
+    (tester) async {
+      final env = await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_hayaiCard, _fukushuCard],
+      );
+
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+      await _revealAndRate(tester, ReviewRating.hard);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '復習');
+      expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+
+      await _revealAndRate(tester, ReviewRating.good);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+
+      await _revealAndRate(tester, ReviewRating.easy);
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+
+      final logs = await env.db.select(env.db.userReviewLogs).get();
+      expect(
+        {for (final log in logs) (log.cardId, log.isDrill, log.rating)},
+        {
+          ('card-early', 0, 2),
+          ('card-review', 0, 3),
+          ('card-early', 1, 4),
+        },
+      );
+      final early = (await env.db.select(env.db.userCardSrs).get())
+          .singleWhere((row) => row.cardId == 'card-early');
+      final firstHard = logs.firstWhere(
+        (log) => log.cardId == 'card-early' && log.isDrill == 0,
+      );
+      final expected = const Sm2JrEngine().schedule(
+        CardSrsState(
+          easeFactor: kDefaultEaseFactor,
+          intervalDays: 0,
+          repetitions: 0,
+          dueAt: DateTime.utc(2026, 9, 1),
+          phase: CardPhase.learning,
+          engineId: kSm2JrEngineId,
+        ),
+        3,
+        firstHard.ratedAt,
+      );
+      expect(early.easeFactor, expected.easeFactor);
+      expect(early.intervalDays, expected.intervalDays);
+      expect(early.repetitions, expected.repetitions);
+      expect(early.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
+      expect(early.phase, expected.phase.name);
+    },
+  );
 }
 
 const _taberuCard = (
@@ -211,6 +316,28 @@ const _taberuCard = (
   seq: _taberuSeq,
   phase: CardPhase.neu,
   dueAt: null,
+  suspendReason: null,
+  state: WordState.learning,
+);
+
+final _hayaiCard = (
+  id: 'early',
+  lemma: '早い',
+  reading: 'はやい',
+  seq: 1,
+  phase: CardPhase.learning,
+  dueAt: DateTime.utc(2026, 9, 1),
+  suspendReason: null,
+  state: WordState.learning,
+);
+
+final _fukushuCard = (
+  id: 'review',
+  lemma: '復習',
+  reading: 'ふくしゅう',
+  seq: 2,
+  phase: CardPhase.review,
+  dueAt: DateTime.utc(2026, 9, 20),
   suspendReason: null,
   state: WordState.learning,
 );
@@ -307,6 +434,13 @@ Future<_Env> _openReview(
   const ReviewRoute().go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
   return _Env(db: db);
+}
+
+Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
+  await tester.tap(find.byKey(ReviewKeys.reveal));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(ReviewKeys.rating(rating)));
+  await tester.pumpAndSettle();
 }
 
 void _expectNoOutOfScopeControls(WidgetTester tester) {
