@@ -8,7 +8,9 @@ widget tests. Save (words + word_states=saved + crop_words, no card) is in
 `test/features/words/`. Caderno list / search / state filter, and tapping a row
 to `/notebook/word/:id` (fixture JMdict gloss by seq, first crop sentence, page
 link), **Aprender** (word_states=learning + one card / card_srs, no SRS reset
-on a second tap), and **Conhecido** / **Ignorar** (word_states + optional
-`cards.suspend_reason`, card / SRS / Caderno list kept), is in
+on a second tap), **Conhecido** / **Ignorar** (word_states + optional
+`cards.suspend_reason`, card / SRS / Caderno list kept), and **Remover card**
+(confirm deletes card + SRS and returns to saved; cancel is a no-op; no card
+does not delete the word), is in
 `test/features/notebook/` plus `test/features/flashcards/`. Default
 `OcrEngine` wiring (`manga_ocr` sidecar) is in `test/features/ocr/`.

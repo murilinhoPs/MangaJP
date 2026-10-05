@@ -123,6 +123,7 @@ void main() {
       expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.known), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.ignore), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
 
       _expectNoOutOfScopeControls(tester);
       final states = await env.db.select(env.db.userWordStates).get();
@@ -528,6 +529,127 @@ void main() {
       WordState.known.name,
     );
   });
+
+  testWidgets(
+    'confirming Remover card deletes card and SRS and returns to saved',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      final tablesBefore = await _tableNames(env.db);
+
+      await _tapDeleteCard(tester, confirm: true);
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
+        '食べる',
+      );
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Salvo',
+      );
+      expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
+      _expectNoOutOfScopeControls(tester);
+
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.state,
+        WordState.saved.name,
+      );
+      expect(
+        (await env.db.select(env.db.userWords).get()).single.id,
+        env.wordId,
+      );
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+      expect(await env.db.select(env.db.cropWords).get(), isNotEmpty);
+      expect(await _tableNames(env.db), tablesBefore);
+      expect(tablesBefore, isNot(contains('review_logs')));
+
+      const NotebookRoute().go(tester.element(find.byType(NotebookWordPage)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(find.byKey(NotebookKeys.row(env.wordId)), findsOneWidget);
+      expect(
+        tester
+            .widget<ListTile>(find.byKey(NotebookKeys.row(env.wordId)))
+            .trailing,
+        isA<Text>().having((text) => text.data, 'label', 'Salvo'),
+      );
+
+      await tester.tap(find.byKey(NotebookKeys.row(env.wordId)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
+        '食べる',
+      );
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Salvo',
+      );
+    },
+  );
+
+  testWidgets('cancelling Remover card is a no-op', (tester) async {
+    final env = await _openWord(
+      tester,
+      jmdictPath: jmdictPath,
+      state: WordState.learning,
+      card: true,
+    );
+    final before = await _studySnapshot(env.db);
+
+    await _tapDeleteCard(tester, confirm: false);
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(NotebookWordPage), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Aprendendo',
+    );
+    expect(await _studySnapshot(env.db), before);
+    expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+    expect(await env.db.select(env.db.userCardSrs).get(), hasLength(1));
+  });
+
+  testWidgets(
+    'Remover card without a card does not delete the word or create a card',
+    (tester) async {
+      final env = await _openWord(tester, jmdictPath: jmdictPath);
+      final before = await _studySnapshot(env.db);
+
+      await _tapDeleteCard(tester, confirm: true);
+
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
+        '食べる',
+      );
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Salvo',
+      );
+      expect(await _studySnapshot(env.db), before);
+      expect(
+        (await env.db.select(env.db.userWords).get()).single.id,
+        env.wordId,
+      );
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+
+      const NotebookRoute().go(tester.element(find.byType(NotebookWordPage)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(NotebookKeys.row(env.wordId)), findsOneWidget);
+    },
+  );
 }
 
 class _Env {
@@ -767,8 +889,33 @@ Future<void> _seedCrop(
       );
 }
 
+Future<void> _tapDeleteCard(
+  WidgetTester tester, {
+  required bool confirm,
+}) async {
+  final delete = find.byKey(NotebookWordKeys.deleteCard);
+  await tester.scrollUntilVisible(
+    delete,
+    80,
+    scrollable: find.descendant(
+      of: find.byType(NotebookWordPage),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(delete);
+  await tester.pumpAndSettle();
+  expect(find.byType(AlertDialog), findsOneWidget);
+  expect(find.text('Remover card?'), findsOneWidget);
+  final key = confirm
+      ? NotebookWordKeys.deleteCardConfirm
+      : NotebookWordKeys.deleteCardCancel;
+  await tester.tap(find.byKey(key));
+  await tester.pumpAndSettle();
+}
+
 void _expectNoOutOfScopeControls(WidgetTester tester) {
-  expect(find.text('Remover'), findsNothing);
+  expect(find.text('Remover palavra'), findsNothing);
   expect(find.text('Remove'), findsNothing);
   expect(find.text('Add card'), findsNothing);
   expect(find.text('Salvar'), findsNothing);

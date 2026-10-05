@@ -16,6 +16,8 @@ void main() {
     expect(await db.appMetaDao.getValue('schema_version'), '5');
     final names = await _tableNames(db);
     expect(names, containsAll(<String>['cards', 'card_srs']));
+    expect(names, isNot(contains('review_logs')));
+    expect(names, isNot(contains('review_log')));
     expect(await db.select(db.userCards).get(), isEmpty);
     expect(await db.select(db.userCardSrs).get(), isEmpty);
     final columns = await db.customSelect('PRAGMA table_info(cards)').get();
@@ -295,6 +297,182 @@ void main() {
       expect(await _studySnapshot(env.db), afterFirst);
       expect(afterFirst.state, WordState.ignored.name);
       expect(afterFirst.suspendReason, WordState.ignored.name);
+    },
+  );
+
+  test(
+    'deleteCard with a card removes card and SRS and returns to saved',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+      );
+      final tablesBefore = await _tableNames(env.db);
+
+      await env.cards.deleteCard('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.saved.name);
+      expect(state.updatedAt.isAfter(seeded.stateUpdatedAt), isTrue);
+
+      expect((await env.db.select(env.db.userWords).get()).single.id, 'eat');
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+      expect(await _tableNames(env.db), tablesBefore);
+      expect(tablesBefore, isNot(contains('review_logs')));
+    },
+  );
+
+  test('deleteCard from known removes card, SRS, suspend_reason and returns to saved', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.known);
+    await _seedCard(
+      env.db,
+      wordId: 'eat',
+      srs: _progressedSrs,
+      suspendReason: WordState.known.name,
+    );
+
+    await env.cards.deleteCard('eat');
+
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.saved.name,
+    );
+    expect(await env.db.select(env.db.userCards).get(), isEmpty);
+    expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+    expect((await env.db.select(env.db.userWords).get()), hasLength(1));
+  });
+
+  test(
+    'deleteCard without a card does not delete the word or create a card',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.known);
+      final before = await _studySnapshot(env.db);
+
+      await env.cards.deleteCard('eat');
+
+      expect(await _studySnapshot(env.db), before);
+      expect(before.state, WordState.known.name);
+      expect(before.cardId, isNull);
+      expect((await env.db.select(env.db.userWords).get()).single.id, 'eat');
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+    },
+  );
+
+  test('deleteCard on a missing word is a no-op', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.learning);
+    await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+    final before = await _studySnapshot(env.db);
+
+    await env.cards.deleteCard('missing');
+
+    expect(await _studySnapshot(env.db), before);
+    expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+  });
+
+  test('deleteCard leaves a second word card and SRS untouched', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.learning);
+    await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+    await env.db
+        .into(env.db.userWords)
+        .insert(
+          UserWordsCompanion.insert(
+            id: 'drink',
+            seq: 1358300,
+            lemma: '飲む',
+            reading: 'のむ',
+            createdAt: DateTime.utc(2026, 1, 2),
+          ),
+        );
+    await env.db
+        .into(env.db.userWordStates)
+        .insert(
+          UserWordStatesCompanion.insert(
+            wordId: 'drink',
+            state: WordState.learning.name,
+            updatedAt: DateTime.utc(2026, 1, 2),
+          ),
+        );
+    await env.db
+        .into(env.db.userCards)
+        .insert(
+          UserCardsCompanion.insert(
+            id: 'card-drink',
+            wordId: 'drink',
+            kind: FlashcardKind.vocab.name,
+            createdAt: DateTime.utc(2026, 2, 2),
+          ),
+        );
+    await env.db
+        .into(env.db.userCardSrs)
+        .insert(
+          UserCardSrsCompanion.insert(
+            cardId: 'card-drink',
+            easeFactor: 2.5,
+            intervalDays: 7,
+            repetitions: 2,
+            dueAt: DateTime.utc(2026, 7, 1),
+            phase: 'review',
+            engineId: kSm2JrEngineId,
+          ),
+        );
+
+    await env.cards.deleteCard('eat');
+
+    expect(await env.db.select(env.db.userWords).get(), hasLength(2));
+    final leftover = (await env.db.select(env.db.userCards).get()).single;
+    expect(leftover.id, 'card-drink');
+    expect(leftover.wordId, 'drink');
+    final leftoverSrs = (await env.db.select(env.db.userCardSrs).get()).single;
+    expect(leftoverSrs.cardId, 'card-drink');
+    expect(leftoverSrs.intervalDays, 7);
+  });
+
+  test(
+    'deleteCard drops review_logs for that card only when the table exists',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+
+      expect(await _tableNames(env.db), isNot(contains('review_logs')));
+
+      await env.db.customStatement(
+        'CREATE TABLE review_logs ('
+        'id TEXT PRIMARY KEY NOT NULL, '
+        'card_id TEXT NOT NULL'
+        ')',
+      );
+      await env.db.customStatement(
+        "INSERT INTO review_logs (id, card_id) VALUES "
+        "('log-eat', 'card-eat'), ('log-other', 'card-other')",
+      );
+
+      await env.cards.deleteCard('eat');
+
+      final leftover = await env.db
+          .customSelect('SELECT id FROM review_logs ORDER BY id')
+          .get();
+      expect(
+        {for (final row in leftover) row.read<String>('id')},
+        {'log-other'},
+      );
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await _tableNames(env.db), contains('review_logs'));
     },
   );
 }
