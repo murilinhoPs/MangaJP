@@ -19,7 +19,7 @@ It is a **single-user, local-first tool** built for the author's own study routi
 
 ## How it works
 
-```
+```text
 Share / import image → crop bubble → OCR (manga-ocr) → page text
       → tap a word → deinflect + JMdict lookup → Salvar → Caderno
       → Aprender → flashcard (sm2-jr@1) → /review
