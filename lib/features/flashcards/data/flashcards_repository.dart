@@ -19,6 +19,12 @@ FlashcardsRepository flashcardsRepository(Ref ref) {
 ///
 /// [markKnown] / [markIgnored] set `word_states` and, when a card exists,
 /// `cards.suspend_reason`. They never create, delete, or reschedule a card.
+///
+/// [deleteCard] removes `cards` + `card_srs` (SRS first, FK) and sets
+/// `word_states=saved`. The word and `crop_words` stay. No card → no-op on
+/// the word (does not delete it, does not create a card). This schema has
+/// no `review_logs` table; if that table already exists, only that card's
+/// log rows are deleted. This method never creates the table.
 class FlashcardsRepository {
   const FlashcardsRepository(this._db);
 
@@ -137,5 +143,66 @@ class FlashcardsRepository {
         await _db.cardsDao.updateSuspendReason(card.id, target.name);
       }
     });
+  }
+
+  /// Delete the vocab card and its SRS. The word stays in the Caderno as saved.
+  ///
+  /// Missing word or missing card → no-op (does not delete the word, does not
+  /// create a card). Existing card → delete `card_srs` then `cards`, then set
+  /// `word_states=saved`.
+  Future<void> deleteCard(String wordId) {
+    return _db.transaction(() async {
+      final word = await _db.wordsDao.wordById(wordId);
+      if (word == null) {
+        return;
+      }
+
+      final card = await _db.cardsDao.cardForWord(wordId);
+      if (card == null) {
+        return;
+      }
+
+      await _deleteReviewLogsIfPresent(card.id);
+      await _db.cardsDao.deleteSrs(card.id);
+      await _db.cardsDao.deleteCard(card.id);
+
+      final now = DateTime.now().toUtc();
+      final stateRow = await _db.wordsDao.stateFor(wordId);
+      final current = WordState.fromDb(stateRow?.state ?? '');
+      if (stateRow == null) {
+        await _db.wordsDao.insertState(
+          UserWordStatesCompanion.insert(
+            wordId: wordId,
+            state: WordState.saved.name,
+            updatedAt: now,
+          ),
+        );
+        return;
+      }
+      if (current != WordState.saved) {
+        await _db.wordsDao.updateState(
+          wordId: wordId,
+          state: WordState.saved.name,
+          updatedAt: now,
+        );
+      }
+    });
+  }
+
+  /// `review_logs` is not in this schema. If a future migration adds it,
+  /// drop only the rows for [cardId]; never create the table here.
+  Future<void> _deleteReviewLogsIfPresent(String cardId) async {
+    final rows = await _db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'review_logs'",
+        )
+        .get();
+    if (rows.isEmpty) {
+      return;
+    }
+    await _db.customStatement('DELETE FROM review_logs WHERE card_id = ?', [
+      cardId,
+    ]);
   }
 }

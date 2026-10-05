@@ -17,10 +17,13 @@ abstract final class NotebookWordKeys {
   static const learn = Key('notebook-word-learn');
   static const known = Key('notebook-word-known');
   static const ignore = Key('notebook-word-ignore');
+  static const deleteCard = Key('notebook-word-delete-card');
+  static const deleteCardCancel = Key('notebook-word-delete-card-cancel');
+  static const deleteCardConfirm = Key('notebook-word-delete-card-confirm');
 }
 
 /// `/notebook/word/:id` — lemma, reading, state, JMdict gloss, first crop,
-/// Aprender / Conhecido / Ignorar.
+/// Aprender / Conhecido / Ignorar / Remover card.
 class NotebookWordPage extends ConsumerWidget {
   const NotebookWordPage({super.key, required this.wordId});
 
@@ -133,8 +136,48 @@ class _NotebookWordBody extends ConsumerWidget {
           onPressed: () => _runStudy(ref, (repo) => repo.markIgnored(wordId)),
           child: const Text('Ignorar'),
         ),
+        const SizedBox(height: 8),
+        TextButton(
+          key: NotebookWordKeys.deleteCard,
+          onPressed: () => _confirmDeleteCard(context, ref),
+          child: Text(
+            'Remover card',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _confirmDeleteCard(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Remover card?'),
+          content: const Text(
+            'O card e o progresso SRS serão apagados. '
+            'A palavra continua no Caderno.',
+          ),
+          actions: [
+            TextButton(
+              key: NotebookWordKeys.deleteCardCancel,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              key: NotebookWordKeys.deleteCardConfirm,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Remover'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted || confirmed != true) {
+      return;
+    }
+    await _runStudy(ref, (repo) => repo.deleteCard(wordId));
   }
 
   Future<void> _runStudy(

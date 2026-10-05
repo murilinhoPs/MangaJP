@@ -44,6 +44,7 @@ void main() {
         'card_srs',
       ]),
     );
+    expect(names, isNot(contains('review_logs')));
     expect(await db.select(db.userCards).get(), isEmpty);
     expect(await db.select(db.userCardSrs).get(), isEmpty);
   });

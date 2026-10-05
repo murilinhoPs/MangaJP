@@ -35,4 +35,12 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
       UserCardsCompanion(suspendReason: Value(reason)),
     );
   }
+
+  Future<void> deleteSrs(String cardId) {
+    return (delete(userCardSrs)..where((t) => t.cardId.equals(cardId))).go();
+  }
+
+  Future<void> deleteCard(String cardId) {
+    return (delete(userCards)..where((t) => t.id.equals(cardId))).go();
+  }
 }
