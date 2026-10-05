@@ -285,6 +285,9 @@ void main() {
       );
       final early = (await env.db.select(env.db.userCardSrs).get())
           .singleWhere((row) => row.cardId == 'card-early');
+      final firstHard = logs.firstWhere(
+        (log) => log.cardId == 'card-early' && log.isDrill == 0,
+      );
       final expected = const Sm2JrEngine().schedule(
         CardSrsState(
           easeFactor: kDefaultEaseFactor,
@@ -295,12 +298,12 @@ void main() {
           engineId: kSm2JrEngineId,
         ),
         3,
-        _now,
+        firstHard.ratedAt,
       );
       expect(early.easeFactor, expected.easeFactor);
       expect(early.intervalDays, expected.intervalDays);
       expect(early.repetitions, expected.repetitions);
-      expect(early.dueAt, expected.dueAt);
+      expect(early.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
       expect(early.phase, expected.phase.name);
     },
   );
