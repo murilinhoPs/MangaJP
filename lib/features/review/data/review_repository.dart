@@ -19,6 +19,15 @@ ReviewRepository reviewRepository(Ref ref) {
   return ReviewRepository(ref.watch(appDatabaseProvider));
 }
 
+/// Bumped after a persisted `/review` answer so Home refetches due / novos hoje.
+@Riverpod(keepAlive: true)
+class ReviewRevision extends _$ReviewRevision {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
 /// Due queue and answer write for `/review`.
 ///
 /// Queue: unsuspended (`suspend_reason` null) cards with `card_srs.due_at`

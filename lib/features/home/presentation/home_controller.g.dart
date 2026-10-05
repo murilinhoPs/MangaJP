@@ -59,11 +59,19 @@ abstract class _$HelloMeta extends $AsyncNotifier<String> {
 }
 
 /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+///
+/// Refetches when a `/review` answer persists, and again when the shell
+/// returns to `/home` (Home stays mounted as a branch, so a one-shot
+/// FutureProvider would otherwise stay stale).
 
 @ProviderFor(homeReviewCounts)
 final homeReviewCountsProvider = HomeReviewCountsProvider._();
 
 /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+///
+/// Refetches when a `/review` answer persists, and again when the shell
+/// returns to `/home` (Home stays mounted as a branch, so a one-shot
+/// FutureProvider would otherwise stay stale).
 
 final class HomeReviewCountsProvider
     extends
@@ -74,6 +82,10 @@ final class HomeReviewCountsProvider
         >
     with $FutureModifier<HomeReviewCounts>, $FutureProvider<HomeReviewCounts> {
   /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+  ///
+  /// Refetches when a `/review` answer persists, and again when the shell
+  /// returns to `/home` (Home stays mounted as a branch, so a one-shot
+  /// FutureProvider would otherwise stay stale).
   HomeReviewCountsProvider._()
     : super(
         from: null,
@@ -100,4 +112,4 @@ final class HomeReviewCountsProvider
   }
 }
 
-String _$homeReviewCountsHash() => r'1811d6ad9c18f0061263d7729749c5c9e17273c1';
+String _$homeReviewCountsHash() => r'a97e950a86bb928c0880f1fb9560ce794ecc274f';

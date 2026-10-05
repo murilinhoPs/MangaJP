@@ -13,6 +13,7 @@ import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
+import 'package:manga_jp/core/router/routes.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/review/domain/new_per_day.dart';
@@ -175,6 +176,63 @@ void main() {
     );
     expect(find.byKey(HomeKeys.review), findsOneWidget);
   });
+
+  testWidgets(
+    'returning to Home after /review answers refreshes due and novos hoje',
+    (tester) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [
+          _SeedCard(
+            id: 'learn',
+            lemma: '学ぶ',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            priorNonDrillAt: DateTime.utc(2026, 10, 4, 12),
+          ),
+          _SeedCard(
+            id: 'new-0',
+            lemma: '新0',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+        ],
+      );
+
+      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 1');
+      expect(
+        tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
+        'Novos hoje: 0 de 15',
+      );
+
+      await tester.tap(find.byKey(HomeKeys.review));
+      await tester.pumpAndSettle();
+      expect(
+        GoRouter.of(tester.element(find.byType(ReviewPage))).state.uri.path,
+        '/review',
+      );
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '学ぶ');
+
+      await _revealAndRate(tester, ReviewRating.good);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新0');
+      await _revealAndRate(tester, ReviewRating.good);
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+
+      const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      expect(
+        GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+        '/home',
+      );
+      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 0');
+      expect(
+        tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
+        'Novos hoje: 1 de 15',
+      );
+      _expectNoCardList(tester);
+    },
+  );
 }
 
 class _SeedCard {
@@ -184,6 +242,7 @@ class _SeedCard {
     required this.phase,
     required this.dueAt,
     this.suspendReason,
+    this.priorNonDrillAt,
   });
 
   final String id;
@@ -191,6 +250,7 @@ class _SeedCard {
   final CardPhase phase;
   final DateTime dueAt;
   final String? suspendReason;
+  final DateTime? priorNonDrillAt;
 }
 
 class _Env {
@@ -260,6 +320,19 @@ Future<_Env> _openHome(
             engineId: kSm2JrEngineId,
           ),
         );
+    if (card.priorNonDrillAt != null) {
+      await db.cardsDao.insertLog(
+        UserReviewLogsCompanion.insert(
+          id: 'log-${card.id}',
+          cardId: 'card-${card.id}',
+          ratedAt: card.priorNonDrillAt!,
+          rating: 3,
+          quality: 4,
+          engineId: kSm2JrEngineId,
+          isDrill: 0,
+        ),
+      );
+    }
   }
 
   final reviewClock = clock ?? _Clock(DateTime.utc(2026, 10, 5, 12));
@@ -304,4 +377,11 @@ void _expectNoCardList(WidgetTester tester) {
 void _expectOutOfScopeStubs(WidgetTester tester) {
   expect(find.text('Capturas recentes'), findsOneWidget);
   expect(find.text('Galeria'), findsOneWidget);
+}
+
+Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
+  await tester.tap(find.byKey(ReviewKeys.reveal));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(ReviewKeys.rating(rating)));
+  await tester.pumpAndSettle();
 }
