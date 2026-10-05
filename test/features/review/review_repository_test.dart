@@ -183,41 +183,47 @@ void main() {
     const engine = Sm2JrEngine();
     for (final rating in ReviewRating.values) {
       final env = await _openRepo(now);
-      addTearDown(env.db.close);
-      await _seedPair(
-        env.db,
-        id: 'eat',
-        lemma: '食べる',
-        reading: 'たべる',
-        seq: 1358280,
-        phase: CardPhase.neu,
-        dueAt: now,
-        state: WordState.learning,
-      );
-      final prev = (await env.review.nextDue())!.srs;
+      try {
+        await _seedPair(
+          env.db,
+          id: 'eat',
+          lemma: '食べる',
+          reading: 'たべる',
+          seq: 1358280,
+          phase: CardPhase.neu,
+          dueAt: now,
+          state: WordState.learning,
+        );
+        final prev = (await env.review.nextDue())!.srs;
 
-      await env.review.answer('card-eat', rating);
+        await env.review.answer('card-eat', rating);
 
-      final log = (await env.db.select(env.db.userReviewLogs).get()).single;
-      expect(log.cardId, 'card-eat');
-      expect(log.rating, ratingFor(rating));
-      expect(log.quality, qualityFor(rating));
-      expect(log.engineId, kSm2JrEngineId);
-      expect(log.isDrill, 0);
-      expect(log.ratedAt, now);
+        final log = (await env.db.select(env.db.userReviewLogs).get()).single;
+        expect(log.cardId, 'card-eat');
+        expect(log.rating, ratingFor(rating));
+        expect(log.quality, qualityFor(rating));
+        expect(log.engineId, kSm2JrEngineId);
+        expect(log.isDrill, 0);
+        expect(log.ratedAt.isAtSameMomentAs(now), isTrue);
 
-      final srs = (await env.db.select(env.db.userCardSrs).get()).single;
-      final expected = engine.schedule(prev, qualityFor(rating), now);
-      expect(srs.easeFactor, expected.easeFactor);
-      expect(srs.intervalDays, expected.intervalDays);
-      expect(srs.repetitions, expected.repetitions);
-      expect(srs.dueAt, expected.dueAt);
-      expect(srs.phase, expected.phase.name);
-      expect(srs.engineId, expected.engineId);
+        final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+        final expected = engine.schedule(prev, qualityFor(rating), now);
+        expect(srs.easeFactor, expected.easeFactor);
+        expect(srs.intervalDays, expected.intervalDays);
+        expect(srs.repetitions, expected.repetitions);
+        expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
+        expect(srs.phase, expected.phase.name);
+        expect(srs.engineId, expected.engineId);
 
-      final state = (await env.db.select(env.db.userWordStates).get()).single;
-      expect(state.state, WordState.learning.name);
-      expect(state.updatedAt, DateTime.utc(2026, 1, 1));
+        final state = (await env.db.select(env.db.userWordStates).get()).single;
+        expect(state.state, WordState.learning.name);
+        expect(
+          state.updatedAt.isAtSameMomentAs(DateTime.utc(2026, 1, 1)),
+          isTrue,
+        );
+      } finally {
+        await env.db.close();
+      }
     }
   });
 
@@ -242,7 +248,7 @@ void main() {
     expect(srs.intervalDays, expected.intervalDays);
     expect(srs.repetitions, expected.repetitions);
     expect(srs.phase, CardPhase.review.name);
-    expect(srs.dueAt, expected.dueAt);
+    expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
   });
 
   test('answer does not promote word_state off learning', () async {

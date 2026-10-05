@@ -28,10 +28,9 @@ ReviewRepository reviewRepository(Ref ref) {
 class ReviewRepository {
   ReviewRepository(
     this._db, {
-    SrsEngine engine = const Sm2JrEngine(),
+    this._engine = const Sm2JrEngine(),
     DateTime Function()? clock,
-  }) : _engine = engine,
-       _clock = clock ?? DateTime.now;
+  }) : _clock = clock ?? DateTime.now;
 
   final AppDatabase _db;
   final SrsEngine _engine;
