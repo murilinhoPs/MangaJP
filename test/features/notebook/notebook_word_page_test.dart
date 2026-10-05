@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' show InsertMode;
+import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -121,6 +121,8 @@ void main() {
       expect(find.text('later sentence'), findsNothing);
       expect(find.byKey(NotebookWordKeys.pageLink), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.known), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.ignore), findsOneWidget);
 
       _expectNoOutOfScopeControls(tester);
       final states = await env.db.select(env.db.userWordStates).get();
@@ -194,8 +196,8 @@ void main() {
     );
     final beforeCard = (await env.db.select(env.db.userCards).get()).single;
     final beforeSrs = await _srsSnapshot(env.db);
-    final beforeState = (await env.db.select(env.db.userWordStates).get())
-        .single;
+    final beforeState =
+        (await env.db.select(env.db.userWordStates).get()).single;
 
     await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
     await tester.tap(find.byKey(NotebookWordKeys.learn));
@@ -285,6 +287,247 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'Conhecido with a card sets known and suspend_reason without touching SRS',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+      final beforeSrs = await _srsSnapshot(env.db);
+      final tablesBefore = await _tableNames(env.db);
+
+      await tester.ensureVisible(find.byKey(NotebookWordKeys.known));
+      await tester.tap(find.byKey(NotebookWordKeys.known));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Conhecido',
+      );
+      expect(find.byKey(NotebookWordKeys.known), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.ignore), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
+      _expectNoOutOfScopeControls(tester);
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.known.name);
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, beforeCard.id);
+      expect(cards.single.createdAt, beforeCard.createdAt);
+      expect(cards.single.suspendReason, WordState.known.name);
+      expect(await _srsSnapshot(env.db), beforeSrs);
+      expect(await env.db.select(env.db.userCardSrs).get(), hasLength(1));
+      expect(await _tableNames(env.db), tablesBefore);
+    },
+  );
+
+  testWidgets(
+    'Ignorar with a card sets ignored and suspend_reason without touching SRS',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+      final beforeSrs = await _srsSnapshot(env.db);
+
+      await tester.ensureVisible(find.byKey(NotebookWordKeys.ignore));
+      await tester.tap(find.byKey(NotebookWordKeys.ignore));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Ignorado',
+      );
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, beforeCard.id);
+      expect(cards.single.suspendReason, WordState.ignored.name);
+      expect(await _srsSnapshot(env.db), beforeSrs);
+    },
+  );
+
+  testWidgets('Conhecido without a card only changes state', (tester) async {
+    final env = await _openWord(tester, jmdictPath: jmdictPath);
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.known));
+    await tester.tap(find.byKey(NotebookWordKeys.known));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Conhecido',
+    );
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.known.name,
+    );
+    expect(await env.db.select(env.db.userCards).get(), isEmpty);
+    expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+  });
+
+  testWidgets('Ignorar without a card only changes state', (tester) async {
+    final env = await _openWord(tester, jmdictPath: jmdictPath);
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.ignore));
+    await tester.tap(find.byKey(NotebookWordKeys.ignore));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Ignorado',
+    );
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.ignored.name,
+    );
+    expect(await env.db.select(env.db.userCards).get(), isEmpty);
+  });
+
+  testWidgets(
+    'switching known to ignored updates suspend_reason and keeps the card',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.known,
+        card: true,
+        suspendReason: WordState.known.name,
+      );
+      final beforeCard = (await env.db.select(env.db.userCards).get()).single;
+      final beforeSrs = await _srsSnapshot(env.db);
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Conhecido',
+      );
+      await tester.ensureVisible(find.byKey(NotebookWordKeys.ignore));
+      await tester.tap(find.byKey(NotebookWordKeys.ignore));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Ignorado',
+      );
+      var cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, beforeCard.id);
+      expect(cards.single.suspendReason, WordState.ignored.name);
+      expect(await _srsSnapshot(env.db), beforeSrs);
+
+      await tester.tap(find.byKey(NotebookWordKeys.known));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Conhecido',
+      );
+      cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, beforeCard.id);
+      expect(cards.single.suspendReason, WordState.known.name);
+      expect(await _srsSnapshot(env.db), beforeSrs);
+    },
+  );
+
+  testWidgets('second Conhecido tap is a no-op', (tester) async {
+    final env = await _openWord(
+      tester,
+      jmdictPath: jmdictPath,
+      state: WordState.learning,
+      card: true,
+    );
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.known));
+    await tester.tap(find.byKey(NotebookWordKeys.known));
+    await tester.pumpAndSettle();
+    final afterFirst = await _studySnapshot(env.db);
+
+    await tester.tap(find.byKey(NotebookWordKeys.known));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(NotebookWordKeys.known));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Conhecido',
+    );
+    expect(await _studySnapshot(env.db), afterFirst);
+  });
+
+  testWidgets('second Ignorar tap is a no-op', (tester) async {
+    final env = await _openWord(
+      tester,
+      jmdictPath: jmdictPath,
+      state: WordState.learning,
+      card: true,
+    );
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.ignore));
+    await tester.tap(find.byKey(NotebookWordKeys.ignore));
+    await tester.pumpAndSettle();
+    final afterFirst = await _studySnapshot(env.db);
+
+    await tester.tap(find.byKey(NotebookWordKeys.ignore));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Ignorado',
+    );
+    expect(await _studySnapshot(env.db), afterFirst);
+  });
+
+  testWidgets('known word stays on the Caderno list and detail', (
+    tester,
+  ) async {
+    final env = await _openWord(tester, jmdictPath: jmdictPath);
+
+    await tester.ensureVisible(find.byKey(NotebookWordKeys.known));
+    await tester.tap(find.byKey(NotebookWordKeys.known));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NotebookWordPage), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, '食べる');
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Conhecido',
+    );
+
+    const NotebookRoute().go(tester.element(find.byType(NotebookWordPage)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NotebookPage), findsOneWidget);
+    expect(find.byKey(NotebookKeys.row(env.wordId)), findsOneWidget);
+    expect(
+      tester
+          .widget<ListTile>(find.byKey(NotebookKeys.row(env.wordId)))
+          .trailing,
+      isA<Text>().having((text) => text.data, 'label', 'Conhecido'),
+    );
+
+    await tester.tap(find.byKey(NotebookKeys.row(env.wordId)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NotebookWordPage), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, '食べる');
+    expect(
+      tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+      'Conhecido',
+    );
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.known.name,
+    );
+  });
 }
 
 class _Env {
@@ -315,6 +558,7 @@ Future<_Env> _openNotebook(
   required String jmdictPath,
   WordState state = WordState.saved,
   bool card = false,
+  String? suspendReason,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
@@ -352,6 +596,7 @@ Future<_Env> _openNotebook(
             wordId: wordId,
             kind: FlashcardKind.vocab.name,
             createdAt: DateTime.utc(2026, 2, 1),
+            suspendReason: Value(suspendReason),
           ),
         );
     await db
@@ -417,9 +662,8 @@ Future<_Env> _openNotebook(
 
   const NotebookRoute().go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
-  final stateUpdatedAt = (await db.select(db.userWordStates).get())
-      .single
-      .updatedAt;
+  final stateUpdatedAt =
+      (await db.select(db.userWordStates).get()).single.updatedAt;
   return _Env(
     db: db,
     wordId: wordId,
@@ -433,12 +677,14 @@ Future<_Env> _openWord(
   required String jmdictPath,
   WordState state = WordState.saved,
   bool card = false,
+  String? suspendReason,
 }) async {
   final env = await _openNotebook(
     tester,
     jmdictPath: jmdictPath,
     state: state,
     card: card,
+    suspendReason: suspendReason,
   );
   await tester.tap(find.byKey(NotebookKeys.row(env.wordId)));
   await tester.pumpAndSettle();
@@ -455,6 +701,36 @@ Future<_SrsSnapshot> _srsSnapshot(AppDatabase db) async {
     phase: row.phase,
     engineId: row.engineId,
   );
+}
+
+typedef _StudySnapshot = ({
+  String state,
+  DateTime stateUpdatedAt,
+  String? cardId,
+  DateTime? cardCreatedAt,
+  String? suspendReason,
+  _SrsSnapshot? srs,
+});
+
+Future<_StudySnapshot> _studySnapshot(AppDatabase db) async {
+  final state = (await db.select(db.userWordStates).get()).single;
+  final cards = await db.select(db.userCards).get();
+  final card = cards.isEmpty ? null : cards.single;
+  return (
+    state: state.state,
+    stateUpdatedAt: state.updatedAt,
+    cardId: card?.id,
+    cardCreatedAt: card?.createdAt,
+    suspendReason: card?.suspendReason,
+    srs: card == null ? null : await _srsSnapshot(db),
+  );
+}
+
+Future<Set<String>> _tableNames(AppDatabase db) async {
+  final rows = await db
+      .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+      .get();
+  return {for (final row in rows) row.read<String>('name')};
 }
 
 Future<void> _seedCrop(
@@ -494,13 +770,8 @@ Future<void> _seedCrop(
 void _expectNoOutOfScopeControls(WidgetTester tester) {
   expect(find.text('Remover'), findsNothing);
   expect(find.text('Remove'), findsNothing);
-  expect(find.widgetWithText(FilledButton, 'Conhecido'), findsNothing);
-  expect(find.widgetWithText(FilledButton, 'Ignorar'), findsNothing);
-  expect(find.widgetWithText(TextButton, 'Conhecido'), findsNothing);
-  expect(find.widgetWithText(TextButton, 'Ignorar'), findsNothing);
   expect(find.text('Add card'), findsNothing);
   expect(find.text('Salvar'), findsNothing);
   expect(find.byType(DeckPage), findsNothing);
   expect(find.byIcon(Icons.delete_outline), findsNothing);
-  expect(find.byIcon(Icons.style), findsNothing);
 }

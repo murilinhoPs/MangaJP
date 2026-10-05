@@ -29,4 +29,10 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   Future<void> insertSrs(UserCardSrsCompanion row) {
     return into(userCardSrs).insert(row);
   }
+
+  Future<void> updateSuspendReason(String cardId, String? reason) {
+    return (update(userCards)..where((t) => t.id.equals(cardId))).write(
+      UserCardsCompanion(suspendReason: Value(reason)),
+    );
+  }
 }

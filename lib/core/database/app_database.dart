@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -46,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '4'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '5'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -87,6 +87,15 @@ class AppDatabase extends _$AppDatabase {
             AppMetaCompanion.insert(key: 'schema_version', value: '4'),
             onConflict: DoUpdate(
               (_) => const AppMetaCompanion(value: Value('4')),
+            ),
+          );
+        }
+        if (from < 5) {
+          await m.addColumn(userCards, userCards.suspendReason);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '5'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('5')),
             ),
           );
         }

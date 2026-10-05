@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
@@ -12,47 +13,51 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '4');
+    expect(await db.appMetaDao.getValue('schema_version'), '5');
     final names = await _tableNames(db);
     expect(names, containsAll(<String>['cards', 'card_srs']));
     expect(await db.select(db.userCards).get(), isEmpty);
     expect(await db.select(db.userCardSrs).get(), isEmpty);
+    final columns = await db.customSelect('PRAGMA table_info(cards)').get();
+    expect({
+      for (final row in columns) row.read<String>('name'),
+    }, contains('suspend_reason'));
   });
 
-  test('learn with no card sets learning and inserts golden initial SRS', () async {
-    final env = await _openRepo();
-    addTearDown(env.db.close);
-    await _seedWord(env.db, id: 'eat', state: WordState.saved);
+  test(
+    'learn with no card sets learning and inserts golden initial SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.saved);
 
-    await env.cards.learn('eat');
+      await env.cards.learn('eat');
 
-    final state = (await env.db.select(env.db.userWordStates).get()).single;
-    expect(state.state, WordState.learning.name);
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.learning.name);
 
-    final card = (await env.db.select(env.db.userCards).get()).single;
-    expect(card.wordId, 'eat');
-    expect(card.kind, FlashcardKind.vocab.name);
+      final card = (await env.db.select(env.db.userCards).get()).single;
+      expect(card.wordId, 'eat');
+      expect(card.kind, FlashcardKind.vocab.name);
+      expect(card.suspendReason, isNull);
 
-    final srs = (await env.db.select(env.db.userCardSrs).get()).single;
-    expect(srs.cardId, card.id);
-    final initial = initialCardSrsState(srs.dueAt);
-    expect(srs.easeFactor, initial.easeFactor);
-    expect(srs.intervalDays, initial.intervalDays);
-    expect(srs.repetitions, initial.repetitions);
-    expect(srs.phase, CardPhase.neu.name);
-    expect(srs.engineId, kSm2JrEngineId);
-    expect(srs.intervalDays, isNot(1));
-  });
+      final srs = (await env.db.select(env.db.userCardSrs).get()).single;
+      expect(srs.cardId, card.id);
+      final initial = initialCardSrsState(srs.dueAt);
+      expect(srs.easeFactor, initial.easeFactor);
+      expect(srs.intervalDays, initial.intervalDays);
+      expect(srs.repetitions, initial.repetitions);
+      expect(srs.phase, CardPhase.neu.name);
+      expect(srs.engineId, kSm2JrEngineId);
+      expect(srs.intervalDays, isNot(1));
+    },
+  );
 
   test('learn when a card exists does not duplicate or reset SRS', () async {
     final env = await _openRepo();
     addTearDown(env.db.close);
     await _seedWord(env.db, id: 'eat', state: WordState.learning);
-    final seeded = await _seedCard(
-      env.db,
-      wordId: 'eat',
-      srs: _progressedSrs,
-    );
+    final seeded = await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
 
     await env.cards.learn('eat');
     await env.cards.learn('eat');
@@ -78,6 +83,7 @@ void main() {
       env.db,
       wordId: 'eat',
       srs: _progressedSrs,
+      suspendReason: WordState.known.name,
     );
 
     await env.cards.learn('eat');
@@ -90,29 +96,207 @@ void main() {
     expect(cards, hasLength(1));
     expect(cards.single.id, seeded.cardId);
     expect(await _srsSnapshot(env.db), seeded.srs);
+    expect(cards.single.suspendReason, isNull);
   });
 
-  test('learn from ignored returns to learning without resetting SRS', () async {
-    final env = await _openRepo();
-    addTearDown(env.db.close);
-    await _seedWord(env.db, id: 'eat', state: WordState.ignored);
-    final seeded = await _seedCard(
-      env.db,
-      wordId: 'eat',
-      srs: _progressedSrs,
-    );
+  test(
+    'learn from ignored returns to learning without resetting SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.ignored);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+        suspendReason: WordState.ignored.name,
+      );
 
-    await env.cards.learn('eat');
+      await env.cards.learn('eat');
 
-    final state = (await env.db.select(env.db.userWordStates).get()).single;
-    expect(state.state, WordState.learning.name);
-    expect(state.updatedAt.isAfter(seeded.stateUpdatedAt), isTrue);
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.learning.name);
+      expect(state.updatedAt.isAfter(seeded.stateUpdatedAt), isTrue);
 
-    final cards = await env.db.select(env.db.userCards).get();
-    expect(cards, hasLength(1));
-    expect(cards.single.id, seeded.cardId);
-    expect(await _srsSnapshot(env.db), seeded.srs);
-  });
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(await _srsSnapshot(env.db), seeded.srs);
+      expect(cards.single.suspendReason, isNull);
+    },
+  );
+
+  test(
+    'known with a card sets state and suspend_reason without touching SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+      );
+      final tablesBefore = await _tableNames(env.db);
+
+      await env.cards.markKnown('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.known.name);
+      expect(state.updatedAt.isAfter(seeded.stateUpdatedAt), isTrue);
+
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(cards.single.createdAt, seeded.createdAt);
+      expect(cards.single.suspendReason, WordState.known.name);
+      expect(await _srsSnapshot(env.db), seeded.srs);
+      expect(await env.db.select(env.db.userCardSrs).get(), hasLength(1));
+      expect(await _tableNames(env.db), tablesBefore);
+    },
+  );
+
+  test(
+    'ignored with a card sets state and suspend_reason without touching SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+      );
+
+      await env.cards.markIgnored('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.ignored.name);
+
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(cards.single.suspendReason, WordState.ignored.name);
+      expect(await _srsSnapshot(env.db), seeded.srs);
+    },
+  );
+
+  test(
+    'known without a card only changes state and does not create a card',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.saved);
+
+      await env.cards.markKnown('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.known.name);
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+    },
+  );
+
+  test(
+    'ignored without a card only changes state and does not create a card',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.saved);
+
+      await env.cards.markIgnored('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.ignored.name);
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+    },
+  );
+
+  test(
+    'switching known to ignored updates suspend_reason and keeps SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.known);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+        suspendReason: WordState.known.name,
+      );
+
+      await env.cards.markIgnored('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.ignored.name);
+      expect(state.updatedAt.isAfter(seeded.stateUpdatedAt), isTrue);
+
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(cards.single.createdAt, seeded.createdAt);
+      expect(cards.single.suspendReason, WordState.ignored.name);
+      expect(await _srsSnapshot(env.db), seeded.srs);
+
+      await env.cards.markKnown('eat');
+      expect(
+        (await env.db.select(env.db.userWordStates).get()).single.state,
+        WordState.known.name,
+      );
+      expect(
+        (await env.db.select(env.db.userCards).get()).single.suspendReason,
+        WordState.known.name,
+      );
+      expect(await _srsSnapshot(env.db), seeded.srs);
+      expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+    },
+  );
+
+  test(
+    'second known tap is a no-op on state, suspend_reason, card, and SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.saved);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+      );
+
+      await env.cards.markKnown('eat');
+      final afterFirst = await _studySnapshot(env.db);
+
+      await env.cards.markKnown('eat');
+      await env.cards.markKnown('eat');
+
+      expect(await _studySnapshot(env.db), afterFirst);
+      expect(afterFirst.state, WordState.known.name);
+      expect(afterFirst.suspendReason, WordState.known.name);
+      expect(afterFirst.cardId, seeded.cardId);
+      expect(afterFirst.srs, seeded.srs);
+    },
+  );
+
+  test(
+    'second ignored tap is a no-op on state, suspend_reason, card, and SRS',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.saved);
+      await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+
+      await env.cards.markIgnored('eat');
+      final afterFirst = await _studySnapshot(env.db);
+
+      await env.cards.markIgnored('eat');
+
+      expect(await _studySnapshot(env.db), afterFirst);
+      expect(afterFirst.state, WordState.ignored.name);
+      expect(afterFirst.suspendReason, WordState.ignored.name);
+    },
+  );
 }
 
 final _progressedSrs = (
@@ -199,6 +383,7 @@ Future<_SeededCard> _seedCard(
     String engineId,
   })
   srs,
+  String? suspendReason,
 }) async {
   const cardId = 'card-eat';
   final createdAt = DateTime.utc(2026, 2, 1);
@@ -211,6 +396,7 @@ Future<_SeededCard> _seedCard(
           wordId: wordId,
           kind: FlashcardKind.vocab.name,
           createdAt: createdAt,
+          suspendReason: Value(suspendReason),
         ),
       );
   await db
@@ -228,9 +414,8 @@ Future<_SeededCard> _seedCard(
       );
   final card = (await db.select(db.userCards).get()).single;
   final persisted = await _srsSnapshot(db);
-  final stateUpdatedAt = (await db.select(db.userWordStates).get())
-      .single
-      .updatedAt;
+  final stateUpdatedAt =
+      (await db.select(db.userWordStates).get()).single.updatedAt;
   return _SeededCard(
     cardId: card.id,
     createdAt: card.createdAt,
@@ -248,6 +433,29 @@ Future<_SrsSnapshot> _srsSnapshot(AppDatabase db) async {
     dueAt: row.dueAt,
     phase: row.phase,
     engineId: row.engineId,
+  );
+}
+
+typedef _StudySnapshot = ({
+  String state,
+  DateTime stateUpdatedAt,
+  String? cardId,
+  DateTime? cardCreatedAt,
+  String? suspendReason,
+  _SrsSnapshot? srs,
+});
+
+Future<_StudySnapshot> _studySnapshot(AppDatabase db) async {
+  final state = (await db.select(db.userWordStates).get()).single;
+  final cards = await db.select(db.userCards).get();
+  final card = cards.isEmpty ? null : cards.single;
+  return (
+    state: state.state,
+    stateUpdatedAt: state.updatedAt,
+    cardId: card?.id,
+    cardCreatedAt: card?.createdAt,
+    suspendReason: card?.suspendReason,
+    srs: card == null ? null : await _srsSnapshot(db),
   );
 }
 
