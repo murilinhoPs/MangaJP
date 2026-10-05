@@ -867,6 +867,8 @@ void main() {
 
       const NotebookRoute().go(tester.element(find.byType(PageDetailPage)));
       await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(NotebookKeys.search), '食べる');
+      await tester.pumpAndSettle();
       expect(find.byKey(NotebookKeys.row(env.wordId)), findsNothing);
       expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
     },
