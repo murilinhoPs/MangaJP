@@ -893,8 +893,17 @@ Future<void> _tapDeleteCard(
   WidgetTester tester, {
   required bool confirm,
 }) async {
-  await tester.ensureVisible(find.byKey(NotebookWordKeys.deleteCard));
-  await tester.tap(find.byKey(NotebookWordKeys.deleteCard));
+  final delete = find.byKey(NotebookWordKeys.deleteCard);
+  await tester.scrollUntilVisible(
+    delete,
+    80,
+    scrollable: find.descendant(
+      of: find.byType(NotebookWordPage),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(delete);
   await tester.pumpAndSettle();
   expect(find.byType(AlertDialog), findsOneWidget);
   expect(find.text('Remover card?'), findsOneWidget);
