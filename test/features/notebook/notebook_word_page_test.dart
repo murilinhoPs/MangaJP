@@ -13,6 +13,7 @@ import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
+import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/flashcards/presentation/deck_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
@@ -124,6 +125,9 @@ void main() {
       expect(find.byKey(NotebookWordKeys.known), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.ignore), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.removeFromNotebook), findsOneWidget);
+      expect(find.text('Remover card'), findsOneWidget);
+      expect(find.text('Remover do Caderno'), findsOneWidget);
 
       _expectNoOutOfScopeControls(tester);
       final states = await env.db.select(env.db.userWordStates).get();
@@ -651,6 +655,222 @@ void main() {
       expect(find.byKey(NotebookKeys.row(env.wordId)), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'confirming Remover do Caderno without a card leaves the list and '
+    'deletes the word',
+    (tester) async {
+      final env = await _openWord(tester, jmdictPath: jmdictPath);
+      final before = await _persistSnapshot(env.db);
+
+      await _tapRemoveFromNotebook(tester, confirmFirst: true);
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(find.byType(NotebookWordPage), findsNothing);
+      expect(find.byKey(NotebookKeys.row(env.wordId)), findsNothing);
+      expect(find.text('Remover card'), findsNothing);
+
+      expect(await env.db.select(env.db.userWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+      expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await _persistSnapshot(env.db, includeWordGraph: false), {
+        'crops': before['crops'],
+        'pages': before['pages'],
+      });
+
+      NotebookWordRoute(id: env.wordId)
+          .go(tester.element(find.byType(NotebookPage)));
+      await tester.pumpAndSettle();
+      expect(find.text('Nenhuma palavra.'), findsOneWidget);
+    },
+  );
+
+  testWidgets('cancelling Remover do Caderno without a card is a no-op', (
+    tester,
+  ) async {
+    final env = await _openWord(tester, jmdictPath: jmdictPath);
+    final before = await _persistSnapshot(env.db);
+
+    await _tapRemoveFromNotebook(tester, confirmFirst: false);
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(NotebookWordPage), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, '食べる');
+    expect(find.byKey(NotebookWordKeys.removeFromNotebook), findsOneWidget);
+    expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
+    expect(await _persistSnapshot(env.db), before);
+  });
+
+  testWidgets(
+    'confirming both Remover do Caderno dialogs deletes word, card, SRS, '
+    'logs, and occurrences; crop and page stay',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: 'card-eat',
+              ratedAt: DateTime.utc(2026, 3, 1),
+              rating: 3,
+              quality: 4,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+      final before = await _persistSnapshot(env.db);
+
+      await _tapRemoveFromNotebook(
+        tester,
+        confirmFirst: true,
+        confirmSecond: true,
+      );
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(find.byType(NotebookWordPage), findsNothing);
+      expect(find.byKey(NotebookKeys.row(env.wordId)), findsNothing);
+
+      expect(await env.db.select(env.db.userWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+      expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+      expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      expect(await env.db.select(env.db.userCardSrs).get(), isEmpty);
+      expect(await env.db.select(env.db.userReviewLogs).get(), isEmpty);
+      expect(await _persistSnapshot(env.db, includeWordGraph: false), {
+        'crops': before['crops'],
+        'pages': before['pages'],
+      });
+
+      NotebookWordRoute(id: env.wordId)
+          .go(tester.element(find.byType(NotebookPage)));
+      await tester.pumpAndSettle();
+      expect(find.text('Nenhuma palavra.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'cancelling the first Remover do Caderno dialog with a card deletes nothing',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: 'card-eat',
+              ratedAt: DateTime.utc(2026, 3, 1),
+              rating: 3,
+              quality: 4,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+      final before = await _persistSnapshot(env.db);
+
+      await _tapRemoveFromNotebook(tester, confirmFirst: false);
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Aprendendo',
+      );
+      expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
+      expect(await _persistSnapshot(env.db), before);
+    },
+  );
+
+  testWidgets(
+    'cancelling the second Remover do Caderno dialog deletes nothing',
+    (tester) async {
+      final env = await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.learning,
+        card: true,
+      );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: 'card-eat',
+              ratedAt: DateTime.utc(2026, 3, 1),
+              rating: 3,
+              quality: 4,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+      final before = await _persistSnapshot(env.db);
+
+      await _tapRemoveFromNotebook(
+        tester,
+        confirmFirst: true,
+        confirmSecond: false,
+      );
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+        'Aprendendo',
+      );
+      expect(find.byKey(NotebookWordKeys.deleteCard), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.removeFromNotebook), findsOneWidget);
+      expect(await _persistSnapshot(env.db), before);
+    },
+  );
+
+  testWidgets(
+    'after Remover do Caderno, saving the same lemma from lookup is a new word',
+    (tester) async {
+      final env = await _openWord(tester, jmdictPath: jmdictPath);
+      await _tapRemoveFromNotebook(tester, confirmFirst: true);
+
+      expect(find.byType(NotebookPage), findsOneWidget);
+      PageDetailRoute(id: env.pageId)
+          .go(tester.element(find.byType(NotebookPage)));
+      await tester.pumpAndSettle();
+      expect(find.byType(PageDetailPage), findsOneWidget);
+
+      final ocr = find.byKey(PageDetailKeys.ocrText);
+      await tester.tapAt(tester.getTopLeft(ocr) + const Offset(8, 8));
+      await tester.pumpAndSettle();
+      expect(find.byKey(LookupSheetKeys.save), findsOneWidget);
+      await tester.tap(find.byKey(LookupSheetKeys.save));
+      await tester.pumpAndSettle();
+
+      final words = await env.db.select(env.db.userWords).get();
+      expect(words, hasLength(1));
+      expect(words.single.id, isNot(env.wordId));
+      expect(words.single.lemma, '食べる');
+      final states = await env.db.select(env.db.userWordStates).get();
+      expect(states, hasLength(1));
+      expect(states.single.wordId, words.single.id);
+      expect(states.single.state, WordState.saved.name);
+      expect(await env.db.wordsDao.stateFor(env.wordId), isNull);
+
+      const NotebookRoute().go(tester.element(find.byType(PageDetailPage)));
+      await tester.pumpAndSettle();
+      expect(find.byKey(NotebookKeys.row(env.wordId)), findsNothing);
+      expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
+    },
+  );
 }
 
 class _Env {
@@ -913,6 +1133,88 @@ Future<void> _tapDeleteCard(
       : NotebookWordKeys.deleteCardCancel;
   await tester.tap(find.byKey(key));
   await tester.pumpAndSettle();
+}
+
+Future<void> _tapRemoveFromNotebook(
+  WidgetTester tester, {
+  required bool confirmFirst,
+  bool? confirmSecond,
+}) async {
+  final button = find.byKey(NotebookWordKeys.removeFromNotebook);
+  await tester.scrollUntilVisible(
+    button,
+    80,
+    scrollable: find.descendant(
+      of: find.byType(NotebookWordPage),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(button);
+  await tester.pumpAndSettle();
+  expect(find.byType(AlertDialog), findsOneWidget);
+  expect(find.text('Remover do Caderno?'), findsOneWidget);
+  expect(find.text('Apagar o card também?'), findsNothing);
+  await tester.tap(
+    find.byKey(
+      confirmFirst
+          ? NotebookWordKeys.removeFromNotebookConfirm
+          : NotebookWordKeys.removeFromNotebookCancel,
+    ),
+  );
+  await tester.pumpAndSettle();
+  if (confirmSecond == null) {
+    expect(find.text('Apagar o card também?'), findsNothing);
+    return;
+  }
+  expect(find.byType(AlertDialog), findsOneWidget);
+  expect(find.text('Apagar o card também?'), findsOneWidget);
+  await tester.tap(
+    find.byKey(
+      confirmSecond
+          ? NotebookWordKeys.removeFromNotebookCardConfirm
+          : NotebookWordKeys.removeFromNotebookCardCancel,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<Map<String, Object>> _persistSnapshot(
+  AppDatabase db, {
+  bool includeWordGraph = true,
+}) async {
+  final crops = await db.select(db.capturedCrops).get()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final pages = await db.select(db.capturedPages).get()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  if (!includeWordGraph) {
+    return {'crops': crops, 'pages': pages};
+  }
+  final words = await db.select(db.userWords).get()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final states = await db.select(db.userWordStates).get()
+    ..sort((a, b) => a.wordId.compareTo(b.wordId));
+  final links = await db.select(db.cropWords).get()
+    ..sort((a, b) {
+      final byCrop = a.cropId.compareTo(b.cropId);
+      return byCrop != 0 ? byCrop : a.wordId.compareTo(b.wordId);
+    });
+  final cards = await db.select(db.userCards).get()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final srs = await db.select(db.userCardSrs).get()
+    ..sort((a, b) => a.cardId.compareTo(b.cardId));
+  final logs = await db.select(db.userReviewLogs).get()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  return {
+    'crops': crops,
+    'pages': pages,
+    'words': words,
+    'states': states,
+    'cropWords': links,
+    'cards': cards,
+    'srs': srs,
+    'logs': logs,
+  };
 }
 
 void _expectNoOutOfScopeControls(WidgetTester tester) {
