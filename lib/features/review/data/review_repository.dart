@@ -86,12 +86,41 @@ class ReviewRepository {
     final introduced = await _db.cardsDao.countNewIntroducedSince(
       StudyDay.startOf(now),
     );
+    final latestRatedAt = await _latestRatedAt([
+      for (final row in rows) row.$1.id,
+    ]);
     final queue = applyNewPerDayLimit(
-      [for (final row in rows) _toCard(row)],
+      [
+        for (final row in rows)
+          _toCard(
+            row,
+            isDrill: StudyDay.isDrill(now, latestRatedAt[row.$1.id]),
+          ),
+      ],
       introduced: introduced,
       isNew: (card) => card.srs.phase == CardPhase.neu,
     );
     return (queue: queue, introduced: introduced);
+  }
+
+  Future<Map<String, DateTime>> _latestRatedAt(List<String> cardIds) async {
+    if (cardIds.isEmpty) {
+      return {};
+    }
+    final logs = await (_db.select(
+      _db.userReviewLogs,
+    )..where((t) => t.cardId.isIn(cardIds))).get();
+    final latest = <String, ReviewLogRow>{};
+    for (final log in logs) {
+      final prev = latest[log.cardId];
+      if (prev == null ||
+          log.ratedAt.isAfter(prev.ratedAt) ||
+          (log.ratedAt.isAtSameMomentAs(prev.ratedAt) &&
+              log.id.compareTo(prev.id) > 0)) {
+        latest[log.cardId] = log;
+      }
+    }
+    return {for (final entry in latest.entries) entry.key: entry.value.ratedAt};
   }
 
   /// Record [rating]. First answer of the study-day reschedules; later ones
@@ -145,7 +174,10 @@ class ReviewRepository {
     });
   }
 
-  ReviewCard _toCard((UserCard, CardSrsRow, UserWord) row) {
+  ReviewCard _toCard(
+    (UserCard, CardSrsRow, UserWord) row, {
+    required bool isDrill,
+  }) {
     final (card, srs, word) = row;
     return ReviewCard(
       cardId: card.id,
@@ -154,6 +186,7 @@ class ReviewRepository {
       lemma: word.lemma,
       reading: word.reading,
       srs: _srsFromRow(srs),
+      isDrill: isDrill,
     );
   }
 

@@ -281,6 +281,23 @@ void main() {
     expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(2));
   });
 
+  test('dueQueue isDrill is true after a same study-day answer', () async {
+    final env = await _openRepo(now);
+    addTearDown(env.db.close);
+    await _seedPair(
+      env.db,
+      id: 'eat',
+      lemma: '食べる',
+      phase: CardPhase.neu,
+      dueAt: now,
+      state: WordState.learning,
+    );
+
+    expect((await env.review.dueQueue()).single.isDrill, isFalse);
+    await env.review.answer('card-eat', ReviewRating.again);
+    expect((await env.review.dueQueue()).single.isDrill, isTrue);
+  });
+
   test(
     'second answer on the same study-day is drill and does not change SRS',
     () async {

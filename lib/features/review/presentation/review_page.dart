@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/interval_preview.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
 
@@ -13,12 +14,16 @@ abstract final class ReviewKeys {
   static const reveal = Key('review-reveal');
 
   static Key rating(ReviewRating rating) => Key('review-${rating.name}');
+
+  static Key interval(ReviewRating rating) =>
+      Key('review-${rating.name}-interval');
 }
 
 /// `/review` — session snapshot of the due queue (at most 15 new cards
 /// per study-day). Front is the lemma; Revelar shows reading + JMdict
-/// gloss, then Again / Hard / Good / Easy. Again/Hard go to the back of
-/// this session; Good/Easy leave it.
+/// gloss, then Again / Hard / Good / Easy with the `sm2-jr@1` interval
+/// that rating would schedule (hidden on drill). Again/Hard go to the
+/// back of this session; Good/Easy leave it.
 class ReviewPage extends ConsumerWidget {
   const ReviewPage({super.key});
 
@@ -77,6 +82,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
     final theme = Theme.of(context);
     final card = widget.view.card;
     final gloss = widget.view.glossText;
+    final previews = ratingPreviewLabels(card.srs, isDrill: card.isDrill);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -131,12 +137,21 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: FilledButton(
                         key: ReviewKeys.rating(rating),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 10,
+                          ),
+                        ),
                         onPressed: () {
                           ref
                               .read(reviewSessionProvider.notifier)
                               .answer(rating);
                         },
-                        child: Text(_ratingLabel(rating)),
+                        child: _RatingButtonLabel(
+                          rating: rating,
+                          interval: previews?[rating],
+                        ),
                       ),
                     ),
                   ),
@@ -144,6 +159,33 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _RatingButtonLabel extends StatelessWidget {
+  const _RatingButtonLabel({required this.rating, this.interval});
+
+  final ReviewRating rating;
+  final String? interval;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(_ratingLabel(rating), textAlign: TextAlign.center),
+        if (interval != null)
+          Text(
+            interval!,
+            key: ReviewKeys.interval(rating),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+      ],
     );
   }
 }
