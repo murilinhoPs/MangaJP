@@ -276,6 +276,7 @@ Future<_Env> _openHome(
 Future<void> _pumpHome(WidgetTester tester, _Env env) async {
   await tester.pumpWidget(
     MangaJpApp(
+      key: UniqueKey(),
       overrides: [
         appDatabaseProvider.overrideWith((ref) => env.db),
         reviewRepositoryProvider.overrideWith((ref) => env.review),
