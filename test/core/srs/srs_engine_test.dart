@@ -98,4 +98,29 @@ void main() {
       expect(preview[rating], engine.schedule(prev, qualityFor(rating), now));
     }
   });
+
+  test('preview of a new card matches goldens (Good = 1)', () {
+    final prev = initialCardSrsState(now);
+    final preview = engine.preview(prev, now);
+    expect(preview[ReviewRating.good]!.intervalDays, 1);
+    expect(prev.intervalDays, 0);
+    expect(prev.easeFactor, 2.5);
+    expect(prev.repetitions, 0);
+  });
+
+  test(
+    'preview of interval 6 EF 2.5 matches goldens (Again = 0, Easy = 16)',
+    () {
+      final prev = CardSrsState(
+        easeFactor: 2.5,
+        intervalDays: 6,
+        repetitions: 2,
+        dueAt: now,
+        phase: CardPhase.review,
+      );
+      final preview = engine.preview(prev, now);
+      expect(preview[ReviewRating.again]!.intervalDays, 0);
+      expect(preview[ReviewRating.easy]!.intervalDays, 16);
+    },
+  );
 }
