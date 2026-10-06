@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database.dart';
@@ -54,26 +55,48 @@ class WordsRepository {
         );
       }
 
-      final stateRow = await _db.wordsDao.stateFor(wordId);
-      if (stateRow == null) {
-        await _db.wordsDao.insertState(
-          UserWordStatesCompanion.insert(
-            wordId: wordId,
-            state: WordState.saved.name,
-            updatedAt: DateTime.now().toUtc(),
-          ),
-        );
-      } else {
-        final current = WordState.fromDb(stateRow.state);
-        if (!current.isProtected && current != WordState.saved) {
-          await _db.wordsDao.updateState(
-            wordId: wordId,
-            state: WordState.saved.name,
-            updatedAt: DateTime.now().toUtc(),
-          );
-        }
-      }
+      await _ensureSavedState(wordId);
+      await _db.wordsDao.insertCropWord(
+        CropWordsCompanion.insert(
+          cropId: cropId,
+          wordId: wordId,
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+    });
+  }
 
+  /// Persist a custom word when JMdict has no hit.
+  ///
+  /// [surface] becomes `lemma` / `reading`. [userNote] is required (trimmed
+  /// non-empty). Id is `custom:<uuid>`. Gloss is not stored. No card.
+  Future<void> saveCustomFromLookup({
+    required String cropId,
+    required String surface,
+    required String userNote,
+  }) {
+    final dictForm = surface.trim();
+    final note = userNote.trim();
+    if (dictForm.isEmpty) {
+      throw ArgumentError.value(surface, 'surface', 'required');
+    }
+    if (note.isEmpty) {
+      throw ArgumentError.value(userNote, 'userNote', 'required');
+    }
+
+    return _db.transaction(() async {
+      final wordId = newCustomWordId();
+      await _db.wordsDao.insertWord(
+        UserWordsCompanion.insert(
+          id: wordId,
+          seq: await _unusedCustomSeq(),
+          lemma: dictForm,
+          reading: dictForm,
+          userNote: Value(note),
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+      await _ensureSavedState(wordId);
       await _db.wordsDao.insertCropWord(
         CropWordsCompanion.insert(
           cropId: cropId,
@@ -108,5 +131,39 @@ class WordsRepository {
       await _db.wordsDao.deleteState(wordId);
       await _db.wordsDao.deleteWord(wordId);
     });
+  }
+
+  Future<void> _ensureSavedState(String wordId) async {
+    final stateRow = await _db.wordsDao.stateFor(wordId);
+    if (stateRow == null) {
+      await _db.wordsDao.insertState(
+        UserWordStatesCompanion.insert(
+          wordId: wordId,
+          state: WordState.saved.name,
+          updatedAt: DateTime.now().toUtc(),
+        ),
+      );
+      return;
+    }
+    final current = WordState.fromDb(stateRow.state);
+    if (!current.isProtected && current != WordState.saved) {
+      await _db.wordsDao.updateState(
+        wordId: wordId,
+        state: WordState.saved.name,
+        updatedAt: DateTime.now().toUtc(),
+      );
+    }
+  }
+
+  /// Negative seq so custom rows never collide with JMdict (positive) seqs.
+  Future<int> _unusedCustomSeq() async {
+    var seq = -DateTime.now().toUtc().microsecondsSinceEpoch.abs();
+    if (seq >= 0) {
+      seq = -1;
+    }
+    while (await _db.wordsDao.wordBySeq(seq) != null) {
+      seq--;
+    }
+    return seq;
   }
 }

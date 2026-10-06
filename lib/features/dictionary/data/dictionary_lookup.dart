@@ -54,6 +54,28 @@ class DictionaryLookup {
     return best;
   }
 
+  /// Contiguous kana/kanji run covering [tapIndex], used when JMdict misses.
+  String? missSurface(String text, {int tapIndex = 0}) {
+    if (text.isEmpty) {
+      return null;
+    }
+    final cover = tapIndex < 0
+        ? 0
+        : (tapIndex >= text.length ? text.length - 1 : tapIndex);
+    if (!_isJapaneseUnit(text.codeUnitAt(cover))) {
+      return null;
+    }
+    var start = cover;
+    var end = cover + 1;
+    while (start > 0 && _isJapaneseUnit(text.codeUnitAt(start - 1))) {
+      start--;
+    }
+    while (end < text.length && _isJapaneseUnit(text.codeUnitAt(end))) {
+      end++;
+    }
+    return text.substring(start, end);
+  }
+
   List<DictEntry> _entriesForSurface(String surface) {
     final transformed = deinflector.transform(surface);
     final byText = <String, List<DeinflectedText>>{};
@@ -153,4 +175,13 @@ String? _yomitanCondition(String pos) {
     return 'vz';
   }
   return null;
+}
+
+bool _isJapaneseUnit(int unit) {
+  return (unit >= 0x3040 && unit <= 0x30FF) ||
+      (unit >= 0x31F0 && unit <= 0x31FF) ||
+      (unit >= 0x3400 && unit <= 0x9FFF) ||
+      (unit >= 0xF900 && unit <= 0xFAFF) ||
+      unit == 0x3005 ||
+      (unit >= 0xFF66 && unit <= 0xFF9D);
 }

@@ -103,6 +103,8 @@ void main() {
     );
     expect(find.text('Add card'), findsNothing);
     expect(find.byKey(LookupSheetKeys.save), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.note), findsNothing);
+    expect(find.byKey(LookupSheetKeys.miss), findsNothing);
   });
 
   testWidgets('Salvar persists word + saved state + crop link, not a card', (
@@ -229,6 +231,60 @@ void main() {
       tester.widget<Text>(find.byKey(LookupSheetKeys.gloss)).data,
       'low-priority fixture homograph',
     );
+  });
+
+  testWidgets('no JMdict hit opens custom sheet; Salvar needs a note', (
+    tester,
+  ) async {
+    const pageId = 'page-custom';
+    final db = await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: pageId,
+      ocrText: 'ぴよ',
+    );
+
+    await tester.tap(find.byKey(PageDetailKeys.ocrText));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+    expect(find.text('ぴよ'), findsWidgets);
+    expect(find.byKey(LookupSheetKeys.gloss), findsNothing);
+    expect(find.byKey(LookupSheetKeys.note), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byKey(LookupSheetKeys.save)).onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byKey(LookupSheetKeys.save));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(await db.select(db.userWords).get(), isEmpty);
+
+    await tester.enterText(find.byKey(LookupSheetKeys.note), '   ');
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<FilledButton>(find.byKey(LookupSheetKeys.save)).onPressed,
+      isNull,
+    );
+
+    await tester.enterText(find.byKey(LookupSheetKeys.note), ' nome na fala ');
+    await tester.pumpAndSettle();
+    await _tapSave(tester);
+
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    final words = await db.select(db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.id, startsWith('custom:'));
+    expect(words.single.lemma, 'ぴよ');
+    expect(words.single.reading, 'ぴよ');
+    expect(words.single.userNote, 'nome na fala');
+    expect(
+      (await db.select(db.userWordStates).get()).single.state,
+      WordState.saved.name,
+    );
+    expect(await db.select(db.userCards).get(), isEmpty);
   });
 }
 

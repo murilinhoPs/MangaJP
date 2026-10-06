@@ -1067,6 +1067,17 @@ class $UserWordsTable extends UserWords
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _userNoteMeta = const VerificationMeta(
+    'userNote',
+  );
+  @override
+  late final GeneratedColumn<String> userNote = GeneratedColumn<String>(
+    'user_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1079,7 +1090,14 @@ class $UserWordsTable extends UserWords
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, seq, lemma, reading, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    seq,
+    lemma,
+    reading,
+    userNote,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1121,6 +1139,12 @@ class $UserWordsTable extends UserWords
     } else if (isInserting) {
       context.missing(_readingMeta);
     }
+    if (data.containsKey('user_note')) {
+      context.handle(
+        _userNoteMeta,
+        userNote.isAcceptableOrUnknown(data['user_note']!, _userNoteMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1154,6 +1178,10 @@ class $UserWordsTable extends UserWords
         DriftSqlType.string,
         data['${effectivePrefix}reading'],
       )!,
+      userNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_note'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1172,12 +1200,14 @@ class UserWord extends DataClass implements Insertable<UserWord> {
   final int seq;
   final String lemma;
   final String reading;
+  final String? userNote;
   final DateTime createdAt;
   const UserWord({
     required this.id,
     required this.seq,
     required this.lemma,
     required this.reading,
+    this.userNote,
     required this.createdAt,
   });
   @override
@@ -1187,6 +1217,9 @@ class UserWord extends DataClass implements Insertable<UserWord> {
     map['seq'] = Variable<int>(seq);
     map['lemma'] = Variable<String>(lemma);
     map['reading'] = Variable<String>(reading);
+    if (!nullToAbsent || userNote != null) {
+      map['user_note'] = Variable<String>(userNote);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1197,6 +1230,9 @@ class UserWord extends DataClass implements Insertable<UserWord> {
       seq: Value(seq),
       lemma: Value(lemma),
       reading: Value(reading),
+      userNote: userNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userNote),
       createdAt: Value(createdAt),
     );
   }
@@ -1211,6 +1247,7 @@ class UserWord extends DataClass implements Insertable<UserWord> {
       seq: serializer.fromJson<int>(json['seq']),
       lemma: serializer.fromJson<String>(json['lemma']),
       reading: serializer.fromJson<String>(json['reading']),
+      userNote: serializer.fromJson<String?>(json['userNote']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1222,6 +1259,7 @@ class UserWord extends DataClass implements Insertable<UserWord> {
       'seq': serializer.toJson<int>(seq),
       'lemma': serializer.toJson<String>(lemma),
       'reading': serializer.toJson<String>(reading),
+      'userNote': serializer.toJson<String?>(userNote),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1231,12 +1269,14 @@ class UserWord extends DataClass implements Insertable<UserWord> {
     int? seq,
     String? lemma,
     String? reading,
+    Value<String?> userNote = const Value.absent(),
     DateTime? createdAt,
   }) => UserWord(
     id: id ?? this.id,
     seq: seq ?? this.seq,
     lemma: lemma ?? this.lemma,
     reading: reading ?? this.reading,
+    userNote: userNote.present ? userNote.value : this.userNote,
     createdAt: createdAt ?? this.createdAt,
   );
   UserWord copyWithCompanion(UserWordsCompanion data) {
@@ -1245,6 +1285,7 @@ class UserWord extends DataClass implements Insertable<UserWord> {
       seq: data.seq.present ? data.seq.value : this.seq,
       lemma: data.lemma.present ? data.lemma.value : this.lemma,
       reading: data.reading.present ? data.reading.value : this.reading,
+      userNote: data.userNote.present ? data.userNote.value : this.userNote,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1256,13 +1297,14 @@ class UserWord extends DataClass implements Insertable<UserWord> {
           ..write('seq: $seq, ')
           ..write('lemma: $lemma, ')
           ..write('reading: $reading, ')
+          ..write('userNote: $userNote, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, seq, lemma, reading, createdAt);
+  int get hashCode => Object.hash(id, seq, lemma, reading, userNote, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1271,6 +1313,7 @@ class UserWord extends DataClass implements Insertable<UserWord> {
           other.seq == this.seq &&
           other.lemma == this.lemma &&
           other.reading == this.reading &&
+          other.userNote == this.userNote &&
           other.createdAt == this.createdAt);
 }
 
@@ -1279,6 +1322,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
   final Value<int> seq;
   final Value<String> lemma;
   final Value<String> reading;
+  final Value<String?> userNote;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const UserWordsCompanion({
@@ -1286,6 +1330,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
     this.seq = const Value.absent(),
     this.lemma = const Value.absent(),
     this.reading = const Value.absent(),
+    this.userNote = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1294,6 +1339,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
     required int seq,
     required String lemma,
     required String reading,
+    this.userNote = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1306,6 +1352,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
     Expression<int>? seq,
     Expression<String>? lemma,
     Expression<String>? reading,
+    Expression<String>? userNote,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1314,6 +1361,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
       if (seq != null) 'seq': seq,
       if (lemma != null) 'lemma': lemma,
       if (reading != null) 'reading': reading,
+      if (userNote != null) 'user_note': userNote,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1324,6 +1372,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
     Value<int>? seq,
     Value<String>? lemma,
     Value<String>? reading,
+    Value<String?>? userNote,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -1332,6 +1381,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
       seq: seq ?? this.seq,
       lemma: lemma ?? this.lemma,
       reading: reading ?? this.reading,
+      userNote: userNote ?? this.userNote,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1352,6 +1402,9 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
     if (reading.present) {
       map['reading'] = Variable<String>(reading.value);
     }
+    if (userNote.present) {
+      map['user_note'] = Variable<String>(userNote.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1368,6 +1421,7 @@ class UserWordsCompanion extends UpdateCompanion<UserWord> {
           ..write('seq: $seq, ')
           ..write('lemma: $lemma, ')
           ..write('reading: $reading, ')
+          ..write('userNote: $userNote, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4141,6 +4195,7 @@ typedef $$UserWordsTableCreateCompanionBuilder = UserWordsCompanion Function({
   required int seq,
   required String lemma,
   required String reading,
+  Value<String?> userNote,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -4149,6 +4204,7 @@ typedef $$UserWordsTableUpdateCompanionBuilder = UserWordsCompanion Function({
   Value<int> seq,
   Value<String> lemma,
   Value<String> reading,
+  Value<String?> userNote,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -4238,6 +4294,11 @@ class $$UserWordsTableFilterComposer
 
   ColumnFilters<String> get reading => $composableBuilder(
     column: $table.reading,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userNote => $composableBuilder(
+    column: $table.userNote,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4351,6 +4412,11 @@ class $$UserWordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get userNote => $composableBuilder(
+    column: $table.userNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4377,6 +4443,9 @@ class $$UserWordsTableAnnotationComposer
 
   GeneratedColumn<String> get reading =>
       $composableBuilder(column: $table.reading, builder: (column) => column);
+
+  GeneratedColumn<String> get userNote =>
+      $composableBuilder(column: $table.userNote, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -4493,6 +4562,7 @@ class $$UserWordsTableTableManager
                 Value<int> seq = const Value.absent(),
                 Value<String> lemma = const Value.absent(),
                 Value<String> reading = const Value.absent(),
+                Value<String?> userNote = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UserWordsCompanion(
@@ -4500,6 +4570,7 @@ class $$UserWordsTableTableManager
                 seq: seq,
                 lemma: lemma,
                 reading: reading,
+                userNote: userNote,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -4509,6 +4580,7 @@ class $$UserWordsTableTableManager
                 required int seq,
                 required String lemma,
                 required String reading,
+                Value<String?> userNote = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => UserWordsCompanion.insert(
@@ -4516,6 +4588,7 @@ class $$UserWordsTableTableManager
                 seq: seq,
                 lemma: lemma,
                 reading: reading,
+                userNote: userNote,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

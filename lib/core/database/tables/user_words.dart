@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
-/// Dictionary-backed user word (`words`). Identity is JMdict `seq`.
+/// User word (`words`). JMdict rows are keyed by unique `seq`. Custom rows
+/// (no JMdict hit) use id `custom:<uuid>` and a required [userNote].
 class UserWords extends Table {
   @override
   String get tableName => 'words';
@@ -9,6 +10,7 @@ class UserWords extends Table {
   IntColumn get seq => integer().unique()();
   TextColumn get lemma => text()();
   TextColumn get reading => text()();
+  TextColumn get userNote => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

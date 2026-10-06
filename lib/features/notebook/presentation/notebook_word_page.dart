@@ -13,6 +13,7 @@ abstract final class NotebookWordKeys {
   static const reading = Key('notebook-word-reading');
   static const state = Key('notebook-word-state');
   static const gloss = Key('notebook-word-gloss');
+  static const note = Key('notebook-word-note');
   static const sentence = Key('notebook-word-sentence');
   static const pageLink = Key('notebook-word-page-link');
   static const learn = Key('notebook-word-learn');
@@ -114,6 +115,14 @@ class _NotebookWordBody extends ConsumerWidget {
             Text(
               view.glossText,
               key: NotebookWordKeys.gloss,
+              style: theme.textTheme.bodyLarge,
+            ),
+          ],
+          if (detail.userNote != null && detail.userNote!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              detail.userNote!,
+              key: NotebookWordKeys.note,
               style: theme.textTheme.bodyLarge,
             ),
           ],

@@ -48,7 +48,7 @@ final class ReviewSessionProvider
   ReviewSession create() => ReviewSession();
 }
 
-String _$reviewSessionHash() => r'e6b716028cc5d15c27bd6d8d673e8073df79b52a';
+String _$reviewSessionHash() => r'ff2e2277ff17903a48105412746b3747d32df5d2';
 
 /// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
 /// first build (already capped to leftover new-per-day slots). Again/Hard

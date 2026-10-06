@@ -20,7 +20,7 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '6');
+    expect(await db.appMetaDao.getValue('schema_version'), '7');
     final names = await _tableNames(db);
     expect(
       names,
@@ -33,6 +33,11 @@ void main() {
       ]),
     );
     expect(await _cardRowCount(db), 0);
+    final wordCols = await db.customSelect("PRAGMA table_info('words')").get();
+    expect(
+      {for (final row in wordCols) row.read<String>('name')},
+      contains('user_note'),
+    );
   });
 
   test(
@@ -67,6 +72,61 @@ void main() {
       expect(await _cardRowCount(env.db), 0);
     },
   );
+
+  test('custom save writes custom:<uuid>, surface lemma, required note', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+
+    await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: 'ぴよ',
+      userNote: '  nome do personagem  ',
+    );
+
+    final words = await env.db.select(env.db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.id, startsWith(customWordIdPrefix));
+    expect(words.single.lemma, 'ぴよ');
+    expect(words.single.reading, 'ぴよ');
+    expect(words.single.userNote, 'nome do personagem');
+    expect(words.single.seq, lessThan(0));
+
+    final states = await env.db.select(env.db.userWordStates).get();
+    expect(states, hasLength(1));
+    expect(states.single.wordId, words.single.id);
+    expect(states.single.state, WordState.saved.name);
+
+    final links = await env.db.select(env.db.cropWords).get();
+    expect(links, hasLength(1));
+    expect(links.single.cropId, env.cropId);
+    expect(links.single.wordId, words.single.id);
+    expect(await _cardRowCount(env.db), 0);
+  });
+
+  test('custom save rejects empty or whitespace-only note', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+
+    expect(
+      () => env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: 'ぴよ',
+        userNote: '   ',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(
+      () => env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: 'ぴよ',
+        userNote: '',
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(await env.db.select(env.db.userWords).get(), isEmpty);
+    expect(await env.db.select(env.db.userWordStates).get(), isEmpty);
+    expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+  });
 
   test('second Save is a no-op: no duplicate rows, no field changes', () async {
     final env = await _openRepo();

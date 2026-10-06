@@ -89,23 +89,40 @@ class _PageOcrBody extends ConsumerWidget {
       if (!context.mounted) {
         return;
       }
-      if (result == null) {
+      if (result != null) {
+        await showLookupSheet(
+          context,
+          result,
+          onSave: (entry) {
+            return ref
+                .read(wordsRepositoryProvider)
+                .saveFromLookup(
+                  cropId: crop.id,
+                  seq: entry.seq,
+                  lemma: entry.lemma,
+                  reading: entry.reading,
+                );
+          },
+        );
+        return;
+      }
+      final surface = lookup.missSurface(crop.ocrText, tapIndex: tapIndex);
+      if (surface == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nenhuma entrada no dicionário.')),
         );
         return;
       }
-      await showLookupSheet(
+      await showCustomLookupSheet(
         context,
-        result,
-        onSave: (entry) {
+        surface: surface,
+        onSave: (userNote) {
           return ref
               .read(wordsRepositoryProvider)
-              .saveFromLookup(
+              .saveCustomFromLookup(
                 cropId: crop.id,
-                seq: entry.seq,
-                lemma: entry.lemma,
-                reading: entry.reading,
+                surface: surface,
+                userNote: userNote,
               );
         },
       );

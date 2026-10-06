@@ -9,6 +9,7 @@ class ReviewCard {
     required this.lemma,
     required this.reading,
     required this.srs,
+    this.userNote,
     this.isDrill = false,
   });
 
@@ -18,6 +19,9 @@ class ReviewCard {
   final String lemma;
   final String reading;
   final CardSrsState srs;
+
+  /// Custom-entry note from `words.user_note`, if any.
+  final String? userNote;
 
   /// Next answer of this card on the current study-day is drill (`is_drill=1`):
   /// it does not change SRS, and rating buttons hide the interval preview.
@@ -34,6 +38,7 @@ class ReviewCard {
       lemma: lemma,
       reading: reading,
       srs: srs,
+      userNote: userNote,
       isDrill: true,
     );
   }

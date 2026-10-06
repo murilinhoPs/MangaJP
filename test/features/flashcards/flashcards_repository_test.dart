@@ -13,7 +13,7 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '6');
+    expect(await db.appMetaDao.getValue('schema_version'), '7');
     final names = await _tableNames(db);
     expect(names, containsAll(<String>['cards', 'card_srs', 'review_logs']));
     expect(await db.select(db.userCards).get(), isEmpty);

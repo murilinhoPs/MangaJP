@@ -247,6 +247,7 @@ M0 set up the foundation: app shell and routing (M0.1), OCR ground truth and eng
 | **M1.15** | After **Revelar** on `/review`, Again / Hard / Good / Easy show the `sm2-jr@1` interval preview. Reveal writes nothing. Drills have no preview. |
 | **M1.16** | Home **Capturas recentes** (below **Revisar**) shows up to 6 newest page thumbs. Tap opens `/pages/:id`. Empty state stays visible. |
 | **M1.17** | Home **Galeria** (below **Capturas recentes**) opens `image_picker`. A chosen image goes to `/capture` in the existing crop flow. Cancel stays on Home. |
+| **M1.18** | Lookup miss → custom word (`custom:<uuid>`, `lemma` = surface, empty JMdict gloss, required `user_note`). Caderno detail and card back show the note read-only. |
 
 ## License
 
