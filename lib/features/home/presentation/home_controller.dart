@@ -2,6 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database_provider.dart';
 import '../../../core/router/app_router.dart';
+import '../../pages/data/pages_repository.dart';
+import '../../pages/domain/page.dart';
+import '../../pages/domain/recent_pages.dart';
 import '../../review/data/review_repository.dart';
 import '../../review/domain/home_review_counts.dart';
 
@@ -41,4 +44,28 @@ Future<HomeReviewCounts> homeReviewCounts(Ref ref) {
   router.routerDelegate.addListener(onRoute);
   ref.onDispose(() => router.routerDelegate.removeListener(onRoute));
   return ref.watch(reviewRepositoryProvider).homeCounts();
+}
+
+/// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+///
+/// Refetches when the shell returns to `/home` (Home stays mounted as a
+/// branch, so a one-shot FutureProvider would otherwise stay stale after
+/// `/capture` → `/pages/:id`).
+@riverpod
+Future<List<MangaPage>> homeRecentPages(Ref ref) {
+  final router = ref.watch(appRouterProvider);
+  var path = router.state.uri.path;
+  void onRoute() {
+    final next = router.state.uri.path;
+    if (next == '/home' && path != '/home') {
+      ref.invalidateSelf();
+    }
+    path = next;
+  }
+
+  router.routerDelegate.addListener(onRoute);
+  ref.onDispose(() => router.routerDelegate.removeListener(onRoute));
+  return ref
+      .watch(pagesRepositoryProvider)
+      .listRecentPages(limit: RecentPages.limit);
 }
