@@ -2,6 +2,8 @@
 
 A personal, Android-first Flutter app for learning Japanese vocabulary **from the manga you are actually reading**.
 
+Its goal is to **help you read a manga in Japanese while learning the words and kanji you don't know yet**. Instead of stopping to look things up somewhere else, you look them up from the page itself, keep them, and review them until reading gets easier.
+
 You share (or import) a manga page, crop a speech bubble, and the app reads the Japanese text with OCR. Tap any word to see its dictionary form and meaning, save it to your notebook (**Caderno**), and turn it into a spaced-repetition flashcard. Every word keeps a link back to the sentence and page where you found it.
 
 ## Why this exists
@@ -11,7 +13,7 @@ Reading raw manga is one of the most motivating ways to learn Japanese, but the 
 MangaJP Study closes that loop in one place:
 
 1. **Get the text out of the image** without typing — crop the bubble and OCR it with a manga-specific model.
-2. **Look the word up correctly** — deinflect conjugated forms (食べた → 食べる) and match them against a local JMdict.
+2. **Look the word up correctly** — deinflect conjugated forms (食べた → 食べる) and match them against a local JMdict, which shows the reading of words written in kanji you can't read yet.
 3. **Decide what to do with it** — save it, learn it, mark it as known, or ignore it.
 4. **Remember it** — review learned words with an SM-2 scheduler, with the original manga sentence as context.
 
@@ -57,7 +59,7 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 
 ## Project status
 
-The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet.
+The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are currently learned through the words that contain them (reading + meaning); the KANJIDIC2 `kanji` table is baked into `jmdict.sqlite` but there is no per-kanji screen yet.
 
 See [Milestone history](#milestone-history) for the detailed behavior of each step.
 
