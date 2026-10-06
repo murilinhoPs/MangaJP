@@ -2,23 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../capture/data/image_source_service.dart';
 import '../../pages/domain/page.dart';
 import '../../review/domain/home_review_counts.dart';
 import '../../review/domain/new_per_day.dart';
 import 'home_controller.dart';
 
-/// Keys for `/home` (Revisar + Capturas recentes).
+/// Keys for `/home` (Revisar + Capturas recentes + Galeria).
 abstract final class HomeKeys {
   static const review = Key('home-review');
   static const due = Key('home-review-due');
   static const newToday = Key('home-review-new-today');
   static const recentCaptures = Key('home-recent-captures');
   static const recentEmpty = Key('home-recent-empty');
+  static const gallery = Key('home-gallery');
 
   static Key recentThumb(String pageId) => Key('home-recent-thumb-$pageId');
 }
 
-/// `/home` — **Revisar** (due + novos hoje), **Capturas recentes**, Galeria stub.
+/// `/home` — **Revisar**, **Capturas recentes**, **Galeria** (gallery pick → crop).
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -61,15 +63,18 @@ class HomePage extends ConsumerWidget {
           onTap: () => const ReviewRoute().go(context),
         ),
         _RecentCapturesBlock(pages: recent.asData?.value),
-        _StubBlock(
-          title: 'Galeria',
-          subtitle: 'Import → /capture (crop → OCR)',
-          icon: Icons.add_photo_alternate_outlined,
-          onTap: () => const CaptureRoute().push<void>(context),
-        ),
+        _GalleryBlock(onTap: () => _importFromGallery(context, ref)),
       ],
     );
   }
+}
+
+/// Home **Galeria**: `image_picker` first, then `/capture` with the same extra
+/// as share/import. Cancel (`null`) stays on Home.
+Future<void> _importFromGallery(BuildContext context, WidgetRef ref) async {
+  final picked = await ref.read(imageSourceServiceProvider).pickFromGallery();
+  if (!context.mounted || picked == null) return;
+  await CaptureRoute($extra: picked).push<void>(context);
 }
 
 /// Always-visible **Revisar** block. Tap opens `/review`, including 0 / 0 de 15.
@@ -191,26 +196,20 @@ class _RecentThumb extends StatelessWidget {
   }
 }
 
-class _StubBlock extends StatelessWidget {
-  const _StubBlock({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
+/// Always-visible **Galeria** import CTA. Tap opens the system gallery picker.
+class _GalleryBlock extends StatelessWidget {
+  const _GalleryBlock({required this.onTap});
 
-  final String title;
-  final String subtitle;
-  final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(subtitle),
+        key: HomeKeys.gallery,
+        leading: const Icon(Icons.add_photo_alternate_outlined),
+        title: const Text('Galeria'),
+        subtitle: const Text('Escolher da galeria'),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),

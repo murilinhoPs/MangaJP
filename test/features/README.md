@@ -19,6 +19,7 @@ cancel on either dialog is a no-op; crops/pages stay), is in
 queue, study-day at 04:00 America/Sao_Paulo, first answer vs drill, session
 Again/Hard requeue, reveal, Again/Hard/Good/Easy → `review_logs` +
 `sm2-jr@1` schedule, `new_per_day=15`) is in `test/features/review/`. Home
-**Revisar** (due + novos hoje, tap → `/review`, 04:00 clock) is in
-`test/features/home/`. Default `OcrEngine` wiring (`manga_ocr`
+**Revisar** (due + novos hoje, tap → `/review`, 04:00 clock), **Capturas
+recentes**, and **Galeria** (mocked `image_picker` → `/capture` crop; cancel
+stays on Home) are in `test/features/home/`. Default `OcrEngine` wiring (`manga_ocr`
 sidecar) is in `test/features/ocr/`.

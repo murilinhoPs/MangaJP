@@ -14,6 +14,9 @@ import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/features/capture/data/image_source_service.dart';
+import 'package:manga_jp/features/capture/domain/incoming_image.dart';
+import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
@@ -22,6 +25,8 @@ import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
+import '../capture/fake_image_source_service.dart';
+import '../capture/fixture_png.dart';
 import '../dictionary/bake_jmdict_fixture.dart';
 
 class _Clock {
@@ -69,7 +74,7 @@ void main() {
       lessThan(tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy),
     );
     _expectNoCardList(tester);
-    _expectOutOfScopeStubs(tester);
+    _expectGalleryBelowRecent(tester);
 
     await tester.tap(find.byKey(HomeKeys.review));
     await tester.pumpAndSettle();
@@ -364,6 +369,60 @@ void main() {
     expect(find.byKey(HomeKeys.recentEmpty), findsNothing);
     expect(find.byKey(HomeKeys.recentThumb('page-late')), findsOneWidget);
   });
+
+  testWidgets('Galeria CTA sits under Capturas recentes', (tester) async {
+    await _openHome(tester, jmdictPath: jmdictPath);
+
+    expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
+    expect(find.byKey(HomeKeys.gallery), findsOneWidget);
+    expect(find.text('Galeria'), findsOneWidget);
+    expect(find.text('Escolher da galeria'), findsOneWidget);
+    expect(find.text('Import → /capture (crop → OCR)'), findsNothing);
+    expect(find.byKey(HomeKeys.review), findsOneWidget);
+    expect(find.text('Capturas recentes'), findsOneWidget);
+    _expectGalleryBelowRecent(tester);
+  });
+
+  testWidgets('Galeria pick opens /capture crop with the image', (tester) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      source: FakeImageSourceService(
+        galleryImage: IncomingImage(bytes: fixturePng()),
+      ),
+    );
+
+    await tester.tap(find.byKey(HomeKeys.gallery));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CapturePage), findsOneWidget);
+    expect(find.text('Captura'), findsOneWidget);
+    expect(find.text('Confirmar crop'), findsOneWidget);
+    expect(find.byKey(CaptureKeys.pickGallery), findsNothing);
+    expect(find.text('Caderno'), findsNothing);
+    expect(
+      GoRouter.of(tester.element(find.byType(CapturePage))).state.uri.path,
+      '/capture',
+    );
+  });
+
+  testWidgets('Galeria cancel stays on /home', (tester) async {
+    final source = FakeImageSourceService();
+    await _openHome(tester, jmdictPath: jmdictPath, source: source);
+
+    await tester.tap(find.byKey(HomeKeys.gallery));
+    await tester.pumpAndSettle();
+
+    expect(source.galleryCalls, 1);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+    expect(find.byKey(HomeKeys.review), findsOneWidget);
+    expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
+  });
 }
 
 class _SeedPage {
@@ -396,11 +455,13 @@ class _Env {
     required this.db,
     required this.review,
     required this.jmdictPath,
+    required this.source,
   });
 
   final AppDatabase db;
   final ReviewRepository review;
   final String jmdictPath;
+  final ImageSourceService source;
 }
 
 Future<_Env> _openHome(
@@ -408,6 +469,7 @@ Future<_Env> _openHome(
   required String jmdictPath,
   List<_SeedCard> cards = const [],
   List<_SeedPage> pages = const [],
+  ImageSourceService? source,
   _Clock? clock,
   Future<void> Function(ReviewRepository review)? prepare,
 }) async {
@@ -490,7 +552,12 @@ Future<_Env> _openHome(
     await prepare(review);
   }
 
-  final env = _Env(db: db, review: review, jmdictPath: jmdictPath);
+  final env = _Env(
+    db: db,
+    review: review,
+    jmdictPath: jmdictPath,
+    source: source ?? FakeImageSourceService(),
+  );
   await _pumpHome(tester, env);
   return env;
 }
@@ -502,6 +569,7 @@ Future<void> _pumpHome(WidgetTester tester, _Env env) async {
       overrides: [
         appDatabaseProvider.overrideWith((ref) => env.db),
         reviewRepositoryProvider.overrideWith((ref) => env.review),
+        imageSourceServiceProvider.overrideWith((ref) => env.source),
         jmdictServiceProvider.overrideWith((ref) async {
           final service = JmdictService()..openFile(env.jmdictPath);
           ref.onDispose(service.close);
@@ -523,8 +591,14 @@ void _expectNoCardList(WidgetTester tester) {
   expect(find.text('Resumo'), findsNothing);
 }
 
-void _expectOutOfScopeStubs(WidgetTester tester) {
+void _expectGalleryBelowRecent(WidgetTester tester) {
+  expect(find.byKey(HomeKeys.gallery), findsOneWidget);
   expect(find.text('Galeria'), findsOneWidget);
+  expect(find.text('Escolher da galeria'), findsOneWidget);
+  expect(
+    tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy,
+    lessThan(tester.getTopLeft(find.byKey(HomeKeys.gallery)).dy),
+  );
 }
 
 List<String> _recentThumbIds(WidgetTester tester) {
