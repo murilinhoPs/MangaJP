@@ -36,4 +36,39 @@ void main() {
     expect(page, isNotNull);
     expect(page!.sha256, sha256Hex(png));
   });
+
+  test(
+    'listRecentPages returns at most 6 pages by created_at descending',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final repo = PagesRepository(db);
+
+      for (var i = 1; i <= 7; i++) {
+        await db.pagesDao.insertPage(
+          CapturedPagesCompanion.insert(
+            id: 'page-$i',
+            sha256: 'sha-$i',
+            createdAt: DateTime.utc(2026, 1, i),
+          ),
+        );
+      }
+
+      final recent = await repo.listRecentPages();
+      expect(recent.map((page) => page.id).toList(), [
+        'page-7',
+        'page-6',
+        'page-5',
+        'page-4',
+        'page-3',
+        'page-2',
+      ]);
+    },
+  );
+
+  test('listRecentPages is empty when there are no pages', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    expect(await PagesRepository(db).listRecentPages(), isEmpty);
+  });
 }
