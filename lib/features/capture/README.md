@@ -10,7 +10,7 @@ Android share-intent device smoke are later M1.
 | Package | Role |
 |---------|------|
 | `receive_sharing_intent` | Android `ACTION_SEND` / `SEND_MULTIPLE` and iOS Share Extension (`image/*`) |
-| `image_picker` | Gallery stub (Home **Galeria** → `/capture` → pick) |
+| `image_picker` | Home **Galeria** pick (and `/capture` empty-state fallback) |
 | `image` | Decode + `copyCrop` + encode PNG (PRD §9.4) |
 
 OCR talks to `tools/manga_ocr_sidecar/serve.py` (kha-white/manga-ocr). Crop UI is a
@@ -65,9 +65,9 @@ Xcode).
 flutter run
 ```
 
-**Gallery (no share sheet):** Home → **Galeria** → `/capture` → **Escolher da
-galeria** → pick any image → (optional) drag the rect / corners → **Confirmar
-crop**. The app must go to `/pages/:id` and show the persisted OCR text. Logcat:
+**Gallery (no share sheet):** Home → **Galeria** → pick any image → (optional)
+drag the rect / corners → **Confirmar crop**. The app must go to `/pages/:id`
+and show the persisted OCR text. Canceling the picker stays on Home. Logcat:
 `M0.8 crop PNG bytes.length=…` then `M1.1 OCR manga_ocr: …`.
 
 **Share:** in Photos / Files / a screenshot, **Share** → **MangaJP**. The app
@@ -119,7 +119,7 @@ is enough to click through gallery → rect → bytes:
 flutter run -d linux
 ```
 
-Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
+Home → **Galeria** → pick an image → **Confirmar
 crop**. The app goes to `/pages/:id` with the persisted OCR text when the
 sidecar is up. `/capture` is not a bottom tab.
 
@@ -133,7 +133,7 @@ headers (already in `serve.py`) so Chrome can POST crop PNG bytes:
 flutter run -d chrome
 ```
 
-Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar
+Home → **Galeria** → pick an image → **Confirmar
 crop**. Same `/pages/:id` check when the sidecar is up. `/capture` is not a
 bottom tab.
 
@@ -143,6 +143,6 @@ bottom tab.
 flutter test test/features/capture/ test/features/ocr/ test/features/pages/
 ```
 
-Fixture PNG → `CapturePage` / share extra / Home Galeria stub → default rect →
+Fixture PNG → `CapturePage` / share extra / Home **Galeria** pick → default rect →
 crop bytes, OCR text persisted in Drift `crops`, then `/pages/:id` shows that
 text (fake `OcrEngine`; default wiring is still `manga_ocr`).

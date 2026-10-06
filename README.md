@@ -36,7 +36,7 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 | Notebook | `/notebook` | Lists every word you have touched, newest first, with lemma/reading search and a state filter. |
 | Word detail | `/notebook/word/:id` | Lemma, reading, state, gloss, first source sentence and a link to its page. Actions: **Aprender**, **Conhecido**, **Ignorar**, **Remover card**, **Remover do Caderno**. |
 | Review | `/review` | One due card at a time: front is the lemma, **Revelar** shows reading + gloss, then rate **Again / Hard / Good / Easy**. |
-| Home | `/home` | The **Revisar** block shows how many cards are due and **Novos hoje** (`N de 15`). |
+| Home | `/home` | **Revisar** shows due and **Novos hoje** (`N de 15`). **Galeria** (below **Capturas recentes**) picks an image into `/capture`. |
 
 ### Word states
 
@@ -120,7 +120,7 @@ flutter devices
 flutter run
 ```
 
-The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** pushes `/capture` (outside the tab shell). Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar, writes `crops.ocr_text`, and goes to `/pages/:id`. Tapping OCR text there looks up the lemma in the local JMdict (`assets/dict/jmdict.sqlite`). **Salvar** persists the chosen entry without creating a flashcard.
+The app opens `/home`. Drift `onCreate` seeds `app_meta.hello = MangaJP M0.1`; Home reads it through a Riverpod codegen provider. Home **Galeria** opens the gallery picker; a chosen image pushes `/capture` (outside the tab shell) into the crop flow. Cancel stays on Home. Sharing an image on Android or iOS also opens `/capture`. Confirming a crop runs the default manga-ocr sidecar, writes `crops.ocr_text`, and goes to `/pages/:id`. Tapping OCR text there looks up the lemma in the local JMdict (`assets/dict/jmdict.sqlite`). **Salvar** persists the chosen entry without creating a flashcard.
 
 See `lib/features/capture/README.md` for AndroidManifest filters, the iOS Share Extension, the manga-ocr sidecar, and device steps. CI: `flutter test test/features/capture/ test/features/pages/`.
 
@@ -145,7 +145,7 @@ Dependencies (Ubuntu): `ninja-build`, `libgtk-3-dev`, `g++`.
 flutter run -d linux
 ```
 
-Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running. `/capture` has no bottom tabs.
+Then Home → **Galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running. `/capture` has no bottom tabs.
 
 ## Run on Chrome (Flutter web)
 
@@ -157,7 +157,7 @@ Drift uses `sqlite3.wasm` + `drift_worker.js` in `web/` (from the drift **2.35.1
 flutter run -d chrome
 ```
 
-Then Home → **Galeria** → **Escolher da galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running (the sidecar sends CORS headers for the Chrome origin). `/capture` has no bottom tabs.
+Then Home → **Galeria** → pick an image → **Confirmar crop**. The app goes to `/pages/:id` with the persisted OCR text if `tools/manga_ocr_sidecar/serve.py` is running (the sidecar sends CORS headers for the Chrome origin). `/capture` has no bottom tabs.
 
 Override the sidecar URL with `--dart-define=MANGA_OCR_URL=http://127.0.0.1:8765` if needed.
 
@@ -244,6 +244,9 @@ M0 set up the foundation: app shell and routing (M0.1), OCR ground truth and eng
 | **M1.12** | At most 15 new (`neu`) cards per study day (`new_per_day` constant). A `neu` card counts on its first non-drill answer; leftover `neu` cards wait for the next 04:00. Due learning / relearning / review cards still enter, and a `neu` card already in the session (Again/Hard) stays. |
 | **M1.13** | Home **Revisar** shows due cards (learning / relearning / review that would enter the queue now) and **Novos hoje** (`N de 15`). Tap opens `/review`. The block stays visible at `0` / `0 de 15`. |
 | **M1.14** | **Remover do Caderno** asks for confirmation (a second one when the word has a card) and deletes the word, `word_states`, `crop_words`, and, if present, `cards` + `card_srs` + that card's `review_logs`. Crops and pages stay. Cancel on either dialog is a no-op. |
+| **M1.15** | After **Revelar** on `/review`, Again / Hard / Good / Easy show the `sm2-jr@1` interval preview. Reveal writes nothing. Drills have no preview. |
+| **M1.16** | Home **Capturas recentes** (below **Revisar**) shows up to 6 newest page thumbs. Tap opens `/pages/:id`. Empty state stays visible. |
+| **M1.17** | Home **Galeria** (below **Capturas recentes**) opens `image_picker`. A chosen image goes to `/capture` in the existing crop flow. Cancel stays on Home. |
 
 ## License
 
