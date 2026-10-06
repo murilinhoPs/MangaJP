@@ -35,6 +35,7 @@ class NotebookRepository {
       lemma: word.lemma,
       reading: word.reading,
       state: WordState.fromDb(stateRow?.state ?? ''),
+      userNote: word.userNote,
       sentence: crop?.ocrText,
       pageId: crop?.pageId,
     );

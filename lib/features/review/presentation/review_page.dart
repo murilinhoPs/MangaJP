@@ -11,6 +11,7 @@ abstract final class ReviewKeys {
   static const lemma = Key('review-lemma');
   static const reading = Key('review-reading');
   static const gloss = Key('review-gloss');
+  static const note = Key('review-note');
   static const reveal = Key('review-reveal');
 
   static Key rating(ReviewRating rating) => Key('review-${rating.name}');
@@ -113,6 +114,15 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       Text(
                         gloss,
                         key: ReviewKeys.gloss,
+                        style: theme.textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    if (card.userNote != null && card.userNote!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        card.userNote!,
+                        key: ReviewKeys.note,
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),

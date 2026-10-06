@@ -186,6 +186,7 @@ class ReviewRepository {
       lemma: word.lemma,
       reading: word.reading,
       srs: _srsFromRow(srs),
+      userNote: word.userNote,
       isDrill: isDrill,
     );
   }
