@@ -5,6 +5,7 @@ import '../../../core/database/app_database_provider.dart';
 import '../../../core/utils/ids.dart';
 import '../domain/page.dart';
 import '../domain/page_crop.dart';
+import '../domain/recent_pages.dart';
 
 part 'pages_repository.g.dart';
 
@@ -79,6 +80,18 @@ class PagesRepository {
       _db.capturedPages,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (row == null) return null;
+    return _toPage(row);
+  }
+
+  /// Newest [limit] pages (`created_at` descending). Does not load crops.
+  Future<List<MangaPage>> listRecentPages({
+    int limit = RecentPages.limit,
+  }) async {
+    final rows = await _db.pagesDao.listRecentPages(limit);
+    return [for (final row in rows) _toPage(row)];
+  }
+
+  static MangaPage _toPage(CapturedPage row) {
     return MangaPage(id: row.id, sha256: row.sha256, createdAt: row.createdAt);
   }
 

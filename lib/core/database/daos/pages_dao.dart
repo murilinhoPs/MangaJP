@@ -30,4 +30,11 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
         .get();
   }
+
+  Future<List<CapturedPage>> listRecentPages(int limit) {
+    return (select(capturedPages)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(limit))
+        .get();
+  }
 }

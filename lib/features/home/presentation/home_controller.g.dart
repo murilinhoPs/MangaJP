@@ -113,3 +113,59 @@ final class HomeReviewCountsProvider
 }
 
 String _$homeReviewCountsHash() => r'a97e950a86bb928c0880f1fb9560ce794ecc274f';
+
+/// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+///
+/// Refetches when the shell returns to `/home` (Home stays mounted as a
+/// branch, so a one-shot FutureProvider would otherwise stay stale after
+/// `/capture` → `/pages/:id`).
+
+@ProviderFor(homeRecentPages)
+final homeRecentPagesProvider = HomeRecentPagesProvider._();
+
+/// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+///
+/// Refetches when the shell returns to `/home` (Home stays mounted as a
+/// branch, so a one-shot FutureProvider would otherwise stay stale after
+/// `/capture` → `/pages/:id`).
+
+final class HomeRecentPagesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MangaPage>>,
+          List<MangaPage>,
+          FutureOr<List<MangaPage>>
+        >
+    with $FutureModifier<List<MangaPage>>, $FutureProvider<List<MangaPage>> {
+  /// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+  ///
+  /// Refetches when the shell returns to `/home` (Home stays mounted as a
+  /// branch, so a one-shot FutureProvider would otherwise stay stale after
+  /// `/capture` → `/pages/:id`).
+  HomeRecentPagesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeRecentPagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeRecentPagesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<MangaPage>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<MangaPage>> create(Ref ref) {
+    return homeRecentPages(ref);
+  }
+}
+
+String _$homeRecentPagesHash() => r'228a2c9462e57b9b4c2cd8a5b971ad7cd876ff10';

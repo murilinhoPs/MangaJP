@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../pages/domain/page.dart';
 import '../../review/domain/home_review_counts.dart';
 import '../../review/domain/new_per_day.dart';
 import 'home_controller.dart';
 
-/// Keys for `/home` (Revisar block).
+/// Keys for `/home` (Revisar + Capturas recentes).
 abstract final class HomeKeys {
   static const review = Key('home-review');
   static const due = Key('home-review-due');
   static const newToday = Key('home-review-new-today');
+  static const recentCaptures = Key('home-recent-captures');
+  static const recentEmpty = Key('home-recent-empty');
+
+  static Key recentThumb(String pageId) => Key('home-recent-thumb-$pageId');
 }
 
-/// `/home` — **Revisar** (due + novos hoje) plus stub IA blocks.
+/// `/home` — **Revisar** (due + novos hoje), **Capturas recentes**, Galeria stub.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -21,6 +26,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hello = ref.watch(helloMetaProvider);
     final counts = ref.watch(homeReviewCountsProvider);
+    final recent = ref.watch(homeRecentPagesProvider);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -54,12 +60,7 @@ class HomePage extends ConsumerWidget {
           counts: counts.asData?.value,
           onTap: () => const ReviewRoute().go(context),
         ),
-        _StubBlock(
-          title: 'Capturas recentes',
-          subtitle: 'Thumbs → /pages/:id — stub',
-          icon: Icons.photo_library_outlined,
-          onTap: () => const PagesRoute().go(context),
-        ),
+        _RecentCapturesBlock(pages: recent.asData?.value),
         _StubBlock(
           title: 'Galeria',
           subtitle: 'Import → /capture (crop → OCR)',
@@ -100,6 +101,91 @@ class _ReviewBlock extends StatelessWidget {
         isThreeLine: true,
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// Always-visible **Capturas recentes**. Page image bytes are not persisted
+/// (only `pages.sha256`); thumbs are tappable placeholders to `/pages/:id`.
+class _RecentCapturesBlock extends StatelessWidget {
+  const _RecentCapturesBlock({required this.pages});
+
+  final List<MangaPage>? pages;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: HomeKeys.recentCaptures,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ListTile(
+              leading: Icon(Icons.photo_library_outlined),
+              title: Text('Capturas recentes'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: _body(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    final items = pages;
+    if (items == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (items.isEmpty) {
+      return const Text('Nenhuma captura ainda.', key: HomeKeys.recentEmpty);
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final page in items)
+          SizedBox(
+            width: 80,
+            height: 104,
+            child: _RecentThumb(
+              pageId: page.id,
+              onTap: () => PageDetailRoute(id: page.id).go(context),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RecentThumb extends StatelessWidget {
+  const _RecentThumb({required this.pageId, required this.onTap});
+
+  final String pageId;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        key: HomeKeys.recentThumb(pageId),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox.expand(
+          child: Center(
+            child: Icon(Icons.photo_outlined, color: scheme.onSurfaceVariant),
+          ),
+        ),
       ),
     );
   }
