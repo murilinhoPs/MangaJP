@@ -15,7 +15,7 @@ MangaJP Study closes that loop in one place:
 1. **Get the text out of the image** without typing — crop the bubble and OCR it with a manga-specific model.
 2. **Look the word up correctly** — deinflect conjugated forms (食べた → 食べる) and match them against a local JMdict, which shows the reading of words written in kanji you can't read yet.
 3. **Decide what to do with it** — save it, learn it, mark it as known, or ignore it.
-4. **Remember it** — review learned words with an SM-2 scheduler, with the original manga sentence as context.
+4. **Remember it** — review learned words with an SM-2 scheduler: the card front shows the word as written (in kanji when it has them), and the back reveals the reading and meaning, with the original manga sentence as context.
 
 It is a **single-user, local-first tool** built for the author's own study routine: no accounts, no server, no sync. All data lives in an on-device SQLite database. The UI is in Brazilian Portuguese and the study day follows the `America/Sao_Paulo` time zone.
 
@@ -59,7 +59,7 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 
 ## Project status
 
-The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are currently learned through the words that contain them (reading + meaning); the KANJIDIC2 `kanji` table is baked into `jmdict.sqlite` but there is no per-kanji screen yet.
+The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are learned through the words that contain them: the lookup sheet, the Caderno, the word detail, and the review card all show the word in its kanji form (when it has one) together with its kana reading and meaning. What is still missing is per-character information (the meaning and on/kun readings of each kanji on its own): the KANJIDIC2 `kanji` table is baked into `jmdict.sqlite`, but no screen uses it yet.
 
 See [Milestone history](#milestone-history) for the detailed behavior of each step.
 
