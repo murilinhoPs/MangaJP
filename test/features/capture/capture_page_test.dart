@@ -12,27 +12,13 @@ import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
+import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 
 import '../ocr/fake_ocr_engine.dart';
+import 'fake_image_source_service.dart';
 import 'fixture_png.dart';
-
-class FakeImageSourceService extends ImageSourceService {
-  FakeImageSourceService({this.galleryImage, this.initial});
-
-  final IncomingImage? galleryImage;
-  final IncomingImage? initial;
-
-  @override
-  Stream<IncomingImage> get mediaStream => const Stream.empty();
-
-  @override
-  Future<IncomingImage?> initialMedia() async => initial;
-
-  @override
-  Future<IncomingImage?> pickFromGallery() async => galleryImage;
-}
 
 List<Override> _harness({
   required AppDatabase db,
@@ -109,7 +95,31 @@ void main() {
     expect(find.byType(PageDetailPage), findsOneWidget);
   });
 
-  testWidgets('Home Galeria opens /capture; confirm goes to /pages/:id', (
+  testWidgets('empty /capture gallery pick loads crop UI', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      const CapturePage().wrap(
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(
+            galleryImage: IncomingImage(bytes: png),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escolher da galeria'), findsOneWidget);
+    await tester.tap(find.byKey(CaptureKeys.pickGallery));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(CaptureKeys.confirm), findsOneWidget);
+    expect(find.text('Escolher da galeria'), findsNothing);
+  });
+
+  testWidgets('Home Galeria pick opens /capture crop; confirm goes to /pages/:id', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
@@ -127,18 +137,39 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Galeria'));
+    await tester.tap(find.byKey(HomeKeys.gallery));
     await tester.pumpAndSettle();
 
     expect(find.byType(CapturePage), findsOneWidget);
     expect(find.text('Caderno'), findsNothing);
-
-    await tester.tap(find.byKey(CaptureKeys.pickGallery));
-    await tester.pumpAndSettle();
+    expect(find.byKey(CaptureKeys.pickGallery), findsNothing);
+    expect(find.text('Confirmar crop'), findsOneWidget);
 
     await tester.tap(find.byKey(CaptureKeys.confirm));
     await tester.pumpAndSettle();
     expect(find.byType(PageDetailPage), findsOneWidget);
+  });
+
+  testWidgets('Home Galeria cancel stays on /home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final source = FakeImageSourceService();
+
+    await tester.pumpWidget(
+      MangaJpApp(overrides: _harness(db: db, source: source)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(HomeKeys.gallery));
+    await tester.pumpAndSettle();
+
+    expect(source.galleryCalls, 1);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
   });
 
   testWidgets(
@@ -200,9 +231,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Galeria'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(CaptureKeys.pickGallery));
+      await tester.tap(find.byKey(HomeKeys.gallery));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(CaptureKeys.confirm));
       await tester.pumpAndSettle();
