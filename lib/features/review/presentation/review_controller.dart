@@ -54,7 +54,11 @@ class ReviewSession extends _$ReviewSession {
         .read(reviewRepositoryProvider)
         .answer(current.card.cardId, rating);
     ref.read(reviewRevisionProvider.notifier).bump();
-    _remaining = applySessionRating(remaining, rating);
+    final answeredId = current.card.cardId;
+    _remaining = [
+      for (final card in applySessionRating(remaining, rating))
+        card.cardId == answeredId ? card.asDrill() : card,
+    ];
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);
     state = AsyncData(_viewFor(_remaining!, jmdict));

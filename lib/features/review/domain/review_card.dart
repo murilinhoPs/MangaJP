@@ -9,6 +9,7 @@ class ReviewCard {
     required this.lemma,
     required this.reading,
     required this.srs,
+    this.isDrill = false,
   });
 
   final String cardId;
@@ -17,4 +18,23 @@ class ReviewCard {
   final String lemma;
   final String reading;
   final CardSrsState srs;
+
+  /// Next answer of this card on the current study-day is drill (`is_drill=1`):
+  /// it does not change SRS, and rating buttons hide the interval preview.
+  final bool isDrill;
+
+  ReviewCard asDrill() {
+    if (isDrill) {
+      return this;
+    }
+    return ReviewCard(
+      cardId: cardId,
+      wordId: wordId,
+      seq: seq,
+      lemma: lemma,
+      reading: reading,
+      srs: srs,
+      isDrill: true,
+    );
+  }
 }

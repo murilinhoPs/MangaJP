@@ -7,5 +7,7 @@ abstract class SrsEngine {
 
   CardSrsState schedule(CardSrsState prev, int quality, DateTime now);
 
+  /// Read-only next [CardSrsState] for every rating. Same math as
+  /// [schedule]; callers must not persist the result as an answer.
   Map<ReviewRating, CardSrsState> preview(CardSrsState prev, DateTime now);
 }

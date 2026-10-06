@@ -113,6 +113,7 @@ void main() {
       expect(find.byKey(ReviewKeys.reading), findsNothing);
       expect(find.byKey(ReviewKeys.gloss), findsNothing);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsNothing);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
       expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
 
       await tester.tap(find.byKey(ReviewKeys.reveal));
@@ -140,9 +141,153 @@ void main() {
       expect(find.byKey(ReviewKeys.rating(ReviewRating.hard)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.easy)), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+            .data,
+        '1 dia',
+      );
       _expectNoOutOfScopeControls(tester);
     },
   );
+
+  testWidgets(
+    'revealing writes nothing; new card Good preview is 1 dia from sm2-jr@1',
+    (tester) async {
+      final env = await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+      );
+      final srsBefore = (await env.db.select(env.db.userCardSrs).get()).single;
+
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
+      expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsNothing);
+
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+            .data,
+        '1 dia',
+      );
+      expect(await env.db.select(env.db.userReviewLogs).get(), isEmpty);
+      final srsAfter = (await env.db.select(env.db.userCardSrs).get()).single;
+      expect(srsAfter.easeFactor, srsBefore.easeFactor);
+      expect(srsAfter.intervalDays, srsBefore.intervalDays);
+      expect(srsAfter.repetitions, srsBefore.repetitions);
+      expect(srsAfter.dueAt, srsBefore.dueAt);
+      expect(srsAfter.phase, srsBefore.phase);
+      expect(srsAfter.engineId, srsBefore.engineId);
+    },
+  );
+
+  testWidgets(
+    'interval 6 EF 2.5 shows Again hoje and Easy 16 dias from sm2-jr@1',
+    (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_fukushuCard],
+        customizeDb: (db) async {
+          await (db.update(
+            db.userCardSrs,
+          )..where((t) => t.cardId.equals('card-review'))).write(
+            const UserCardSrsCompanion(
+              easeFactor: Value(2.5),
+              intervalDays: Value(6),
+              repetitions: Value(2),
+              phase: Value('review'),
+            ),
+          );
+        },
+      );
+
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+            .data,
+        'hoje',
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
+            .data,
+        '16 dias',
+      );
+    },
+  );
+
+  testWidgets(
+    'drill answer (second same study-day) shows no interval preview',
+    (tester) async {
+      await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
+
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ReviewKeys.interval(ReviewRating.good)),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.again)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
+
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsOneWidget);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.hard)), findsNothing);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
+      expect(find.byKey(ReviewKeys.interval(ReviewRating.easy)), findsNothing);
+      expect(find.text('hoje'), findsNothing);
+      expect(find.text('1 dia'), findsNothing);
+    },
+  );
+
+  testWidgets('a card already answered this study-day opens with no preview', (
+    tester,
+  ) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+      customizeDb: (db) async {
+        await db.cardsDao.insertLog(
+          UserReviewLogsCompanion.insert(
+            id: 'log-eat',
+            cardId: 'card-eat',
+            ratedAt: _now,
+            rating: 1,
+            quality: 0,
+            engineId: kSm2JrEngineId,
+            isDrill: 0,
+          ),
+        );
+      },
+    );
+
+    await tester.tap(find.byKey(ReviewKeys.reveal));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
+    expect(find.text('1 dia'), findsNothing);
+  });
 
   testWidgets('Good writes rating 3 / quality 4, updates SRS, keeps learning', (
     tester,
@@ -435,6 +580,7 @@ Future<_Env> _openReview(
   required String jmdictPath,
   List<_SeedCard> cards = const [],
   Future<void> Function(ReviewRepository review)? prepare,
+  Future<void> Function(AppDatabase db)? customizeDb,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
@@ -484,6 +630,10 @@ Future<_Env> _openReview(
             engineId: kSm2JrEngineId,
           ),
         );
+  }
+
+  if (customizeDb != null) {
+    await customizeDb(db);
   }
 
   final review = ReviewRepository(db, clock: () => _now);
