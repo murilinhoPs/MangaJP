@@ -128,12 +128,90 @@ void main() {
       expect(find.byKey(NotebookWordKeys.removeFromNotebook), findsOneWidget);
       expect(find.text('Remover card'), findsOneWidget);
       expect(find.text('Remover do Caderno'), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.note), findsNothing);
 
       _expectNoOutOfScopeControls(tester);
       final states = await env.db.select(env.db.userWordStates).get();
       expect(states, hasLength(1));
       expect(states.single.state, WordState.saved.name);
       expect(states.single.updatedAt, env.stateUpdatedAt);
+    },
+  );
+
+  testWidgets(
+    'custom word detail shows user_note read-only and no JMdict gloss',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      const wordId = 'custom:piyo';
+      const pageId = 'page-piyo';
+      await db
+          .into(db.userWords)
+          .insert(
+            UserWordsCompanion.insert(
+              id: wordId,
+              seq: -1,
+              lemma: 'ぴよ',
+              reading: 'ぴよ',
+              userNote: const Value('nome do personagem'),
+              createdAt: DateTime.utc(2026, 1, 1),
+            ),
+          );
+      await db
+          .into(db.userWordStates)
+          .insert(
+            UserWordStatesCompanion.insert(
+              wordId: wordId,
+              state: WordState.saved.name,
+              updatedAt: DateTime.utc(2026, 1, 1),
+            ),
+          );
+      await _seedCrop(
+        db,
+        cropId: 'crop-piyo',
+        pageId: pageId,
+        ocrText: 'ぴよだよ',
+        createdAt: DateTime.utc(2026, 1, 2),
+      );
+      await db
+          .into(db.cropWords)
+          .insert(
+            CropWordsCompanion.insert(
+              cropId: 'crop-piyo',
+              wordId: wordId,
+              createdAt: DateTime.utc(2026, 1, 2),
+            ),
+          );
+
+      await tester.pumpWidget(
+        MangaJpApp(
+          overrides: [
+            appDatabaseProvider.overrideWith((ref) => db),
+            jmdictServiceProvider.overrideWith((ref) async {
+              final service = JmdictService()..openFile(jmdictPath);
+              ref.onDispose(service.close);
+              return service;
+            }),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      const NotebookWordRoute(id: wordId).go(tester.element(find.byType(HomePage)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, 'ぴよ');
+      expect(find.byKey(NotebookWordKeys.gloss), findsNothing);
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.note)).data,
+        'nome do personagem',
+      );
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Editar nota'), findsNothing);
+      expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
+      _expectNoOutOfScopeControls(tester);
     },
   );
 

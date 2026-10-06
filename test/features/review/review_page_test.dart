@@ -141,6 +141,7 @@ void main() {
       expect(find.byKey(ReviewKeys.rating(ReviewRating.hard)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.easy)), findsOneWidget);
+      expect(find.byKey(ReviewKeys.note), findsNothing);
       expect(
         tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
@@ -150,6 +151,47 @@ void main() {
       _expectNoOutOfScopeControls(tester);
     },
   );
+
+  testWidgets('custom word Revelar shows user_note and no JMdict gloss', (
+    tester,
+  ) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [
+        (
+          id: 'custom:piyo',
+          lemma: 'ぴよ',
+          reading: 'ぴよ',
+          seq: -1,
+          phase: CardPhase.neu,
+          dueAt: null,
+          suspendReason: null,
+          state: WordState.learning,
+        ),
+      ],
+      customizeDb: (db) async {
+        await (db.update(
+          db.userWords,
+        )..where((t) => t.id.equals('custom:piyo'))).write(
+          const UserWordsCompanion(userNote: Value('nome do personagem')),
+        );
+      },
+    );
+
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, 'ぴよ');
+    expect(find.byKey(ReviewKeys.note), findsNothing);
+
+    await tester.tap(find.byKey(ReviewKeys.reveal));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'ぴよ');
+    expect(find.byKey(ReviewKeys.gloss), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(ReviewKeys.note)).data,
+      'nome do personagem',
+    );
+  });
 
   testWidgets(
     'revealing writes nothing; new card Good preview is 1 dia from sm2-jr@1',

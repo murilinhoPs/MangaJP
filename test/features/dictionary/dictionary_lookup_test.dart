@@ -130,4 +130,10 @@ void main() {
     expect(result.selected.glosses, ['high-priority fixture homograph']);
     expect(result.entries.last.glosses, ['low-priority fixture homograph']);
   });
+
+  test('missSurface is the kana/kanji run covering the tap', () {
+    expect(lookup.missSurface('ぴよ'), 'ぴよ');
+    expect(lookup.missSurface('よぉ、相棒', tapIndex: 0), 'よぉ');
+    expect(lookup.findAt('ぴよ'), isNull);
+  });
 }
