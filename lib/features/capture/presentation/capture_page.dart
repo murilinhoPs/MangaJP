@@ -26,7 +26,7 @@ abstract final class CaptureKeys {
   static const pickGallery = Key('capture-pick-gallery');
 }
 
-/// `/capture` — share target / gallery stub / crop ≥1 rect (not a bottom tab).
+/// `/capture` — share / Home Galeria extra / empty-state gallery pick → crop ≥1.
 class CapturePage extends ConsumerStatefulWidget {
   const CapturePage({super.key, this.image, this.onCropped});
 

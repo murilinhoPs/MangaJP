@@ -16,6 +16,7 @@ ImageSourceService imageSourceService(Ref ref) => ImageSourceService();
 /// Native share is Android + iOS. `flutter test` on desktop never touches the
 /// plugin (`Platform.isAndroid` / `Platform.isIOS` are false on the CI host).
 /// Web has no share target (`nativeShareSupported` is false).
+/// Home **Galeria** and `/capture` empty-state both call [pickFromGallery].
 class ImageSourceService {
   ImageSourceService();
 
@@ -48,10 +49,16 @@ class ImageSourceService {
         .cast<IncomingImage>();
   }
 
+  /// System gallery. Cancel (or a picker error) returns `null` — a no-op.
   Future<IncomingImage?> pickFromGallery() async {
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (file == null) return null;
-    return IncomingImage(bytes: await file.readAsBytes());
+    try {
+      final file = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (file == null) return null;
+      return IncomingImage(bytes: await file.readAsBytes());
+    } catch (error, stack) {
+      debugPrint('ImageSourceService.pickFromGallery: $error\n$stack');
+      return null;
+    }
   }
 
   IncomingImage? _firstImage(List<SharedMediaFile> files) {
