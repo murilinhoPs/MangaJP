@@ -15,7 +15,7 @@ MangaJP Study closes that loop in one place:
 1. **Get the text out of the image** without typing — crop the bubble and OCR it with a manga-specific model.
 2. **Look the word up correctly** — deinflect conjugated forms (食べた → 食べる) and match them against a local JMdict, which shows the reading of words written in kanji you can't read yet.
 3. **Decide what to do with it** — save it, learn it, mark it as known, or ignore it.
-4. **Remember it** — review learned words with an SM-2 scheduler: the card front shows the word as written (in kanji when it has them), and the back reveals the reading and meaning, with the original manga sentence as context.
+4. **Remember it** — review learned words with an SM-2 scheduler: the card front shows the word as written (in kanji when it has them), and the back reveals the reading and meaning. The word detail in the Caderno keeps the original manga sentence and a link to its page.
 
 It is a **single-user, local-first tool** built for the author's own study routine: no accounts, no server, no sync. All data lives in an on-device SQLite database. The UI is in Brazilian Portuguese and the study day follows the `America/Sao_Paulo` time zone.
 
