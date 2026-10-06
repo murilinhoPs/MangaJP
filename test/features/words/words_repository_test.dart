@@ -107,16 +107,16 @@ void main() {
     final env = await _openRepo();
     addTearDown(env.db.close);
 
-    await expectLater(
-      env.words.saveCustomFromLookup(
+    expect(
+      () => env.words.saveCustomFromLookup(
         cropId: env.cropId,
         surface: 'ぴよ',
         userNote: '   ',
       ),
       throwsA(isA<ArgumentError>()),
     );
-    await expectLater(
-      env.words.saveCustomFromLookup(
+    expect(
+      () => env.words.saveCustomFromLookup(
         cropId: env.cropId,
         surface: 'ぴよ',
         userNote: '',
