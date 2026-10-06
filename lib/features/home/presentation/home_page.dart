@@ -128,7 +128,7 @@ class _RecentCapturesBlock extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: _body(),
+              child: _body(context),
             ),
           ],
         ),
@@ -136,7 +136,7 @@ class _RecentCapturesBlock extends StatelessWidget {
     );
   }
 
-  Widget _body() {
+  Widget _body(BuildContext context) {
     final items = pages;
     if (items == null) {
       return const Padding(
@@ -147,23 +147,20 @@ class _RecentCapturesBlock extends StatelessWidget {
     if (items.isEmpty) {
       return const Text('Nenhuma captura ainda.', key: HomeKeys.recentEmpty);
     }
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 3 / 4,
-      ),
-      itemBuilder: (context, index) {
-        final page = items[index];
-        return _RecentThumb(
-          pageId: page.id,
-          onTap: () => PageDetailRoute(id: page.id).go(context),
-        );
-      },
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final page in items)
+          SizedBox(
+            width: 80,
+            height: 104,
+            child: _RecentThumb(
+              pageId: page.id,
+              onTap: () => PageDetailRoute(id: page.id).go(context),
+            ),
+          ),
+      ],
     );
   }
 }

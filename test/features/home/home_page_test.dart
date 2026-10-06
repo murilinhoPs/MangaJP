@@ -300,6 +300,7 @@ void main() {
     );
 
     await tester.ensureVisible(find.byKey(HomeKeys.recentThumb('page-7')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(HomeKeys.recentThumb('page-7')));
     await tester.pumpAndSettle();
     expect(
