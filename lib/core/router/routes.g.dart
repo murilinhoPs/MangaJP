@@ -6,77 +6,97 @@ part of 'routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-  $appShellRoute,
-  $captureRoute,
-  $settingsRoute,
-  $deckRoute,
-];
+List<RouteBase> get $appRoutes => [$appChromeRoute];
 
-RouteBase get $appShellRoute => StatefulShellRouteData.$route(
-  factory: $AppShellRouteExtension._fromState,
-  branches: [
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/home',
-          hasOverriddenOnExit: false,
-          factory: $HomeRoute._fromState,
-        ),
-      ],
-    ),
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/pages',
-          hasOverriddenOnExit: false,
-          factory: $PagesRoute._fromState,
+RouteBase get $appChromeRoute => ShellRouteData.$route(
+  factory: $AppChromeRouteExtension._fromState,
+  routes: [
+    StatefulShellRouteData.$route(
+      factory: $AppShellRouteExtension._fromState,
+      branches: [
+        StatefulShellBranchData.$branch(
           routes: [
             GoRouteData.$route(
-              path: ':id',
+              path: '/home',
               hasOverriddenOnExit: false,
-              factory: $PageDetailRoute._fromState,
+              factory: $HomeRoute._fromState,
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
+              path: '/pages',
+              hasOverriddenOnExit: false,
+              factory: $PagesRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: ':id',
+                  hasOverriddenOnExit: false,
+                  factory: $PageDetailRoute._fromState,
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
+              path: '/review',
+              hasOverriddenOnExit: false,
+              factory: $ReviewRoute._fromState,
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
+              path: '/notebook',
+              hasOverriddenOnExit: false,
+              factory: $NotebookRoute._fromState,
+              routes: [
+                GoRouteData.$route(
+                  path: 'word/:id',
+                  hasOverriddenOnExit: false,
+                  factory: $NotebookWordRoute._fromState,
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
+              path: '/more',
+              hasOverriddenOnExit: false,
+              factory: $MoreRoute._fromState,
             ),
           ],
         ),
       ],
     ),
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/review',
-          hasOverriddenOnExit: false,
-          factory: $ReviewRoute._fromState,
-        ),
-      ],
+    GoRouteData.$route(
+      path: '/capture',
+      hasOverriddenOnExit: false,
+      factory: $CaptureRoute._fromState,
     ),
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/notebook',
-          hasOverriddenOnExit: false,
-          factory: $NotebookRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: 'word/:id',
-              hasOverriddenOnExit: false,
-              factory: $NotebookWordRoute._fromState,
-            ),
-          ],
-        ),
-      ],
+    GoRouteData.$route(
+      path: '/settings',
+      hasOverriddenOnExit: false,
+      factory: $SettingsRoute._fromState,
     ),
-    StatefulShellBranchData.$branch(
-      routes: [
-        GoRouteData.$route(
-          path: '/more',
-          hasOverriddenOnExit: false,
-          factory: $MoreRoute._fromState,
-        ),
-      ],
+    GoRouteData.$route(
+      path: '/deck',
+      hasOverriddenOnExit: false,
+      factory: $DeckRoute._fromState,
     ),
   ],
 );
+
+extension $AppChromeRouteExtension on AppChromeRoute {
+  static AppChromeRoute _fromState(GoRouterState state) =>
+      const AppChromeRoute();
+}
 
 extension $AppShellRouteExtension on AppShellRoute {
   static AppShellRoute _fromState(GoRouterState state) => const AppShellRoute();
@@ -230,12 +250,6 @@ mixin $MoreRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $captureRoute => GoRouteData.$route(
-  path: '/capture',
-  hasOverriddenOnExit: false,
-  factory: $CaptureRoute._fromState,
-);
-
 mixin $CaptureRoute on GoRouteData {
   static CaptureRoute _fromState(GoRouterState state) =>
       CaptureRoute($extra: state.extra as IncomingImage?);
@@ -261,12 +275,6 @@ mixin $CaptureRoute on GoRouteData {
       context.replace(location, extra: _self.$extra);
 }
 
-RouteBase get $settingsRoute => GoRouteData.$route(
-  path: '/settings',
-  hasOverriddenOnExit: false,
-  factory: $SettingsRoute._fromState,
-);
-
 mixin $SettingsRoute on GoRouteData {
   static SettingsRoute _fromState(GoRouterState state) => const SettingsRoute();
 
@@ -286,12 +294,6 @@ mixin $SettingsRoute on GoRouteData {
   @override
   void replace(BuildContext context) => context.replace(location);
 }
-
-RouteBase get $deckRoute => GoRouteData.$route(
-  path: '/deck',
-  hasOverriddenOnExit: false,
-  factory: $DeckRoute._fromState,
-);
 
 mixin $DeckRoute on GoRouteData {
   static DeckRoute _fromState(GoRouterState state) => const DeckRoute();

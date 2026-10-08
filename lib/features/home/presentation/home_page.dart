@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../capture/data/image_source_service.dart';
+import '../../capture/presentation/gallery_import.dart';
 import '../../pages/domain/page.dart';
 import '../../review/domain/home_review_counts.dart';
 import '../../review/domain/new_per_day.dart';
@@ -64,18 +64,10 @@ class HomePage extends ConsumerWidget {
           onTap: () => const ReviewRoute().go(context),
         ),
         _RecentCapturesBlock(pages: recent.asData?.value),
-        _GalleryBlock(onTap: () => _importFromGallery(context, ref)),
+        _GalleryBlock(onTap: () => importFromGallery(context, ref)),
       ],
     );
   }
-}
-
-/// Home **Galeria**: `image_picker` first, then `/capture` with the same extra
-/// as share/import. Cancel (`null`) stays on Home.
-Future<void> _importFromGallery(BuildContext context, WidgetRef ref) async {
-  final picked = await ref.read(imageSourceServiceProvider).pickFromGallery();
-  if (!context.mounted || picked == null) return;
-  await CaptureRoute($extra: picked).push<void>(context);
 }
 
 /// Always-visible **Revisar** block. Tap opens `/review`, including 0 / 0 de 15.
@@ -192,9 +184,7 @@ class _RecentThumb extends StatelessWidget {
         onTap: onTap,
         borderRadius: radius,
         child: SizedBox.expand(
-          child: Center(
-            child: Icon(Icons.photo_outlined, color: tokens.text3),
-          ),
+          child: Center(child: Icon(Icons.photo_outlined, color: tokens.text3)),
         ),
       ),
     );

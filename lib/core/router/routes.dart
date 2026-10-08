@@ -12,45 +12,66 @@ import '../../features/pages/presentation/page_detail_page.dart';
 import '../../features/pages/presentation/pages_list_page.dart';
 import '../../features/review/presentation/review_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../shell/app_chrome.dart';
 import '../widgets/app_scaffold.dart';
 
 part 'routes.g.dart';
 
-@TypedStatefulShellRoute<AppShellRoute>(
-  branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
-    TypedStatefulShellBranch<HomeBranch>(
-      routes: <TypedRoute<RouteData>>[TypedGoRoute<HomeRoute>(path: '/home')],
-    ),
-    TypedStatefulShellBranch<PagesBranch>(
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<PagesRoute>(
-          path: '/pages',
+@TypedShellRoute<AppChromeRoute>(
+  routes: <TypedRoute<RouteData>>[
+    TypedStatefulShellRoute<AppShellRoute>(
+      branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
+        TypedStatefulShellBranch<HomeBranch>(
           routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<PageDetailRoute>(path: ':id'),
+            TypedGoRoute<HomeRoute>(path: '/home'),
+          ],
+        ),
+        TypedStatefulShellBranch<PagesBranch>(
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<PagesRoute>(
+              path: '/pages',
+              routes: <TypedRoute<RouteData>>[
+                TypedGoRoute<PageDetailRoute>(path: ':id'),
+              ],
+            ),
+          ],
+        ),
+        TypedStatefulShellBranch<ReviewBranch>(
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<ReviewRoute>(path: '/review'),
+          ],
+        ),
+        TypedStatefulShellBranch<NotebookBranch>(
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<NotebookRoute>(
+              path: '/notebook',
+              routes: <TypedRoute<RouteData>>[
+                TypedGoRoute<NotebookWordRoute>(path: 'word/:id'),
+              ],
+            ),
+          ],
+        ),
+        TypedStatefulShellBranch<MoreBranch>(
+          routes: <TypedRoute<RouteData>>[
+            TypedGoRoute<MoreRoute>(path: '/more'),
           ],
         ),
       ],
     ),
-    TypedStatefulShellBranch<ReviewBranch>(
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<ReviewRoute>(path: '/review'),
-      ],
-    ),
-    TypedStatefulShellBranch<NotebookBranch>(
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<NotebookRoute>(
-          path: '/notebook',
-          routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<NotebookWordRoute>(path: 'word/:id'),
-          ],
-        ),
-      ],
-    ),
-    TypedStatefulShellBranch<MoreBranch>(
-      routes: <TypedRoute<RouteData>>[TypedGoRoute<MoreRoute>(path: '/more')],
-    ),
+    TypedGoRoute<CaptureRoute>(path: '/capture'),
+    TypedGoRoute<SettingsRoute>(path: '/settings'),
+    TypedGoRoute<DeckRoute>(path: '/deck'),
   ],
 )
+class AppChromeRoute extends ShellRouteData {
+  const AppChromeRoute();
+
+  @override
+  Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
+    return AppChrome(child: navigator);
+  }
+}
+
 class AppShellRoute extends StatefulShellRouteData {
   const AppShellRoute();
 
@@ -145,7 +166,6 @@ class MoreRoute extends GoRouteData with $MoreRoute {
   Widget build(BuildContext context, GoRouterState state) => const MorePage();
 }
 
-@TypedGoRoute<CaptureRoute>(path: '/capture')
 class CaptureRoute extends GoRouteData with $CaptureRoute {
   const CaptureRoute({this.$extra});
 
@@ -158,7 +178,6 @@ class CaptureRoute extends GoRouteData with $CaptureRoute {
   }
 }
 
-@TypedGoRoute<SettingsRoute>(path: '/settings')
 class SettingsRoute extends GoRouteData with $SettingsRoute {
   const SettingsRoute();
 
@@ -168,7 +187,6 @@ class SettingsRoute extends GoRouteData with $SettingsRoute {
   }
 }
 
-@TypedGoRoute<DeckRoute>(path: '/deck')
 class DeckRoute extends GoRouteData with $DeckRoute {
   const DeckRoute();
 

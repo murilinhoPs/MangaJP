@@ -7,6 +7,10 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/shell/shell_layout.dart';
+import '../../../core/shell/shell_nav.dart';
+import '../../../core/shell/shell_registry.dart';
+import '../../../core/shell/task_dock.dart';
 import '../../../core/utils/hashing.dart';
 import '../../../core/utils/ids.dart';
 import '../../ocr/data/ocr_repository.dart';
@@ -80,8 +84,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       return;
     }
     try {
-      final bytes =
-          incoming.bytes ?? await XFile(incoming.path!).readAsBytes();
+      final bytes = incoming.bytes ?? await XFile(incoming.path!).readAsBytes();
       final decoded = img.decodeImage(bytes);
       if (decoded == null) {
         throw const FormatException('Could not decode image');
@@ -164,53 +167,76 @@ class _CapturePageState extends ConsumerState<CapturePage> {
   @override
   Widget build(BuildContext context) {
     final cropped = _cropped;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Captura')),
-      body: Column(
-        children: [
-          Expanded(child: _body()),
-          if (cropped != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Crop PNG: ${cropped.bytes.length} bytes '
-                '(${cropped.width}×${cropped.height})',
-                key: CaptureKeys.cropBytes,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          if (_ocr != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
-                key: CaptureKeys.ocrText,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  key: CaptureKeys.confirm,
-                  onPressed: _bytes == null || _busy ? null : _confirm,
-                  child: const Text('Confirmar crop'),
+    final wide = ShellLayout.isWide(context);
+    final canConfirm = _bytes != null && !_busy;
+    final task = ShellTask(
+      actions: [
+        ShellAction(
+          id: 'confirm',
+          label: 'Confirmar crop',
+          primary: true,
+          enabled: canConfirm,
+          onPressed: _confirm,
+        ),
+      ],
+    );
+    return ShellBinder(
+      task: task,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Captura')),
+        body: Column(
+          children: [
+            Expanded(child: _body()),
+            if (cropped != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  'Crop PNG: ${cropped.bytes.length} bytes '
+                  '(${cropped.width}×${cropped.height})',
+                  key: CaptureKeys.cropBytes,
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ),
-        ],
+            if (_ocr != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
+                  key: CaptureKeys.ocrText,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            if (!wide)
+              TaskDock(
+                leading: [
+                  DockIconButton(
+                    key: ShellKeys.dockAction('close'),
+                    icon: Icons.close,
+                    tooltip: 'Fechar',
+                    onPressed: () => popTaskOrHome(context),
+                  ),
+                ],
+                trailing: [
+                  DockTextButton(
+                    key: CaptureKeys.confirm,
+                    label: 'Confirmar crop',
+                    primary: true,
+                    enabled: canConfirm,
+                    onPressed: canConfirm ? _confirm : null,
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

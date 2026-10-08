@@ -1,72 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../router/routes.dart';
+import '../shell/shell_layout.dart';
+import '../theme/app_theme.dart';
 
-/// Shell: header (title + settings) + bottom tabs Home · Páginas · Review · Caderno · Mais.
+/// Inner shell: title AppBar (no actions) + the tab body.
+///
+/// Mobile nav cards, desktop rail, and the command bar live in [AppChrome].
 class AppScaffold extends StatelessWidget {
   const AppScaffold({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   static const _titles = <String>[
-    'Home',
+    'Início',
     'Páginas',
     'Review',
     'Caderno',
-    'Mais',
+    'Ajustes',
   ];
 
   @override
   Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    final hideBar = path == '/home' || ShellLayout.isTask(path);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[navigationShell.currentIndex]),
-        actions: [
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => const SettingsRoute().push<void>(context),
-          ),
-        ],
-      ),
+      backgroundColor: context.tokens.bg,
+      appBar: hideBar
+          ? null
+          : AppBar(title: Text(_titles[navigationShell.currentIndex])),
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.photo_library_outlined),
-            selectedIcon: Icon(Icons.photo_library),
-            label: 'Páginas',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.style_outlined),
-            selectedIcon: Icon(Icons.style),
-            label: 'Review',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Caderno',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.more_horiz),
-            selectedIcon: Icon(Icons.more_horiz),
-            label: 'Mais',
-          ),
-        ],
-      ),
     );
   }
 }

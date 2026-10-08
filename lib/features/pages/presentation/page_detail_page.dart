@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shell/shell_layout.dart';
+import '../../../core/shell/shell_nav.dart';
+import '../../../core/shell/shell_registry.dart';
+import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
@@ -24,19 +28,58 @@ class PageDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final crops = ref.watch(pageCropsProvider(pageId));
-
-    return crops.when(
-      data: (items) => _PageOcrBody(crops: items),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            '$error',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
+    final wide = ShellLayout.isWide(context);
+    final count = crops.asData?.value.length ?? 0;
+    final hint = count == 0 ? null : '$count recortes';
+    final task = ShellTask(
+      meta: pageId,
+      metaHint: hint,
+      actions: [
+        ShellAction(
+          id: 'back',
+          label: 'Voltar',
+          icon: Icons.chevron_left,
+          onPressed: () => popTaskOrHome(context),
         ),
+      ],
+    );
+
+    return ShellBinder(
+      task: task,
+      child: Column(
+        children: [
+          Expanded(
+            child: crops.when(
+              data: (items) => _PageOcrBody(crops: items),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    '$error',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (!wide)
+            TaskDock(
+              meta: pageId,
+              metaHint: hint,
+              leading: [
+                DockIconButton(
+                  key: ShellKeys.dockAction('back'),
+                  icon: Icons.chevron_left,
+                  tooltip: 'Voltar',
+                  onPressed: () => popTaskOrHome(context),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

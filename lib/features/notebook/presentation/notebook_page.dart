@@ -8,6 +8,9 @@ import '../domain/notebook_entry.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
+/// Focus for Caderno search (`/` shortcut).
+final notebookSearchFocusNode = FocusNode();
+
 /// Keys for `/notebook` (list + search + state filter; tap opens word detail).
 abstract final class NotebookKeys {
   static const search = Key('notebook-search');
@@ -35,6 +38,7 @@ class NotebookPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: TextField(
             key: NotebookKeys.search,
+            focusNode: notebookSearchFocusNode,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search),
               hintText: 'Lema ou leitura',
