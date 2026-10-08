@@ -16,6 +16,7 @@ import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
+import 'package:manga_jp/features/pages/presentation/ocr_char_index.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
@@ -150,6 +151,98 @@ void main() {
       ),
       findsWidgets,
     );
+  });
+
+  testWidgets('tap right half of 高 in 高い opens 高い, not い', (tester) async {
+    const ocr = '高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-takai-right',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _glyphLocal(paragraph, start: 0, end: 1, rightHalf: true);
+    expect(
+      charIndexAt(paragraph, local),
+      0,
+      reason: 'right half of 高 must resolve 高, not い',
+    );
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    await _expectTakaiLookup(tester);
+  });
+
+  testWidgets('tap left half of 高 in 高い opens 高い', (tester) async {
+    const ocr = '高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-takai-left',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _glyphLocal(paragraph, start: 0, end: 1, rightHalf: false);
+    expect(charIndexAt(paragraph, local), 0);
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    await _expectTakaiLookup(tester);
+  });
+
+  testWidgets('tap right half of 高 on the second wrapped OCR line opens 高い', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ocr = 'あいうえおかきくけこさしすせ高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-wrap-takai-right',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final start = ocr.indexOf('高い');
+    final local = _glyphLocal(
+      paragraph,
+      start: start,
+      end: start + 1,
+      rightHalf: true,
+    );
+    expect(
+      paragraph
+          .getBoxesForSelection(
+            TextSelection(baseOffset: start, extentOffset: start + 1),
+          )
+          .first
+          .toRect()
+          .top,
+      greaterThan(10),
+      reason: '高い must wrap onto a second line at this width',
+    );
+    expect(
+      charIndexAt(paragraph, local),
+      start,
+      reason: 'right half of wrapped 高 must stay on 高, not い',
+    );
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    await _expectTakaiLookup(tester);
   });
 
   testWidgets('tap conjugated OCR form shows lemma gloss from JMdict', (
@@ -407,4 +500,41 @@ Future<void> _tapSave(WidgetTester tester) async {
   await tester.ensureVisible(save);
   await tester.tap(save);
   await tester.pumpAndSettle();
+}
+
+Offset _glyphLocal(
+  RenderParagraph paragraph, {
+  required int start,
+  required int end,
+  required bool rightHalf,
+}) {
+  final boxes = paragraph.getBoxesForSelection(
+    TextSelection(baseOffset: start, extentOffset: end),
+  );
+  expect(boxes, isNotEmpty);
+  final rect = boxes.first.toRect();
+  expect(rect.width, greaterThan(4));
+  return Offset(rightHalf ? rect.right - 2 : rect.left + 2, rect.center.dy);
+}
+
+Future<void> _expectTakaiLookup(WidgetTester tester) async {
+  expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+  expect(find.byKey(LookupSheetKeys.miss), findsNothing);
+  expect(find.text('Nenhuma entrada no dicionário.'), findsNothing);
+  final gloss = tester.widget<Text>(find.byKey(LookupSheetKeys.gloss)).data!;
+  expect(gloss, contains('high'));
+  expect(
+    find.descendant(
+      of: find.byKey(LookupSheetKeys.sheet),
+      matching: find.text('高い'),
+    ),
+    findsWidgets,
+  );
+  expect(
+    find.descendant(
+      of: find.byKey(LookupSheetKeys.sheet),
+      matching: find.text('い'),
+    ),
+    findsNothing,
+  );
 }

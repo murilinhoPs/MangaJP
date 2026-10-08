@@ -7,6 +7,7 @@ import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
 import '../../words/data/words_repository.dart';
 import '../domain/page_crop.dart';
+import 'ocr_char_index.dart';
 import 'page_detail_controller.dart';
 
 /// Keys for `/pages/:id` OCR text (persisted Drift `crops.ocr_text`).
@@ -161,11 +162,9 @@ class _TappableOcrTextState extends State<_TappableOcrText> {
       return;
     }
     final local = paragraph.globalToLocal(details.globalPosition);
-    var index = paragraph.getPositionForOffset(local).offset;
-    if (index < 0) {
-      index = 0;
-    } else if (index >= text.length) {
-      index = text.length - 1;
+    final index = charIndexAt(paragraph, local);
+    if (index == null) {
+      return;
     }
     widget.onTapCharacter(index);
   }
