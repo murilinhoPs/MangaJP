@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../domain/dict_entry.dart';
 import '../domain/lookup_result.dart';
 
@@ -23,6 +24,12 @@ Future<void> showLookupSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppRadius.sheetReview),
+      ),
+    ),
     builder: (context) => LookupSheet(result: result, onSave: onSave),
   );
 }
@@ -36,6 +43,12 @@ Future<void> showCustomLookupSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppRadius.sheetReview),
+      ),
+    ),
     builder: (context) =>
         LookupSheet.custom(surface: surface, onSaveCustom: onSave),
   );
@@ -163,7 +176,10 @@ class _LookupSheetState extends State<LookupSheet> {
                             ListTile(
                               key: LookupSheetKeys.option(entry.seq),
                               selected: entry.seq == _selectedSeq,
-                              title: Text(entry.lemma),
+                              title: Text(
+                                entry.lemma,
+                                style: AppTypeScale.linhaCadernoJp,
+                              ),
                               subtitle: Text(
                                 [
                                   if (entry.reading != entry.lemma)
@@ -183,14 +199,14 @@ class _LookupSheetState extends State<LookupSheet> {
                     Text(
                       _selected.glossText,
                       key: LookupSheetKeys.gloss,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: AppTypeScale.definicao,
                     ),
                   ] else ...[
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       'Nenhuma entrada no dicionário.',
                       key: LookupSheetKeys.miss,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: AppTypeScale.definicao,
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -209,6 +225,9 @@ class _LookupSheetState extends State<LookupSheet> {
                   const SizedBox(height: 16),
                   FilledButton(
                     key: LookupSheetKeys.save,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(AppTargets.acaoEstado),
+                    ),
                     onPressed: _canSave ? _save : null,
                     child: const Text('Salvar'),
                   ),
@@ -230,13 +249,19 @@ class _LemmaHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(lemma, style: theme.textTheme.headlineSmall),
+        Text(lemma, style: AppTypeScale.lookupJp),
         if (reading != null && reading != lemma)
-          Text(reading!, style: theme.textTheme.titleMedium),
+          Text(
+            reading!,
+            style: AppTypeScale.ui14.copyWith(
+              fontFamily: AppFonts.jp,
+              color: tokens.text2,
+            ),
+          ),
       ],
     );
   }

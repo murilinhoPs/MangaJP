@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../domain/crop_rect.dart';
 
 enum _Hit { none, body, nw, ne, sw, se }
@@ -62,7 +63,12 @@ class _CropOverlayState extends State<CropOverlay> {
           },
           child: CustomPaint(
             size: layout,
-            painter: _CropPainter(dest: dest, rect: display),
+            painter: _CropPainter(
+              dest: dest,
+              rect: display,
+              dimColor: AppColors.bg.withValues(alpha: 0.6),
+              handleColor: AppColors.text,
+            ),
           ),
         );
       },
@@ -140,10 +146,17 @@ class _CropOverlayState extends State<CropOverlay> {
 }
 
 class _CropPainter extends CustomPainter {
-  const _CropPainter({required this.dest, required this.rect});
+  const _CropPainter({
+    required this.dest,
+    required this.rect,
+    required this.dimColor,
+    required this.handleColor,
+  });
 
   final Rect dest;
   final Rect rect;
+  final Color dimColor;
+  final Color handleColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -151,16 +164,16 @@ class _CropPainter extends CustomPainter {
       ..addRect(dest)
       ..addRect(rect)
       ..fillType = PathFillType.evenOdd;
-    canvas.drawPath(dim, Paint()..color = const Color(0x99000000));
+    canvas.drawPath(dim, Paint()..color = dimColor);
 
     final border = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = Colors.white;
+      ..color = handleColor;
     canvas.drawRect(rect, border);
 
     const handle = 10.0;
-    final fill = Paint()..color = Colors.white;
+    final fill = Paint()..color = handleColor;
     for (final corner in [
       rect.topLeft,
       rect.topRight,
@@ -176,6 +189,9 @@ class _CropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CropPainter oldDelegate) {
-    return oldDelegate.dest != dest || oldDelegate.rect != rect;
+    return oldDelegate.dest != dest ||
+        oldDelegate.rect != rect ||
+        oldDelegate.dimColor != dimColor ||
+        oldDelegate.handleColor != handleColor;
   }
 }

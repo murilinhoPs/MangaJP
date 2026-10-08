@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../words/domain/word_state.dart';
 import '../domain/notebook_entry.dart';
 import 'notebook_controller.dart';
@@ -37,8 +38,6 @@ class NotebookPage extends ConsumerWidget {
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search),
               hintText: 'Lema ou leitura',
-              border: OutlineInputBorder(),
-              isDense: true,
             ),
             onChanged: (value) {
               ref.read(notebookListQueryProvider.notifier).setSearch(value);
@@ -56,6 +55,12 @@ class NotebookPage extends ConsumerWidget {
                   key: NotebookKeys.stateAll,
                   label: const Text('Todos'),
                   selected: query.state == null,
+                  showCheckmark: false,
+                  side: BorderSide(
+                    color: query.state == null
+                        ? context.tokens.coral
+                        : context.tokens.border,
+                  ),
                   onSelected: (_) {
                     ref.read(notebookListQueryProvider.notifier).setState(null);
                   },
@@ -68,6 +73,12 @@ class NotebookPage extends ConsumerWidget {
                     key: NotebookKeys.stateFilter(state),
                     label: Text(notebookStateLabel(state)),
                     selected: query.state == state,
+                    showCheckmark: false,
+                    side: BorderSide(
+                      color: query.state == state
+                          ? context.tokens.coral
+                          : context.tokens.border,
+                    ),
                     onSelected: (_) {
                       ref
                           .read(notebookListQueryProvider.notifier)
@@ -121,11 +132,23 @@ class _NotebookList extends StatelessWidget {
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final entry = entries[index];
+        final tokens = context.tokens;
         return ListTile(
           key: NotebookKeys.row(entry.wordId),
-          title: Text(entry.lemma),
-          subtitle: Text(entry.reading),
-          trailing: Text(notebookStateLabel(entry.state)),
+          title: Text(entry.lemma, style: AppTypeScale.linhaCadernoJp),
+          subtitle: Text(
+            entry.reading,
+            style: AppTypeScale.ui14.copyWith(
+              fontFamily: AppFonts.jp,
+              color: tokens.text2,
+            ),
+          ),
+          trailing: Text(
+            notebookStateLabel(entry.state),
+            style: AppTypeScale.metadados11.copyWith(
+              color: tokens.wordState(entry.state.name),
+            ),
+          ),
           onTap: () => NotebookWordRoute(id: entry.wordId).go(context),
         );
       },

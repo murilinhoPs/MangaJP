@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
 import '../../words/data/words_repository.dart';
@@ -146,7 +147,7 @@ class _TappableOcrText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyLarge;
+    const style = AppTypeScale.balaoPaginaMobileJp;
     return LayoutBuilder(
       builder: (context, constraints) {
         return GestureDetector(
