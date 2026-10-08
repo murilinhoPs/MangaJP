@@ -216,6 +216,41 @@ void main() {
     expect(text.style?.fontFamilyFallback, contains(AppFonts.jp));
   });
 
+  test('outlinedButtonTheme and ColorScheme.outline use border, not coral', () {
+    expect(scheme.outline, AppColors.border);
+    expect(scheme.outlineVariant, AppColors.borderStrong);
+    final outlined = theme.outlinedButtonTheme.style?.side?.resolve(
+      const <WidgetState>{},
+    );
+    expect(outlined?.color, AppColors.border);
+    final filled = theme.filledButtonTheme.style?.side?.resolve(
+      const <WidgetState>{},
+    );
+    expect(filled?.color, AppColors.coral);
+  });
+
+  test('navigationBarTheme active is coral rail-ativo, not violet', () {
+    final nav = theme.navigationBarTheme;
+    expect(nav.indicatorColor, AppColors.overlayRailAtivo);
+    expect(nav.indicatorColor, isNot(AppColors.overlayEstadoAtivo));
+    expect(
+      nav.iconTheme?.resolve({WidgetState.selected})?.color,
+      AppColors.coral,
+    );
+    expect(
+      nav.iconTheme?.resolve(const <WidgetState>{})?.color,
+      AppColors.text3,
+    );
+    expect(
+      nav.labelTextStyle?.resolve({WidgetState.selected})?.color,
+      AppColors.coral,
+    );
+    expect(
+      nav.labelTextStyle?.resolve(const <WidgetState>{})?.color,
+      AppColors.text3,
+    );
+  });
+
   test('lib sources do not introduce amber/blue/legacy coral', () {
     final root = Directory('lib');
     for (final file in root.listSync(recursive: true).whereType<File>()) {

@@ -179,14 +179,17 @@ ButtonStyle _ratingStyle(ReviewRating rating, MangaJpTokens tokens) {
     ReviewRating.good => (tokens.mint, tokens.srsBomFill, tokens.text),
     ReviewRating.easy => (tokens.border, tokens.surface, tokens.text),
   };
+  // `side` must be set here: FilledButton.styleFrom merges with
+  // filledButtonTheme, whose coral outline would otherwise win over
+  // `shape.side` for Hard/Easy (tokens: border + surface only).
   return FilledButton.styleFrom(
     backgroundColor: fill,
     foregroundColor: fg,
     minimumSize: const Size.fromHeight(AppTargets.respostaReviewMobile),
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+    side: BorderSide(color: border),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
-      side: BorderSide(color: border),
     ),
   );
 }

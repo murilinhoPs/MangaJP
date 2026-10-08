@@ -234,6 +234,24 @@ abstract final class AppTheme {
           side: BorderSide(color: AppColors.coral),
         ),
       ),
+      // Color only (M1.20 owns shell layout). Default M3 indicator uses
+      // secondaryContainer (violet / Aprendendo). Active = coral + rail-ativo.
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: AppColors.overlayRailAtivo,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected ? AppColors.coral : AppColors.text3,
+            size: AppIcons.sizeMin,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return AppTypeScale.metadados11.copyWith(
+            color: selected ? AppColors.coral : AppColors.text3,
+          );
+        }),
+      ),
     );
   }
 

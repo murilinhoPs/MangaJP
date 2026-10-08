@@ -9,6 +9,7 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
@@ -141,6 +142,24 @@ void main() {
       expect(find.byKey(ReviewKeys.rating(ReviewRating.hard)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.easy)), findsOneWidget);
+      BorderSide? ratingSide(ReviewRating rating) => tester
+          .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+          .style
+          ?.side
+          ?.resolve(const <WidgetState>{});
+      Color? ratingFill(ReviewRating rating) => tester
+          .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+          .style
+          ?.backgroundColor
+          ?.resolve(const <WidgetState>{});
+      expect(ratingSide(ReviewRating.again)?.color, AppColors.coral);
+      expect(ratingFill(ReviewRating.again), AppColors.srsErreiFill);
+      expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
+      expect(ratingFill(ReviewRating.hard), AppColors.surface);
+      expect(ratingSide(ReviewRating.good)?.color, AppColors.mint);
+      expect(ratingFill(ReviewRating.good), AppColors.srsBomFill);
+      expect(ratingSide(ReviewRating.easy)?.color, AppColors.border);
+      expect(ratingFill(ReviewRating.easy), AppColors.surface);
       expect(find.byKey(ReviewKeys.note), findsNothing);
       expect(
         tester
