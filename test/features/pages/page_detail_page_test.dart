@@ -77,6 +77,34 @@ void main() {
     expect(find.text(recognized), findsOneWidget);
   });
 
+  testWidgets('tap leftmost kanji of 猫を食べた。 opens 猫, not the trailing 。', (
+    tester,
+  ) async {
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-neko-tabeta',
+      ocrText: '猫を食べた。',
+    );
+
+    final topLeft = tester.getTopLeft(find.byKey(PageDetailKeys.ocrText));
+    await tester.tapAt(topLeft + const Offset(8, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.miss), findsNothing);
+    expect(find.text('Nenhuma entrada no dicionário.'), findsNothing);
+    final gloss = tester.widget<Text>(find.byKey(LookupSheetKeys.gloss)).data!;
+    expect(gloss, contains('cat'));
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.text('猫'),
+      ),
+      findsWidgets,
+    );
+  });
+
   testWidgets('tap conjugated OCR form shows lemma gloss from JMdict', (
     tester,
   ) async {

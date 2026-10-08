@@ -148,34 +148,29 @@ class _TappableOcrText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const style = AppTypeScale.balaoPaginaMobileJp;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return GestureDetector(
-          onTapDown: (details) {
-            if (text.isEmpty) {
-              return;
-            }
-            final painter = TextPainter(
-              text: TextSpan(text: text, style: style),
-              textAlign: TextAlign.center,
-              textDirection: Directionality.of(context),
-            )..layout(maxWidth: constraints.maxWidth);
-            final offset = painter
-                .getPositionForOffset(details.localPosition)
-                .offset;
-            final index = offset < 0
-                ? 0
-                : (offset >= text.length ? text.length - 1 : offset);
-            onTapCharacter(index);
-          },
-          child: Text(
-            text,
-            key: PageDetailKeys.ocrText,
-            textAlign: TextAlign.center,
-            style: style,
-          ),
-        );
-      },
+    // Size the hit target to the glyphs. A full-width TextPainter with
+    // `textAlign: center` reports `width` = ink width, so local x on the
+    // centered visual 猫 mapped past the line and always hit trailing `。`.
+    return Center(
+      child: GestureDetector(
+        onTapDown: (details) {
+          if (text.isEmpty) {
+            return;
+          }
+          final painter = TextPainter(
+            text: TextSpan(text: text, style: style),
+            textDirection: Directionality.of(context),
+          )..layout();
+          final offset = painter
+              .getPositionForOffset(details.localPosition)
+              .offset;
+          final index = offset < 0
+              ? 0
+              : (offset >= text.length ? text.length - 1 : offset);
+          onTapCharacter(index);
+        },
+        child: Text(text, key: PageDetailKeys.ocrText, style: style),
+      ),
     );
   }
 }
