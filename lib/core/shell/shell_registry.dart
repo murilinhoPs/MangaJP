@@ -20,6 +20,9 @@ class ShellAction {
   final bool primary;
   final bool enabled;
 
+  /// [onPressed] is omitted from equality: [ShellBinder] rebinds when the
+  /// [ShellTask] value changes. Keep callback identity stable for a given
+  /// id/label (typical of State methods).
   @override
   bool operator ==(Object other) {
     return other is ShellAction &&

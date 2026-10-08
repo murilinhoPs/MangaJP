@@ -55,46 +55,50 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     return router?.state.uri.path ?? GoRouterState.of(context).uri.path;
   }
 
-  bool get _typing {
-    final focus = FocusManager.instance.primaryFocus;
-    final ctx = focus?.context;
-    if (ctx == null) {
-      return false;
-    }
-    return ctx.widget is EditableText ||
-        ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+  Map<ShortcutActivator, Intent> get _shortcuts {
+    return {
+      const SingleActivator(LogicalKeyboardKey.keyR): const ShellShortcutIntent(
+        'r',
+      ),
+      ShellShortcuts.activator(LogicalKeyboardKey.keyK):
+          const ShellShortcutIntent('k'),
+      ShellShortcuts.activator(LogicalKeyboardKey.keyO):
+          const ShellShortcutIntent('o'),
+      const SingleActivator(LogicalKeyboardKey.slash):
+          const ShellShortcutIntent('slash'),
+      const SingleActivator(LogicalKeyboardKey.escape):
+          const _ShellEscapeIntent(),
+    };
   }
 
-  Map<ShortcutActivator, VoidCallback> _bindings(BuildContext context) {
+  Map<Type, Action<Intent>> _actions(BuildContext context) {
     return {
-      const SingleActivator(LogicalKeyboardKey.keyR): () {
-        if (_typing) {
-          return;
-        }
-        const ReviewRoute().go(context);
-      },
-      ShellShortcuts.activator(LogicalKeyboardKey.keyK): () {
-        if (_typing || _paletteOpen) {
-          return;
-        }
-        _openPalette(context);
-      },
-      ShellShortcuts.activator(LogicalKeyboardKey.keyO): () {
-        if (_typing) {
-          return;
-        }
-        importFromGallery(context, ref);
-      },
-      const SingleActivator(LogicalKeyboardKey.slash): () {
-        if (_typing) {
-          return;
-        }
-        _focusNotebookSearch(context);
-      },
-      const SingleActivator(LogicalKeyboardKey.escape): () {
-        _onEscape(context);
-      },
+      ShellShortcutIntent: ShellPassthroughAction(
+        shouldPassThrough: () => ShellShortcuts.isTyping,
+        onInvoke: (intent) => _invokeShortcut(context, intent.id),
+      ),
+      _ShellEscapeIntent: CallbackAction<_ShellEscapeIntent>(
+        onInvoke: (_) {
+          _onEscape(context);
+          return null;
+        },
+      ),
     };
+  }
+
+  void _invokeShortcut(BuildContext context, String id) {
+    switch (id) {
+      case 'r':
+        const ReviewRoute().go(context);
+      case 'k':
+        if (!_paletteOpen) {
+          _openPalette(context);
+        }
+      case 'o':
+        importFromGallery(context, ref);
+      case 'slash':
+        _focusNotebookSearch(context);
+    }
   }
 
   Future<void> _openPalette(BuildContext context) async {
@@ -118,7 +122,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
   void _focusNotebookSearch(BuildContext context) {
     const NotebookRoute().go(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      notebookSearchFocusNode.requestFocus();
+      NotebookSearch.requestFocus();
     });
   }
 
@@ -168,6 +172,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final due = counts.asData?.value.due ?? 0;
     final task = ShellLayout.isTask(path);
 
+    final barActions = _barActions(context);
     Widget body = widget.child;
     if (wide) {
       body = Row(
@@ -177,12 +182,19 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           Expanded(
             child: Stack(
               children: [
-                body,
+                Padding(
+                  padding: EdgeInsets.only(
+                    bottom: barActions.isEmpty
+                        ? 0
+                        : ShellLayout.commandBarClearance,
+                  ),
+                  child: body,
+                ),
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: CommandBar(actions: _barActions(context)),
+                  child: CommandBar(actions: barActions),
                 ),
               ],
             ),
@@ -193,18 +205,25 @@ class _AppChromeState extends ConsumerState<AppChrome> {
 
     return ShellScope(
       registry: _registry,
-      child: CallbackShortcuts(
-        bindings: _bindings(context),
-        child: Focus(
-          focusNode: _focus,
-          autofocus: true,
-          child: Scaffold(
-            backgroundColor: context.tokens.bg,
-            body: body,
-            bottomNavigationBar: wide || task ? null : NavCards(path: path),
+      child: Shortcuts(
+        shortcuts: _shortcuts,
+        child: Actions(
+          actions: _actions(context),
+          child: Focus(
+            focusNode: _focus,
+            autofocus: true,
+            child: Scaffold(
+              backgroundColor: context.tokens.bg,
+              body: body,
+              bottomNavigationBar: wide || task ? null : NavCards(path: path),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _ShellEscapeIntent extends Intent {
+  const _ShellEscapeIntent();
 }

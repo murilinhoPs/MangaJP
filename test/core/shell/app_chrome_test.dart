@@ -252,13 +252,32 @@ void main() {
     await tester.tap(find.byType(HomePage));
     await tester.pump();
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyR), isTrue);
     await tester.pump();
     await tester.pump();
 
     expect(find.byType(ReviewPage), findsOneWidget);
     expect(find.byKey(ShellKeys.navCards), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+  });
+
+  testWidgets('R and / are not handled while Caderno search is focused', (
+    tester,
+  ) async {
+    await _pumpShell(tester, size: _mobile);
+    await tester.tap(find.byKey(ShellKeys.navCard('caderno')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(NotebookKeys.search));
+    await tester.pump();
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyR), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.slash), isFalse);
+    expect(
+      GoRouter.of(tester.element(find.byType(NotebookPage))).state.uri.path,
+      '/notebook',
+    );
+    expect(find.byType(ReviewPage), findsNothing);
   });
 }
 

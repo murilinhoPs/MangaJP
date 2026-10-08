@@ -8,8 +8,20 @@ import '../domain/notebook_entry.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
-/// Focus for Caderno search (`/` shortcut).
-final notebookSearchFocusNode = FocusNode();
+/// Caderno search focus, owned by the mounted [NotebookPage].
+abstract final class NotebookSearch {
+  static FocusNode? _node;
+
+  static void attach(FocusNode node) => _node = node;
+
+  static void detach(FocusNode node) {
+    if (identical(_node, node)) {
+      _node = null;
+    }
+  }
+
+  static void requestFocus() => _node?.requestFocus();
+}
 
 /// Keys for `/notebook` (list + search + state filter; tap opens word detail).
 abstract final class NotebookKeys {
@@ -24,11 +36,31 @@ abstract final class NotebookKeys {
 }
 
 /// `/notebook` — every word with a listed state, newest first.
-class NotebookPage extends ConsumerWidget {
+class NotebookPage extends ConsumerStatefulWidget {
   const NotebookPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotebookPage> createState() => _NotebookPageState();
+}
+
+class _NotebookPageState extends ConsumerState<NotebookPage> {
+  final FocusNode _searchFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    NotebookSearch.attach(_searchFocus);
+  }
+
+  @override
+  void dispose() {
+    NotebookSearch.detach(_searchFocus);
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final query = ref.watch(notebookListQueryProvider);
     final entries = ref.watch(notebookEntriesProvider);
 
@@ -38,7 +70,7 @@ class NotebookPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: TextField(
             key: NotebookKeys.search,
-            focusNode: notebookSearchFocusNode,
+            focusNode: _searchFocus,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search),
               hintText: 'Lema ou leitura',

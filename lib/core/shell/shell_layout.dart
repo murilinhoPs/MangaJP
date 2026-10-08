@@ -12,6 +12,12 @@ import '../theme/app_theme.dart';
 abstract final class ShellLayout {
   static const double railWidth = 76;
   static const double commandBarBottom = 24;
+
+  /// Visual bar row: 8 padding + [AppTargets.min] + 8 padding.
+  static const double commandBarHeight = 8 + AppTargets.min + 8;
+
+  /// Bottom inset so shell content clears the floating bar + 24 offset.
+  static const double commandBarClearance = commandBarBottom + commandBarHeight;
   static const double jpSealSize = 34;
 
   static bool isWide(BuildContext context) {
@@ -65,6 +71,40 @@ abstract final class ShellShortcuts {
   static SingleActivator activator(LogicalKeyboardKey key) {
     return SingleActivator(key, control: !usesMeta, meta: usesMeta);
   }
+
+  /// True when an [EditableText] (any [TextField]) has primary focus.
+  static bool get isTyping {
+    final focus = FocusManager.instance.primaryFocus;
+    final ctx = focus?.context;
+    if (ctx == null) {
+      return false;
+    }
+    return ctx.widget is EditableText ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+}
+
+/// Shell shortcut payload. One [Action] handles every id.
+class ShellShortcutIntent extends Intent {
+  const ShellShortcutIntent(this.id);
+  final String id;
+}
+
+/// While typing, [isEnabled] and [consumesKey] are false so Linux / Android
+/// physical keyboards deliver `r` and `/` to the focused [EditableText].
+class ShellPassthroughAction extends CallbackAction<ShellShortcutIntent> {
+  ShellPassthroughAction({
+    required this.shouldPassThrough,
+    required super.onInvoke,
+  });
+
+  final bool Function() shouldPassThrough;
+
+  @override
+  bool isEnabled(ShellShortcutIntent intent) => !shouldPassThrough();
+
+  @override
+  bool consumesKey(ShellShortcutIntent intent) => !shouldPassThrough();
 }
 
 class ShellDestination {

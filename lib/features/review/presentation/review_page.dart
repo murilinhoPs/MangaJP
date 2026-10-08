@@ -160,105 +160,121 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
         ),
     ];
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.space): _reveal,
-        const SingleActivator(LogicalKeyboardKey.digit1): () {
-          _rate(ReviewRating.again);
-        },
-        const SingleActivator(LogicalKeyboardKey.digit2): () {
-          _rate(ReviewRating.hard);
-        },
-        const SingleActivator(LogicalKeyboardKey.digit3): () {
-          _rate(ReviewRating.good);
-        },
-        const SingleActivator(LogicalKeyboardKey.digit4): () {
-          _rate(ReviewRating.easy);
-        },
+    return Shortcuts(
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.space): ShellShortcutIntent('space'),
+        SingleActivator(LogicalKeyboardKey.digit1): ShellShortcutIntent('1'),
+        SingleActivator(LogicalKeyboardKey.digit2): ShellShortcutIntent('2'),
+        SingleActivator(LogicalKeyboardKey.digit3): ShellShortcutIntent('3'),
+        SingleActivator(LogicalKeyboardKey.digit4): ShellShortcutIntent('4'),
       },
-      child: Focus(
-        autofocus: true,
-        child: _ReviewScaffold(
-          meta: card.lemma,
-          actions: actions,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          card.lemma,
-                          key: ReviewKeys.lemma,
-                          style: AppTypeScale.reviewMobileJp,
-                          textAlign: TextAlign.center,
-                        ),
-                        if (_revealed) ...[
-                          const SizedBox(height: 8),
+      child: Actions(
+        actions: {
+          ShellShortcutIntent: ShellPassthroughAction(
+            shouldPassThrough: () => ShellShortcuts.isTyping,
+            onInvoke: (intent) {
+              switch (intent.id) {
+                case 'space':
+                  _reveal();
+                case '1':
+                  _rate(ReviewRating.again);
+                case '2':
+                  _rate(ReviewRating.hard);
+                case '3':
+                  _rate(ReviewRating.good);
+                case '4':
+                  _rate(ReviewRating.easy);
+              }
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: _ReviewScaffold(
+            meta: card.lemma,
+            actions: actions,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            card.reading,
-                            key: ReviewKeys.reading,
-                            style: AppTypeScale.ui14.copyWith(
-                              fontFamily: AppFonts.jp,
-                              color: tokens.text2,
-                            ),
+                            card.lemma,
+                            key: ReviewKeys.lemma,
+                            style: AppTypeScale.reviewMobileJp,
                             textAlign: TextAlign.center,
                           ),
-                          if (gloss.isNotEmpty) ...[
-                            const SizedBox(height: 16),
+                          if (_revealed) ...[
+                            const SizedBox(height: 8),
                             Text(
-                              gloss,
-                              key: ReviewKeys.gloss,
-                              style: AppTypeScale.definicao,
+                              card.reading,
+                              key: ReviewKeys.reading,
+                              style: AppTypeScale.ui14.copyWith(
+                                fontFamily: AppFonts.jp,
+                                color: tokens.text2,
+                              ),
                               textAlign: TextAlign.center,
                             ),
-                          ],
-                          if (card.userNote != null &&
-                              card.userNote!.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              card.userNote!,
-                              key: ReviewKeys.note,
-                              style: AppTypeScale.definicao,
-                              textAlign: TextAlign.center,
-                            ),
+                            if (gloss.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                gloss,
+                                key: ReviewKeys.gloss,
+                                style: AppTypeScale.definicao,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                            if (card.userNote != null &&
+                                card.userNote!.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                card.userNote!,
+                                key: ReviewKeys.note,
+                                style: AppTypeScale.definicao,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                if (!_revealed)
-                  FilledButton(
-                    key: ReviewKeys.reveal,
-                    onPressed: _reveal,
-                    child: const Text('Revelar'),
-                  )
-                else
-                  Row(
-                    children: [
-                      for (final rating in ReviewRating.values)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: FilledButton(
-                              key: ReviewKeys.rating(rating),
-                              style: _ratingStyle(rating, tokens),
-                              onPressed: () => _rate(rating),
-                              child: _RatingButtonLabel(
-                                rating: rating,
-                                interval: previews?[rating],
+                  if (!_revealed)
+                    FilledButton(
+                      key: ReviewKeys.reveal,
+                      onPressed: _reveal,
+                      child: const Text('Revelar'),
+                    )
+                  else
+                    Row(
+                      children: [
+                        for (final rating in ReviewRating.values)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: FilledButton(
+                                key: ReviewKeys.rating(rating),
+                                style: _ratingStyle(rating, tokens),
+                                onPressed: () => _rate(rating),
+                                child: _RatingButtonLabel(
+                                  rating: rating,
+                                  interval: previews?[rating],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-              ],
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),
