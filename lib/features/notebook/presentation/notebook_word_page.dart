@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
 import 'notebook_controller.dart';
@@ -83,10 +84,11 @@ class _NotebookWordBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final tokens = context.tokens;
     final detail = view.detail;
     final sentence = detail.sentence;
     final pageId = detail.pageId;
+    const detalheSize = Size.fromHeight(AppTargets.detalhe);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -96,26 +98,31 @@ class _NotebookWordBody extends ConsumerWidget {
           Text(
             detail.lemma,
             key: NotebookWordKeys.lemma,
-            style: theme.textTheme.headlineSmall,
+            style: AppTypeScale.detalheMobileJp,
           ),
           const SizedBox(height: 4),
           Text(
             detail.reading,
             key: NotebookWordKeys.reading,
-            style: theme.textTheme.titleMedium,
+            style: AppTypeScale.ui14.copyWith(
+              fontFamily: AppFonts.jp,
+              color: tokens.text2,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             notebookStateLabel(detail.state),
             key: NotebookWordKeys.state,
-            style: theme.textTheme.bodyMedium,
+            style: AppTypeScale.ui14.copyWith(
+              color: tokens.wordState(detail.state.name),
+            ),
           ),
           if (view.glossText.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
               view.glossText,
               key: NotebookWordKeys.gloss,
-              style: theme.textTheme.bodyLarge,
+              style: AppTypeScale.definicao,
             ),
           ],
           if (detail.userNote != null && detail.userNote!.isNotEmpty) ...[
@@ -123,7 +130,7 @@ class _NotebookWordBody extends ConsumerWidget {
             Text(
               detail.userNote!,
               key: NotebookWordKeys.note,
-              style: theme.textTheme.bodyLarge,
+              style: AppTypeScale.definicao,
             ),
           ],
           if (sentence != null && sentence.isNotEmpty) ...[
@@ -131,7 +138,7 @@ class _NotebookWordBody extends ConsumerWidget {
             Text(
               sentence,
               key: NotebookWordKeys.sentence,
-              style: theme.textTheme.bodyLarge,
+              style: AppTypeScale.balaoPaginaMobileJp,
             ),
           ],
           if (pageId != null && pageId.isNotEmpty)
@@ -146,18 +153,34 @@ class _NotebookWordBody extends ConsumerWidget {
           const SizedBox(height: 16),
           FilledButton(
             key: NotebookWordKeys.learn,
+            style: FilledButton.styleFrom(
+              minimumSize: detalheSize,
+              backgroundColor: tokens.overlayEstadoAtivo,
+              foregroundColor: tokens.violetText,
+              side: BorderSide(color: tokens.coral),
+            ),
             onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
             child: const Text('Aprender'),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             key: NotebookWordKeys.known,
+            style: OutlinedButton.styleFrom(
+              minimumSize: detalheSize,
+              foregroundColor: tokens.mint,
+              backgroundColor: tokens.surfaceRaised,
+            ),
             onPressed: () => _runStudy(ref, (repo) => repo.markKnown(wordId)),
             child: const Text('Conhecido'),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             key: NotebookWordKeys.ignore,
+            style: OutlinedButton.styleFrom(
+              minimumSize: detalheSize,
+              foregroundColor: tokens.text3,
+              backgroundColor: tokens.surfaceRaised,
+            ),
             onPressed: () => _runStudy(ref, (repo) => repo.markIgnored(wordId)),
             child: const Text('Ignorar'),
           ),
@@ -167,7 +190,7 @@ class _NotebookWordBody extends ConsumerWidget {
             onPressed: () => _confirmDeleteCard(context, ref),
             child: Text(
               'Remover card',
-              style: TextStyle(color: theme.colorScheme.error),
+              style: TextStyle(color: tokens.coral),
             ),
           ),
           const SizedBox(height: 8),
@@ -176,7 +199,7 @@ class _NotebookWordBody extends ConsumerWidget {
             onPressed: () => _confirmRemoveFromNotebook(context, ref),
             child: Text(
               'Remover do Caderno',
-              style: TextStyle(color: theme.colorScheme.error),
+              style: TextStyle(color: tokens.coral),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import 'app_database_open.dart';
+import 'demo_seed.dart';
 import 'daos/app_meta_dao.dart';
 import 'daos/cards_dao.dart';
 import 'daos/pages_dao.dart';
@@ -119,6 +120,7 @@ class AppDatabase extends _$AppDatabase {
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
+        await seedDemoIfRequested(this);
       },
     );
   }

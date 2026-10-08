@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../capture/data/image_source_service.dart';
 import '../../pages/domain/page.dart';
 import '../../review/domain/home_review_counts.dart';
@@ -33,7 +34,7 @@ class HomePage extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('MangaJP Study', style: Theme.of(context).textTheme.headlineSmall),
+        const Text('MangaJP Study', style: AppTypeScale.tituloTela),
         const SizedBox(height: 8),
         hello.when(
           data: (value) => Card(
@@ -100,6 +101,9 @@ class _ReviewBlock extends StatelessWidget {
             Text(
               'Novos hoje: $newToday de ${NewPerDay.limit}',
               key: HomeKeys.newToday,
+              style: AppTypeScale.ui13.copyWith(
+                color: context.tokens.violetText,
+              ),
             ),
           ],
         ),
@@ -178,17 +182,18 @@ class _RecentThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    final radius = BorderRadius.circular(AppRadius.segmentado);
     return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(8),
+      color: tokens.surfaceRaised,
+      borderRadius: radius,
       child: InkWell(
         key: HomeKeys.recentThumb(pageId),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: radius,
         child: SizedBox.expand(
           child: Center(
-            child: Icon(Icons.photo_outlined, color: scheme.onSurfaceVariant),
+            child: Icon(Icons.photo_outlined, color: tokens.text3),
           ),
         ),
       ),

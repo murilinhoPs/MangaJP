@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../domain/interval_preview.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
@@ -80,7 +81,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.tokens;
     final card = widget.view.card;
     final gloss = widget.view.glossText;
     final previews = ratingPreviewLabels(card.srs, isDrill: card.isDrill);
@@ -98,7 +99,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                   Text(
                     card.lemma,
                     key: ReviewKeys.lemma,
-                    style: theme.textTheme.headlineSmall,
+                    style: AppTypeScale.reviewMobileJp,
                     textAlign: TextAlign.center,
                   ),
                   if (_revealed) ...[
@@ -106,7 +107,10 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                     Text(
                       card.reading,
                       key: ReviewKeys.reading,
-                      style: theme.textTheme.titleMedium,
+                      style: AppTypeScale.ui14.copyWith(
+                        fontFamily: AppFonts.jp,
+                        color: tokens.text2,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     if (gloss.isNotEmpty) ...[
@@ -114,7 +118,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       Text(
                         gloss,
                         key: ReviewKeys.gloss,
-                        style: theme.textTheme.bodyLarge,
+                        style: AppTypeScale.definicao,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -123,7 +127,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       Text(
                         card.userNote!,
                         key: ReviewKeys.note,
-                        style: theme.textTheme.bodyLarge,
+                        style: AppTypeScale.definicao,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -147,12 +151,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: FilledButton(
                         key: ReviewKeys.rating(rating),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 10,
-                          ),
-                        ),
+                        style: _ratingStyle(rating, tokens),
                         onPressed: () {
                           ref
                               .read(reviewSessionProvider.notifier)
@@ -173,6 +172,28 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
   }
 }
 
+ButtonStyle _ratingStyle(ReviewRating rating, MangaJpTokens tokens) {
+  final (Color border, Color fill, Color fg) = switch (rating) {
+    ReviewRating.again => (tokens.coral, tokens.srsErreiFill, tokens.text),
+    ReviewRating.hard => (tokens.border, tokens.surface, tokens.text),
+    ReviewRating.good => (tokens.mint, tokens.srsBomFill, tokens.text),
+    ReviewRating.easy => (tokens.border, tokens.surface, tokens.text),
+  };
+  // `side` must be set here: FilledButton.styleFrom merges with
+  // filledButtonTheme, whose coral outline would otherwise win over
+  // `shape.side` for Hard/Easy (tokens: border + surface only).
+  return FilledButton.styleFrom(
+    backgroundColor: fill,
+    foregroundColor: fg,
+    minimumSize: const Size.fromHeight(AppTargets.respostaReviewMobile),
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+    side: BorderSide(color: border),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
+    ),
+  );
+}
+
 class _RatingButtonLabel extends StatelessWidget {
   const _RatingButtonLabel({required this.rating, this.interval});
 
@@ -181,7 +202,12 @@ class _RatingButtonLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.tokens;
+    final intervalColor = switch (rating) {
+      ReviewRating.again => tokens.coralText,
+      ReviewRating.good => tokens.mint,
+      ReviewRating.hard || ReviewRating.easy => tokens.text3,
+    };
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -191,9 +217,7 @@ class _RatingButtonLabel extends StatelessWidget {
             interval!,
             key: ReviewKeys.interval(rating),
             textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onPrimary,
-            ),
+            style: AppTypeScale.mono10.copyWith(color: intervalColor),
           ),
       ],
     );
