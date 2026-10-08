@@ -155,22 +155,9 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         ),
       ];
     }
-    final bound = _registry.task?.actions ?? const <ShellAction>[];
-    if (bound.isNotEmpty) {
-      return bound;
-    }
-    if (ShellLayout.isTask(path)) {
-      return const [];
-    }
-    return [
-      ShellAction(
-        id: 'revisar',
-        label: 'Revisar',
-        shortcut: 'R',
-        primary: true,
-        onPressed: () => const ReviewRoute().go(context),
-      ),
-    ];
+    // Task screens bind their own bar actions. Other destinations (Caderno,
+    // Deck, Mais, Páginas) keep R as a shortcut but do not duplicate Home's bar.
+    return _registry.task?.actions ?? const <ShellAction>[];
   }
 
   @override

@@ -184,6 +184,7 @@ void main() {
       _railLabelColor(tester, 'biblioteca', 'Biblioteca'),
       isNot(AppColors.coral),
     );
+    expect(find.byKey(ShellKeys.commandBar), findsNothing);
   });
 
   testWidgets('Ctrl+K opens the palette and an item navigates', (tester) async {
