@@ -38,6 +38,7 @@ abstract final class ShellKeys {
   static const commandBar = Key('shell-command-bar');
   static const palette = Key('shell-command-palette');
   static const taskDock = Key('shell-task-dock');
+  static const dockMeta = Key('shell-task-dock-meta');
   static const jpSeal = Key('shell-jp-seal');
 
   static Key navCard(String id) => Key('shell-nav-card-$id');

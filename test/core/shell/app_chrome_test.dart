@@ -8,6 +8,7 @@ import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
+import 'package:manga_jp/core/shell/task_dock.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
@@ -90,6 +91,7 @@ void main() {
     expect(find.byKey(ShellKeys.navCards), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
     expect(find.byKey(ShellKeys.dockAction('back')), findsOneWidget);
+    expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
     expect(find.text(pageId), findsWidgets);
   });
 
@@ -119,6 +121,41 @@ void main() {
     expect(find.text('Caderno'), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
     expect(find.byKey(CaptureKeys.confirm), findsOneWidget);
+    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
+  });
+
+  testWidgets('dock without meta renders no empty pill', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const Scaffold(
+          body: TaskDock(
+            leading: [DockIconButton(icon: Icons.close, onPressed: _noop)],
+            trailing: [
+              DockTextButton(label: 'Confirmar crop', onPressed: _noop),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
+    expect(find.text('Confirmar crop'), findsOneWidget);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const Scaffold(
+          body: TaskDock(
+            meta: '   ',
+            leading: [DockIconButton(icon: Icons.close, onPressed: _noop)],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
   });
 
   testWidgets('desktop rail is 76px with Ajustes at the bottom', (
@@ -224,6 +261,8 @@ void main() {
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
   });
 }
+
+void _noop() {}
 
 const _mobile = Size(390, 844);
 const _desktop = Size(1280, 800);

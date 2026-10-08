@@ -18,6 +18,13 @@ class TaskDock extends StatelessWidget {
   final List<Widget> leading;
   final List<Widget> trailing;
 
+  bool get _hasMeta {
+    final title = meta?.trim();
+    final hint = metaHint?.trim();
+    return (title != null && title.isNotEmpty) ||
+        (hint != null && hint.isNotEmpty);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -32,9 +39,12 @@ class TaskDock extends StatelessWidget {
             children: [
               ..._spaced(leading),
               if (leading.isNotEmpty) const SizedBox(width: 8),
-              Expanded(
-                child: _Meta(title: meta, hint: metaHint),
-              ),
+              if (_hasMeta)
+                Expanded(
+                  child: _Meta(title: meta, hint: metaHint),
+                )
+              else
+                const Spacer(),
               if (trailing.isNotEmpty) const SizedBox(width: 8),
               ..._spaced(trailing),
             ],
@@ -157,6 +167,7 @@ class _Meta extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Container(
+      key: ShellKeys.dockMeta,
       height: AppTargets.dockTela,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
