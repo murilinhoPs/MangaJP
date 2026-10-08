@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -100,6 +101,52 @@ void main() {
       find.descendant(
         of: find.byKey(LookupSheetKeys.sheet),
         matching: find.text('猫'),
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('tap kanji on the second wrapped OCR line opens that word', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ocr = 'あいうえおかきくけこさしすせ高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-wrap-takai',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final start = ocr.indexOf('高い');
+    final boxes = paragraph.getBoxesForSelection(
+      TextSelection(baseOffset: start, extentOffset: start + 1),
+    );
+    expect(boxes, isNotEmpty);
+    expect(
+      boxes.first.toRect().top,
+      greaterThan(10),
+      reason: '高い must wrap onto a second line at this width',
+    );
+    await tester.tapAt(paragraph.localToGlobal(boxes.first.toRect().center));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.miss), findsNothing);
+    expect(find.text('Nenhuma entrada no dicionário.'), findsNothing);
+    final gloss = tester.widget<Text>(find.byKey(LookupSheetKeys.gloss)).data!;
+    expect(gloss, contains('high'));
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.text('高い'),
       ),
       findsWidgets,
     );
