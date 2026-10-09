@@ -555,16 +555,12 @@ void main() {
       ],
     );
 
-    await tester.tap(find.byType(HomePage));
-    await tester.pump();
-
-    final probe = find.byKey(HomeKeys.typingProbe, skipOffstage: false);
-    expect(probe, findsOneWidget);
+    expect(find.byKey(HomeKeys.typingProbe), findsOneWidget);
     final editable = find.descendant(
-      of: probe,
+      of: find.byKey(HomeKeys.typingProbe),
       matching: find.byType(EditableText),
-      skipOffstage: false,
     );
+    expect(editable, findsOneWidget);
     tester.state<EditableTextState>(editable).requestKeyboard();
     await tester.pump();
 
@@ -579,7 +575,7 @@ void main() {
 
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
-    await tester.tap(find.byType(HomePage));
+    await tester.tap(find.text('para revisar'));
     await tester.pump();
 
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isTrue);

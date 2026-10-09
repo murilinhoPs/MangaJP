@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,31 +43,16 @@ class HomePage extends ConsumerWidget {
     final totalPages = ref.watch(homePageCountProvider).asData?.value;
     final week = ref.watch(homeWeekRhythmProvider).asData?.value;
     final now = DateTime.now();
-    final body = ShellLayout.isWide(context)
-        ? _DesktopHome(counts: counts, recent: recent, now: now)
-        : _MobileHome(
-            counts: counts,
-            recent: recent,
-            totalPages: totalPages,
-            week: week,
-            now: now,
-            onGallery: () => importFromGallery(context, ref),
-          );
-    return Stack(
-      children: [
-        body,
-        if (kDebugMode)
-          const Offstage(
-            offstage: true,
-            child: ExcludeSemantics(
-              child: SizedBox(
-                width: 1,
-                height: 1,
-                child: TextField(key: HomeKeys.typingProbe),
-              ),
-            ),
-          ),
-      ],
+    if (ShellLayout.isWide(context)) {
+      return _DesktopHome(counts: counts, recent: recent, now: now);
+    }
+    return _MobileHome(
+      counts: counts,
+      recent: recent,
+      totalPages: totalPages,
+      week: week,
+      now: now,
+      onGallery: () => importFromGallery(context, ref),
     );
   }
 }
@@ -150,6 +134,15 @@ class _DesktopHome extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(48, 36, 48, 24),
       children: [
+        const ExcludeSemantics(
+          child: SizedBox(
+            height: 1,
+            child: TextField(
+              key: HomeKeys.typingProbe,
+              decoration: InputDecoration.collapsed(hintText: ''),
+            ),
+          ),
+        ),
         _DesktopCounts(counts: counts),
         const SizedBox(height: 40),
         _RecentPagesList(pages: recent, now: now),
@@ -598,22 +591,25 @@ class _RecentCapturesBlock extends StatelessWidget {
     }
     return SizedBox(
       height: 132,
-      child: ListView.separated(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final page = items[index];
-          return SizedBox(
-            width: 96,
-            child: _RecentThumb(
-              page: page,
-              number: index + 1,
-              now: now,
-              onTap: () => PageDetailRoute(id: page.id).go(context),
-            ),
-          );
-        },
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              SizedBox(
+                width: 96,
+                height: 132,
+                child: _RecentThumb(
+                  page: items[i],
+                  number: i + 1,
+                  now: now,
+                  onTap: () => PageDetailRoute(id: items[i].id).go(context),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
