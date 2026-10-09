@@ -25,6 +25,14 @@ abstract final class StudyDay {
     return startLocal.subtract(utcOffset);
   }
 
+  /// Monday 04:00 America/Sao_Paulo that opened [now]'s study week.
+  static DateTime weekStartOf(DateTime now) {
+    final todayStart = startOf(now);
+    final todayLocal = todayStart.add(utcOffset);
+    final fromMonday = todayLocal.weekday - DateTime.monday;
+    return todayStart.subtract(Duration(days: fromMonday));
+  }
+
   /// True when [lastRatedAt] already sits on [now]'s study-day.
   static bool isDrill(DateTime now, DateTime? lastRatedAt) {
     if (lastRatedAt == null) {

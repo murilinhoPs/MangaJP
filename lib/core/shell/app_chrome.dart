@@ -116,6 +116,14 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     }
   }
 
+  String? get _recentPageId {
+    final pages = ref.read(homeRecentPagesProvider).asData?.value;
+    if (pages == null || pages.isEmpty) {
+      return null;
+    }
+    return pages.first.id;
+  }
+
   void _openRecentPage(BuildContext context, int index) {
     final pages = ref.read(homeRecentPagesProvider).asData?.value;
     if (pages == null || index < 0 || index >= pages.length) {
@@ -126,8 +134,9 @@ class _AppChromeState extends ConsumerState<AppChrome> {
 
   Future<void> _openPalette(BuildContext context) async {
     _paletteOpen = true;
+    final recentPageId = _recentPageId;
     final items = <PaletteAction>[
-      ...ShellPaletteNav.items,
+      ...ShellPaletteNav.items(recentPageId: recentPageId),
       for (final action in _barActions(context))
         PaletteAction(
           id: 'bar-${action.id}',
@@ -192,7 +201,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final path = _path;
     final wide = ShellLayout.isWide(context);
     final counts = ref.watch(homeReviewCountsProvider);
-    final due = counts.asData?.value.due ?? 0;
+    final revisoes = counts.asData?.value.revisoes ?? 0;
+    ref.watch(homeRecentPagesProvider);
     final task = ShellLayout.isTask(path);
 
     final barActions = _barActions(context);
@@ -201,7 +211,11 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       body = Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppRail(path: path, dueCount: due),
+          AppRail(
+            path: path,
+            reviewBadge: revisoes,
+            recentPageId: _recentPageId,
+          ),
           Expanded(
             child: Stack(
               children: [

@@ -23,6 +23,7 @@ import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
+import 'package:manga_jp/features/review/domain/new_per_day.dart';
 import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/settings/presentation/settings_page.dart';
@@ -64,7 +65,10 @@ void main() {
     expect(find.text('FILA DE HOJE'), findsOneWidget);
     expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '0');
     expect(find.text('cards esperando'), findsOneWidget);
-    expect(find.text('0 novos'), findsOneWidget);
+    expect(
+      find.text('0 novos · limite ${NewPerDay.limit}/dia'),
+      findsOneWidget,
+    );
     expect(find.text('0 revisões'), findsOneWidget);
     expect(find.text('0 drill'), findsOneWidget);
     expect(find.text('Due + novos hoje — stub'), findsNothing);
@@ -138,7 +142,10 @@ void main() {
 
     expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '4');
     expect(find.text('3 revisões'), findsOneWidget);
-    expect(find.text('1 novos'), findsOneWidget);
+    expect(
+      find.text('1 novos · limite ${NewPerDay.limit}/dia'),
+      findsOneWidget,
+    );
     expect(find.text('0 drill'), findsOneWidget);
     _expectNoCardList(tester);
 
@@ -212,7 +219,10 @@ void main() {
 
       expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '2');
       expect(find.text('1 revisões'), findsOneWidget);
-      expect(find.text('1 novos'), findsOneWidget);
+      expect(
+        find.text('1 novos · limite ${NewPerDay.limit}/dia'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byKey(HomeKeys.review));
       await tester.pumpAndSettle();
@@ -373,7 +383,9 @@ void main() {
     _expectGalleryBelowRecent(tester);
   });
 
-  testWidgets('Galeria pick opens /capture crop with the image', (tester) async {
+  testWidgets('Galeria pick opens /capture crop with the image', (
+    tester,
+  ) async {
     await _openHome(
       tester,
       jmdictPath: jmdictPath,
@@ -414,63 +426,56 @@ void main() {
     );
   });
 
-  testWidgets(
-    'queue card shows novos/revisões/drill counts in queue colors',
-    (tester) async {
-      await _openHome(
-        tester,
-        jmdictPath: jmdictPath,
-        cards: [
-          _SeedCard(
-            id: 'rev',
-            lemma: '残る',
-            phase: CardPhase.review,
-            dueAt: DateTime.utc(2026, 9, 1),
-          ),
-          _SeedCard(
-            id: 'new-a',
-            lemma: '新A',
-            phase: CardPhase.neu,
-            dueAt: DateTime.utc(2026, 10, 1),
-          ),
-          _SeedCard(
-            id: 'new-b',
-            lemma: '新B',
-            phase: CardPhase.neu,
-            dueAt: DateTime.utc(2026, 10, 1, 0, 1),
-          ),
-          _SeedCard(
-            id: 'drill',
-            lemma: 'ドリル',
-            phase: CardPhase.learning,
-            dueAt: DateTime.utc(2026, 9, 8),
-            drillToday: true,
-          ),
-        ],
-      );
+  testWidgets('queue card shows novos/revisões/drill counts in queue colors', (
+    tester,
+  ) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [
+        _SeedCard(
+          id: 'rev',
+          lemma: '残る',
+          phase: CardPhase.review,
+          dueAt: DateTime.utc(2026, 9, 1),
+        ),
+        _SeedCard(
+          id: 'new-a',
+          lemma: '新A',
+          phase: CardPhase.neu,
+          dueAt: DateTime.utc(2026, 10, 1),
+        ),
+        _SeedCard(
+          id: 'new-b',
+          lemma: '新B',
+          phase: CardPhase.neu,
+          dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+        ),
+        _SeedCard(
+          id: 'drill',
+          lemma: 'ドリル',
+          phase: CardPhase.learning,
+          dueAt: DateTime.utc(2026, 9, 8),
+          drillToday: true,
+        ),
+      ],
+    );
 
-      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '4');
-      expect(find.text('2 novos'), findsOneWidget);
-      expect(find.text('1 revisões'), findsOneWidget);
-      expect(find.text('1 drill'), findsOneWidget);
-      expect(_queueCountColor(tester, HomeKeys.novos), AppColors.violetText);
-      expect(_queueCountColor(tester, HomeKeys.revisoes), AppColors.mint);
-      expect(_queueCountColor(tester, HomeKeys.drill), AppColors.coral);
-      expect(tester.getSize(find.byKey(HomeKeys.queueBar)).height, 8);
-      expect(
-        tester.getSize(_queueSeg(AppColors.violet)).width,
-        greaterThan(8),
-      );
-      expect(
-        tester.getSize(_queueSeg(AppColors.mint)).width,
-        greaterThan(8),
-      );
-      expect(
-        tester.getSize(_queueSeg(AppColors.coral)).width,
-        greaterThan(8),
-      );
-    },
-  );
+    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '4');
+    expect(
+      find.text('2 novos · limite ${NewPerDay.limit}/dia'),
+      findsOneWidget,
+    );
+    expect(find.text('1 revisões'), findsOneWidget);
+    expect(find.text('1 drill'), findsOneWidget);
+    expect(_queueCountColor(tester, HomeKeys.novos), AppColors.violetText);
+    expect(_queueCountColor(tester, HomeKeys.revisoes), AppColors.mint);
+    expect(_queueCountColor(tester, HomeKeys.drill), AppColors.coral);
+    expect(tester.getSize(find.byKey(HomeKeys.queueBar)).height, 8);
+    expect(tester.getSize(_queueSeg(AppColors.violet)).width, greaterThan(8));
+    expect(tester.getSize(_queueSeg(AppColors.mint)).width, greaterThan(8));
+    expect(tester.getSize(_queueSeg(AppColors.coral)).width, greaterThan(8));
+  });
 
   testWidgets('Páginas recentes list tap opens /pages/:id', (tester) async {
     await _openHome(
@@ -542,7 +547,7 @@ void main() {
     expect(find.text('/pages — stub (M0.1)'), findsNothing);
   });
 
-  testWidgets('desktop 1 opens recent page; focused field swallows 1-3', (
+  testWidgets('desktop 1 opens recent page; focused field swallows 1-3/R/', (
     tester,
   ) async {
     await _openHome(
@@ -568,7 +573,10 @@ void main() {
       ],
     );
 
-    expect(find.byKey(HomeKeys.typingProbe), findsOneWidget);
+    expect(find.byKey(HomeKeys.typingProbe), findsNothing);
+    final probe = _insertChromeTypingProbe(tester);
+    await tester.pump();
+
     final editable = find.descendant(
       of: find.byKey(HomeKeys.typingProbe),
       matching: find.byType(EditableText),
@@ -580,13 +588,16 @@ void main() {
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyR), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.slash), isFalse);
     expect(
       GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
       '/home',
     );
     expect(find.byType(PageDetailPage), findsNothing);
+    expect(find.byType(ReviewPage), findsNothing);
 
-    FocusManager.instance.primaryFocus?.unfocus();
+    probe.remove();
     await tester.pump();
     await tester.tap(find.text('para revisar'));
     await tester.pump();
@@ -598,6 +609,64 @@ void main() {
       '/pages/page-1',
     );
   });
+
+  testWidgets('rail badge matches para revisar from the same counts', (
+    tester,
+  ) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      size: const Size(1280, 800),
+      cards: [
+        _SeedCard(
+          id: 'rev',
+          lemma: '残る',
+          phase: CardPhase.review,
+          dueAt: DateTime.utc(2026, 9, 1),
+        ),
+        _SeedCard(
+          id: 'new-a',
+          lemma: '新A',
+          phase: CardPhase.neu,
+          dueAt: DateTime.utc(2026, 10, 1),
+        ),
+        _SeedCard(
+          id: 'new-b',
+          lemma: '新B',
+          phase: CardPhase.neu,
+          dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+        ),
+        _SeedCard(
+          id: 'drill',
+          lemma: 'ドリル',
+          phase: CardPhase.learning,
+          dueAt: DateTime.utc(2026, 9, 8),
+          drillToday: true,
+        ),
+      ],
+    );
+
+    final paraRevisar = tester
+        .widget<Text>(
+          find
+              .descendant(
+                of: find.byKey(HomeKeys.revisoes),
+                matching: find.byType(Text),
+              )
+              .first,
+        )
+        .data;
+    final badge = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(ShellKeys.reviewBadge),
+            matching: find.byType(Text),
+          ),
+        )
+        .data;
+    expect(paraRevisar, '1');
+    expect(badge, paraRevisar);
+  });
 }
 
 Color? _queueCountColor(WidgetTester tester, Key key) {
@@ -606,6 +675,29 @@ Color? _queueCountColor(WidgetTester tester, Key key) {
   );
   final span = text.textSpan! as TextSpan;
   return (span.children!.first as TextSpan).style?.color;
+}
+
+OverlayEntry _insertChromeTypingProbe(WidgetTester tester) {
+  final overlay = Overlay.of(tester.element(find.byType(HomePage)));
+  final entry = OverlayEntry(
+    builder: (context) {
+      return const Align(
+        alignment: Alignment.bottomLeft,
+        child: SizedBox(
+          width: 120,
+          height: 40,
+          child: Material(
+            child: TextField(
+              key: HomeKeys.typingProbe,
+              decoration: InputDecoration.collapsed(hintText: ''),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+  overlay.insert(entry);
+  return entry;
 }
 
 Finder _queueSeg(Color color) {

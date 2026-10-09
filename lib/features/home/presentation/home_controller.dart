@@ -69,18 +69,14 @@ Future<int> homePageCount(Ref ref) {
   return ref.watch(pagesRepositoryProvider).countPages();
 }
 
-/// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+/// Current week (Mon→Sun study-days) of `review_logs`. `null` when empty.
 @riverpod
 Future<HomeWeekRhythm?> homeWeekRhythm(Ref ref) async {
   ref.watch(reviewRevisionProvider);
   _refetchOnReturnHome(ref);
   final review = ref.watch(reviewRepositoryProvider);
   final now = review.nowUtc();
-  final todayStart = StudyDay.startOf(now);
-  final todayLocal = todayStart.add(StudyDay.utcOffset);
-  final fromMonday = todayLocal.weekday - DateTime.monday;
-  final mondayStart = todayStart.subtract(Duration(days: fromMonday));
-  final times = await review.reviewTimesSince(mondayStart);
+  final times = await review.reviewTimesSince(StudyDay.weekStartOf(now));
   final week = HomeWeekRhythm.fromLogs(now, times);
   if (!week.hasActivity) {
     return null;

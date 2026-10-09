@@ -33,9 +33,7 @@ class HomeWeekRhythm {
 
   static HomeWeekRhythm fromLogs(DateTime now, Iterable<DateTime> ratedAt) {
     final todayStart = StudyDay.startOf(now);
-    final todayLocal = todayStart.add(StudyDay.utcOffset);
-    final fromMonday = todayLocal.weekday - DateTime.monday;
-    final mondayStart = todayStart.subtract(Duration(days: fromMonday));
+    final mondayStart = StudyDay.weekStartOf(now);
     final days = <HomeWeekDay>[
       for (var i = 0; i < 7; i++)
         _day(

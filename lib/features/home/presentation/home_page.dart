@@ -7,6 +7,7 @@ import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../capture/presentation/gallery_import.dart';
 import '../../review/domain/home_review_counts.dart';
+import '../../review/domain/new_per_day.dart';
 import '../domain/home_dates.dart';
 import '../domain/home_recent_entry.dart';
 import '../domain/home_week_rhythm.dart';
@@ -26,6 +27,8 @@ abstract final class HomeKeys {
   static const gallery = Key('home-gallery');
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
+
+  /// Test-only key for a TextField injected into the shell overlay.
   static const typingProbe = Key('home-typing-probe');
   static const queueBar = Key('home-queue-bar');
 
@@ -107,11 +110,7 @@ class _MobileHome extends StatelessWidget {
           _WeekRhythmCard(week: week!),
         ],
         const SizedBox(height: 20),
-        _RecentCapturesBlock(
-          pages: recent,
-          total: totalPages,
-          now: now,
-        ),
+        _RecentCapturesBlock(pages: recent, total: totalPages, now: now),
         const SizedBox(height: 12),
         _GalleryBlock(onTap: onGallery),
       ],
@@ -135,15 +134,6 @@ class _DesktopHome extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(48, 36, 48, 24),
       children: [
-        const ExcludeSemantics(
-          child: SizedBox(
-            height: 1,
-            child: TextField(
-              key: HomeKeys.typingProbe,
-              decoration: InputDecoration.collapsed(hintText: ''),
-            ),
-          ),
-        ),
         _DesktopCounts(counts: counts),
         const SizedBox(height: 40),
         _RecentPagesList(pages: recent, now: now),
@@ -253,7 +243,7 @@ class _QueueCard extends StatelessWidget {
                       _QueueCount(
                         key: HomeKeys.novos,
                         count: novos,
-                        label: 'novos',
+                        label: 'novos · limite ${NewPerDay.limit}/dia',
                         color: tokens.violetText,
                       ),
                       _QueueCount(
@@ -313,23 +303,14 @@ class _QueueBar extends StatelessWidget {
       child: Row(
         children: [
           if (novos > 0)
-            Expanded(
-              flex: novos,
-              child: _seg(tokens.queueNovos, radius),
-            ),
+            Expanded(flex: novos, child: _seg(tokens.queueNovos, radius)),
           if (novos > 0 && (revisoes > 0 || drill > 0))
             const SizedBox(width: 3),
           if (revisoes > 0)
-            Expanded(
-              flex: revisoes,
-              child: _seg(tokens.queueRevisoes, radius),
-            ),
+            Expanded(flex: revisoes, child: _seg(tokens.queueRevisoes, radius)),
           if (revisoes > 0 && drill > 0) const SizedBox(width: 3),
           if (drill > 0)
-            Expanded(
-              flex: drill,
-              child: _seg(tokens.queueDrill, radius),
-            ),
+            Expanded(flex: drill, child: _seg(tokens.queueDrill, radius)),
         ],
       ),
     );
@@ -507,9 +488,7 @@ class _WeekColumn extends StatelessWidget {
         : day.count > 0
         ? tokens.violet
         : tokens.surfaceLow;
-    final height = day.count == 0
-        ? 10.0
-        : 10.0 + (28.0 * day.count / maxCount);
+    final height = day.count == 0 ? 10.0 : 10.0 + (28.0 * day.count / maxCount);
     return Column(
       children: [
         Container(
@@ -759,6 +738,7 @@ class _DesktopCounts extends StatelessWidget {
       children: [
         Expanded(
           child: _DesktopCount(
+            key: HomeKeys.revisoes,
             value: revisoes,
             label: 'para revisar',
             color: tokens.mint,
@@ -785,6 +765,7 @@ class _DesktopCounts extends StatelessWidget {
 
 class _DesktopCount extends StatelessWidget {
   const _DesktopCount({
+    super.key,
     required this.value,
     required this.label,
     required this.color,
