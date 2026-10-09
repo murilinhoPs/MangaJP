@@ -456,6 +456,19 @@ void main() {
       expect(_queueCountColor(tester, HomeKeys.novos), AppColors.violetText);
       expect(_queueCountColor(tester, HomeKeys.revisoes), AppColors.mint);
       expect(_queueCountColor(tester, HomeKeys.drill), AppColors.coral);
+      expect(tester.getSize(find.byKey(HomeKeys.queueBar)).height, 8);
+      expect(
+        tester.getSize(_queueSeg(AppColors.violet)).width,
+        greaterThan(8),
+      );
+      expect(
+        tester.getSize(_queueSeg(AppColors.mint)).width,
+        greaterThan(8),
+      );
+      expect(
+        tester.getSize(_queueSeg(AppColors.coral)).width,
+        greaterThan(8),
+      );
     },
   );
 
@@ -593,6 +606,19 @@ Color? _queueCountColor(WidgetTester tester, Key key) {
   );
   final span = text.textSpan! as TextSpan;
   return (span.children!.first as TextSpan).style?.color;
+}
+
+Finder _queueSeg(Color color) {
+  return find.descendant(
+    of: find.byKey(HomeKeys.queueBar),
+    matching: find.byWidgetPredicate((widget) {
+      if (widget is! DecoratedBox) {
+        return false;
+      }
+      final decoration = widget.decoration;
+      return decoration is BoxDecoration && decoration.color == color;
+    }),
+  );
 }
 
 class _SeedPage {

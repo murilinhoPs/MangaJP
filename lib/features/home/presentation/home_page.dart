@@ -27,6 +27,7 @@ abstract final class HomeKeys {
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
   static const typingProbe = Key('home-typing-probe');
+  static const queueBar = Key('home-queue-bar');
 
   static Key recentThumb(String pageId) => Key('home-recent-thumb-$pageId');
   static Key recentPage(String pageId) => Key('home-recent-page-$pageId');
@@ -298,6 +299,7 @@ class _QueueBar extends StatelessWidget {
     final radius = BorderRadius.circular(AppRadius.segmentado);
     if (total == 0) {
       return Container(
+        key: HomeKeys.queueBar,
         height: height,
         decoration: BoxDecoration(
           color: tokens.surfaceLow,
@@ -306,6 +308,7 @@ class _QueueBar extends StatelessWidget {
       );
     }
     return SizedBox(
+      key: HomeKeys.queueBar,
       height: height,
       child: Row(
         children: [
@@ -335,6 +338,7 @@ class _QueueBar extends StatelessWidget {
   Widget _seg(Color color, BorderRadius radius) {
     return DecoratedBox(
       decoration: BoxDecoration(color: color, borderRadius: radius),
+      child: const SizedBox.expand(),
     );
   }
 }
