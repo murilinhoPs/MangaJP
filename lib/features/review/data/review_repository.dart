@@ -63,17 +63,41 @@ class ReviewRepository {
     return (await _dueSnapshot()).queue;
   }
 
-  /// Home **Revisar** block: non-`neu` due now, and `neu` already counted today.
+  /// Home **Fila de hoje**: queue split + non-`neu` due + `neu` counted today.
   Future<HomeReviewCounts> homeCounts() async {
     final snap = await _dueSnapshot();
     var due = 0;
+    var novos = 0;
+    var revisoes = 0;
+    var drill = 0;
     for (final card in snap.queue) {
+      if (card.isDrill) {
+        drill++;
+      } else if (card.srs.phase == CardPhase.neu) {
+        novos++;
+      } else {
+        revisoes++;
+      }
       if (card.srs.phase != CardPhase.neu) {
         due++;
       }
     }
-    return HomeReviewCounts(due: due, newToday: snap.introduced);
+    return HomeReviewCounts(
+      due: due,
+      newToday: snap.introduced,
+      novos: novos,
+      revisoes: revisoes,
+      drill: drill,
+    );
   }
+
+  /// `rated_at` stamps on or after [since] (for **Ritmo da semana**).
+  Future<List<DateTime>> reviewTimesSince(DateTime since) async {
+    final rows = await _db.cardsDao.logsSince(since);
+    return [for (final row in rows) row.ratedAt];
+  }
+
+  DateTime nowUtc() => _nowUtc();
 
   Future<ReviewCard?> nextDue() async {
     final queue = await dueQueue();

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -14,15 +15,17 @@ import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
+import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
-import 'package:manga_jp/features/review/domain/new_per_day.dart';
 import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
+import 'package:manga_jp/features/settings/presentation/settings_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
 import '../capture/fake_image_source_service.dart';
@@ -57,12 +60,13 @@ void main() {
     await _openHome(tester, jmdictPath: jmdictPath);
 
     expect(find.byKey(HomeKeys.review), findsOneWidget);
-    expect(find.text('Revisar'), findsOneWidget);
-    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 0');
-    expect(
-      tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-      'Novos hoje: 0 de ${NewPerDay.limit}',
-    );
+    expect(find.text('Revisar →'), findsOneWidget);
+    expect(find.text('FILA DE HOJE'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '0');
+    expect(find.text('cards esperando'), findsOneWidget);
+    expect(find.text('0 novos'), findsOneWidget);
+    expect(find.text('0 revisões'), findsOneWidget);
+    expect(find.text('0 drill'), findsOneWidget);
     expect(find.text('Due + novos hoje — stub'), findsNothing);
     expect(find.text('Thumbs → /pages/:id — stub'), findsNothing);
     expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
@@ -132,11 +136,10 @@ void main() {
       ],
     );
 
-    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 3');
-    expect(
-      tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-      'Novos hoje: 0 de 15',
-    );
+    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '4');
+    expect(find.text('3 revisões'), findsOneWidget);
+    expect(find.text('1 novos'), findsOneWidget);
+    expect(find.text('0 drill'), findsOneWidget);
     _expectNoCardList(tester);
 
     await tester.tap(find.byKey(HomeKeys.review));
@@ -171,31 +174,23 @@ void main() {
       },
     );
 
-    expect(
-      tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-      'Novos hoje: 3 de 15',
-    );
+    expect((await env.review.homeCounts()).newToday, 3);
+    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '0');
 
     clock.now = StudyDay.instant(2026, 10, 5, 3, 59);
     await _pumpHome(tester, env);
-    expect(
-      tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-      'Novos hoje: 3 de 15',
-    );
+    expect((await env.review.homeCounts()).newToday, 3);
 
     clock.now = StudyDay.instant(2026, 10, 5, 4);
     await _pumpHome(tester, env);
-    expect(
-      tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-      'Novos hoje: 0 de 15',
-    );
+    expect((await env.review.homeCounts()).newToday, 0);
     expect(find.byKey(HomeKeys.review), findsOneWidget);
   });
 
   testWidgets(
     'returning to Home after /review answers refreshes due and novos hoje',
     (tester) async {
-      await _openHome(
+      final env = await _openHome(
         tester,
         jmdictPath: jmdictPath,
         cards: [
@@ -215,11 +210,9 @@ void main() {
         ],
       );
 
-      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 1');
-      expect(
-        tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-        'Novos hoje: 0 de 15',
-      );
+      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '2');
+      expect(find.text('1 revisões'), findsOneWidget);
+      expect(find.text('1 novos'), findsOneWidget);
 
       await tester.tap(find.byKey(HomeKeys.review));
       await tester.pumpAndSettle();
@@ -240,11 +233,8 @@ void main() {
         GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
         '/home',
       );
-      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 0');
-      expect(
-        tester.widget<Text>(find.byKey(HomeKeys.newToday)).data,
-        'Novos hoje: 1 de 15',
-      );
+      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '0');
+      expect((await env.review.homeCounts()).newToday, 1);
       _expectNoCardList(tester);
     },
   );
@@ -332,7 +322,7 @@ void main() {
       ],
     );
 
-    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, 'Due: 1');
+    expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '1');
     expect(find.byKey(HomeKeys.recentThumb('page-a')), findsOneWidget);
     expect(
       tester.getTopLeft(find.byKey(HomeKeys.review)).dy,
@@ -423,13 +413,204 @@ void main() {
       '/home',
     );
   });
+
+  testWidgets(
+    'queue card shows novos/revisões/drill counts in queue colors',
+    (tester) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [
+          _SeedCard(
+            id: 'rev',
+            lemma: '残る',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'new-a',
+            lemma: '新A',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+          _SeedCard(
+            id: 'new-b',
+            lemma: '新B',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+          ),
+          _SeedCard(
+            id: 'drill',
+            lemma: 'ドリル',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            drillToday: true,
+          ),
+        ],
+      );
+
+      expect(tester.widget<Text>(find.byKey(HomeKeys.due)).data, '4');
+      expect(find.text('2 novos'), findsOneWidget);
+      expect(find.text('1 revisões'), findsOneWidget);
+      expect(find.text('1 drill'), findsOneWidget);
+      expect(_queueCountColor(tester, HomeKeys.novos), AppColors.violetText);
+      expect(_queueCountColor(tester, HomeKeys.revisoes), AppColors.mint);
+      expect(_queueCountColor(tester, HomeKeys.drill), AppColors.coral);
+    },
+  );
+
+  testWidgets('Páginas recentes list tap opens /pages/:id', (tester) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      size: const Size(1280, 800),
+      pages: [
+        _SeedPage(
+          id: 'page-a',
+          createdAt: DateTime.utc(2026, 10, 5),
+          ocrText: 'この町には、もう誰も残っていない。',
+          crops: 3,
+        ),
+        _SeedPage(
+          id: 'page-b',
+          createdAt: DateTime.utc(2026, 10, 4),
+          ocrText: '見せる',
+          crops: 2,
+        ),
+      ],
+    );
+
+    expect(find.text('PÁGINAS RECENTES'), findsOneWidget);
+    expect(find.byKey(HomeKeys.recentPage('page-a')), findsOneWidget);
+    expect(find.textContaining('3 recortes'), findsOneWidget);
+
+    await tester.tap(find.byKey(HomeKeys.recentPage('page-a')));
+    await tester.pumpAndSettle();
+    expect(
+      GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
+      '/pages/page-a',
+    );
+  });
+
+  testWidgets('Ajustes card opens /settings', (tester) async {
+    await _openHome(tester, jmdictPath: jmdictPath);
+
+    await tester.tap(find.byKey(ShellKeys.navCard('ajustes')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsPage), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(SettingsPage))).state.uri.path,
+      '/settings',
+    );
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('/more redirects to /settings and Mais is gone', (tester) async {
+    await _openHome(tester, jmdictPath: jmdictPath);
+    final router = GoRouter.of(tester.element(find.byType(HomePage)));
+    router.go('/more');
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/settings');
+    expect(find.byType(SettingsPage), findsOneWidget);
+    expect(find.text('Mais'), findsNothing);
+    expect(find.text('/more'), findsNothing);
+  });
+
+  testWidgets('/pages list redirects to /home', (tester) async {
+    await _openHome(tester, jmdictPath: jmdictPath);
+    final router = GoRouter.of(tester.element(find.byType(HomePage)));
+    router.go('/pages');
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/home');
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.text('/pages — stub (M0.1)'), findsNothing);
+  });
+
+  testWidgets('desktop 1 opens recent page; focused field swallows 1-3', (
+    tester,
+  ) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      size: const Size(1280, 800),
+      pages: [
+        _SeedPage(
+          id: 'page-1',
+          createdAt: DateTime.utc(2026, 10, 5),
+          ocrText: '一文',
+        ),
+        _SeedPage(
+          id: 'page-2',
+          createdAt: DateTime.utc(2026, 10, 4),
+          ocrText: '二文',
+        ),
+        _SeedPage(
+          id: 'page-3',
+          createdAt: DateTime.utc(2026, 10, 3),
+          ocrText: '三文',
+        ),
+      ],
+    );
+
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    final probe = find.byKey(HomeKeys.typingProbe, skipOffstage: false);
+    expect(probe, findsOneWidget);
+    final editable = find.descendant(
+      of: probe,
+      matching: find.byType(EditableText),
+      skipOffstage: false,
+    );
+    tester.state<EditableTextState>(editable).requestKeyboard();
+    await tester.pump();
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isFalse);
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
+    expect(find.byType(PageDetailPage), findsNothing);
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isTrue);
+    await tester.pumpAndSettle();
+    expect(
+      GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
+      '/pages/page-1',
+    );
+  });
+}
+
+Color? _queueCountColor(WidgetTester tester, Key key) {
+  final text = tester.widget<Text>(
+    find.descendant(of: find.byKey(key), matching: find.byType(Text)),
+  );
+  final span = text.textSpan! as TextSpan;
+  return (span.children!.first as TextSpan).style?.color;
 }
 
 class _SeedPage {
-  const _SeedPage({required this.id, required this.createdAt});
+  const _SeedPage({
+    required this.id,
+    required this.createdAt,
+    this.ocrText,
+    this.crops = 0,
+  });
 
   final String id;
   final DateTime createdAt;
+  final String? ocrText;
+  final int crops;
 }
 
 class _SeedCard {
@@ -440,6 +621,7 @@ class _SeedCard {
     required this.dueAt,
     this.suspendReason,
     this.priorNonDrillAt,
+    this.drillToday = false,
   });
 
   final String id;
@@ -448,6 +630,7 @@ class _SeedCard {
   final DateTime dueAt;
   final String? suspendReason;
   final DateTime? priorNonDrillAt;
+  final bool drillToday;
 }
 
 class _Env {
@@ -471,6 +654,7 @@ Future<_Env> _openHome(
   List<_SeedPage> pages = const [],
   ImageSourceService? source,
   _Clock? clock,
+  Size size = const Size(390, 844),
   Future<void> Function(ReviewRepository review)? prepare,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
@@ -484,6 +668,22 @@ Future<_Env> _openHome(
         createdAt: page.createdAt,
       ),
     );
+    final cropCount = page.ocrText != null && page.crops == 0 ? 1 : page.crops;
+    for (var i = 0; i < cropCount; i++) {
+      await db.pagesDao.insertCrop(
+        CapturedCropsCompanion.insert(
+          id: 'crop-${page.id}-$i',
+          pageId: page.id,
+          ocrText: page.ocrText ?? '文',
+          engineId: 'test',
+          left: 0.1,
+          top: 0.1,
+          width: 0.4,
+          height: 0.4,
+          createdAt: page.createdAt,
+        ),
+      );
+    }
   }
 
   for (final card in cards) {
@@ -544,6 +744,19 @@ Future<_Env> _openHome(
         ),
       );
     }
+    if (card.drillToday) {
+      await db.cardsDao.insertLog(
+        UserReviewLogsCompanion.insert(
+          id: 'drill-${card.id}',
+          cardId: 'card-${card.id}',
+          ratedAt: DateTime.utc(2026, 10, 5, 11),
+          rating: 1,
+          quality: 0,
+          engineId: kSm2JrEngineId,
+          isDrill: 0,
+        ),
+      );
+    }
   }
 
   final reviewClock = clock ?? _Clock(DateTime.utc(2026, 10, 5, 12));
@@ -558,11 +771,20 @@ Future<_Env> _openHome(
     jmdictPath: jmdictPath,
     source: source ?? FakeImageSourceService(),
   );
-  await _pumpHome(tester, env);
+  await _pumpHome(tester, env, size: size);
   return env;
 }
 
-Future<void> _pumpHome(WidgetTester tester, _Env env) async {
+Future<void> _pumpHome(
+  WidgetTester tester,
+  _Env env, {
+  Size size = const Size(390, 844),
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
   await tester.pumpWidget(
     MangaJpApp(
       key: UniqueKey(),
@@ -583,7 +805,6 @@ Future<void> _pumpHome(WidgetTester tester, _Env env) async {
 
 void _expectNoCardList(WidgetTester tester) {
   expect(find.text('学ぶ'), findsNothing);
-  expect(find.text('復習'), findsNothing);
   expect(find.text('新0'), findsNothing);
   expect(find.text('既知'), findsNothing);
   expect(find.byKey(ReviewKeys.lemma), findsNothing);

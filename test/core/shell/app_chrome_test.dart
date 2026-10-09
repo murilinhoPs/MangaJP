@@ -236,6 +236,8 @@ void main() {
 
     expect(find.byKey(ShellKeys.palette), findsOneWidget);
     expect(find.byKey(ShellKeys.paletteItem('caderno')), findsOneWidget);
+    expect(find.byKey(ShellKeys.paletteItem('more')), findsNothing);
+    expect(find.text('Mais'), findsNothing);
 
     await tester.tap(find.byKey(ShellKeys.paletteItem('caderno')));
     await tester.pumpAndSettle();

@@ -8,57 +8,7 @@ part of 'home_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
-
-@ProviderFor(HelloMeta)
-final helloMetaProvider = HelloMetaProvider._();
-
-/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
-final class HelloMetaProvider
-    extends $AsyncNotifierProvider<HelloMeta, String> {
-  /// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
-  HelloMetaProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'helloMetaProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$helloMetaHash();
-
-  @$internal
-  @override
-  HelloMeta create() => HelloMeta();
-}
-
-String _$helloMetaHash() => r'2430771fd64876e190d37eef934ae6a1440c298c';
-
-/// Riverpod codegen hello: reads `app_meta.hello` seeded by Drift `onCreate`.
-
-abstract class _$HelloMeta extends $AsyncNotifier<String> {
-  FutureOr<String> build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<String>, String>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<String>, String>,
-              AsyncValue<String>,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
-/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+/// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
 ///
 /// Refetches when a `/review` answer persists, and again when the shell
 /// returns to `/home` (Home stays mounted as a branch, so a one-shot
@@ -67,7 +17,7 @@ abstract class _$HelloMeta extends $AsyncNotifier<String> {
 @ProviderFor(homeReviewCounts)
 final homeReviewCountsProvider = HomeReviewCountsProvider._();
 
-/// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+/// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
 ///
 /// Refetches when a `/review` answer persists, and again when the shell
 /// returns to `/home` (Home stays mounted as a branch, so a one-shot
@@ -81,7 +31,7 @@ final class HomeReviewCountsProvider
           FutureOr<HomeReviewCounts>
         >
     with $FutureModifier<HomeReviewCounts>, $FutureProvider<HomeReviewCounts> {
-  /// Due + novos hoje for the Home **Revisar** block. Uses the review clock.
+  /// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
   ///
   /// Refetches when a `/review` answer persists, and again when the shell
   /// returns to `/home` (Home stays mounted as a branch, so a one-shot
@@ -112,9 +62,9 @@ final class HomeReviewCountsProvider
   }
 }
 
-String _$homeReviewCountsHash() => r'a97e950a86bb928c0880f1fb9560ce794ecc274f';
+String _$homeReviewCountsHash() => r'dd0e7d916385a609dd8d634ce090b53f737d2a50';
 
-/// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+/// Newest pages for Home **Capturas recentes** / **Páginas recentes**.
 ///
 /// Refetches when the shell returns to `/home` (Home stays mounted as a
 /// branch, so a one-shot FutureProvider would otherwise stay stale after
@@ -123,7 +73,7 @@ String _$homeReviewCountsHash() => r'a97e950a86bb928c0880f1fb9560ce794ecc274f';
 @ProviderFor(homeRecentPages)
 final homeRecentPagesProvider = HomeRecentPagesProvider._();
 
-/// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+/// Newest pages for Home **Capturas recentes** / **Páginas recentes**.
 ///
 /// Refetches when the shell returns to `/home` (Home stays mounted as a
 /// branch, so a one-shot FutureProvider would otherwise stay stale after
@@ -132,12 +82,14 @@ final homeRecentPagesProvider = HomeRecentPagesProvider._();
 final class HomeRecentPagesProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<MangaPage>>,
-          List<MangaPage>,
-          FutureOr<List<MangaPage>>
+          AsyncValue<List<HomeRecentEntry>>,
+          List<HomeRecentEntry>,
+          FutureOr<List<HomeRecentEntry>>
         >
-    with $FutureModifier<List<MangaPage>>, $FutureProvider<List<MangaPage>> {
-  /// Newest pages for Home **Capturas recentes** (at most [RecentPages.limit]).
+    with
+        $FutureModifier<List<HomeRecentEntry>>,
+        $FutureProvider<List<HomeRecentEntry>> {
+  /// Newest pages for Home **Capturas recentes** / **Páginas recentes**.
   ///
   /// Refetches when the shell returns to `/home` (Home stays mounted as a
   /// branch, so a one-shot FutureProvider would otherwise stay stale after
@@ -158,14 +110,91 @@ final class HomeRecentPagesProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<MangaPage>> $createElement(
+  $FutureProviderElement<List<HomeRecentEntry>> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<List<MangaPage>> create(Ref ref) {
+  FutureOr<List<HomeRecentEntry>> create(Ref ref) {
     return homeRecentPages(ref);
   }
 }
 
-String _$homeRecentPagesHash() => r'228a2c9462e57b9b4c2cd8a5b971ad7cd876ff10';
+String _$homeRecentPagesHash() => r'a3346a988795f8d414e4e0e39876464375abca71';
+
+@ProviderFor(homePageCount)
+final homePageCountProvider = HomePageCountProvider._();
+
+final class HomePageCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  HomePageCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homePageCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homePageCountHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return homePageCount(ref);
+  }
+}
+
+String _$homePageCountHash() => r'b76700baa822063d7bdf8605c6483d9f58de402c';
+
+/// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+
+@ProviderFor(homeWeekRhythm)
+final homeWeekRhythmProvider = HomeWeekRhythmProvider._();
+
+/// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+
+final class HomeWeekRhythmProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<HomeWeekRhythm?>,
+          HomeWeekRhythm?,
+          FutureOr<HomeWeekRhythm?>
+        >
+    with $FutureModifier<HomeWeekRhythm?>, $FutureProvider<HomeWeekRhythm?> {
+  /// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+  HomeWeekRhythmProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeWeekRhythmProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeWeekRhythmHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<HomeWeekRhythm?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<HomeWeekRhythm?> create(Ref ref) {
+    return homeWeekRhythm(ref);
+  }
+}
+
+String _$homeWeekRhythmHash() => r'f37a0640a39ed06d29faffd3ad80af4b14d43882';

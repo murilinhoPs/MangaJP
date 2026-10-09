@@ -37,4 +37,9 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
           ..limit(limit))
         .get();
   }
+
+  Future<int> countPages() async {
+    final rows = await select(capturedPages).get();
+    return rows.length;
+  }
 }

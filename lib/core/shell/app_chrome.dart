@@ -56,7 +56,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
   }
 
   Map<ShortcutActivator, Intent> get _shortcuts {
-    return {
+    final map = <ShortcutActivator, Intent>{
       const SingleActivator(LogicalKeyboardKey.keyR): const ShellShortcutIntent(
         'r',
       ),
@@ -69,6 +69,15 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       const SingleActivator(LogicalKeyboardKey.escape):
           const _ShellEscapeIntent(),
     };
+    if (_path == '/home') {
+      map[const SingleActivator(LogicalKeyboardKey.digit1)] =
+          const ShellShortcutIntent('home-1');
+      map[const SingleActivator(LogicalKeyboardKey.digit2)] =
+          const ShellShortcutIntent('home-2');
+      map[const SingleActivator(LogicalKeyboardKey.digit3)] =
+          const ShellShortcutIntent('home-3');
+    }
+    return map;
   }
 
   Map<Type, Action<Intent>> _actions(BuildContext context) {
@@ -98,7 +107,21 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         importFromGallery(context, ref);
       case 'slash':
         _focusNotebookSearch(context);
+      case 'home-1':
+        _openRecentPage(context, 0);
+      case 'home-2':
+        _openRecentPage(context, 1);
+      case 'home-3':
+        _openRecentPage(context, 2);
     }
+  }
+
+  void _openRecentPage(BuildContext context, int index) {
+    final pages = ref.read(homeRecentPagesProvider).asData?.value;
+    if (pages == null || index < 0 || index >= pages.length) {
+      return;
+    }
+    PageDetailRoute(id: pages[index].id).go(context);
   }
 
   Future<void> _openPalette(BuildContext context) async {
@@ -160,7 +183,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       ];
     }
     // Task screens bind their own bar actions. Other destinations (Caderno,
-    // Deck, Mais, Páginas) keep R as a shortcut but do not duplicate Home's bar.
+    // Deck, Ajustes, Páginas) keep R as a shortcut but do not duplicate Home's bar.
     return _registry.task?.actions ?? const <ShellAction>[];
   }
 

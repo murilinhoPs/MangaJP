@@ -743,6 +743,10 @@ void main() {
       final counts = await env.review.homeCounts();
       expect(counts.due, 3);
       expect(counts.newToday, 0);
+      expect(counts.novos, 2);
+      expect(counts.revisoes, 3);
+      expect(counts.drill, 0);
+      expect(counts.waiting, 5);
     },
   );
 
