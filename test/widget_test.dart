@@ -10,16 +10,15 @@ void main() {
     addTearDown(db.close);
 
     await tester.pumpWidget(
-      MangaJpApp(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-        ],
-      ),
+      MangaJpApp(overrides: [appDatabaseProvider.overrideWith((ref) => db)]),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('MangaJP Study'), findsOneWidget);
-    expect(find.textContaining('app_meta.hello = MangaJP M0.1'), findsOneWidget);
-    expect(find.text('Home'), findsWidgets);
+    expect(
+      find.textContaining('app_meta.hello = MangaJP M0.1'),
+      findsOneWidget,
+    );
+    expect(find.text('Início'), findsWidgets);
   });
 }

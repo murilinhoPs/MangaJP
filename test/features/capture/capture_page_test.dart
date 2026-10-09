@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
+import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
@@ -119,36 +120,37 @@ void main() {
     expect(find.text('Escolher da galeria'), findsNothing);
   });
 
-  testWidgets('Home Galeria pick opens /capture crop; confirm goes to /pages/:id', (
-    tester,
-  ) async {
-    final db = AppDatabase(NativeDatabase.memory());
-    addTearDown(db.close);
+  testWidgets(
+    'Home Galeria pick opens /capture crop; confirm goes to /pages/:id',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
 
-    await tester.pumpWidget(
-      MangaJpApp(
-        overrides: _harness(
-          db: db,
-          source: FakeImageSourceService(
-            galleryImage: IncomingImage(bytes: png),
+      await tester.pumpWidget(
+        MangaJpApp(
+          overrides: _harness(
+            db: db,
+            source: FakeImageSourceService(
+              galleryImage: IncomingImage(bytes: png),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(HomeKeys.gallery));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(HomeKeys.gallery));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(CapturePage), findsOneWidget);
-    expect(find.text('Caderno'), findsNothing);
-    expect(find.byKey(CaptureKeys.pickGallery), findsNothing);
-    expect(find.text('Confirmar crop'), findsOneWidget);
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.text('Caderno'), findsNothing);
+      expect(find.byKey(CaptureKeys.pickGallery), findsNothing);
+      expect(find.text('Confirmar crop'), findsOneWidget);
 
-    await tester.tap(find.byKey(CaptureKeys.confirm));
-    await tester.pumpAndSettle();
-    expect(find.byType(PageDetailPage), findsOneWidget);
-  });
+      await tester.tap(find.byKey(CaptureKeys.confirm));
+      await tester.pumpAndSettle();
+      expect(find.byType(PageDetailPage), findsOneWidget);
+    },
+  );
 
   testWidgets('Home Galeria cancel stays on /home', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
@@ -156,7 +158,9 @@ void main() {
     final source = FakeImageSourceService();
 
     await tester.pumpWidget(
-      MangaJpApp(overrides: _harness(db: db, source: source)),
+      MangaJpApp(
+        overrides: _harness(db: db, source: source),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -253,7 +257,7 @@ extension on CapturePage {
   Widget wrap({List<Override> overrides = const []}) {
     return ProviderScope(
       overrides: overrides,
-      child: MaterialApp(home: this),
+      child: MaterialApp(theme: AppTheme.dark, home: this),
     );
   }
 }

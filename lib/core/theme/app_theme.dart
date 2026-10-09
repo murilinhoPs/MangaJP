@@ -8,6 +8,7 @@ import 'app_targets.dart';
 import 'app_type_scale.dart';
 import 'manga_jp_tokens.dart';
 
+export 'app_breakpoints.dart';
 export 'app_colors.dart';
 export 'app_fonts.dart';
 export 'app_icons.dart';
