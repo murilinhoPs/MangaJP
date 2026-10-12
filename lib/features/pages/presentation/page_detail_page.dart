@@ -216,8 +216,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     });
     try {
       final lookup = await ref.read(dictionaryLookupProvider.future);
-      final states =
-          ref.read(listedWordStatesProvider).asData?.value ?? WordStateIndex.empty;
+      final states = await ref.read(listedWordStatesProvider.future);
       if (!mounted) {
         return;
       }

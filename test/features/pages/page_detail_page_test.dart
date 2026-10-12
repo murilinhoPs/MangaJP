@@ -10,6 +10,7 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
@@ -642,6 +643,118 @@ void main() {
     expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
     expect(find.text(PageLabels.toquePalavra), findsOneWidget);
   });
+
+  testWidgets(
+    'desktop command bar is Voltar · meta · Editar · +',
+    (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const pageId = 'page-desktop-meta';
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: pageId,
+        ocrText: '食べた',
+      );
+
+      expect(find.byKey(ShellKeys.taskDock), findsNothing);
+      expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
+      expect(find.byKey(ShellKeys.command('back')), findsOneWidget);
+      expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+      expect(find.byKey(ShellKeys.command('edit')), findsOneWidget);
+      expect(find.byKey(ShellKeys.command('add')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(ShellKeys.dockMeta),
+          matching: find.text(pageId),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(ShellKeys.dockMeta),
+          matching: find.text('1 recortes'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getTopLeft(find.byKey(ShellKeys.command('back'))).dx,
+        lessThan(tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx),
+      );
+      expect(
+        tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx,
+        lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx),
+      );
+      expect(
+        tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx,
+        lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('add'))).dx),
+      );
+    },
+  );
+
+  testWidgets(
+    'desktop drawer marks Aprendendo active with coral ring and 14% ink',
+    (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-drawer-learn',
+        ocrText: '食べた',
+        seed: (db, cropId) async {
+          final words = WordsRepository(db);
+          final cards = FlashcardsRepository(db);
+          await cards.learn(
+            await words.saveFromLookup(
+              cropId: cropId,
+              seq: 1358280,
+              lemma: '食べる',
+              reading: 'たべる',
+            ),
+          );
+        },
+      );
+
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(LookupSheetKeys.drawer), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.modal), findsNothing);
+      final learn = tester.widget<LookupActionButton>(
+        find.byKey(LookupSheetKeys.learn),
+      );
+      expect(learn.active, isTrue);
+      expect(
+        tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.known)).active,
+        isFalse,
+      );
+      expect(
+        tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).active,
+        isFalse,
+      );
+
+      final material = tester.widget<Material>(
+        find.descendant(
+          of: find.byKey(LookupSheetKeys.learn),
+          matching: find.byType(Material),
+        ),
+      );
+      expect(
+        material.color,
+        Color.alphaBlend(AppColors.overlayEstadoAtivo, AppColors.surface),
+      );
+      final shape = material.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, AppColors.coral);
+      expect(shape.side.width, 1.5);
+    },
+  );
 }
 
 Future<AppDatabase> _openPage(

@@ -554,13 +554,18 @@ class LookupActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final fill = active ? activeFill : tokens.surfaceRaised;
+    // Overlay fills are translucent (14%). Blend onto `surface` so the ink
+    // and coral ring stay visible on the desktop drawer (`bg`), not only on
+    // the mobile sheet (`surface`).
+    final fill = active
+        ? Color.alphaBlend(activeFill, tokens.surface)
+        : tokens.surfaceRaised;
     final border = active ? tokens.coral : tokens.border;
     return Material(
       color: fill,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
-        side: BorderSide(color: border),
+        side: BorderSide(color: border, width: active ? 1.5 : 1),
       ),
       child: InkWell(
         onTap: enabled ? onPressed : null,

@@ -41,7 +41,7 @@ class TaskDock extends StatelessWidget {
               if (leading.isNotEmpty) const SizedBox(width: 8),
               if (_hasMeta)
                 Expanded(
-                  child: _Meta(title: meta, hint: metaHint),
+                  child: TaskMeta(title: meta, hint: metaHint),
                 )
               else
                 const Spacer(),
@@ -157,8 +157,9 @@ class DockTextButton extends StatelessWidget {
   }
 }
 
-class _Meta extends StatelessWidget {
-  const _Meta({this.title, this.hint});
+/// Page id / crop count pill shared by [TaskDock] and the desktop command bar.
+class TaskMeta extends StatelessWidget {
+  const TaskMeta({super.key, this.title, this.hint});
 
   final String? title;
   final String? hint;
