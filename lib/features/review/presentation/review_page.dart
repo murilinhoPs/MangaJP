@@ -497,16 +497,7 @@ class _ReviewStatus extends StatelessWidget {
                     ),
                     side: BorderSide(color: tokens.coral),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(ReviewLabels.revisarDeNovo),
-                      if (wide) ...[
-                        const SizedBox(width: 8),
-                        const KbdChip(label: 'Enter', onPrimary: true),
-                      ],
-                    ],
-                  ),
+                  child: const Text(ReviewLabels.revisarDeNovo),
                 ),
               ],
             ],

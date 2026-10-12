@@ -382,6 +382,7 @@ void main() {
 
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyR), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.slash), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.escape), isTrue);
     expect(
       GoRouter.of(tester.element(find.byType(NotebookPage))).state.uri.path,
       '/notebook',

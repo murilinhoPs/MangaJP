@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
+import 'notebook_page.dart';
 
 /// Keys for `/notebook/word/:id` (lemma / gloss / first crop / study actions).
 abstract final class NotebookWordKeys {
@@ -48,18 +50,14 @@ class NotebookWordPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(notebookWordProvider(wordId));
+    final wide = ShellLayout.isWide(context);
 
     return view.when(
       data: (item) {
         if (item == null) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('Nenhuma palavra.', textAlign: TextAlign.center),
-            ),
-          );
+          return _NotebookMissing(wide: wide);
         }
-        return _NotebookWordBody(wordId: wordId, view: item);
+        return _NotebookWordBody(wordId: wordId, view: item, wide: wide);
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
@@ -76,11 +74,66 @@ class NotebookWordPage extends ConsumerWidget {
   }
 }
 
+class _NotebookMissing extends StatelessWidget {
+  const _NotebookMissing({required this.wide});
+
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IgnorePointer(
+                child: Text(
+                  NotebookLabels.watermark,
+                  style:
+                      (wide
+                              ? AppTypeScale.reviewDesktopJp
+                              : AppTypeScale.reviewMobileJp)
+                          .copyWith(
+                            color: tokens.text4.withValues(alpha: 0.35),
+                            height: 1,
+                          ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                NotebookLabels.empty,
+                key: NotebookKeys.empty,
+                textAlign: TextAlign.center,
+                style: AppTypeScale.tituloTela.copyWith(color: tokens.text),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                NotebookLabels.emptyHint,
+                textAlign: TextAlign.center,
+                style: AppTypeScale.ui14.copyWith(color: tokens.text3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NotebookWordBody extends ConsumerWidget {
-  const _NotebookWordBody({required this.wordId, required this.view});
+  const _NotebookWordBody({
+    required this.wordId,
+    required this.view,
+    required this.wide,
+  });
 
   final String wordId;
   final NotebookWordView view;
+  final bool wide;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -89,120 +142,151 @@ class _NotebookWordBody extends ConsumerWidget {
     final sentence = detail.sentence;
     final pageId = detail.pageId;
     const detalheSize = Size.fromHeight(AppTargets.detalhe);
+    final lemmaStyle = wide
+        ? AppTypeScale.detalheDesktopJp
+        : AppTypeScale.detalheMobileJp;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            detail.lemma,
-            key: NotebookWordKeys.lemma,
-            style: AppTypeScale.detalheMobileJp,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            detail.reading,
-            key: NotebookWordKeys.reading,
-            style: AppTypeScale.ui14.copyWith(
-              fontFamily: AppFonts.jp,
-              color: tokens.text2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            notebookStateLabel(detail.state),
-            key: NotebookWordKeys.state,
-            style: AppTypeScale.ui14.copyWith(
-              color: tokens.wordState(detail.state.name),
-            ),
-          ),
-          if (view.glossText.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              view.glossText,
-              key: NotebookWordKeys.gloss,
-              style: AppTypeScale.definicao,
-            ),
-          ],
-          if (detail.userNote != null && detail.userNote!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              detail.userNote!,
-              key: NotebookWordKeys.note,
-              style: AppTypeScale.definicao,
-            ),
-          ],
-          if (sentence != null && sentence.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Text(
-              sentence,
-              key: NotebookWordKeys.sentence,
-              style: AppTypeScale.balaoPaginaMobileJp,
-            ),
-          ],
-          if (pageId != null && pageId.isNotEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: NotebookWordKeys.pageLink,
-                onPressed: () => PageDetailRoute(id: pageId).go(context),
-                child: const Text('Ver página'),
+      padding: wide
+          ? const EdgeInsets.fromLTRB(48, 24, 48, 48)
+          : const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                detail.lemma,
+                key: NotebookWordKeys.lemma,
+                style: lemmaStyle,
               ),
-            ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: NotebookWordKeys.learn,
-            style: FilledButton.styleFrom(
-              minimumSize: detalheSize,
-              backgroundColor: tokens.overlayEstadoAtivo,
-              foregroundColor: tokens.violetText,
-              side: BorderSide(color: tokens.coral),
-            ),
-            onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
-            child: const Text('Aprender'),
+              const SizedBox(height: 4),
+              Text(
+                detail.reading,
+                key: NotebookWordKeys.reading,
+                style: AppTypeScale.ui14.copyWith(
+                  fontFamily: AppFonts.jp,
+                  color: tokens.text2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                NotebookLabels.state(detail.state),
+                key: NotebookWordKeys.state,
+                style: AppTypeScale.ui14.copyWith(
+                  color: tokens.wordState(detail.state.name),
+                ),
+              ),
+              if (view.glossText.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  view.glossText,
+                  key: NotebookWordKeys.gloss,
+                  style: AppTypeScale.definicao,
+                ),
+              ],
+              if (detail.userNote != null && detail.userNote!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  detail.userNote!,
+                  key: NotebookWordKeys.note,
+                  style: AppTypeScale.definicao,
+                ),
+              ],
+              if (sentence != null && sentence.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text(
+                  NotebookLabels.frase.toUpperCase(),
+                  style: AppTypeScale.mono10.copyWith(
+                    color: tokens.text3,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Material(
+                  color: tokens.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.linha),
+                    side: BorderSide(color: tokens.border),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    child: Text(
+                      sentence,
+                      key: NotebookWordKeys.sentence,
+                      style: wide
+                          ? AppTypeScale.fraseLeitorDesktopJp
+                          : AppTypeScale.balaoPaginaMobileJp,
+                    ),
+                  ),
+                ),
+              ],
+              if (pageId != null && pageId.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    key: NotebookWordKeys.pageLink,
+                    style: TextButton.styleFrom(foregroundColor: tokens.text2),
+                    onPressed: () => PageDetailRoute(id: pageId).go(context),
+                    child: const Text(NotebookLabels.verPagina),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              FilledButton(
+                key: NotebookWordKeys.learn,
+                style: FilledButton.styleFrom(
+                  minimumSize: detalheSize,
+                  backgroundColor: tokens.overlayEstadoAtivo,
+                  foregroundColor: tokens.violetText,
+                  surfaceTintColor: Colors.transparent,
+                  side: BorderSide(color: tokens.coral),
+                ),
+                onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
+                child: const Text(NotebookLabels.aprender),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                key: NotebookWordKeys.known,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: detalheSize,
+                  foregroundColor: tokens.mint,
+                  backgroundColor: tokens.surfaceRaised,
+                  side: BorderSide(color: tokens.border),
+                ),
+                onPressed: () =>
+                    _runStudy(ref, (repo) => repo.markKnown(wordId)),
+                child: const Text(NotebookLabels.conhecido),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                key: NotebookWordKeys.ignore,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: detalheSize,
+                  foregroundColor: tokens.text3,
+                  backgroundColor: tokens.surfaceRaised,
+                  side: BorderSide(color: tokens.border),
+                ),
+                onPressed: () =>
+                    _runStudy(ref, (repo) => repo.markIgnored(wordId)),
+                child: const Text(NotebookLabels.ignorar),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                key: NotebookWordKeys.deleteCard,
+                onPressed: () => _confirmDeleteCard(context, ref),
+                child: const Text(NotebookLabels.removerCard),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                key: NotebookWordKeys.removeFromNotebook,
+                onPressed: () => _confirmRemoveFromNotebook(context, ref),
+                child: const Text(NotebookLabels.removerDoCaderno),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            key: NotebookWordKeys.known,
-            style: OutlinedButton.styleFrom(
-              minimumSize: detalheSize,
-              foregroundColor: tokens.mint,
-              backgroundColor: tokens.surfaceRaised,
-            ),
-            onPressed: () => _runStudy(ref, (repo) => repo.markKnown(wordId)),
-            child: const Text('Conhecido'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            key: NotebookWordKeys.ignore,
-            style: OutlinedButton.styleFrom(
-              minimumSize: detalheSize,
-              foregroundColor: tokens.text3,
-              backgroundColor: tokens.surfaceRaised,
-            ),
-            onPressed: () => _runStudy(ref, (repo) => repo.markIgnored(wordId)),
-            child: const Text('Ignorar'),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            key: NotebookWordKeys.deleteCard,
-            onPressed: () => _confirmDeleteCard(context, ref),
-            child: Text(
-              'Remover card',
-              style: TextStyle(color: tokens.coral),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            key: NotebookWordKeys.removeFromNotebook,
-            onPressed: () => _confirmRemoveFromNotebook(context, ref),
-            child: Text(
-              'Remover do Caderno',
-              style: TextStyle(color: tokens.coral),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
