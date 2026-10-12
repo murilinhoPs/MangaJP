@@ -90,6 +90,13 @@ class PagesRepository {
     return [for (final row in rows) _toCrop(row)];
   }
 
+  Future<void> updateCropOcr({
+    required String cropId,
+    required String ocrText,
+  }) {
+    return _db.pagesDao.updateCropOcr(cropId: cropId, ocrText: ocrText);
+  }
+
   Future<MangaPage?> pageById(String id) async {
     final row = await (_db.select(
       _db.capturedPages,
