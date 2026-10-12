@@ -3,13 +3,17 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/kbd_chip.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
+import 'package:manga_jp/features/review/domain/review_labels.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
@@ -43,6 +47,28 @@ void main() {
     }
   });
 
+  test('DS rating intervals match tokens.json srs.*.interval', () {
+    expect(ReviewLabels.interval(ReviewRating.again), 'agora');
+    expect(ReviewLabels.interval(ReviewRating.hard), '10 min');
+    expect(ReviewLabels.interval(ReviewRating.good), '1 dia');
+    expect(ReviewLabels.interval(ReviewRating.easy), '4 dias');
+  });
+
+  test('done copy is the motif N=0 / N=1 / N>1 lines', () {
+    expect(ReviewLabels.done, 'Sessão concluída');
+    expect(ReviewLabels.doneHint, 'Nada mais na fila agora.');
+    expect(ReviewLabels.revisarDeNovo, 'Revisar de novo');
+    expect(ReviewLabels.doneRequeuedHint(0), ReviewLabels.doneHint);
+    expect(
+      ReviewLabels.doneRequeuedHint(1),
+      '1 card volta agora. Você errou ou achou difícil.',
+    );
+    expect(
+      ReviewLabels.doneRequeuedHint(2),
+      '2 cards voltam agora. Você errou ou achou difíceis.',
+    );
+  });
+
   test('gloss is loaded from JMdict by seq, not stored or hardcoded', () {
     expect(JmdictService.assetPath, 'assets/dict/jmdict.sqlite');
     for (final path in [
@@ -68,6 +94,7 @@ void main() {
     expect(find.byType(ReviewPage), findsOneWidget);
     expect(tester.takeException(), isNull);
     expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
     expect(find.text('Nenhum card para revisar.'), findsOneWidget);
     expect(find.byKey(ReviewKeys.lemma), findsNothing);
     expect(find.byKey(ReviewKeys.reveal), findsNothing);
@@ -97,12 +124,13 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
     expect(find.text('食べる'), findsNothing);
     _expectNoOutOfScopeControls(tester);
   });
 
   testWidgets(
-    'front is the lemma; Revelar shows reading and fixture JMdict gloss',
+    'front is the lemma; Mostrar shows reading and fixture JMdict gloss',
     (tester) async {
       await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
 
@@ -142,6 +170,14 @@ void main() {
       expect(find.byKey(ReviewKeys.rating(ReviewRating.hard)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.easy)), findsOneWidget);
+      expect(find.text(ReviewLabels.errei), findsOneWidget);
+      expect(find.text(ReviewLabels.dificil), findsOneWidget);
+      expect(find.text(ReviewLabels.bom), findsOneWidget);
+      expect(find.text(ReviewLabels.facil), findsOneWidget);
+      expect(find.text('Again'), findsNothing);
+      expect(find.text('Hard'), findsNothing);
+      expect(find.text('Good'), findsNothing);
+      expect(find.text('Easy'), findsNothing);
       BorderSide? ratingSide(ReviewRating rating) => tester
           .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
           .style
@@ -152,8 +188,8 @@ void main() {
           .style
           ?.backgroundColor
           ?.resolve(const <WidgetState>{});
-      expect(ratingSide(ReviewRating.again)?.color, AppColors.coral);
-      expect(ratingFill(ReviewRating.again), AppColors.srsErreiFill);
+      expect(ratingSide(ReviewRating.again)?.color, AppColors.border);
+      expect(ratingFill(ReviewRating.again), AppColors.surface);
       expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
       expect(ratingFill(ReviewRating.hard), AppColors.surface);
       expect(ratingSide(ReviewRating.good)?.color, AppColors.mint);
@@ -163,9 +199,27 @@ void main() {
       expect(find.byKey(ReviewKeys.note), findsNothing);
       expect(
         tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+            .data,
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+            .data,
+        ReviewLabels.interval(ReviewRating.hard),
+      );
+      expect(
+        tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
             .data,
-        '1 dia',
+        ReviewLabels.interval(ReviewRating.good),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
+            .data,
+        ReviewLabels.interval(ReviewRating.easy),
       );
       _expectNoOutOfScopeControls(tester);
     },
@@ -204,7 +258,8 @@ void main() {
     await tester.tap(find.byKey(ReviewKeys.reveal));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'ぴよ');
+    // Kana identical to the lemma is not repeated; the note is the back.
+    expect(find.byKey(ReviewKeys.reading), findsNothing);
     expect(find.byKey(ReviewKeys.gloss), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(ReviewKeys.note)).data,
@@ -247,7 +302,7 @@ void main() {
   );
 
   testWidgets(
-    'interval 6 EF 2.5 shows Again hoje and Easy 16 dias from sm2-jr@1',
+    'rating row uses DS interval captions, not live sm2-jr day counts',
     (tester) async {
       await _openReview(
         tester,
@@ -276,79 +331,97 @@ void main() {
         tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
             .data,
-        'hoje',
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+            .data,
+        ReviewLabels.interval(ReviewRating.hard),
       );
       expect(
         tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
             .data,
-        '16 dias',
+        ReviewLabels.interval(ReviewRating.easy),
       );
-    },
-  );
-
-  testWidgets(
-    'drill answer (second same study-day) shows no interval preview',
-    (tester) async {
-      await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
-
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(ReviewKeys.interval(ReviewRating.good)),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.again)));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsOneWidget);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.hard)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.easy)), findsNothing);
       expect(find.text('hoje'), findsNothing);
-      expect(find.text('1 dia'), findsNothing);
+      expect(find.text('16 dias'), findsNothing);
     },
   );
 
-  testWidgets('a card already answered this study-day opens with no preview', (
-    tester,
-  ) async {
-    await _openReview(
-      tester,
-      jmdictPath: jmdictPath,
-      cards: [_taberuCard],
-      customizeDb: (db) async {
-        await db.cardsDao.insertLog(
-          UserReviewLogsCompanion.insert(
-            id: 'log-eat',
-            cardId: 'card-eat',
-            ratedAt: _now,
-            rating: 1,
-            quality: 0,
-            engineId: kSm2JrEngineId,
-            isDrill: 0,
-          ),
-        );
-      },
-    );
+  testWidgets('drill answer still shows DS interval captions', (tester) async {
+    await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
+
+    await tester.tap(find.byKey(ReviewKeys.reveal));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsOneWidget);
+
+    await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.again)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
 
     await tester.tap(find.byKey(ReviewKeys.reveal));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
-    expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-    expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-    expect(find.text('1 dia'), findsNothing);
+    expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+          .data,
+      ReviewLabels.interval(ReviewRating.again),
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+          .data,
+      ReviewLabels.interval(ReviewRating.good),
+    );
+    expect(find.text('hoje'), findsNothing);
   });
+
+  testWidgets(
+    'a card already answered this study-day still shows DS intervals',
+    (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+        customizeDb: (db) async {
+          await db.cardsDao.insertLog(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: 'card-eat',
+              ratedAt: _now,
+              rating: 1,
+              quality: 0,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+        },
+      );
+
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+            .data,
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+            .data,
+        ReviewLabels.interval(ReviewRating.good),
+      );
+    },
+  );
 
   testWidgets('Good writes rating 3 / quality 4, updates SRS, keeps learning', (
     tester,
@@ -373,7 +446,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsOneWidget);
+    expect(find.byKey(ReviewKeys.empty), findsNothing);
 
     final log = (await env.db.select(env.db.userReviewLogs).get()).single;
     expect(log.cardId, 'card-eat');
@@ -467,7 +541,8 @@ void main() {
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
 
       await _revealAndRate(tester, ReviewRating.easy);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
 
       final logs = await env.db.select(env.db.userReviewLogs).get();
       expect(
@@ -540,7 +615,8 @@ void main() {
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '学ぶ');
       expect(find.text('新15'), findsNothing);
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
       expect(find.text('新15'), findsNothing);
       _expectNoOutOfScopeControls(tester);
     },
@@ -580,10 +656,460 @@ void main() {
       expect(find.text('新15'), findsNothing);
 
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      // Again left the card due now. Snapshot is empty → done + requeue,
+      // extra neu stay capped out. Reload continues with 新14.
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.text(ReviewLabels.doneRequeuedHint(1)), findsOneWidget);
+      expect(find.text('新15'), findsNothing);
+      await tester.tap(find.byKey(ReviewKeys.reload));
+      await tester.pumpAndSettle();
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新14');
       expect(find.text('新15'), findsNothing);
     },
   );
+
+  for (final size in [_phone, _desktop]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= 900;
+
+    testWidgets('empty state uses DS card copy at $label', (tester) async {
+      await _openReview(tester, jmdictPath: jmdictPath, size: size);
+
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsNothing);
+      expect(find.text(ReviewLabels.empty), findsOneWidget);
+      expect(find.text(ReviewLabels.emptyHint), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(ReviewPage), matching: find.text('復習')),
+        findsOneWidget,
+      );
+      if (wide) {
+        expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
+        expect(find.byKey(ShellKeys.taskDock), findsNothing);
+      } else {
+        expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+      }
+    });
+
+    testWidgets(
+      'session card uses sheet-review radius and JP scale at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_taberuCard],
+          size: size,
+        );
+
+        expect(find.byKey(ReviewKeys.card), findsOneWidget);
+        final material = tester.widget<Material>(find.byKey(ReviewKeys.card));
+        final shape = material.shape! as RoundedRectangleBorder;
+        expect(
+          shape.borderRadius,
+          BorderRadius.circular(AppRadius.sheetReview),
+        );
+        expect(shape.side.color, AppColors.border);
+        expect(material.color, AppColors.surface);
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.lemma)).style?.fontSize,
+          wide ? 120 : 72,
+        );
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(1),
+        );
+        expect(find.text('Revelar'), findsNothing);
+        expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+        expect(find.byType(FilledButton), findsOneWidget);
+        if (wide) {
+          expect(find.text(ReviewLabels.mostrar), findsNWidgets(2));
+          expect(find.byKey(ShellKeys.command('mostrar')), findsOneWidget);
+          final bar = tester.widget<Material>(
+            find
+                .ancestor(
+                  of: find.byKey(ShellKeys.command('mostrar')),
+                  matching: find.byType(Material),
+                )
+                .first,
+          );
+          expect(bar.color, isNot(AppColors.overlayPrimaria));
+          expect(bar.color, isNot(AppColors.coral));
+          final shape = bar.shape! as RoundedRectangleBorder;
+          expect(shape.side.color, AppColors.border);
+          expect(shape.side.color, isNot(AppColors.coral));
+          expect(find.text('Espaço'), findsOneWidget);
+          final chip = tester.widget<Container>(
+            find
+                .ancestor(
+                  of: find.text('Espaço'),
+                  matching: find.byType(Container),
+                )
+                .first,
+          );
+          final chipBorder = (chip.decoration! as BoxDecoration).border!;
+          expect(chipBorder.top.color, isNot(AppColors.coral));
+        } else {
+          expect(find.text(ReviewLabels.mostrar), findsOneWidget);
+          expect(find.byKey(ShellKeys.command('mostrar')), findsNothing);
+          expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+          expect(
+            find.descendant(
+              of: find.byKey(ShellKeys.taskDock),
+              matching: find.text(ReviewLabels.mostrar),
+            ),
+            findsNothing,
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'revealed back is kana+meaning, DS intervals, Bom-only fill at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_taberuCard],
+          size: size,
+        );
+        await tester.tap(find.byKey(ReviewKeys.reveal));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.lemma)).style?.fontSize,
+          wide ? 120 : 72,
+        );
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'たべる');
+        expect(find.text('食べる'), findsWidgets);
+        final gloss = tester.widget<Text>(find.byKey(ReviewKeys.gloss)).data!;
+        expect(gloss, contains('to eat'));
+
+        expect(find.text(ReviewLabels.errei), findsOneWidget);
+        expect(find.text(ReviewLabels.dificil), findsOneWidget);
+        expect(find.text(ReviewLabels.bom), findsOneWidget);
+        expect(find.text(ReviewLabels.facil), findsOneWidget);
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+              .data,
+          ReviewLabels.interval(ReviewRating.again),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+              .data,
+          ReviewLabels.interval(ReviewRating.hard),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+              .data,
+          ReviewLabels.interval(ReviewRating.good),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
+              .data,
+          ReviewLabels.interval(ReviewRating.easy),
+        );
+        expect(find.text('hoje'), findsNothing);
+
+        Color? ratingFill(ReviewRating rating) => tester
+            .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+            .style
+            ?.backgroundColor
+            ?.resolve(const <WidgetState>{});
+        BorderSide? ratingSide(ReviewRating rating) => tester
+            .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+            .style
+            ?.side
+            ?.resolve(const <WidgetState>{});
+        expect(ratingFill(ReviewRating.again), AppColors.surface);
+        expect(ratingSide(ReviewRating.again)?.color, AppColors.border);
+        expect(ratingFill(ReviewRating.hard), AppColors.surface);
+        expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
+        expect(ratingFill(ReviewRating.good), AppColors.srsBomFill);
+        expect(ratingSide(ReviewRating.good)?.color, AppColors.mint);
+        expect(ratingFill(ReviewRating.easy), AppColors.surface);
+        expect(ratingSide(ReviewRating.easy)?.color, AppColors.border);
+        expect(ratingFill(ReviewRating.again), isNot(AppColors.srsBomFill));
+        expect(ratingFill(ReviewRating.again), isNot(AppColors.srsErreiFill));
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+              .style
+              ?.color,
+          AppColors.coralText,
+        );
+
+        final ratingHeight = tester
+            .getSize(find.byKey(ReviewKeys.rating(ReviewRating.good)))
+            .height;
+        if (wide) {
+          expect(ratingHeight, greaterThanOrEqualTo(AppTargets.min));
+          expect(find.byKey(ShellKeys.taskDock), findsNothing);
+          // Rail badge uses waiting (= remaining), so "1" is badge + keycap.
+          expect(
+            tester
+                .widget<Text>(
+                  find.descendant(
+                    of: find.byKey(ShellKeys.reviewBadge),
+                    matching: find.byType(Text),
+                  ),
+                )
+                .data,
+            '1',
+          );
+          expect(find.text('1'), findsNWidgets(2));
+          expect(find.text('2'), findsOneWidget);
+          expect(find.text('3'), findsOneWidget);
+          expect(find.text('4'), findsOneWidget);
+        } else {
+          expect(ratingHeight, AppTargets.respostaReviewMobile);
+          final goodBox = tester.getRect(
+            find.byKey(ReviewKeys.rating(ReviewRating.good)),
+          );
+          final dockBox = tester.getRect(find.byKey(ShellKeys.taskDock));
+          expect(goodBox.bottom, lessThanOrEqualTo(dockBox.top + 0.5));
+          expect(find.text('1'), findsNothing);
+          expect(find.text('2'), findsNothing);
+          expect(find.text('3'), findsNothing);
+          expect(find.text('4'), findsNothing);
+        }
+      },
+    );
+
+    testWidgets(
+      'Good on the last snapshot card still due in DB keeps the session at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_hayaiCard, _taberuCard],
+          size: size,
+          customizeDb: (db) async {
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-early',
+                cardId: 'card-early',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+          },
+        );
+
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(2),
+        );
+        await _revealAndRate(tester, ReviewRating.good);
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
+        await _revealAndRate(tester, ReviewRating.good);
+
+        _expectDone(tester, n: 1, wide: wide);
+        await _continueDone(tester, wide: wide);
+        await tester.pumpAndSettle();
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(1),
+        );
+      },
+    );
+
+    testWidgets('Good leaves the session on the done state at $label', (
+      tester,
+    ) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+        size: size,
+      );
+      await _revealAndRate(tester, ReviewRating.good);
+
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
+      expect(find.byKey(ReviewKeys.card), findsNothing);
+      _expectDone(tester, n: 0, wide: wide);
+    });
+
+    testWidgets(
+      'done N>1 motif copy, one coral primary, Enter reloads at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_hayaiCard, _fukushuCard, _taberuCard],
+          size: size,
+          customizeDb: (db) async {
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-early',
+                cardId: 'card-early',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-review',
+                cardId: 'card-review',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+          },
+        );
+
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(3),
+        );
+        await _revealAndRate(tester, ReviewRating.good);
+        await _revealAndRate(tester, ReviewRating.good);
+        await _revealAndRate(tester, ReviewRating.good);
+
+        _expectDone(tester, n: 2, wide: wide);
+        await _continueDone(tester, wide: wide);
+        await tester.pumpAndSettle();
+        expect(find.byKey(ReviewKeys.done), findsNothing);
+        expect(find.byKey(ReviewKeys.card), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(2),
+        );
+      },
+    );
+
+    testWidgets('2 remaining uses plural at $label', (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_hayaiCard, _fukushuCard],
+        size: size,
+      );
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(2),
+      );
+    });
+  }
+
+  testWidgets('Space reveals; 1–4 rate', (tester) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+      size: _phone,
+    );
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.reading), findsOneWidget);
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.done), findsOneWidget);
+  });
+
+  testWidgets('1 Again, 2 Hard, 4 Easy match the rating keys', (tester) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_hayaiCard, _fukushuCard],
+      size: _phone,
+    );
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isTrue);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '復習');
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit4), isTrue);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+  });
+
+  testWidgets('review shortcuts pass through when a TextField is focused', (
+    tester,
+  ) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+      size: _desktop,
+    );
+
+    final probe = _insertReviewTypingProbe(tester);
+    addTearDown(probe.remove);
+    await tester.pump();
+    final editable = find.descendant(
+      of: find.byKey(_typingProbeKey),
+      matching: find.byType(EditableText),
+    );
+    tester.state<EditableTextState>(editable).requestKeyboard();
+    await tester.pump();
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit4), isFalse);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(find.byKey(ReviewKeys.reading), findsNothing);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
+  });
+}
+
+const _phone = Size(390, 844);
+const _desktop = Size(1280, 800);
+const _typingProbeKey = Key('review-typing-probe');
+
+OverlayEntry _insertReviewTypingProbe(WidgetTester tester) {
+  final overlay = Overlay.of(tester.element(find.byType(ReviewPage)));
+  final entry = OverlayEntry(
+    builder: (context) {
+      return const Align(
+        alignment: Alignment.bottomLeft,
+        child: SizedBox(
+          width: 120,
+          height: 40,
+          child: Material(
+            child: TextField(
+              key: _typingProbeKey,
+              decoration: InputDecoration.collapsed(hintText: ''),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+  overlay.insert(entry);
+  return entry;
 }
 
 const _taberuCard = (
@@ -640,9 +1166,14 @@ Future<_Env> _openReview(
   WidgetTester tester, {
   required String jmdictPath,
   List<_SeedCard> cards = const [],
+  Size size = const Size(390, 844),
   Future<void> Function(ReviewRepository review)? prepare,
   Future<void> Function(AppDatabase db)? customizeDb,
 }) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
 
@@ -727,6 +1258,146 @@ Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(ReviewKeys.rating(rating)));
   await tester.pumpAndSettle();
+}
+
+String? _railBadge(WidgetTester tester) {
+  final badge = find.byKey(ShellKeys.reviewBadge);
+  if (badge.evaluate().isEmpty) {
+    return null;
+  }
+  return tester
+      .widget<Text>(find.descendant(of: badge, matching: find.byType(Text)))
+      .data;
+}
+
+Material _commandMaterial(WidgetTester tester, String id) {
+  return tester.widget<Material>(
+    find
+        .ancestor(
+          of: find.byKey(ShellKeys.command(id)),
+          matching: find.byType(Material),
+        )
+        .first,
+  );
+}
+
+void _expectDone(WidgetTester tester, {required int n, required bool wide}) {
+  expect(find.byKey(ReviewKeys.done), findsOneWidget);
+  expect(find.text(ReviewLabels.done), findsOneWidget);
+  expect(find.text('Sessão concluída.'), findsNothing);
+  expect(find.text(ReviewLabels.doneRequeuedHint(n)), findsOneWidget);
+  expect(
+    tester.widget<Text>(find.byKey(ReviewKeys.done)).style?.color,
+    AppColors.text,
+  );
+  final hint = tester.widget<Text>(
+    n > 0 ? find.byKey(ReviewKeys.requeued) : find.text(ReviewLabels.doneHint),
+  );
+  expect(hint.style?.color, AppColors.text3);
+  expect(hint.style?.color, isNot(AppColors.coral));
+  expect(hint.style?.color, isNot(AppColors.coralText));
+  expect(hint.style?.color, isNot(AppColors.mint));
+  expect(hint.style?.color, isNot(AppColors.violet));
+  final jp = tester.widget<Text>(
+    find.descendant(of: find.byType(ReviewPage), matching: find.text('復習')),
+  );
+  expect(jp.style?.color, isNot(AppColors.coral));
+
+  if (wide) {
+    expect(_railBadge(tester), n == 0 ? isNull : '$n');
+  }
+
+  if (n == 0) {
+    expect(find.byKey(ReviewKeys.reload), findsNothing);
+    expect(find.text(ReviewLabels.revisarDeNovo), findsNothing);
+    expect(find.text('Enter'), findsNothing);
+    if (wide) {
+      expect(find.byKey(ShellKeys.command('close')), findsOneWidget);
+      expect(
+        _commandMaterial(tester, 'close').color,
+        AppColors.overlayPrimaria,
+      );
+      expect(find.byKey(ShellKeys.command('reload')), findsNothing);
+    }
+    return;
+  }
+
+  expect(find.byKey(ReviewKeys.reload), findsOneWidget);
+  final coralPrimaries = tester
+      .widgetList<FilledButton>(find.byType(FilledButton))
+      .where(
+        (btn) =>
+            btn.style?.backgroundColor?.resolve(const <WidgetState>{}) ==
+            AppColors.coral,
+      );
+  expect(coralPrimaries, hasLength(1));
+  final btn = tester.widget<FilledButton>(find.byKey(ReviewKeys.reload));
+  expect(
+    btn.style?.backgroundColor?.resolve(const <WidgetState>{}),
+    AppColors.coral,
+  );
+  expect(
+    btn.style?.foregroundColor?.resolve(const <WidgetState>{}),
+    AppColors.onCoral,
+  );
+  if (wide) {
+    expect(find.byKey(ShellKeys.command('reload')), findsOneWidget);
+    expect(find.byKey(ShellKeys.command('close')), findsOneWidget);
+    for (final id in ['reload', 'close']) {
+      final material = _commandMaterial(tester, id);
+      expect(material.color, isNot(AppColors.overlayPrimaria));
+      expect(material.color, isNot(AppColors.coral));
+      final shape = material.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, AppColors.border);
+      expect(shape.side.color, isNot(AppColors.coral));
+    }
+    expect(find.text('Enter'), findsNWidgets(2));
+    _expectKbdChip(
+      tester,
+      ancestor: find.byKey(ReviewKeys.reload),
+      color: AppColors.onCoral,
+      border: AppColors.onCoral.withValues(alpha: 0.4),
+    );
+    _expectKbdChip(
+      tester,
+      ancestor: find.byKey(ShellKeys.command('reload')),
+      color: AppColors.text2,
+      border: AppColors.borderStrong,
+    );
+  } else {
+    expect(find.text('Enter'), findsNothing);
+    expect(find.byKey(ShellKeys.command('reload')), findsNothing);
+    expect(find.text(ReviewLabels.revisarDeNovo), findsOneWidget);
+  }
+}
+
+void _expectKbdChip(
+  WidgetTester tester, {
+  required Finder ancestor,
+  required Color color,
+  required Color border,
+}) {
+  final chip = find.descendant(of: ancestor, matching: find.byType(KbdChip));
+  expect(chip, findsOneWidget);
+  final text = tester.widget<Text>(
+    find.descendant(of: chip, matching: find.byType(Text)),
+  );
+  expect(text.data, 'Enter');
+  expect(text.style?.fontFamily, AppFonts.mono);
+  expect(text.style?.color, color);
+  final container = tester.widget<Container>(
+    find.descendant(of: chip, matching: find.byType(Container)).first,
+  );
+  final deco = container.decoration! as BoxDecoration;
+  expect(deco.border!.top.color, border);
+}
+
+Future<void> _continueDone(WidgetTester tester, {required bool wide}) async {
+  if (wide) {
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.enter), isTrue);
+  } else {
+    await tester.tap(find.byKey(ReviewKeys.reload));
+  }
 }
 
 void _expectNoOutOfScopeControls(WidgetTester tester) {

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
+import 'package:manga_jp/core/copy/recortes_label.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
@@ -427,7 +428,9 @@ void main() {
     expect(find.byKey(LookupSheetKeys.gloss), findsNothing);
     expect(find.byKey(LookupSheetKeys.note), findsOneWidget);
     expect(
-      tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).enabled,
+      tester
+          .widget<LookupActionButton>(find.byKey(LookupSheetKeys.save))
+          .enabled,
       isFalse,
     );
 
@@ -439,7 +442,9 @@ void main() {
     await tester.enterText(find.byKey(LookupSheetKeys.note), '   ');
     await tester.pumpAndSettle();
     expect(
-      tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).enabled,
+      tester
+          .widget<LookupActionButton>(find.byKey(LookupSheetKeys.save))
+          .enabled,
       isFalse,
     );
 
@@ -510,7 +515,8 @@ void main() {
       },
     );
 
-    expect(_spanColor(tester, '高い'), AppColors.text);
+    expect(_spanColor(tester, '高い'), AppColors.text); // Salvo
+    expect(_spanColor(tester, 'を'), AppColors.text); // Novo
     expect(_spanColor(tester, '猫'), AppColors.mint);
     expect(_spanColor(tester, '食べた'), AppColors.violetText);
     expect(_spanColor(tester, 'ぴよ'), AppColors.text3);
@@ -521,12 +527,16 @@ void main() {
       find.byKey(PageDetailKeys.ocrText),
     );
     await tester.tapAt(
-      paragraph.localToGlobal(_glyphLocal(paragraph, start: 0, end: 1, rightHalf: false)),
+      paragraph.localToGlobal(
+        _glyphLocal(paragraph, start: 0, end: 1, rightHalf: false),
+      ),
     );
     await tester.pumpAndSettle();
     expect(_spanBackground(tester, '高い'), AppColors.overlaySelecaoToque);
     expect(
-      tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).active,
+      tester
+          .widget<LookupActionButton>(find.byKey(LookupSheetKeys.save))
+          .active,
       isTrue,
     );
   });
@@ -560,68 +570,106 @@ void main() {
     expect(find.byKey(LookupSheetKeys.phrase), findsOneWidget);
   });
 
-  testWidgets('lookup shortcuts A/K/I/S apply state and persist', (
-    tester,
-  ) async {
-    final db = await _openPage(
-      tester,
-      jmdictPath: jmdictPath,
-      pageId: 'page-shortcut-a',
-      ocrText: '食べた',
+  for (final shortcut in _lookupShortcuts) {
+    testWidgets(
+      'lookup shortcut ${shortcut.label} applies ${shortcut.state.name}',
+      (tester) async {
+        final db = await _openPage(
+          tester,
+          jmdictPath: jmdictPath,
+          pageId: 'page-shortcut-${shortcut.state.name}',
+          ocrText: '食べた',
+        );
+        await tester.tap(find.byKey(PageDetailKeys.ocrText));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(shortcut.key);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+        final states = await db.select(db.userWordStates).get();
+        expect(states, hasLength(1));
+        expect(states.single.state, shortcut.state.name);
+        expect(
+          await db.select(db.userCards).get(),
+          shortcut.createsCard ? hasLength(1) : isEmpty,
+        );
+      },
     );
-    await tester.tap(find.byKey(PageDetailKeys.ocrText));
-    await tester.pumpAndSettle();
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.pumpAndSettle();
+  }
 
-    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
-    final states = await db.select(db.userWordStates).get();
-    expect(states, hasLength(1));
-    expect(states.single.state, WordState.learning.name);
-    expect(await db.select(db.userCards).get(), hasLength(1));
-  });
+  testWidgets(
+    'lookup shortcuts do not fire while the note TextField is focused',
+    (tester) async {
+      final db = await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-shortcut-typing',
+        ocrText: 'ぴよ',
+      );
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
 
-  testWidgets('mobile lookup is a half-screen sheet; desktop is a 400px drawer', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      expect(find.byKey(LookupSheetKeys.note), findsOneWidget);
+      await tester.tap(find.byKey(LookupSheetKeys.note));
+      await tester.pump();
 
-    await _openPage(
-      tester,
-      jmdictPath: jmdictPath,
-      pageId: 'page-sheet',
-      ocrText: '食べた',
-    );
-    await tester.tap(find.byKey(PageDetailKeys.ocrText));
-    await tester.pumpAndSettle();
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyK), isFalse);
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyI), isFalse);
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyS), isFalse);
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyA), isFalse);
+      await tester.enterText(find.byKey(LookupSheetKeys.note), 'kis');
+      await tester.pump();
 
-    expect(find.byKey(LookupSheetKeys.modal), findsOneWidget);
-    expect(find.byKey(LookupSheetKeys.drawer), findsNothing);
-    expect(
-      tester.getSize(find.byKey(LookupSheetKeys.modal)).height,
-      closeTo(844 * PageLayout.lookupSheetFraction, 0.5),
-    );
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.text('kis'), findsOneWidget);
+      expect(await db.select(db.userWords).get(), isEmpty);
+      expect(await db.select(db.userWordStates).get(), isEmpty);
+    },
+  );
 
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+  testWidgets(
+    'mobile lookup is a half-screen sheet; desktop is a 400px drawer',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    tester.view.physicalSize = const Size(1280, 800);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(PageDetailKeys.ocrText));
-    await tester.pumpAndSettle();
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-sheet',
+        ocrText: '食べた',
+      );
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(LookupSheetKeys.drawer), findsOneWidget);
-    expect(find.byKey(LookupSheetKeys.modal), findsNothing);
-    expect(
-      tester.getSize(find.byKey(LookupSheetKeys.drawer)).width,
-      PageLayout.lookupDrawerWidth,
-    );
-    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
-    expect(find.byKey(LookupSheetKeys.empty), findsNothing);
-  });
+      expect(find.byKey(LookupSheetKeys.modal), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.drawer), findsNothing);
+      expect(
+        tester.getSize(find.byKey(LookupSheetKeys.modal)).height,
+        closeTo(844 * PageLayout.lookupSheetFraction, 0.5),
+      );
+      _expectSheetRadius(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      tester.view.physicalSize = const Size(1280, 800);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(LookupSheetKeys.drawer), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.modal), findsNothing);
+      expect(
+        tester.getSize(find.byKey(LookupSheetKeys.drawer)).width,
+        PageLayout.lookupDrawerWidth,
+      );
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.empty), findsNothing);
+    },
+  );
 
   testWidgets('desktop drawer starts empty until a token is tapped', (
     tester,
@@ -644,56 +692,55 @@ void main() {
     expect(find.text(PageLabels.toquePalavra), findsOneWidget);
   });
 
-  testWidgets(
-    'desktop command bar is Voltar · meta · Editar · +',
-    (tester) async {
-      tester.view.physicalSize = const Size(1280, 800);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('desktop command bar is Voltar · meta · Editar · +', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
-      const pageId = 'page-desktop-meta';
-      await _openPage(
-        tester,
-        jmdictPath: jmdictPath,
-        pageId: pageId,
-        ocrText: '食べた',
-      );
+    const pageId = 'page-desktop-meta';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: pageId,
+      ocrText: '食べた',
+    );
 
-      expect(find.byKey(ShellKeys.taskDock), findsNothing);
-      expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
-      expect(find.byKey(ShellKeys.command('back')), findsOneWidget);
-      expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
-      expect(find.byKey(ShellKeys.command('edit')), findsOneWidget);
-      expect(find.byKey(ShellKeys.command('add')), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(ShellKeys.dockMeta),
-          matching: find.text(pageId),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(ShellKeys.dockMeta),
-          matching: find.text('1 recortes'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        tester.getTopLeft(find.byKey(ShellKeys.command('back'))).dx,
-        lessThan(tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx),
-      );
-      expect(
-        tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx,
-        lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx),
-      );
-      expect(
-        tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx,
-        lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('add'))).dx),
-      );
-    },
-  );
+    expect(find.byKey(ShellKeys.taskDock), findsNothing);
+    expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
+    expect(find.byKey(ShellKeys.command('back')), findsOneWidget);
+    expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+    expect(find.byKey(ShellKeys.command('edit')), findsOneWidget);
+    expect(find.byKey(ShellKeys.command('add')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(ShellKeys.dockMeta),
+        matching: find.text(pageId),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(ShellKeys.dockMeta),
+        matching: find.text(RecortesLabel.count(1)),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(ShellKeys.command('back'))).dx,
+      lessThan(tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx,
+      lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx,
+      lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('add'))).dx),
+    );
+  });
 
   testWidgets(
     'desktop drawer marks Aprendendo active with coral ring and 14% ink',
@@ -745,8 +792,103 @@ void main() {
         tester.getSize(find.byKey(LookupSheetKeys.modal)).height,
         closeTo(844 * PageLayout.lookupSheetFraction, 0.5),
       );
+      _expectSheetRadius(tester);
       _expectAprendendoActive(tester);
     },
+  );
+
+  for (final size in [_phone, _desktop]) {
+    testWidgets(
+      'page meta is 1 recorte singular at ${size.width.toInt()}x${size.height.toInt()}',
+      (tester) async {
+        _setSize(tester, size);
+        await _openPage(
+          tester,
+          jmdictPath: jmdictPath,
+          pageId: 'page-one-crop',
+          ocrText: '食べた',
+        );
+        expect(find.text(RecortesLabel.count(1)), findsOneWidget);
+        expect(find.text('1 recortes'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'page meta is 2 recortes plural at ${size.width.toInt()}x${size.height.toInt()}',
+      (tester) async {
+        _setSize(tester, size);
+        await _openPage(
+          tester,
+          jmdictPath: jmdictPath,
+          pageId: 'page-two-crops',
+          ocrText: '食べた',
+          extraCrops: 1,
+        );
+        expect(find.text(RecortesLabel.count(2)), findsOneWidget);
+        expect(find.text('1 recorte'), findsNothing);
+      },
+    );
+  }
+}
+
+const _phone = Size(390, 844);
+const _desktop = Size(1280, 800);
+
+const _lookupShortcuts =
+    <
+      ({
+        String label,
+        LogicalKeyboardKey key,
+        WordState state,
+        bool createsCard,
+      })
+    >[
+      (
+        label: 'A',
+        key: LogicalKeyboardKey.keyA,
+        state: WordState.learning,
+        createsCard: true,
+      ),
+  (
+    label: 'K',
+    key: LogicalKeyboardKey.keyK,
+    state: WordState.known,
+    createsCard: false,
+  ),
+  (
+    label: 'I',
+    key: LogicalKeyboardKey.keyI,
+    state: WordState.ignored,
+    createsCard: false,
+  ),
+      (
+        label: 'S',
+        key: LogicalKeyboardKey.keyS,
+        state: WordState.saved,
+        createsCard: false,
+      ),
+    ];
+
+void _setSize(WidgetTester tester, Size size) {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+void _expectSheetRadius(WidgetTester tester) {
+  final material = tester.widget<Material>(
+    find
+        .ancestor(
+          of: find.byKey(LookupSheetKeys.modal),
+          matching: find.byType(Material),
+        )
+        .first,
+  );
+  final shape = material.shape! as RoundedRectangleBorder;
+  expect(
+    shape.borderRadius,
+    const BorderRadius.vertical(top: Radius.circular(AppRadius.sheetReview)),
   );
 }
 
@@ -776,6 +918,12 @@ void _expectAprendendoActive(WidgetTester tester) {
     tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).active,
     isFalse,
   );
+  expect(
+    tester
+        .widget<LookupActionButton>(find.byKey(LookupSheetKeys.ignore))
+        .active,
+    isFalse,
+  );
   final material = tester.widget<Material>(
     find.descendant(
       of: find.byKey(LookupSheetKeys.learn),
@@ -796,12 +944,14 @@ Future<AppDatabase> _openPage(
   required String jmdictPath,
   required String pageId,
   required String ocrText,
+  int extraCrops = 0,
   Future<void> Function(AppDatabase db, String cropId)? seed,
 }) async {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
 
-  await PagesRepository(db).saveRecognizedCrop(
+  final pages = PagesRepository(db);
+  await pages.saveRecognizedCrop(
     pageId: pageId,
     sourceSha256: sha256Hex(fixturePng()),
     left: 0.2,
@@ -811,6 +961,18 @@ Future<AppDatabase> _openPage(
     ocrText: ocrText,
     engineId: 'fake',
   );
+  for (var i = 0; i < extraCrops; i++) {
+    await pages.saveRecognizedCrop(
+      pageId: pageId,
+      sourceSha256: sha256Hex(fixturePng()),
+      left: 0.1 + i * 0.05,
+      top: 0.1,
+      width: 0.3,
+      height: 0.3,
+      ocrText: '文$i',
+      engineId: 'fake',
+    );
+  }
   if (seed != null) {
     final cropId = (await db.select(db.capturedCrops).get()).single.id;
     await seed(db, cropId);

@@ -9,6 +9,12 @@
 ///
 /// [novos] / [revisoes] / [drill] split that same queue for the segmented bar
 /// (`queue.novos` violet, `queue.revisoes` mint, `queue.drill` coral).
+///
+/// [waiting] is [ReviewRepository.dueQueue] length — the live queue every
+/// screen reads: Biblioteca **para revisar**, the rail badge on every
+/// route (Biblioteca, Leitor, Review, done), `/review` **restantes**, and
+/// the done-state N. Recomputed after each rating. Not the mint [revisoes]
+/// slice.
 class HomeReviewCounts {
   const HomeReviewCounts({
     required this.due,

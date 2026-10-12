@@ -8,27 +8,33 @@ part of 'review_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-/// first build (already capped to leftover new-per-day slots). Again/Hard
-/// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
-/// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
-/// vs SRS) lives in [ReviewRepository.answer].
+/// `/review` session: order is an in-memory snapshot of
+/// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 
 @ProviderFor(ReviewSession)
 final reviewSessionProvider = ReviewSessionProvider._();
 
-/// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-/// first build (already capped to leftover new-per-day slots). Again/Hard
-/// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
-/// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
-/// vs SRS) lives in [ReviewRepository.answer].
+/// `/review` session: order is an in-memory snapshot of
+/// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 final class ReviewSessionProvider
     extends $AsyncNotifierProvider<ReviewSession, ReviewView?> {
-  /// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-  /// first build (already capped to leftover new-per-day slots). Again/Hard
-  /// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
-  /// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
-  /// vs SRS) lives in [ReviewRepository.answer].
+  /// `/review` session: order is an in-memory snapshot of
+  /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
+  /// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+  /// always the live DB queue length (same as the rail badge). When the
+  /// snapshot runs out, the done state reports how many are still due now;
+  /// [reloadQueue] refetches `dueQueue` and continues. Persistence
+  /// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
   ReviewSessionProvider._()
     : super(
         from: null,
@@ -48,13 +54,15 @@ final class ReviewSessionProvider
   ReviewSession create() => ReviewSession();
 }
 
-String _$reviewSessionHash() => r'ff2e2277ff17903a48105412746b3747d32df5d2';
+String _$reviewSessionHash() => r'4bc58b4a15210ce84c1b7d3da5d3d9ed663eea9c';
 
-/// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-/// first build (already capped to leftover new-per-day slots). Again/Hard
-/// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
-/// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
-/// vs SRS) lives in [ReviewRepository.answer].
+/// `/review` session: order is an in-memory snapshot of
+/// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 
 abstract class _$ReviewSession extends $AsyncNotifier<ReviewView?> {
   FutureOr<ReviewView?> build();

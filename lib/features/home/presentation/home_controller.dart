@@ -28,10 +28,10 @@ void _refetchOnReturnHome(Ref ref) {
 
 /// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
 ///
-/// Refetches when a `/review` answer persists, and again when the shell
-/// returns to `/home` (Home stays mounted as a branch, so a one-shot
-/// FutureProvider would otherwise stay stale).
-@riverpod
+/// Live `waiting` is the rail badge / Review restantes / done N. Refetches
+/// when a `/review` answer persists ([reviewRevisionProvider]), and again
+/// when the shell returns to `/home` (Home stays mounted as a branch).
+@Riverpod(keepAlive: true)
 Future<HomeReviewCounts> homeReviewCounts(Ref ref) {
   ref.watch(reviewRevisionProvider);
   _refetchOnReturnHome(ref);

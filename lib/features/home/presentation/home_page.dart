@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/copy/recortes_label.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
@@ -40,7 +41,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final counts = ref.watch(homeReviewCountsProvider).asData?.value;
+    final counts = ref.watch(homeReviewCountsProvider).value;
     final recent = ref.watch(homeRecentPagesProvider).asData?.value;
     final totalPages = ref.watch(homePageCountProvider).asData?.value;
     final week = ref.watch(homeWeekRhythmProvider).asData?.value;
@@ -700,7 +701,7 @@ class _DesktopCounts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final revisoes = counts?.revisoes ?? 0;
+    final waiting = counts?.waiting ?? 0;
     final novos = counts?.novos ?? 0;
     final drill = counts?.drill ?? 0;
     return Row(
@@ -708,14 +709,15 @@ class _DesktopCounts extends StatelessWidget {
       children: [
         Expanded(
           child: _DesktopCount(
-            key: HomeKeys.revisoes,
-            value: revisoes,
+            key: HomeKeys.due,
+            value: waiting,
             label: 'para revisar',
-            color: tokens.mint,
+            color: tokens.text,
           ),
         ),
         Expanded(
           child: _DesktopCount(
+            key: HomeKeys.novos,
             value: novos,
             label: 'novos',
             color: tokens.violet,
@@ -723,6 +725,7 @@ class _DesktopCounts extends StatelessWidget {
         ),
         Expanded(
           child: _DesktopCount(
+            key: HomeKeys.drill,
             value: drill,
             label: 'drill',
             color: tokens.coral,
@@ -833,9 +836,7 @@ class _RecentPageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final radius = BorderRadius.circular(AppRadius.linha);
-    final recortes = page.cropCount == 1
-        ? '1 recorte'
-        : '${page.cropCount} recortes';
+    final recortes = RecortesLabel.count(page.cropCount);
     final when = HomeDates.relativeDay(page.createdAt, now);
     return Material(
       color: tokens.surface,

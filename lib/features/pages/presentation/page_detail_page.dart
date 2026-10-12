@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/copy/recortes_label.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/shell/shell_nav.dart';
@@ -87,7 +88,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     final wide = ShellLayout.isWide(context);
     final items = crops.asData?.value ?? const <PageCrop>[];
     final count = items.length;
-    final hint = count == 0 ? null : '$count recortes';
+    final hint = count == 0 ? null : RecortesLabel.count(count);
     final task = ShellTask(
       meta: widget.pageId,
       metaHint: hint,
@@ -208,11 +209,17 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
   Future<void> _lookup(PageCrop crop, int tapIndex) async {
     final startGuess = tapIndex < 0
         ? 0
-        : (tapIndex >= crop.ocrText.length ? crop.ocrText.length - 1 : tapIndex);
+        : (tapIndex >= crop.ocrText.length
+              ? crop.ocrText.length - 1
+              : tapIndex);
     setState(() {
       _lookupLoading = true;
       _lookupError = null;
-      _touch = _TouchRange(cropId: crop.id, start: startGuess, end: startGuess + 1);
+      _touch = _TouchRange(
+        cropId: crop.id,
+        start: startGuess,
+        end: startGuess + 1,
+      );
     });
     try {
       final lookup = await ref.read(dictionaryLookupProvider.future);
@@ -281,11 +288,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       setState(() {
         _lookupLoading = false;
         _session = session;
-        _touch = _TouchRange(
-          cropId: crop.id,
-          start: miss.start,
-          end: miss.end,
-        );
+        _touch = _TouchRange(cropId: crop.id, start: miss.start, end: miss.end);
       });
       if (!ShellLayout.isWide(context)) {
         await showCustomLookupSheet(
@@ -314,7 +317,9 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       });
       if (!ShellLayout.isWide(context)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${PageLabels.dicionarioIndisponivel}: $error')),
+          SnackBar(
+            content: Text('${PageLabels.dicionarioIndisponivel}: $error'),
+          ),
         );
       }
     }
@@ -329,12 +334,14 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       session: session,
       action: action,
       save: () {
-        return ref.read(wordsRepositoryProvider).saveFromLookup(
-          cropId: session.crop.id,
-          seq: entry.seq,
-          lemma: entry.lemma,
-          reading: entry.reading,
-        );
+        return ref
+            .read(wordsRepositoryProvider)
+            .saveFromLookup(
+              cropId: session.crop.id,
+              seq: entry.seq,
+              lemma: entry.lemma,
+              reading: entry.reading,
+            );
       },
     );
   }
@@ -348,11 +355,13 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       session: session,
       action: action,
       save: () {
-        return ref.read(wordsRepositoryProvider).saveCustomFromLookup(
-          cropId: session.crop.id,
-          surface: session.surface,
-          userNote: userNote,
-        );
+        return ref
+            .read(wordsRepositoryProvider)
+            .saveCustomFromLookup(
+              cropId: session.crop.id,
+              surface: session.surface,
+              userNote: userNote,
+            );
       },
     );
   }
@@ -492,7 +501,8 @@ class _PageOcrBody extends ConsumerWidget {
 
     final lookup = ref.watch(dictionaryLookupProvider).asData?.value;
     final states =
-        ref.watch(listedWordStatesProvider).asData?.value ?? WordStateIndex.empty;
+        ref.watch(listedWordStatesProvider).asData?.value ??
+        WordStateIndex.empty;
     final tokens = context.tokens;
     final wide = ShellLayout.isWide(context);
     final style = wide
@@ -727,8 +737,7 @@ class _LookupDrawer extends StatelessWidget {
         highlightStart: session.start,
         highlightEnd: session.end,
         wordState: session.wordState,
-        onCustomAction: (action, note) =>
-            onCustomAction(session, action, note),
+        onCustomAction: (action, note) => onCustomAction(session, action, note),
       );
     }
     return LookupSheet(
