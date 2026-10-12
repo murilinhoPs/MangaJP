@@ -492,6 +492,25 @@ void main() {
     expect(find.text(CaptureLabels.recortesMeta(2)), findsOneWidget);
   });
 
+  testWidgets(
+    'Android back with image and no edits exits to Home without a dialog',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _openGalleryCrop(tester, db: db, png: png);
+
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.byKey(CaptureKeys.overlay), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(CapturePage), findsNothing);
+    },
+  );
+
   testWidgets('OCR retry does not duplicate already saved crops', (
     tester,
   ) async {
