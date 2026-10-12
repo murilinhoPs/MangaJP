@@ -292,10 +292,36 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                 textAlign: TextAlign.center,
               ),
             ),
-          if (!wide)
+          if (!wide) ...[
+            if (meta.isNotEmpty)
+              Padding(
+                key: ShellKeys.dockMeta,
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypeScale.metadados12.copyWith(
+                          color: tokens.text2,
+                        ),
+                      ),
+                    ),
+                    if (hint != null) ...[
+                      const SizedBox(width: 12),
+                      Text(
+                        hint,
+                        style: AppTypeScale.metadados11.copyWith(
+                          color: tokens.text3,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             TaskDock(
-              meta: meta.isEmpty ? null : meta,
-              metaHint: hint,
               leading: [
                 DockIconButton(
                   key: ShellKeys.dockAction('close'),
@@ -314,6 +340,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                 ),
               ],
             ),
+          ],
         ],
       ),
     );

@@ -36,7 +36,7 @@ List<CropRect> captureShotRects() {
 int captureShotActiveIndex() => kCaptureShotCrops >= 3 ? 0 : 0;
 
 /// Small grayscale 2×2 manga page (speech-bubble ellipses, no large binary).
-Uint8List buildMangaPanelPng({int width = 360, int height = 520}) {
+Uint8List buildMangaPanelPng({int width = 480, int height = 900}) {
   final image = img.Image(width: width, height: height);
   img.fill(image, color: img.ColorRgb8(22, 22, 26));
 
