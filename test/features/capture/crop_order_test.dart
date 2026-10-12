@@ -26,4 +26,14 @@ void main() {
     expect(rtlCropOrder(const []), isEmpty);
     expect(rtlCropNumbers(const []), isEmpty);
   });
+
+  test('stair-step chain overlap is one RTL row, right to left', () {
+    const right = CropRect(left: 0.55, top: 0.00, width: 0.40, height: 0.40);
+    const mid = CropRect(left: 0.28, top: 0.25, width: 0.40, height: 0.40);
+    const left = CropRect(left: 0.02, top: 0.50, width: 0.40, height: 0.40);
+    const crops = [left, right, mid];
+
+    expect(rtlCropOrder(crops), [1, 2, 0]);
+    expect(rtlCropNumbers(crops), [3, 1, 2]);
+  });
 }

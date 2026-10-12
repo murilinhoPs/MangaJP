@@ -5,17 +5,40 @@ const kRtlSameRowOverlap = 0.35;
 
 /// Manga reading order: right-to-left, then top-to-bottom.
 ///
+/// Rows are clustered by overlap (stairs / chain overlap count as one row),
+/// then each row is sorted by [CropRect.centerX] descending.
 /// Returns crop indices in that order (index 0 = first to read = number 1).
 List<int> rtlCropOrder(List<CropRect> rects) {
-  final order = List<int>.generate(rects.length, (i) => i);
-  order.sort((ia, ib) {
-    final a = rects[ia];
-    final b = rects[ib];
-    if (_sameRow(a, b)) {
-      return b.centerX.compareTo(a.centerX);
+  if (rects.length <= 1) {
+    return List<int>.generate(rects.length, (i) => i);
+  }
+  final remaining = List<int>.generate(rects.length, (i) => i)
+    ..sort((ia, ib) {
+      final byTop = rects[ia].top.compareTo(rects[ib].top);
+      if (byTop != 0) {
+        return byTop;
+      }
+      return rects[ib].centerX.compareTo(rects[ia].centerX);
+    });
+
+  final order = <int>[];
+  while (remaining.isNotEmpty) {
+    final row = <int>[remaining.removeAt(0)];
+    var grew = true;
+    while (grew) {
+      grew = false;
+      for (var i = 0; i < remaining.length; i++) {
+        final index = remaining[i];
+        if (row.any((r) => _sameRow(rects[r], rects[index]))) {
+          row.add(remaining.removeAt(i));
+          grew = true;
+          break;
+        }
+      }
     }
-    return a.centerY.compareTo(b.centerY);
-  });
+    row.sort((ia, ib) => rects[ib].centerX.compareTo(rects[ia].centerX));
+    order.addAll(row);
+  }
   return order;
 }
 
