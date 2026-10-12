@@ -34,7 +34,8 @@ class ReviewView {
   /// Bumps each time the session presents a card so the front resets.
   final int showSeq;
 
-  /// Cards still in this in-memory session (Again/Hard stay).
+  /// [ReviewRepository.dueQueue] length right now — same number as
+  /// Biblioteca **para revisar** / the rail badge.
   final int remaining;
 
   /// Queue size when the session opened.
@@ -44,11 +45,13 @@ class ReviewView {
   bool get isDone => card == null && startedWith > 0;
 }
 
-/// In-memory `/review` session: snapshot of [ReviewRepository.dueQueue] at
-/// first build (already capped to leftover new-per-day slots). Again/Hard
-/// go to the back; Good/Easy leave. Extra `neu` never join this snapshot;
-/// a `neu` already here (Again/Hard) stays. Persistence (study-day / drill
-/// vs SRS) lives in [ReviewRepository.answer].
+/// `/review` session: order is an in-memory snapshot of
+/// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
+/// slots). Again/Hard go to the back; Good/Easy leave. When that list
+/// runs out, it re-reads the DB queue: cards still due now keep the same
+/// card UI; **Sessão concluída** only when the DB queue is empty.
+/// **restantes** is always that queue's length. Persistence (study-day /
+/// drill vs SRS) lives in [ReviewRepository.answer].
 @riverpod
 class ReviewSession extends _$ReviewSession {
   List<ReviewCard>? _remaining;
@@ -59,11 +62,12 @@ class ReviewSession extends _$ReviewSession {
   Future<ReviewView?> build() async {
     final repo = ref.watch(reviewRepositoryProvider);
     final jmdict = await ref.watch(jmdictServiceProvider.future);
+    final queue = [...await repo.dueQueue()];
     if (_remaining == null) {
-      _remaining = [...await repo.dueQueue()];
-      _startedWith = _remaining!.length;
+      _remaining = queue;
+      _startedWith = queue.length;
     }
-    return _viewFor(_remaining!, jmdict);
+    return _viewFor(_remaining!, jmdict, waiting: queue.length);
   }
 
   Future<void> answer(ReviewRating rating) async {
@@ -72,23 +76,31 @@ class ReviewSession extends _$ReviewSession {
     if (current?.card == null || remaining == null || remaining.isEmpty) {
       return;
     }
-    await ref
-        .read(reviewRepositoryProvider)
-        .answer(current!.card!.cardId, rating);
+    final repo = ref.read(reviewRepositoryProvider);
+    await repo.answer(current!.card!.cardId, rating);
     ref.read(reviewRevisionProvider.notifier).bump();
     final answeredId = current.card!.cardId;
-    _remaining = [
+    var next = [
       for (final card in applySessionRating(remaining, rating))
         card.cardId == answeredId ? card.asDrill() : card,
     ];
+    final queue = [...await repo.dueQueue()];
+    if (next.isEmpty) {
+      next = queue;
+    }
+    _remaining = next;
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);
-    state = AsyncData(_viewFor(_remaining!, jmdict));
+    state = AsyncData(_viewFor(next, jmdict, waiting: queue.length));
   }
 
-  ReviewView _viewFor(List<ReviewCard> remaining, JmdictService jmdict) {
+  ReviewView _viewFor(
+    List<ReviewCard> remaining,
+    JmdictService jmdict, {
+    required int waiting,
+  }) {
     if (remaining.isEmpty) {
-      return ReviewView(remaining: 0, startedWith: _startedWith);
+      return ReviewView(remaining: waiting, startedWith: _startedWith);
     }
     final card = remaining.first;
     final entry = jmdict.entryBySeq(card.seq);
@@ -97,7 +109,7 @@ class ReviewSession extends _$ReviewSession {
       card: card,
       reading: (kana != null && kana.isNotEmpty) ? kana : card.reading,
       glossText: entry?.glossText ?? '',
-      remaining: remaining.length,
+      remaining: waiting,
       startedWith: _startedWith,
       showSeq: _showSeq,
     );

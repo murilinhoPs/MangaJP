@@ -640,8 +640,10 @@ void main() {
       expect(find.text('新15'), findsNothing);
 
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.done), findsOneWidget);
-      expect(find.byKey(ReviewKeys.empty), findsNothing);
+      // Again left the card due now; the snapshot is empty so we re-read
+      // the DB queue instead of showing done. Extra neu stay capped out.
+      expect(find.byKey(ReviewKeys.done), findsNothing);
+      expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新14');
       expect(find.text('新15'), findsNothing);
     },
   );
@@ -853,6 +855,60 @@ void main() {
           expect(find.text('2'), findsNothing);
           expect(find.text('3'), findsNothing);
           expect(find.text('4'), findsNothing);
+        }
+      },
+    );
+
+    testWidgets(
+      'Good on the last snapshot card still due in DB keeps the session at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_hayaiCard, _taberuCard],
+          size: size,
+          customizeDb: (db) async {
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-early',
+                cardId: 'card-early',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+          },
+        );
+
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(2),
+        );
+        await _revealAndRate(tester, ReviewRating.good);
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
+        await _revealAndRate(tester, ReviewRating.good);
+
+        expect(find.byKey(ReviewKeys.done), findsNothing);
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(1),
+        );
+        if (wide) {
+          expect(
+            tester
+                .widget<Text>(
+                  find.descendant(
+                    of: find.byKey(ShellKeys.reviewBadge),
+                    matching: find.byType(Text),
+                  ),
+                )
+                .data,
+            '1',
+          );
         }
       },
     );

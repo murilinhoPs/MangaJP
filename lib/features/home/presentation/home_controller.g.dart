@@ -155,12 +155,12 @@ final class HomePageCountProvider
 
 String _$homePageCountHash() => r'b76700baa822063d7bdf8605c6483d9f58de402c';
 
-/// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+/// Current week (Mon→Sun study-days) of `review_logs`. `null` when empty.
 
 @ProviderFor(homeWeekRhythm)
 final homeWeekRhythmProvider = HomeWeekRhythmProvider._();
 
-/// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+/// Current week (Mon→Sun study-days) of `review_logs`. `null` when empty.
 
 final class HomeWeekRhythmProvider
     extends
@@ -170,7 +170,7 @@ final class HomeWeekRhythmProvider
           FutureOr<HomeWeekRhythm?>
         >
     with $FutureModifier<HomeWeekRhythm?>, $FutureProvider<HomeWeekRhythm?> {
-  /// Last 7 study-days of `review_logs`. `null` when the week has no answers.
+  /// Current week (Mon→Sun study-days) of `review_logs`. `null` when empty.
   HomeWeekRhythmProvider._()
     : super(
         from: null,
@@ -197,4 +197,4 @@ final class HomeWeekRhythmProvider
   }
 }
 
-String _$homeWeekRhythmHash() => r'f37a0640a39ed06d29faffd3ad80af4b14d43882';
+String _$homeWeekRhythmHash() => r'003e4ad2e0f340ccc93629cbda670d5fe12afda6';

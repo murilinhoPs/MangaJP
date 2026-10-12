@@ -742,6 +742,272 @@ void main() {
       );
     });
   }
+
+  testWidgets(
+    'rail badge matches waiting on /home, /pages/:id and /review until 0',
+    (tester) async {
+      const pageId = 'page-a';
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: const Size(1280, 800),
+        pages: [
+          _SeedPage(
+            id: pageId,
+            createdAt: DateTime.utc(2026, 10, 5),
+            ocrText: '文',
+            crops: 1,
+          ),
+        ],
+        cards: [
+          _SeedCard(
+            id: 'learn',
+            lemma: '学ぶ',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 7),
+          ),
+          _SeedCard(
+            id: 'rev',
+            lemma: '残る',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'new-a',
+            lemma: '新A',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+          _SeedCard(
+            id: 'drill',
+            lemma: 'ドリル',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            drillToday: true,
+          ),
+        ],
+      );
+
+      Future<void> expectBadge(String waiting) async {
+        expect(_railBadge(tester), waiting);
+      }
+
+      final start = _homeDueCount(tester);
+      expect(start, '4');
+      await expectBadge(start);
+
+      await tester.tap(find.byKey(HomeKeys.recentPage(pageId)));
+      await tester.pumpAndSettle();
+      expect(find.byType(PageDetailPage), findsOneWidget);
+      await expectBadge(start);
+
+      const ReviewRoute().go(tester.element(find.byType(PageDetailPage)));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReviewPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(int.parse(start)),
+      );
+      await expectBadge(start);
+
+      await _revealAndRate(tester, ReviewRating.again);
+      await _expectReviewWaitingMatchesBadge(tester);
+      final afterErrei = _restantesCount(tester)!.toString();
+      const PageDetailRoute(id: pageId)
+          .go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      await expectBadge(afterErrei);
+      const HomeRoute().go(tester.element(find.byType(PageDetailPage)));
+      await tester.pumpAndSettle();
+      expect(_homeDueCount(tester), afterErrei);
+      await expectBadge(afterErrei);
+
+      const ReviewRoute().go(tester.element(find.byType(HomePage)));
+      await tester.pumpAndSettle();
+      await _revealAndRate(tester, ReviewRating.hard);
+      await _expectReviewWaitingMatchesBadge(tester);
+
+      for (var i = 0; i < 16; i++) {
+        if (find.byKey(ReviewKeys.done).evaluate().isNotEmpty) {
+          break;
+        }
+        if (find.byKey(ReviewKeys.reveal).evaluate().isEmpty) {
+          break;
+        }
+        await _revealAndRate(tester, ReviewRating.good);
+        if (find.byKey(ReviewKeys.done).evaluate().isEmpty) {
+          await _expectReviewWaitingMatchesBadge(tester);
+        }
+      }
+
+      // Errei / drill still due now: do not show done while the badge is > 0.
+      if (find.byKey(ReviewKeys.done).evaluate().isEmpty) {
+        await _expectReviewWaitingMatchesBadge(tester);
+        expect(_railBadge(tester), isNotNull);
+      }
+
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: const Size(1280, 800),
+        pages: [
+          _SeedPage(
+            id: pageId,
+            createdAt: DateTime.utc(2026, 10, 5),
+            ocrText: '文',
+            crops: 1,
+          ),
+        ],
+        cards: [
+          _SeedCard(
+            id: 'fin-rev',
+            lemma: '町',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'fin-new',
+            lemma: '誰',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+        ],
+      );
+      await tester.tap(find.byKey(ShellKeys.command('revisar')));
+      await tester.pumpAndSettle();
+      await _revealAndRate(tester, ReviewRating.hard);
+      await _expectReviewWaitingMatchesBadge(tester);
+      await _revealAndRate(tester, ReviewRating.easy);
+      if (find.byKey(ReviewKeys.reveal).evaluate().isNotEmpty) {
+        await _revealAndRate(tester, ReviewRating.easy);
+      }
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.remaining), findsNothing);
+      expect(_railBadge(tester), isNull);
+    },
+  );
+
+  testWidgets(
+    'phone restantes matches Home waiting through Errei/Difícil until 0',
+    (tester) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: const Size(390, 844),
+        cards: [
+          _SeedCard(
+            id: 'learn',
+            lemma: '学ぶ',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 7),
+          ),
+          _SeedCard(
+            id: 'rev',
+            lemma: '残る',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'new-a',
+            lemma: '新A',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+          _SeedCard(
+            id: 'drill',
+            lemma: 'ドリル',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            drillToday: true,
+          ),
+        ],
+      );
+
+      final start = _homeDueCount(tester);
+      expect(start, '4');
+      await tester.tap(find.byKey(HomeKeys.review));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(int.parse(start)),
+      );
+
+      await _revealAndRate(tester, ReviewRating.again);
+      final afterErrei = _restantesCount(tester)!.toString();
+      const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      expect(_homeDueCount(tester), afterErrei);
+
+      await tester.tap(find.byKey(HomeKeys.review));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(int.parse(afterErrei)),
+      );
+
+      await _revealAndRate(tester, ReviewRating.hard);
+      final afterHard = _restantesCount(tester)!.toString();
+      const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      expect(_homeDueCount(tester), afterHard);
+      await tester.tap(find.byKey(HomeKeys.review));
+      await tester.pumpAndSettle();
+
+      for (var i = 0; i < 16; i++) {
+        if (find.byKey(ReviewKeys.done).evaluate().isNotEmpty) {
+          break;
+        }
+        if (find.byKey(ReviewKeys.reveal).evaluate().isEmpty) {
+          break;
+        }
+        await _revealAndRate(tester, ReviewRating.good);
+      }
+
+      if (find.byKey(ReviewKeys.done).evaluate().isEmpty) {
+        final leftover = _restantesCount(tester)!.toString();
+        const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+        await tester.pumpAndSettle();
+        expect(_homeDueCount(tester), leftover);
+      }
+
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: const Size(390, 844),
+        cards: [
+          _SeedCard(
+            id: 'fin-rev',
+            lemma: '町',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'fin-new',
+            lemma: '誰',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+        ],
+      );
+      expect(_homeDueCount(tester), '2');
+      await tester.tap(find.byKey(HomeKeys.review));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(2),
+      );
+      await _revealAndRate(tester, ReviewRating.hard);
+      await _revealAndRate(tester, ReviewRating.easy);
+      if (find.byKey(ReviewKeys.reveal).evaluate().isNotEmpty) {
+        await _revealAndRate(tester, ReviewRating.easy);
+      }
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.remaining), findsNothing);
+      const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      expect(_homeDueCount(tester), '0');
+    },
+  );
 }
 
 String _homeDueCount(WidgetTester tester) {
@@ -751,6 +1017,35 @@ String _homeDueCount(WidgetTester tester) {
     return tester.widget<Text>(nested.first).data!;
   }
   return tester.widget<Text>(due).data!;
+}
+
+String? _railBadge(WidgetTester tester) {
+  final badge = find.byKey(ShellKeys.reviewBadge);
+  if (badge.evaluate().isEmpty) {
+    return null;
+  }
+  return tester
+      .widget<Text>(find.descendant(of: badge, matching: find.byType(Text)))
+      .data;
+}
+
+int? _restantesCount(WidgetTester tester) {
+  final remaining = find.byKey(ReviewKeys.remaining);
+  if (remaining.evaluate().isEmpty) {
+    return null;
+  }
+  final data = tester.widget<Text>(remaining).data!;
+  return int.parse(data.split(' ').first);
+}
+
+Future<void> _expectReviewWaitingMatchesBadge(WidgetTester tester) async {
+  final restantes = _restantesCount(tester)!;
+  final badge = _railBadge(tester);
+  if (restantes == 0) {
+    expect(badge, isNull);
+  } else {
+    expect(badge, '$restantes');
+  }
 }
 
 Color? _queueCountColor(WidgetTester tester, Key key) {
