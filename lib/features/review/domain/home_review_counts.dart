@@ -11,8 +11,10 @@
 /// (`queue.novos` violet, `queue.revisoes` mint, `queue.drill` coral).
 ///
 /// [waiting] is [ReviewRepository.dueQueue] length — the single source for
-/// Biblioteca **para revisar**, the rail badge, and `/review` **restantes**.
-/// **Sessão concluída** only when this is 0. Not the mint [revisoes] slice.
+/// Biblioteca **para revisar**, the rail badge, `/review` **restantes**, and
+/// the done-state requeue count. The in-memory session is one pass; when it
+/// ends, remaining still reports this value. Reload refetches the queue.
+/// Not the mint [revisoes] slice.
 class HomeReviewCounts {
   const HomeReviewCounts({
     required this.due,

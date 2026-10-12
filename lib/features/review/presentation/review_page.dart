@@ -16,6 +16,8 @@ import 'review_controller.dart';
 abstract final class ReviewKeys {
   static const empty = Key('review-empty');
   static const done = Key('review-done');
+  static const requeued = Key('review-requeued');
+  static const reload = Key('review-reload');
   static const card = Key('review-card');
   static const remaining = Key('review-remaining');
   static const lemma = Key('review-lemma');
@@ -52,10 +54,17 @@ class ReviewPage extends ConsumerWidget {
           );
         }
         if (item.isDone) {
-          return const _ReviewEndState(
+          final waiting = item.remaining;
+          return _ReviewEndState(
             statusKey: ReviewKeys.done,
             title: ReviewLabels.done,
-            hint: ReviewLabels.doneHint,
+            hint: waiting == 0
+                ? ReviewLabels.doneHint
+                : kReviewRequeuedLabel.replaceAll('{n}', '$waiting'),
+            remaining: waiting,
+            onReload: waiting == 0
+                ? null
+                : () => ref.read(reviewSessionProvider.notifier).reloadQueue(),
           );
         }
         return _ReviewCardBody(
@@ -89,16 +98,23 @@ class _ReviewEndState extends StatelessWidget {
     required this.statusKey,
     required this.title,
     required this.hint,
+    this.remaining = 0,
+    this.onReload,
   });
 
   final Key statusKey;
   final String title;
   final String hint;
+  final int remaining;
+  final VoidCallback? onReload;
 
   @override
   Widget build(BuildContext context) {
+    final wide = ShellLayout.isWide(context);
+    final restantes = remaining > 0 ? ReviewLabels.restantes(remaining) : null;
     return _ReviewScaffold(
       meta: ReviewLabels.sessao,
+      metaHint: restantes,
       actions: [
         ShellAction(
           id: 'close',
@@ -106,8 +122,23 @@ class _ReviewEndState extends StatelessWidget {
           shortcut: 'Esc',
           onPressed: () => popTaskOrHome(context),
         ),
+        if (onReload != null)
+          ShellAction(
+            id: 'reload',
+            // Existing rail copy; motif owns [kReviewRequeuedLabel].
+            label: 'Revisar',
+            primary: true,
+            onPressed: onReload!,
+          ),
       ],
-      child: _ReviewStatus(statusKey: statusKey, title: title, hint: hint),
+      child: _ReviewStatus(
+        statusKey: statusKey,
+        title: title,
+        hint: hint,
+        remaining: remaining,
+        onReload: onReload,
+        wide: wide,
+      ),
     );
   }
 }
@@ -393,16 +424,21 @@ class _ReviewStatus extends StatelessWidget {
     required this.statusKey,
     required this.title,
     required this.hint,
+    required this.wide,
+    this.remaining = 0,
+    this.onReload,
   });
 
   final Key statusKey;
   final String title;
   final String hint;
+  final bool wide;
+  final int remaining;
+  final VoidCallback? onReload;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final wide = ShellLayout.isWide(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -434,9 +470,32 @@ class _ReviewStatus extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 hint,
+                key: remaining > 0 ? ReviewKeys.requeued : null,
                 textAlign: TextAlign.center,
                 style: AppTypeScale.ui14.copyWith(color: tokens.text3),
               ),
+              if (remaining > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  ReviewLabels.restantes(remaining),
+                  key: ReviewKeys.remaining,
+                  textAlign: TextAlign.center,
+                  style: AppTypeScale.ui14.copyWith(color: tokens.text2),
+                ),
+              ],
+              if (onReload != null) ...[
+                const SizedBox(height: 24),
+                FilledButton(
+                  key: ReviewKeys.reload,
+                  onPressed: onReload,
+                  style: FilledButton.styleFrom(
+                    minimumSize: Size.fromHeight(
+                      wide ? AppTargets.min : AppTargets.respostaReviewMobile,
+                    ),
+                  ),
+                  child: const Text('Revisar'),
+                ),
+              ],
             ],
           ),
         ),

@@ -840,11 +840,19 @@ void main() {
         }
       }
 
-      // Errei / drill still due now: do not show done while the badge is > 0.
-      if (find.byKey(ReviewKeys.done).evaluate().isEmpty) {
-        await _expectReviewWaitingMatchesBadge(tester);
-        expect(_railBadge(tester), isNotNull);
-      }
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      await _expectReviewWaitingMatchesBadge(tester);
+      final leftover = _restantesCount(tester)!;
+      expect(leftover, greaterThan(0));
+      expect(
+        find.text(kReviewRequeuedLabel.replaceAll('{n}', '$leftover')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(ReviewKeys.reload));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ReviewKeys.done), findsNothing);
+      expect(find.byKey(ReviewKeys.card), findsOneWidget);
+      await _expectReviewWaitingMatchesBadge(tester);
 
       await _openHome(
         tester,
@@ -963,12 +971,22 @@ void main() {
         await _revealAndRate(tester, ReviewRating.good);
       }
 
-      if (find.byKey(ReviewKeys.done).evaluate().isEmpty) {
-        final leftover = _restantesCount(tester)!.toString();
-        const HomeRoute().go(tester.element(find.byType(ReviewPage)));
-        await tester.pumpAndSettle();
-        expect(_homeDueCount(tester), leftover);
-      }
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      final leftover = _restantesCount(tester)!.toString();
+      expect(
+        find.text(kReviewRequeuedLabel.replaceAll('{n}', leftover)),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(ReviewKeys.reload));
+      await tester.pumpAndSettle();
+      expect(find.byKey(ReviewKeys.card), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(int.parse(leftover)),
+      );
+      const HomeRoute().go(tester.element(find.byType(ReviewPage)));
+      await tester.pumpAndSettle();
+      expect(_homeDueCount(tester), leftover);
 
       await _openHome(
         tester,

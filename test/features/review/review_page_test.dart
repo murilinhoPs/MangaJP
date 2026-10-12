@@ -640,9 +640,16 @@ void main() {
       expect(find.text('新15'), findsNothing);
 
       await _revealAndRate(tester, ReviewRating.good);
-      // Again left the card due now; the snapshot is empty so we re-read
-      // the DB queue instead of showing done. Extra neu stay capped out.
-      expect(find.byKey(ReviewKeys.done), findsNothing);
+      // Again left the card due now. Snapshot is empty → done + requeue,
+      // extra neu stay capped out. Reload continues with 新14.
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(
+        find.text(kReviewRequeuedLabel.replaceAll('{n}', '1')),
+        findsOneWidget,
+      );
+      expect(find.text('新15'), findsNothing);
+      await tester.tap(find.byKey(ReviewKeys.reload));
+      await tester.pumpAndSettle();
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新14');
       expect(find.text('新15'), findsNothing);
     },
@@ -891,11 +898,14 @@ void main() {
         expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
         await _revealAndRate(tester, ReviewRating.good);
 
-        expect(find.byKey(ReviewKeys.done), findsNothing);
-        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(find.byKey(ReviewKeys.done), findsOneWidget);
         expect(
           tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
           ReviewLabels.restantes(1),
+        );
+        expect(
+          find.text(kReviewRequeuedLabel.replaceAll('{n}', '1')),
+          findsOneWidget,
         );
         if (wide) {
           expect(
@@ -910,6 +920,13 @@ void main() {
             '1',
           );
         }
+        await tester.tap(find.byKey(ReviewKeys.reload));
+        await tester.pumpAndSettle();
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(1),
+        );
       },
     );
 

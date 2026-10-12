@@ -35,7 +35,7 @@ class ReviewView {
   final int showSeq;
 
   /// [ReviewRepository.dueQueue] length right now — same number as
-  /// Biblioteca **para revisar** / the rail badge.
+  /// Biblioteca **para revisar** / the rail badge / done requeue count.
   final int remaining;
 
   /// Queue size when the session opened.
@@ -47,11 +47,11 @@ class ReviewView {
 
 /// `/review` session: order is an in-memory snapshot of
 /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
-/// slots). Again/Hard go to the back; Good/Easy leave. When that list
-/// runs out, it re-reads the DB queue: cards still due now keep the same
-/// card UI; **Sessão concluída** only when the DB queue is empty.
-/// **restantes** is always that queue's length. Persistence (study-day /
-/// drill vs SRS) lives in [ReviewRepository.answer].
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 @riverpod
 class ReviewSession extends _$ReviewSession {
   List<ReviewCard>? _remaining;
@@ -80,18 +80,32 @@ class ReviewSession extends _$ReviewSession {
     await repo.answer(current!.card!.cardId, rating);
     ref.read(reviewRevisionProvider.notifier).bump();
     final answeredId = current.card!.cardId;
-    var next = [
+    final next = [
       for (final card in applySessionRating(remaining, rating))
         card.cardId == answeredId ? card.asDrill() : card,
     ];
     final queue = [...await repo.dueQueue()];
-    if (next.isEmpty) {
-      next = queue;
-    }
     _remaining = next;
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);
     state = AsyncData(_viewFor(next, jmdict, waiting: queue.length));
+  }
+
+  /// Rebuild the in-memory pass from the live DB queue (Errei/Difícil
+  /// cards still due now). No-op when that queue is empty.
+  Future<void> reloadQueue() async {
+    final repo = ref.read(reviewRepositoryProvider);
+    final queue = [...await repo.dueQueue()];
+    if (queue.isEmpty) {
+      return;
+    }
+    _remaining = queue;
+    if (_startedWith == 0) {
+      _startedWith = queue.length;
+    }
+    _showSeq++;
+    final jmdict = await ref.read(jmdictServiceProvider.future);
+    state = AsyncData(_viewFor(queue, jmdict, waiting: queue.length));
   }
 
   ReviewView _viewFor(

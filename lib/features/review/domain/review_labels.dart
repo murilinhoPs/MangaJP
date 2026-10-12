@@ -1,5 +1,10 @@
 import 'review_rating.dart';
 
+/// Placeholder until motif defines Review re-queue copy. `{n}` is
+/// [HomeReviewCounts.waiting] when the in-memory pass ended and the DB
+/// still has cards due now. No Brief/DS string for this yet.
+const kReviewRequeuedLabel = '[motif] {n} voltam agora';
+
 /// Portuguese copy for `/review` (Design Deck Review).
 abstract final class ReviewLabels {
   static const sessao = 'Sessão';

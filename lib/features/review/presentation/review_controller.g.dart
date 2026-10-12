@@ -10,31 +10,31 @@ part of 'review_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// `/review` session: order is an in-memory snapshot of
 /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
-/// slots). Again/Hard go to the back; Good/Easy leave. When that list
-/// runs out, it re-reads the DB queue: cards still due now keep the same
-/// card UI; **Sessão concluída** only when the DB queue is empty.
-/// **restantes** is always that queue's length. Persistence (study-day /
-/// drill vs SRS) lives in [ReviewRepository.answer].
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 
 @ProviderFor(ReviewSession)
 final reviewSessionProvider = ReviewSessionProvider._();
 
 /// `/review` session: order is an in-memory snapshot of
 /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
-/// slots). Again/Hard go to the back; Good/Easy leave. When that list
-/// runs out, it re-reads the DB queue: cards still due now keep the same
-/// card UI; **Sessão concluída** only when the DB queue is empty.
-/// **restantes** is always that queue's length. Persistence (study-day /
-/// drill vs SRS) lives in [ReviewRepository.answer].
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 final class ReviewSessionProvider
     extends $AsyncNotifierProvider<ReviewSession, ReviewView?> {
   /// `/review` session: order is an in-memory snapshot of
   /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
-  /// slots). Again/Hard go to the back; Good/Easy leave. When that list
-  /// runs out, it re-reads the DB queue: cards still due now keep the same
-  /// card UI; **Sessão concluída** only when the DB queue is empty.
-  /// **restantes** is always that queue's length. Persistence (study-day /
-  /// drill vs SRS) lives in [ReviewRepository.answer].
+  /// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+  /// always the live DB queue length (same as the rail badge). When the
+  /// snapshot runs out, the done state reports how many are still due now;
+  /// [reloadQueue] refetches `dueQueue` and continues. Persistence
+  /// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
   ReviewSessionProvider._()
     : super(
         from: null,
@@ -54,15 +54,15 @@ final class ReviewSessionProvider
   ReviewSession create() => ReviewSession();
 }
 
-String _$reviewSessionHash() => r'2d3a51254f9e58c418db36b0819e1875f41b2e19';
+String _$reviewSessionHash() => r'8c333c085ea47d2787ff116b6f067f95418884bc';
 
 /// `/review` session: order is an in-memory snapshot of
 /// [ReviewRepository.dueQueue] (already capped to leftover new-per-day
-/// slots). Again/Hard go to the back; Good/Easy leave. When that list
-/// runs out, it re-reads the DB queue: cards still due now keep the same
-/// card UI; **Sessão concluída** only when the DB queue is empty.
-/// **restantes** is always that queue's length. Persistence (study-day /
-/// drill vs SRS) lives in [ReviewRepository.answer].
+/// slots). Again/Hard go to the back; Good/Easy leave. **restantes** is
+/// always the live DB queue length (same as the rail badge). When the
+/// snapshot runs out, the done state reports how many are still due now;
+/// [reloadQueue] refetches `dueQueue` and continues. Persistence
+/// (study-day / drill vs SRS) lives in [ReviewRepository.answer].
 
 abstract class _$ReviewSession extends $AsyncNotifier<ReviewView?> {
   FutureOr<ReviewView?> build();
