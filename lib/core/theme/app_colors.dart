@@ -28,9 +28,8 @@ abstract final class AppColors {
   static const Color onMint = Color(0xFF06261A);
   static const Color danger = Color(0xFFFF6A4D);
 
-  /// `danger` at 14% alpha — same overlay recipe as `overlay.primaria`.
-  /// Notion DS page was not readable from this environment; documented in the PR.
-  static const Color dangerBg = Color.fromRGBO(255, 106, 77, 0.14);
+  /// `danger` at 12% alpha (0x1F). DS: `Color(0x1FFF6A4D)`.
+  static const Color dangerBg = Color(0x1FFF6A4D);
 
   // Overlays (`overlay` in tokens.json)
   static const Color overlaySelecaoToque = Color.fromRGBO(255, 92, 122, 0.25);

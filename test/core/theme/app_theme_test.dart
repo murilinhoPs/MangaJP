@@ -88,15 +88,16 @@ void main() {
     expect(tokens.wordState('ignored'), tokens.text3);
     expect(tokens.wordState('saved'), tokens.text);
     expect(tokens.danger, const Color(0xFFFF6A4D));
-    expect(tokens.dangerBg, const Color.fromRGBO(255, 106, 77, 0.14));
+    expect(tokens.dangerBg, const Color(0x1FFF6A4D));
   });
 
-  test('danger tokens live in tokens.json (danger-bg is 14% alpha)', () {
+  test('danger tokens live in tokens.json (danger-bg is 12% alpha)', () {
     expect(AppColors.danger, const Color(0xFFFF6A4D));
-    expect(AppColors.dangerBg, const Color.fromRGBO(255, 106, 77, 0.14));
+    expect(AppColors.dangerBg, const Color(0x1FFF6A4D));
+    expect(AppColors.dangerBg.toARGB32() >> 24, 0x1F);
     final json = File('lib/core/theme/tokens.json').readAsStringSync();
     expect(json, contains('"danger": "#FF6A4D"'));
-    expect(json, contains('"danger-bg": "rgba(255,106,77,0.14)"'));
+    expect(json, contains('"danger-bg": "rgba(255,106,77,0.12)"'));
   });
 
   test('no amber, blue, or #FF4D6D in ColorScheme or tokens', () {
