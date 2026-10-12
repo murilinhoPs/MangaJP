@@ -1,23 +1,30 @@
 import 'review_rating.dart';
 
-/// Placeholder until motif defines Review re-queue copy. `{n}` is
-/// [HomeReviewCounts.waiting] when the in-memory pass ended and the DB
-/// still has cards due now. No Brief/DS string for this yet.
-const kReviewRequeuedLabel = '[motif] {n} voltam agora';
-
-/// Portuguese copy for `/review` (Design Deck Review).
+/// Portuguese copy for `/review` (Design Deck Review / motif).
 abstract final class ReviewLabels {
   static const sessao = 'Sessão';
   static const mostrar = 'Mostrar';
   static const fechar = 'Fechar';
   static const empty = 'Nenhum card para revisar.';
   static const emptyHint = 'A fila de hoje está vazia.';
-  static const done = 'Sessão concluída.';
+  static const done = 'Sessão concluída';
   static const doneHint = 'Nada mais na fila agora.';
+  static const revisarDeNovo = 'Revisar de novo';
   static const errei = 'Errei';
   static const dificil = 'Difícil';
   static const bom = 'Bom';
   static const facil = 'Fácil';
+
+  /// Motif copy when the in-memory pass ended and [n] cards are still due.
+  static String doneRequeuedHint(int n) {
+    if (n <= 0) {
+      return doneHint;
+    }
+    if (n == 1) {
+      return '1 card volta agora. Você errou ou achou difícil.';
+    }
+    return '$n cards voltam agora. Você errou ou achou difíceis.';
+  }
 
   static String restantes(int count) =>
       count == 1 ? '1 restante' : '$count restantes';

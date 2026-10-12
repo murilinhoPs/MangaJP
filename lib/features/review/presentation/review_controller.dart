@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/data/jmdict_service.dart';
+import '../../home/presentation/home_controller.dart';
 import '../data/review_repository.dart';
 import '../domain/review_card.dart';
 import '../domain/review_rating.dart';
@@ -60,6 +61,8 @@ class ReviewSession extends _$ReviewSession {
 
   @override
   Future<ReviewView?> build() async {
+    ref.watch(reviewRevisionProvider);
+    final counts = await ref.watch(homeReviewCountsProvider.future);
     final repo = ref.watch(reviewRepositoryProvider);
     final jmdict = await ref.watch(jmdictServiceProvider.future);
     final queue = [...await repo.dueQueue()];
@@ -67,7 +70,7 @@ class ReviewSession extends _$ReviewSession {
       _remaining = queue;
       _startedWith = queue.length;
     }
-    return _viewFor(_remaining!, jmdict, waiting: queue.length);
+    return _viewFor(_remaining!, jmdict, waiting: counts.waiting);
   }
 
   Future<void> answer(ReviewRating rating) async {
@@ -84,28 +87,28 @@ class ReviewSession extends _$ReviewSession {
       for (final card in applySessionRating(remaining, rating))
         card.cardId == answeredId ? card.asDrill() : card,
     ];
-    final queue = [...await repo.dueQueue()];
     _remaining = next;
     _showSeq++;
+    final counts = await ref.read(homeReviewCountsProvider.future);
     final jmdict = await ref.read(jmdictServiceProvider.future);
-    state = AsyncData(_viewFor(next, jmdict, waiting: queue.length));
+    state = AsyncData(_viewFor(next, jmdict, waiting: counts.waiting));
   }
 
   /// Rebuild the in-memory pass from the live DB queue (Errei/Difícil
   /// cards still due now). No-op when that queue is empty.
   Future<void> reloadQueue() async {
-    final repo = ref.read(reviewRepositoryProvider);
-    final queue = [...await repo.dueQueue()];
-    if (queue.isEmpty) {
+    final counts = await ref.read(homeReviewCountsProvider.future);
+    if (counts.waiting == 0) {
       return;
     }
+    final queue = [...await ref.read(reviewRepositoryProvider).dueQueue()];
     _remaining = queue;
     if (_startedWith == 0) {
       _startedWith = queue.length;
     }
     _showSeq++;
     final jmdict = await ref.read(jmdictServiceProvider.future);
-    state = AsyncData(_viewFor(queue, jmdict, waiting: queue.length));
+    state = AsyncData(_viewFor(queue, jmdict, waiting: counts.waiting));
   }
 
   ReviewView _viewFor(

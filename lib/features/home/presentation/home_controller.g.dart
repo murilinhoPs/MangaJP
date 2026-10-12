@@ -10,18 +10,18 @@ part of 'home_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
 ///
-/// Refetches when a `/review` answer persists, and again when the shell
-/// returns to `/home` (Home stays mounted as a branch, so a one-shot
-/// FutureProvider would otherwise stay stale).
+/// Live `waiting` is the rail badge / Review restantes / done N. Refetches
+/// when a `/review` answer persists ([reviewRevisionProvider]), and again
+/// when the shell returns to `/home` (Home stays mounted as a branch).
 
 @ProviderFor(homeReviewCounts)
 final homeReviewCountsProvider = HomeReviewCountsProvider._();
 
 /// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
 ///
-/// Refetches when a `/review` answer persists, and again when the shell
-/// returns to `/home` (Home stays mounted as a branch, so a one-shot
-/// FutureProvider would otherwise stay stale).
+/// Live `waiting` is the rail badge / Review restantes / done N. Refetches
+/// when a `/review` answer persists ([reviewRevisionProvider]), and again
+/// when the shell returns to `/home` (Home stays mounted as a branch).
 
 final class HomeReviewCountsProvider
     extends
@@ -33,16 +33,16 @@ final class HomeReviewCountsProvider
     with $FutureModifier<HomeReviewCounts>, $FutureProvider<HomeReviewCounts> {
   /// Due + queue segments for the Home **Fila de hoje** / Biblioteca counts.
   ///
-  /// Refetches when a `/review` answer persists, and again when the shell
-  /// returns to `/home` (Home stays mounted as a branch, so a one-shot
-  /// FutureProvider would otherwise stay stale).
+  /// Live `waiting` is the rail badge / Review restantes / done N. Refetches
+  /// when a `/review` answer persists ([reviewRevisionProvider]), and again
+  /// when the shell returns to `/home` (Home stays mounted as a branch).
   HomeReviewCountsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'homeReviewCountsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -62,7 +62,7 @@ final class HomeReviewCountsProvider
   }
 }
 
-String _$homeReviewCountsHash() => r'dd0e7d916385a609dd8d634ce090b53f737d2a50';
+String _$homeReviewCountsHash() => r'823d0f91bfa4fe51bb17a08f48bf9677490091e4';
 
 /// Newest pages for Home **Capturas recentes** / **Páginas recentes**.
 ///

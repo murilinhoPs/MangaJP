@@ -8,6 +8,7 @@ import '../../../core/shell/shell_nav.dart';
 import '../../../core/shell/shell_registry.dart';
 import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../home/presentation/home_controller.dart';
 import '../domain/review_labels.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
@@ -43,6 +44,7 @@ class ReviewPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(reviewSessionProvider);
+    final waiting = ref.watch(homeReviewCountsProvider).value?.waiting;
 
     return view.when(
       data: (item) {
@@ -54,22 +56,30 @@ class ReviewPage extends ConsumerWidget {
           );
         }
         if (item.isDone) {
-          final waiting = item.remaining;
+          final n = waiting ?? item.remaining;
           return _ReviewEndState(
             statusKey: ReviewKeys.done,
             title: ReviewLabels.done,
-            hint: waiting == 0
-                ? ReviewLabels.doneHint
-                : kReviewRequeuedLabel.replaceAll('{n}', '$waiting'),
-            remaining: waiting,
-            onReload: waiting == 0
+            hint: ReviewLabels.doneRequeuedHint(n),
+            remaining: n,
+            onReload: n == 0
                 ? null
                 : () => ref.read(reviewSessionProvider.notifier).reloadQueue(),
           );
         }
+        final live = waiting ?? item.remaining;
         return _ReviewCardBody(
           key: ValueKey('${item.card!.cardId}-${item.showSeq}'),
-          view: item,
+          view: live == item.remaining
+              ? item
+              : ReviewView(
+                  remaining: live,
+                  startedWith: item.startedWith,
+                  card: item.card,
+                  reading: item.reading,
+                  glossText: item.glossText,
+                  showSeq: item.showSeq,
+                ),
         );
       },
       loading: () => const _ReviewScaffold(
@@ -111,24 +121,24 @@ class _ReviewEndState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wide = ShellLayout.isWide(context);
-    final restantes = remaining > 0 ? ReviewLabels.restantes(remaining) : null;
+    final reload = onReload;
     return _ReviewScaffold(
       meta: ReviewLabels.sessao,
-      metaHint: restantes,
       actions: [
         ShellAction(
           id: 'close',
           label: ReviewLabels.fechar,
           shortcut: 'Esc',
+          primary: reload == null,
           onPressed: () => popTaskOrHome(context),
         ),
-        if (onReload != null)
+        if (reload != null)
           ShellAction(
             id: 'reload',
-            // Existing rail copy; motif owns [kReviewRequeuedLabel].
-            label: 'Revisar',
+            label: ReviewLabels.revisarDeNovo,
+            shortcut: wide ? 'Enter' : null,
             primary: true,
-            onPressed: onReload!,
+            onPressed: reload,
           ),
       ],
       child: _ReviewStatus(
@@ -136,7 +146,7 @@ class _ReviewEndState extends StatelessWidget {
         title: title,
         hint: hint,
         remaining: remaining,
-        onReload: onReload,
+        onReload: reload,
         wide: wide,
       ),
     );
@@ -439,7 +449,7 @@ class _ReviewStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Center(
+    final body = Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
@@ -455,7 +465,7 @@ class _ReviewStatus extends StatelessWidget {
                               ? AppTypeScale.reviewDesktopJp
                               : AppTypeScale.reviewMobileJp)
                           .copyWith(
-                            color: tokens.coral.withValues(alpha: 0.08),
+                            color: tokens.text4.withValues(alpha: 0.35),
                             height: 1,
                           ),
                 ),
@@ -465,7 +475,7 @@ class _ReviewStatus extends StatelessWidget {
                 title,
                 key: statusKey,
                 textAlign: TextAlign.center,
-                style: AppTypeScale.tituloTela,
+                style: AppTypeScale.tituloTela.copyWith(color: tokens.text),
               ),
               const SizedBox(height: 8),
               Text(
@@ -474,31 +484,59 @@ class _ReviewStatus extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTypeScale.ui14.copyWith(color: tokens.text3),
               ),
-              if (remaining > 0) ...[
-                const SizedBox(height: 8),
-                Text(
-                  ReviewLabels.restantes(remaining),
-                  key: ReviewKeys.remaining,
-                  textAlign: TextAlign.center,
-                  style: AppTypeScale.ui14.copyWith(color: tokens.text2),
-                ),
-              ],
               if (onReload != null) ...[
                 const SizedBox(height: 24),
                 FilledButton(
                   key: ReviewKeys.reload,
                   onPressed: onReload,
                   style: FilledButton.styleFrom(
+                    backgroundColor: tokens.coral,
+                    foregroundColor: tokens.onCoral,
+                    surfaceTintColor: Colors.transparent,
                     minimumSize: Size.fromHeight(
                       wide ? AppTargets.min : AppTargets.respostaReviewMobile,
                     ),
+                    side: BorderSide(color: tokens.coral),
                   ),
-                  child: const Text('Revisar'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(ReviewLabels.revisarDeNovo),
+                      if (wide) ...[
+                        const SizedBox(width: 8),
+                        const KbdChip(label: 'Enter', emphasis: true),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ],
           ),
         ),
+      ),
+    );
+    if (onReload == null) {
+      return body;
+    }
+    return Shortcuts(
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.enter): ShellShortcutIntent('enter'),
+        SingleActivator(LogicalKeyboardKey.numpadEnter): ShellShortcutIntent(
+          'enter',
+        ),
+      },
+      child: Actions(
+        actions: {
+          ShellShortcutIntent: CallbackAction<ShellShortcutIntent>(
+            onInvoke: (intent) {
+              if (intent.id == 'enter') {
+                onReload!();
+              }
+              return null;
+            },
+          ),
+        },
+        child: Focus(autofocus: true, child: body),
       ),
     );
   }

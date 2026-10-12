@@ -53,6 +53,21 @@ void main() {
     expect(ReviewLabels.interval(ReviewRating.easy), '4 dias');
   });
 
+  test('done copy is the motif N=0 / N=1 / N>1 lines', () {
+    expect(ReviewLabels.done, 'Sessão concluída');
+    expect(ReviewLabels.doneHint, 'Nada mais na fila agora.');
+    expect(ReviewLabels.revisarDeNovo, 'Revisar de novo');
+    expect(ReviewLabels.doneRequeuedHint(0), ReviewLabels.doneHint);
+    expect(
+      ReviewLabels.doneRequeuedHint(1),
+      '1 card volta agora. Você errou ou achou difícil.',
+    );
+    expect(
+      ReviewLabels.doneRequeuedHint(2),
+      '2 cards voltam agora. Você errou ou achou difíceis.',
+    );
+  });
+
   test('gloss is loaded from JMdict by seq, not stored or hardcoded', () {
     expect(JmdictService.assetPath, 'assets/dict/jmdict.sqlite');
     for (final path in [
@@ -643,10 +658,7 @@ void main() {
       // Again left the card due now. Snapshot is empty → done + requeue,
       // extra neu stay capped out. Reload continues with 新14.
       expect(find.byKey(ReviewKeys.done), findsOneWidget);
-      expect(
-        find.text(kReviewRequeuedLabel.replaceAll('{n}', '1')),
-        findsOneWidget,
-      );
+      expect(find.text(ReviewLabels.doneRequeuedHint(1)), findsOneWidget);
       expect(find.text('新15'), findsNothing);
       await tester.tap(find.byKey(ReviewKeys.reload));
       await tester.pumpAndSettle();
@@ -898,29 +910,8 @@ void main() {
         expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
         await _revealAndRate(tester, ReviewRating.good);
 
-        expect(find.byKey(ReviewKeys.done), findsOneWidget);
-        expect(
-          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
-          ReviewLabels.restantes(1),
-        );
-        expect(
-          find.text(kReviewRequeuedLabel.replaceAll('{n}', '1')),
-          findsOneWidget,
-        );
-        if (wide) {
-          expect(
-            tester
-                .widget<Text>(
-                  find.descendant(
-                    of: find.byKey(ShellKeys.reviewBadge),
-                    matching: find.byType(Text),
-                  ),
-                )
-                .data,
-            '1',
-          );
-        }
-        await tester.tap(find.byKey(ReviewKeys.reload));
+        _expectDone(tester, n: 1, wide: wide);
+        await _continueDone(tester, wide: wide);
         await tester.pumpAndSettle();
         expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
         expect(
@@ -941,12 +932,64 @@ void main() {
       );
       await _revealAndRate(tester, ReviewRating.good);
 
-      expect(find.byKey(ReviewKeys.done), findsOneWidget);
       expect(find.byKey(ReviewKeys.empty), findsNothing);
-      expect(find.text(ReviewLabels.done), findsOneWidget);
-      expect(find.text(ReviewLabels.doneHint), findsOneWidget);
       expect(find.byKey(ReviewKeys.card), findsNothing);
+      _expectDone(tester, n: 0, wide: wide);
     });
+
+    testWidgets(
+      'done N>1 motif copy, one coral primary, Enter reloads at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_hayaiCard, _fukushuCard, _taberuCard],
+          size: size,
+          customizeDb: (db) async {
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-early',
+                cardId: 'card-early',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+            await db.cardsDao.insertLog(
+              UserReviewLogsCompanion.insert(
+                id: 'log-review',
+                cardId: 'card-review',
+                ratedAt: _now,
+                rating: 1,
+                quality: 0,
+                engineId: kSm2JrEngineId,
+                isDrill: 0,
+              ),
+            );
+          },
+        );
+
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(3),
+        );
+        await _revealAndRate(tester, ReviewRating.good);
+        await _revealAndRate(tester, ReviewRating.good);
+        await _revealAndRate(tester, ReviewRating.good);
+
+        _expectDone(tester, n: 2, wide: wide);
+        await _continueDone(tester, wide: wide);
+        await tester.pumpAndSettle();
+        expect(find.byKey(ReviewKeys.done), findsNothing);
+        expect(find.byKey(ReviewKeys.card), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(2),
+        );
+      },
+    );
 
     testWidgets('2 remaining uses plural at $label', (tester) async {
       await _openReview(
@@ -1214,6 +1257,105 @@ Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(ReviewKeys.rating(rating)));
   await tester.pumpAndSettle();
+}
+
+String? _railBadge(WidgetTester tester) {
+  final badge = find.byKey(ShellKeys.reviewBadge);
+  if (badge.evaluate().isEmpty) {
+    return null;
+  }
+  return tester
+      .widget<Text>(find.descendant(of: badge, matching: find.byType(Text)))
+      .data;
+}
+
+Material _commandMaterial(WidgetTester tester, String id) {
+  return tester.widget<Material>(
+    find
+        .ancestor(
+          of: find.byKey(ShellKeys.command(id)),
+          matching: find.byType(Material),
+        )
+        .first,
+  );
+}
+
+void _expectDone(WidgetTester tester, {required int n, required bool wide}) {
+  expect(find.byKey(ReviewKeys.done), findsOneWidget);
+  expect(find.text(ReviewLabels.done), findsOneWidget);
+  expect(find.text('Sessão concluída.'), findsNothing);
+  expect(find.text(ReviewLabels.doneRequeuedHint(n)), findsOneWidget);
+  expect(
+    tester.widget<Text>(find.byKey(ReviewKeys.done)).style?.color,
+    AppColors.text,
+  );
+  final hint = tester.widget<Text>(
+    n > 0 ? find.byKey(ReviewKeys.requeued) : find.text(ReviewLabels.doneHint),
+  );
+  expect(hint.style?.color, AppColors.text3);
+  expect(hint.style?.color, isNot(AppColors.coral));
+  expect(hint.style?.color, isNot(AppColors.coralText));
+  expect(hint.style?.color, isNot(AppColors.mint));
+  expect(hint.style?.color, isNot(AppColors.violet));
+  final jp = tester.widget<Text>(
+    find.descendant(of: find.byType(ReviewPage), matching: find.text('復習')),
+  );
+  expect(jp.style?.color, isNot(AppColors.coral));
+
+  if (wide) {
+    expect(_railBadge(tester), n == 0 ? isNull : '$n');
+  }
+
+  if (n == 0) {
+    expect(find.byKey(ReviewKeys.reload), findsNothing);
+    expect(find.text(ReviewLabels.revisarDeNovo), findsNothing);
+    expect(find.text('Enter'), findsNothing);
+    if (wide) {
+      expect(find.byKey(ShellKeys.command('close')), findsOneWidget);
+      expect(
+        _commandMaterial(tester, 'close').color,
+        AppColors.overlayPrimaria,
+      );
+      expect(find.byKey(ShellKeys.command('reload')), findsNothing);
+    }
+    return;
+  }
+
+  expect(find.byKey(ReviewKeys.reload), findsOneWidget);
+  final btn = tester.widget<FilledButton>(find.byKey(ReviewKeys.reload));
+  expect(
+    btn.style?.backgroundColor?.resolve(const <WidgetState>{}),
+    AppColors.coral,
+  );
+  expect(
+    btn.style?.foregroundColor?.resolve(const <WidgetState>{}),
+    AppColors.onCoral,
+  );
+  if (wide) {
+    expect(find.byKey(ShellKeys.command('reload')), findsOneWidget);
+    expect(_commandMaterial(tester, 'reload').color, AppColors.overlayPrimaria);
+    expect(
+      _commandMaterial(tester, 'close').color,
+      isNot(AppColors.overlayPrimaria),
+    );
+    expect(find.text('Enter'), findsWidgets);
+    expect(
+      tester.widget<Text>(find.text('Enter').first).style?.fontFamily,
+      AppFonts.mono,
+    );
+  } else {
+    expect(find.text('Enter'), findsNothing);
+    expect(find.byKey(ShellKeys.command('reload')), findsNothing);
+    expect(find.text(ReviewLabels.revisarDeNovo), findsOneWidget);
+  }
+}
+
+Future<void> _continueDone(WidgetTester tester, {required bool wide}) async {
+  if (wide) {
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.enter), isTrue);
+  } else {
+    await tester.tap(find.byKey(ReviewKeys.reload));
+  }
 }
 
 void _expectNoOutOfScopeControls(WidgetTester tester) {

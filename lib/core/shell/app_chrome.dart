@@ -211,8 +211,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
   Widget build(BuildContext context) {
     final path = _path;
     final wide = ShellLayout.isWide(context);
-    final counts = ref.watch(homeReviewCountsProvider);
-    final waiting = counts.asData?.value.waiting ?? 0;
+    final waiting = ref.watch(homeReviewCountsProvider).value?.waiting ?? 0;
     ref.watch(homeRecentPagesProvider);
     final task = ShellLayout.isTask(path);
 

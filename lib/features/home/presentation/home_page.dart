@@ -41,7 +41,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final counts = ref.watch(homeReviewCountsProvider).asData?.value;
+    final counts = ref.watch(homeReviewCountsProvider).value;
     final recent = ref.watch(homeRecentPagesProvider).asData?.value;
     final totalPages = ref.watch(homePageCountProvider).asData?.value;
     final week = ref.watch(homeWeekRhythmProvider).asData?.value;
