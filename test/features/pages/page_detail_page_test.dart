@@ -849,18 +849,18 @@ const _lookupShortcuts =
         state: WordState.learning,
         createsCard: true,
       ),
-      (
-        label: 'K',
-        key: LogicalKeyboardKey.keyK,
-        state: WordState.known,
-        createsCard: true,
-      ),
-      (
-        label: 'I',
-        key: LogicalKeyboardKey.keyI,
-        state: WordState.ignored,
-        createsCard: true,
-      ),
+  (
+    label: 'K',
+    key: LogicalKeyboardKey.keyK,
+    state: WordState.known,
+    createsCard: false,
+  ),
+  (
+    label: 'I',
+    key: LogicalKeyboardKey.keyI,
+    state: WordState.ignored,
+    createsCard: false,
+  ),
       (
         label: 'S',
         key: LogicalKeyboardKey.keyS,
