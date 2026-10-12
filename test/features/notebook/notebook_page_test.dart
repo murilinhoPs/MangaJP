@@ -247,9 +247,7 @@ void main() {
       expect(shape.borderRadius, BorderRadius.circular(AppRadius.linha));
       expect(shape.side.color, AppColors.border);
 
-      final todos = tester.widget<FilterChip>(
-        find.byKey(NotebookKeys.stateAll),
-      );
+      final todos = tester.widget<FilterChip>(find.byKey(NotebookKeys.stateAll));
       expect(todos.selected, isTrue);
       expect(todos.side?.color, AppColors.coral);
       expect(todos.selectedColor, AppColors.overlayPrimaria);

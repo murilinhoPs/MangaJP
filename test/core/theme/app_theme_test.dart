@@ -67,10 +67,7 @@ void main() {
     expect(tokens.borderStrong, const Color(0xFF403D4B));
     expect(tokens.rail, const Color(0xFF121117));
     expect(tokens.bg, const Color(0xFF0E0D12));
-    expect(
-      tokens.overlaySelecaoToque,
-      const Color.fromRGBO(255, 92, 122, 0.25),
-    );
+    expect(tokens.overlaySelecaoToque, const Color.fromRGBO(255, 92, 122, 0.25));
     expect(
       tokens.overlayPalavraNaFrase,
       const Color.fromRGBO(124, 99, 245, 0.22),
@@ -112,9 +109,7 @@ void main() {
       0xFF42A5F5,
       0xFF1B4D3E, // previous seed
     };
-    for (final color in _schemeColors(
-      scheme,
-    ).followedBy(_tokenColors(tokens))) {
+    for (final color in _schemeColors(scheme).followedBy(_tokenColors(tokens))) {
       final argb = color.toARGB32();
       expect(forbidden.contains(argb), isFalse, reason: 'unexpected $color');
       expect(
@@ -222,10 +217,7 @@ void main() {
         theme: AppTheme.dark,
         home: Builder(
           builder: (context) {
-            return Text(
-              'Caderno',
-              style: Theme.of(context).textTheme.bodyMedium,
-            );
+            return Text('Caderno', style: Theme.of(context).textTheme.bodyMedium);
           },
         ),
       ),

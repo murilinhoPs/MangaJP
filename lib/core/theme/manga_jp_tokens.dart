@@ -193,8 +193,7 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
       danger: danger ?? this.danger,
       dangerBg: dangerBg ?? this.dangerBg,
       overlaySelecaoToque: overlaySelecaoToque ?? this.overlaySelecaoToque,
-      overlayPalavraNaFrase:
-          overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
+      overlayPalavraNaFrase: overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
       overlayPrimaria: overlayPrimaria ?? this.overlayPrimaria,
       overlayEstadoAtivo: overlayEstadoAtivo ?? this.overlayEstadoAtivo,
       overlayRailAtivo: overlayRailAtivo ?? this.overlayRailAtivo,
@@ -256,11 +255,7 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
         other.overlayEstadoAtivo,
         t,
       )!,
-      overlayRailAtivo: Color.lerp(
-        overlayRailAtivo,
-        other.overlayRailAtivo,
-        t,
-      )!,
+      overlayRailAtivo: Color.lerp(overlayRailAtivo, other.overlayRailAtivo, t)!,
       srsErreiFill: Color.lerp(srsErreiFill, other.srsErreiFill, t)!,
       srsBomFill: Color.lerp(srsBomFill, other.srsBomFill, t)!,
       queueNovos: Color.lerp(queueNovos, other.queueNovos, t)!,
