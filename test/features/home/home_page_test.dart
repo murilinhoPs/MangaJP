@@ -235,7 +235,7 @@ void main() {
       await _revealAndRate(tester, ReviewRating.good);
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '新0');
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
 
       const HomeRoute().go(tester.element(find.byType(ReviewPage)));
       await tester.pumpAndSettle();
@@ -493,7 +493,7 @@ void main() {
           id: 'page-b',
           createdAt: DateTime.utc(2026, 10, 4),
           ocrText: '見せる',
-          crops: 2,
+          crops: 1,
         ),
       ],
     );
@@ -501,6 +501,8 @@ void main() {
     expect(find.text('PÁGINAS RECENTES'), findsOneWidget);
     expect(find.byKey(HomeKeys.recentPage('page-a')), findsOneWidget);
     expect(find.textContaining('3 recortes'), findsOneWidget);
+    expect(find.textContaining('1 recorte'), findsOneWidget);
+    expect(find.text('1 recortes'), findsNothing);
 
     await tester.tap(find.byKey(HomeKeys.recentPage('page-a')));
     await tester.pumpAndSettle();

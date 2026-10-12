@@ -3,13 +3,16 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
+import 'package:manga_jp/features/review/domain/review_labels.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
@@ -68,6 +71,7 @@ void main() {
     expect(find.byType(ReviewPage), findsOneWidget);
     expect(tester.takeException(), isNull);
     expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
     expect(find.text('Nenhum card para revisar.'), findsOneWidget);
     expect(find.byKey(ReviewKeys.lemma), findsNothing);
     expect(find.byKey(ReviewKeys.reveal), findsNothing);
@@ -97,12 +101,13 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
     expect(find.text('食べる'), findsNothing);
     _expectNoOutOfScopeControls(tester);
   });
 
   testWidgets(
-    'front is the lemma; Revelar shows reading and fixture JMdict gloss',
+    'front is the lemma; Mostrar shows reading and fixture JMdict gloss',
     (tester) async {
       await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
 
@@ -142,6 +147,14 @@ void main() {
       expect(find.byKey(ReviewKeys.rating(ReviewRating.hard)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
       expect(find.byKey(ReviewKeys.rating(ReviewRating.easy)), findsOneWidget);
+      expect(find.text(ReviewLabels.errei), findsOneWidget);
+      expect(find.text(ReviewLabels.dificil), findsOneWidget);
+      expect(find.text(ReviewLabels.bom), findsOneWidget);
+      expect(find.text(ReviewLabels.facil), findsOneWidget);
+      expect(find.text('Again'), findsNothing);
+      expect(find.text('Hard'), findsNothing);
+      expect(find.text('Good'), findsNothing);
+      expect(find.text('Easy'), findsNothing);
       BorderSide? ratingSide(ReviewRating rating) => tester
           .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
           .style
@@ -373,7 +386,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+    expect(find.byKey(ReviewKeys.done), findsOneWidget);
+    expect(find.byKey(ReviewKeys.empty), findsNothing);
 
     final log = (await env.db.select(env.db.userReviewLogs).get()).single;
     expect(log.cardId, 'card-eat');
@@ -467,7 +481,8 @@ void main() {
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
 
       await _revealAndRate(tester, ReviewRating.easy);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
 
       final logs = await env.db.select(env.db.userReviewLogs).get();
       expect(
@@ -540,7 +555,8 @@ void main() {
       expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '学ぶ');
       expect(find.text('新15'), findsNothing);
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
       expect(find.text('新15'), findsNothing);
       _expectNoOutOfScopeControls(tester);
     },
@@ -580,10 +596,233 @@ void main() {
       expect(find.text('新15'), findsNothing);
 
       await _revealAndRate(tester, ReviewRating.good);
-      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
       expect(find.text('新15'), findsNothing);
     },
   );
+
+  for (final size in [_phone, _desktop]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= 900;
+
+    testWidgets('empty state uses DS card copy at $label', (tester) async {
+      await _openReview(tester, jmdictPath: jmdictPath, size: size);
+
+      expect(find.byKey(ReviewKeys.empty), findsOneWidget);
+      expect(find.byKey(ReviewKeys.done), findsNothing);
+      expect(find.text(ReviewLabels.empty), findsOneWidget);
+      expect(find.text(ReviewLabels.emptyHint), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(ReviewPage), matching: find.text('復習')),
+        findsOneWidget,
+      );
+      if (wide) {
+        expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
+        expect(find.byKey(ShellKeys.taskDock), findsNothing);
+      } else {
+        expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+      }
+    });
+
+    testWidgets(
+      'session card uses sheet-review radius and JP scale at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_taberuCard],
+          size: size,
+        );
+
+        expect(find.byKey(ReviewKeys.card), findsOneWidget);
+        final material = tester.widget<Material>(find.byKey(ReviewKeys.card));
+        final shape = material.shape! as RoundedRectangleBorder;
+        expect(
+          shape.borderRadius,
+          BorderRadius.circular(AppRadius.sheetReview),
+        );
+        expect(shape.side.color, AppColors.border);
+        expect(material.color, AppColors.surface);
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.lemma)).style?.fontSize,
+          wide ? 120 : 72,
+        );
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+          ReviewLabels.restantes(1),
+        );
+        expect(find.text(ReviewLabels.mostrar), findsWidgets);
+        expect(find.text('Revelar'), findsNothing);
+      },
+    );
+
+    testWidgets('revealed ratings use PT labels and SRS fills at $label', (
+      tester,
+    ) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+        size: size,
+      );
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(find.text(ReviewLabels.errei), findsOneWidget);
+      expect(find.text(ReviewLabels.dificil), findsOneWidget);
+      expect(find.text(ReviewLabels.bom), findsOneWidget);
+      expect(find.text(ReviewLabels.facil), findsOneWidget);
+      final ratingHeight = tester
+          .getSize(find.byKey(ReviewKeys.rating(ReviewRating.good)))
+          .height;
+      if (wide) {
+        expect(ratingHeight, greaterThanOrEqualTo(AppTargets.min));
+      } else {
+        expect(ratingHeight, AppTargets.respostaReviewMobile);
+      }
+      expect(find.text('1'), wide ? findsOneWidget : findsNothing);
+      expect(find.text('2'), wide ? findsOneWidget : findsNothing);
+      expect(find.text('3'), wide ? findsOneWidget : findsNothing);
+      expect(find.text('4'), wide ? findsOneWidget : findsNothing);
+    });
+
+    testWidgets('Good leaves the session on the done state at $label', (
+      tester,
+    ) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+        size: size,
+      );
+      await _revealAndRate(tester, ReviewRating.good);
+
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+      expect(find.byKey(ReviewKeys.empty), findsNothing);
+      expect(find.text(ReviewLabels.done), findsOneWidget);
+      expect(find.text(ReviewLabels.doneHint), findsOneWidget);
+      expect(find.byKey(ReviewKeys.card), findsNothing);
+    });
+
+    testWidgets('2 remaining uses plural at $label', (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_hayaiCard, _fukushuCard],
+        size: size,
+      );
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(2),
+      );
+    });
+  }
+
+  testWidgets('Space reveals; 1–4 rate', (tester) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+      size: _phone,
+    );
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.reading), findsOneWidget);
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.done), findsOneWidget);
+  });
+
+  testWidgets('1 Again, 2 Hard, 4 Easy match the rating keys', (tester) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_hayaiCard, _fukushuCard],
+      size: _phone,
+    );
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isTrue);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '復習');
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit4), isTrue);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isTrue);
+    await tester.pumpAndSettle();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '早い');
+  });
+
+  testWidgets('review shortcuts pass through when a TextField is focused', (
+    tester,
+  ) async {
+    await _openReview(
+      tester,
+      jmdictPath: jmdictPath,
+      cards: [_taberuCard],
+      size: _desktop,
+    );
+
+    final probe = _insertReviewTypingProbe(tester);
+    addTearDown(probe.remove);
+    await tester.pump();
+    final editable = find.descendant(
+      of: find.byKey(_typingProbeKey),
+      matching: find.byType(EditableText),
+    );
+    tester.state<EditableTextState>(editable).requestKeyboard();
+    await tester.pump();
+
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.space), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit1), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit4), isFalse);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(find.byKey(ReviewKeys.reading), findsNothing);
+    expect(find.byKey(ReviewKeys.done), findsNothing);
+    expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, '食べる');
+  });
+}
+
+const _phone = Size(390, 844);
+const _desktop = Size(1280, 800);
+const _typingProbeKey = Key('review-typing-probe');
+
+OverlayEntry _insertReviewTypingProbe(WidgetTester tester) {
+  final overlay = Overlay.of(tester.element(find.byType(ReviewPage)));
+  final entry = OverlayEntry(
+    builder: (context) {
+      return const Align(
+        alignment: Alignment.bottomLeft,
+        child: SizedBox(
+          width: 120,
+          height: 40,
+          child: Material(
+            child: TextField(
+              key: _typingProbeKey,
+              decoration: InputDecoration.collapsed(hintText: ''),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+  overlay.insert(entry);
+  return entry;
 }
 
 const _taberuCard = (
@@ -640,9 +879,14 @@ Future<_Env> _openReview(
   WidgetTester tester, {
   required String jmdictPath,
   List<_SeedCard> cards = const [],
+  Size size = const Size(390, 844),
   Future<void> Function(ReviewRepository review)? prepare,
   Future<void> Function(AppDatabase db)? customizeDb,
 }) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
 

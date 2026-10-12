@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/shell/shell_nav.dart';
 import '../../../core/shell/shell_registry.dart';
 import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/interval_preview.dart';
+import '../domain/review_labels.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
 
-/// Keys for `/review` (front, reveal, ratings, empty queue).
+/// Keys for `/review` (front, reveal, ratings, empty / done).
 abstract final class ReviewKeys {
   static const empty = Key('review-empty');
+  static const done = Key('review-done');
+  static const card = Key('review-card');
+  static const remaining = Key('review-remaining');
   static const lemma = Key('review-lemma');
   static const reading = Key('review-reading');
   static const gloss = Key('review-gloss');
@@ -27,8 +32,8 @@ abstract final class ReviewKeys {
 }
 
 /// `/review` — session snapshot of the due queue (at most 15 new cards
-/// per study-day). Front is the lemma; Revelar shows reading + JMdict
-/// gloss, then Again / Hard / Good / Easy with the `sm2-jr@1` interval
+/// per study-day). Front is the lemma; Mostrar shows reading + JMdict
+/// gloss, then Errei / Difícil / Bom / Fácil with the `sm2-jr@1` interval
 /// that rating would schedule (hidden on drill). Again/Hard go to the
 /// back of this session; Good/Easy leave it.
 class ReviewPage extends ConsumerWidget {
@@ -40,32 +45,31 @@ class ReviewPage extends ConsumerWidget {
 
     return view.when(
       data: (item) {
-        if (item == null) {
-          return const _ReviewScaffold(
-            meta: 'Review',
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Nenhum card para revisar.',
-                  key: ReviewKeys.empty,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
+        if (item == null || item.isEmpty) {
+          return const _ReviewEndState(
+            statusKey: ReviewKeys.empty,
+            title: ReviewLabels.empty,
+            hint: ReviewLabels.emptyHint,
+          );
+        }
+        if (item.isDone) {
+          return const _ReviewEndState(
+            statusKey: ReviewKeys.done,
+            title: ReviewLabels.done,
+            hint: ReviewLabels.doneHint,
           );
         }
         return _ReviewCardBody(
-          key: ValueKey('${item.card.cardId}-${item.showSeq}'),
+          key: ValueKey('${item.card!.cardId}-${item.showSeq}'),
           view: item,
         );
       },
       loading: () => const _ReviewScaffold(
-        meta: 'Review',
+        meta: ReviewLabels.sessao,
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (error, _) => _ReviewScaffold(
-        meta: 'Review',
+        meta: ReviewLabels.sessao,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -77,6 +81,34 @@ class ReviewPage extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReviewEndState extends StatelessWidget {
+  const _ReviewEndState({
+    required this.statusKey,
+    required this.title,
+    required this.hint,
+  });
+
+  final Key statusKey;
+  final String title;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReviewScaffold(
+      meta: ReviewLabels.sessao,
+      actions: [
+        ShellAction(
+          id: 'close',
+          label: ReviewLabels.fechar,
+          shortcut: 'Esc',
+          onPressed: () => popTaskOrHome(context),
+        ),
+      ],
+      child: _ReviewStatus(statusKey: statusKey, title: title, hint: hint),
     );
   }
 }
@@ -94,29 +126,32 @@ class _ReviewScaffold extends StatelessWidget {
   const _ReviewScaffold({
     required this.child,
     required this.meta,
+    this.metaHint,
     this.actions = const [],
   });
 
   final Widget child;
   final String meta;
+  final String? metaHint;
   final List<ShellAction> actions;
 
   @override
   Widget build(BuildContext context) {
     final wide = ShellLayout.isWide(context);
     return ShellBinder(
-      task: ShellTask(meta: meta, actions: actions),
+      task: ShellTask(meta: meta, metaHint: metaHint, actions: actions),
       child: Column(
         children: [
           Expanded(child: child),
           if (!wide)
             TaskDock(
               meta: meta,
+              metaHint: metaHint,
               leading: [
                 DockIconButton(
                   key: ShellKeys.dockAction('close'),
                   icon: Icons.close,
-                  tooltip: 'Fechar',
+                  tooltip: ReviewLabels.fechar,
                   onPressed: () => popTaskOrHome(context),
                 ),
               ],
@@ -145,15 +180,22 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final card = widget.view.card;
+    final wide = ShellLayout.isWide(context);
+    final card = widget.view.card!;
     final gloss = widget.view.glossText;
     final previews = ratingPreviewLabels(card.srs, isDrill: card.isDrill);
+    final remaining = ReviewLabels.restantes(widget.view.remaining);
     final actions = <ShellAction>[
+      ShellAction(
+        id: 'close',
+        label: ReviewLabels.fechar,
+        shortcut: 'Esc',
+        onPressed: () => popTaskOrHome(context),
+      ),
       if (!_revealed)
         ShellAction(
           id: 'mostrar',
-          label: 'Mostrar',
+          label: ReviewLabels.mostrar,
           shortcut: 'Espaço',
           primary: true,
           onPressed: _reveal,
@@ -193,86 +235,52 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
           autofocus: true,
           child: _ReviewScaffold(
             meta: card.lemma,
+            metaHint: remaining,
             actions: actions,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: wide
+                  ? const EdgeInsets.fromLTRB(48, 36, 48, 24)
+                  : const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            card.lemma,
-                            key: ReviewKeys.lemma,
-                            style: AppTypeScale.reviewMobileJp,
-                            textAlign: TextAlign.center,
-                          ),
-                          if (_revealed) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              card.reading,
-                              key: ReviewKeys.reading,
-                              style: AppTypeScale.ui14.copyWith(
-                                fontFamily: AppFonts.jp,
-                                color: tokens.text2,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            if (gloss.isNotEmpty) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                gloss,
-                                key: ReviewKeys.gloss,
-                                style: AppTypeScale.definicao,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                            if (card.userNote != null &&
-                                card.userNote!.isNotEmpty) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                card.userNote!,
-                                key: ReviewKeys.note,
-                                style: AppTypeScale.definicao,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
-                        ],
+                      child: ConstrainedBox(
+                        // Desktop card max width. Deck / not in tokens.json.
+                        constraints: const BoxConstraints(maxWidth: 640),
+                        child: _ReviewCard(
+                          lemma: card.lemma,
+                          remaining: remaining,
+                          reading: _revealed ? card.reading : null,
+                          gloss: _revealed && gloss.isNotEmpty ? gloss : null,
+                          note:
+                              _revealed &&
+                                  card.userNote != null &&
+                                  card.userNote!.isNotEmpty
+                              ? card.userNote
+                              : null,
+                          wide: wide,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
                   if (!_revealed)
                     FilledButton(
                       key: ReviewKeys.reveal,
                       onPressed: _reveal,
-                      child: const Text('Revelar'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: Size.fromHeight(
+                          wide
+                              ? AppTargets.min
+                              : AppTargets.respostaReviewMobile,
+                        ),
+                      ),
+                      child: const Text(ReviewLabels.mostrar),
                     )
                   else
-                    Row(
-                      children: [
-                        for (final rating in ReviewRating.values)
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: FilledButton(
-                                key: ReviewKeys.rating(rating),
-                                style: _ratingStyle(rating, tokens),
-                                onPressed: () => _rate(rating),
-                                child: _RatingButtonLabel(
-                                  rating: rating,
-                                  interval: previews?[rating],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    _RatingRow(previews: previews, wide: wide, onRate: _rate),
                 ],
               ),
             ),
@@ -283,7 +291,202 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
   }
 }
 
-ButtonStyle _ratingStyle(ReviewRating rating, MangaJpTokens tokens) {
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({
+    required this.lemma,
+    required this.remaining,
+    required this.wide,
+    this.reading,
+    this.gloss,
+    this.note,
+  });
+
+  final String lemma;
+  final String remaining;
+  final String? reading;
+  final String? gloss;
+  final String? note;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Material(
+      key: ReviewKeys.card,
+      color: tokens.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sheetReview),
+        side: BorderSide(color: tokens.border),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: wide ? 32 : 20,
+          vertical: wide ? 36 : 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Text(
+                  ReviewLabels.sessao.toUpperCase(),
+                  style: AppTypeScale.mono10.copyWith(
+                    color: tokens.text3,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  remaining,
+                  key: ReviewKeys.remaining,
+                  style: AppTypeScale.metadados12.copyWith(color: tokens.text3),
+                ),
+              ],
+            ),
+            SizedBox(height: wide ? 28 : 20),
+            Text(
+              lemma,
+              key: ReviewKeys.lemma,
+              style: wide
+                  ? AppTypeScale.reviewDesktopJp
+                  : AppTypeScale.reviewMobileJp,
+              textAlign: TextAlign.center,
+            ),
+            if (reading != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                reading!,
+                key: ReviewKeys.reading,
+                style: AppTypeScale.ui14.copyWith(
+                  fontFamily: AppFonts.jp,
+                  color: tokens.text2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (gloss != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                gloss!,
+                key: ReviewKeys.gloss,
+                style: AppTypeScale.definicao.copyWith(color: tokens.text2),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (note != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                note!,
+                key: ReviewKeys.note,
+                style: AppTypeScale.definicao.copyWith(color: tokens.text3),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewStatus extends StatelessWidget {
+  const _ReviewStatus({
+    required this.statusKey,
+    required this.title,
+    required this.hint,
+  });
+
+  final Key statusKey;
+  final String title;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final wide = ShellLayout.isWide(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IgnorePointer(
+                child: Text(
+                  '復習',
+                  style:
+                      (wide
+                              ? AppTypeScale.reviewDesktopJp
+                              : AppTypeScale.reviewMobileJp)
+                          .copyWith(
+                            color: tokens.coral.withValues(alpha: 0.08),
+                            height: 1,
+                          ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                key: statusKey,
+                textAlign: TextAlign.center,
+                style: AppTypeScale.tituloTela,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                hint,
+                textAlign: TextAlign.center,
+                style: AppTypeScale.ui14.copyWith(color: tokens.text3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RatingRow extends StatelessWidget {
+  const _RatingRow({
+    required this.previews,
+    required this.wide,
+    required this.onRate,
+  });
+
+  final Map<ReviewRating, String>? previews;
+  final bool wide;
+  final ValueChanged<ReviewRating> onRate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final rating in ReviewRating.values)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FilledButton(
+                key: ReviewKeys.rating(rating),
+                style: _ratingStyle(rating, context.tokens, wide: wide),
+                onPressed: () => onRate(rating),
+                child: _RatingButtonLabel(
+                  rating: rating,
+                  interval: previews?[rating],
+                  wide: wide,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+ButtonStyle _ratingStyle(
+  ReviewRating rating,
+  MangaJpTokens tokens, {
+  required bool wide,
+}) {
   final (Color border, Color fill, Color fg) = switch (rating) {
     ReviewRating.again => (tokens.coral, tokens.srsErreiFill, tokens.text),
     ReviewRating.hard => (tokens.border, tokens.surface, tokens.text),
@@ -296,7 +499,9 @@ ButtonStyle _ratingStyle(ReviewRating rating, MangaJpTokens tokens) {
   return FilledButton.styleFrom(
     backgroundColor: fill,
     foregroundColor: fg,
-    minimumSize: const Size.fromHeight(AppTargets.respostaReviewMobile),
+    minimumSize: Size.fromHeight(
+      wide ? AppTargets.min : AppTargets.respostaReviewMobile,
+    ),
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
     side: BorderSide(color: border),
     shape: RoundedRectangleBorder(
@@ -306,10 +511,15 @@ ButtonStyle _ratingStyle(ReviewRating rating, MangaJpTokens tokens) {
 }
 
 class _RatingButtonLabel extends StatelessWidget {
-  const _RatingButtonLabel({required this.rating, this.interval});
+  const _RatingButtonLabel({
+    required this.rating,
+    required this.wide,
+    this.interval,
+  });
 
   final ReviewRating rating;
   final String? interval;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +532,7 @@ class _RatingButtonLabel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(_ratingLabel(rating), textAlign: TextAlign.center),
+        Text(ReviewLabels.rating(rating), textAlign: TextAlign.center),
         if (interval != null)
           Text(
             interval!,
@@ -330,14 +540,11 @@ class _RatingButtonLabel extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTypeScale.mono10.copyWith(color: intervalColor),
           ),
+        if (wide) ...[
+          const SizedBox(height: 4),
+          KbdChip(label: ReviewLabels.ratingShortcut(rating)),
+        ],
       ],
     );
   }
 }
-
-String _ratingLabel(ReviewRating rating) => switch (rating) {
-  ReviewRating.again => 'Again',
-  ReviewRating.hard => 'Hard',
-  ReviewRating.good => 'Good',
-  ReviewRating.easy => 'Easy',
-};
