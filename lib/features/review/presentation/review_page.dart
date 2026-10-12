@@ -137,7 +137,6 @@ class _ReviewEndState extends StatelessWidget {
             id: 'reload',
             label: ReviewLabels.revisarDeNovo,
             shortcut: wide ? 'Enter' : null,
-            primary: true,
             onPressed: reload,
           ),
       ],
@@ -504,7 +503,7 @@ class _ReviewStatus extends StatelessWidget {
                       const Text(ReviewLabels.revisarDeNovo),
                       if (wide) ...[
                         const SizedBox(width: 8),
-                        const KbdChip(label: 'Enter', emphasis: true),
+                        const KbdChip(label: 'Enter', onPrimary: true),
                       ],
                     ],
                   ),

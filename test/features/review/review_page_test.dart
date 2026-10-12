@@ -10,6 +10,7 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/kbd_chip.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/features/review/domain/review_labels.dart';
@@ -1322,6 +1323,14 @@ void _expectDone(WidgetTester tester, {required int n, required bool wide}) {
   }
 
   expect(find.byKey(ReviewKeys.reload), findsOneWidget);
+  final coralPrimaries = tester
+      .widgetList<FilledButton>(find.byType(FilledButton))
+      .where(
+        (btn) =>
+            btn.style?.backgroundColor?.resolve(const <WidgetState>{}) ==
+            AppColors.coral,
+      );
+  expect(coralPrimaries, hasLength(1));
   final btn = tester.widget<FilledButton>(find.byKey(ReviewKeys.reload));
   expect(
     btn.style?.backgroundColor?.resolve(const <WidgetState>{}),
@@ -1333,21 +1342,54 @@ void _expectDone(WidgetTester tester, {required int n, required bool wide}) {
   );
   if (wide) {
     expect(find.byKey(ShellKeys.command('reload')), findsOneWidget);
-    expect(_commandMaterial(tester, 'reload').color, AppColors.overlayPrimaria);
-    expect(
-      _commandMaterial(tester, 'close').color,
-      isNot(AppColors.overlayPrimaria),
+    expect(find.byKey(ShellKeys.command('close')), findsOneWidget);
+    for (final id in ['reload', 'close']) {
+      final material = _commandMaterial(tester, id);
+      expect(material.color, isNot(AppColors.overlayPrimaria));
+      expect(material.color, isNot(AppColors.coral));
+      final shape = material.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, AppColors.border);
+      expect(shape.side.color, isNot(AppColors.coral));
+    }
+    expect(find.text('Enter'), findsNWidgets(2));
+    _expectKbdChip(
+      tester,
+      ancestor: find.byKey(ReviewKeys.reload),
+      color: AppColors.onCoral,
+      border: AppColors.onCoral.withValues(alpha: 0.4),
     );
-    expect(find.text('Enter'), findsWidgets);
-    expect(
-      tester.widget<Text>(find.text('Enter').first).style?.fontFamily,
-      AppFonts.mono,
+    _expectKbdChip(
+      tester,
+      ancestor: find.byKey(ShellKeys.command('reload')),
+      color: AppColors.text2,
+      border: AppColors.borderStrong,
     );
   } else {
     expect(find.text('Enter'), findsNothing);
     expect(find.byKey(ShellKeys.command('reload')), findsNothing);
     expect(find.text(ReviewLabels.revisarDeNovo), findsOneWidget);
   }
+}
+
+void _expectKbdChip(
+  WidgetTester tester, {
+  required Finder ancestor,
+  required Color color,
+  required Color border,
+}) {
+  final chip = find.descendant(of: ancestor, matching: find.byType(KbdChip));
+  expect(chip, findsOneWidget);
+  final text = tester.widget<Text>(
+    find.descendant(of: chip, matching: find.byType(Text)),
+  );
+  expect(text.data, 'Enter');
+  expect(text.style?.fontFamily, AppFonts.mono);
+  expect(text.style?.color, color);
+  final container = tester.widget<Container>(
+    find.descendant(of: chip, matching: find.byType(Container)).first,
+  );
+  final deco = container.decoration! as BoxDecoration;
+  expect(deco.border!.top.color, border);
 }
 
 Future<void> _continueDone(WidgetTester tester, {required bool wide}) async {
