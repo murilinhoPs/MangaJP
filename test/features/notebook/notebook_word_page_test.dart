@@ -9,8 +9,11 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
+import 'package:manga_jp/core/theme/app_theme.dart';
+import 'package:manga_jp/features/notebook/presentation/notebook_labels.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
@@ -951,7 +954,114 @@ void main() {
       expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
     },
   );
+
+  for (final size in [_phone, _desktop]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= AppBreakpoints.wide;
+
+    testWidgets('Caderno detail uses DS type-scale and one primary at $label', (
+      tester,
+    ) async {
+      await _openWord(tester, jmdictPath: jmdictPath, size: size);
+
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+      final lemma = tester.widget<Text>(find.byKey(NotebookWordKeys.lemma));
+      expect(lemma.style?.fontFamily, AppFonts.jp);
+      expect(lemma.style?.fontSize, wide ? 56 : 48);
+      expect(lemma.style?.color, AppColors.text);
+
+      final reading = tester.widget<Text>(find.byKey(NotebookWordKeys.reading));
+      expect(reading.style?.fontFamily, AppFonts.jp);
+      expect(reading.style?.color, AppColors.text2);
+
+      final state = tester.widget<Text>(find.byKey(NotebookWordKeys.state));
+      expect(state.data, 'Salvo');
+      expect(state.style?.color, AppColors.text);
+
+      expect(find.text('FRASE'), findsOneWidget);
+      final sentence = tester.widget<Text>(
+        find.byKey(NotebookWordKeys.sentence),
+      );
+      expect(sentence.style?.fontFamily, AppFonts.jp);
+      expect(sentence.style?.fontSize, wide ? 30 : 22);
+
+      if (wide) {
+        expect(find.byKey(ShellKeys.rail), findsOneWidget);
+        expect(find.byKey(ShellKeys.navCards), findsNothing);
+      } else {
+        expect(find.byKey(ShellKeys.navCards), findsOneWidget);
+        expect(find.byKey(ShellKeys.rail), findsNothing);
+      }
+
+      final learn = tester.widget<FilledButton>(
+        find.byKey(NotebookWordKeys.learn),
+      );
+      expect(
+        learn.style?.side?.resolve(const <WidgetState>{})?.color,
+        AppColors.coral,
+      );
+      expect(
+        learn.style?.backgroundColor?.resolve(const <WidgetState>{}),
+        AppColors.overlayEstadoAtivo,
+      );
+      expect(
+        learn.style?.foregroundColor?.resolve(const <WidgetState>{}),
+        AppColors.violetText,
+      );
+
+      final coralPrimaries = tester
+          .widgetList<FilledButton>(find.byType(FilledButton))
+          .where(
+            (btn) =>
+                btn.style?.side?.resolve(const <WidgetState>{})?.color ==
+                AppColors.coral,
+          );
+      expect(coralPrimaries, hasLength(1));
+
+      final pageLink = tester.widget<TextButton>(
+        find.byKey(NotebookWordKeys.pageLink),
+      );
+      expect(
+        pageLink.style?.foregroundColor?.resolve(const <WidgetState>{}),
+        AppColors.text2,
+      );
+
+      final known = tester.widget<OutlinedButton>(
+        find.byKey(NotebookWordKeys.known),
+      );
+      expect(
+        known.style?.foregroundColor?.resolve(const <WidgetState>{}),
+        AppColors.mint,
+      );
+      expect(
+        known.style?.side?.resolve(const <WidgetState>{})?.color,
+        AppColors.border,
+      );
+    });
+
+    testWidgets('Caderno missing word uses the empty state at $label', (
+      tester,
+    ) async {
+      final env = await _openWord(tester, jmdictPath: jmdictPath, size: size);
+      await _tapRemoveFromNotebook(tester, confirmFirst: true);
+      expect(find.byType(NotebookPage), findsOneWidget);
+
+      NotebookWordRoute(
+        id: env.wordId,
+      ).go(tester.element(find.byType(NotebookPage)));
+      await tester.pumpAndSettle();
+
+      expect(find.text(NotebookLabels.empty), findsOneWidget);
+      expect(find.byKey(NotebookKeys.empty), findsOneWidget);
+      expect(find.text(NotebookLabels.emptyHint), findsOneWidget);
+      expect(find.text(NotebookLabels.watermark), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.learn), findsNothing);
+    });
+  }
 }
+
+const _phone = Size(390, 844);
+const _desktop = Size(1280, 800);
 
 class _Env {
   const _Env({
@@ -982,7 +1092,13 @@ Future<_Env> _openNotebook(
   WordState state = WordState.saved,
   bool card = false,
   String? suspendReason,
+  Size size = _phone,
 }) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
 
@@ -1101,6 +1217,7 @@ Future<_Env> _openWord(
   WordState state = WordState.saved,
   bool card = false,
   String? suspendReason,
+  Size size = _phone,
 }) async {
   final env = await _openNotebook(
     tester,
@@ -1108,6 +1225,7 @@ Future<_Env> _openWord(
     state: state,
     card: card,
     suspendReason: suspendReason,
+    size: size,
   );
   await tester.tap(find.byKey(NotebookKeys.row(env.wordId)));
   await tester.pumpAndSettle();

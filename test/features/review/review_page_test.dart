@@ -1351,12 +1351,13 @@ void _expectDone(WidgetTester tester, {required int n, required bool wide}) {
       expect(shape.side.color, AppColors.border);
       expect(shape.side.color, isNot(AppColors.coral));
     }
-    expect(find.text('Enter'), findsNWidgets(2));
-    _expectKbdChip(
-      tester,
-      ancestor: find.byKey(ReviewKeys.reload),
-      color: AppColors.onCoral,
-      border: AppColors.onCoral.withValues(alpha: 0.4),
+    expect(find.text('Enter'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(ReviewKeys.reload),
+        matching: find.byType(KbdChip),
+      ),
+      findsNothing,
     );
     _expectKbdChip(
       tester,

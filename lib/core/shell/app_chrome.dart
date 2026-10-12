@@ -67,7 +67,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       const SingleActivator(LogicalKeyboardKey.slash):
           const ShellShortcutIntent('slash'),
       const SingleActivator(LogicalKeyboardKey.escape):
-          const _ShellEscapeIntent(),
+          const ShellShortcutIntent('escape'),
     };
     if (_path == '/home') {
       map[const SingleActivator(LogicalKeyboardKey.digit1)] =
@@ -86,12 +86,6 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         shouldPassThrough: () => ShellShortcuts.isTyping,
         onInvoke: (intent) => _invokeShortcut(context, intent.id),
       ),
-      _ShellEscapeIntent: CallbackAction<_ShellEscapeIntent>(
-        onInvoke: (_) {
-          _onEscape(context);
-          return null;
-        },
-      ),
     };
   }
 
@@ -107,6 +101,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         importFromGallery(context, ref);
       case 'slash':
         _focusNotebookSearch(context);
+      case 'escape':
+        _onEscape(context);
       case 'home-1':
         _openRecentPage(context, 0);
       case 'home-2':
@@ -273,8 +269,4 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       ),
     );
   }
-}
-
-class _ShellEscapeIntent extends Intent {
-  const _ShellEscapeIntent();
 }
