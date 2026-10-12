@@ -118,9 +118,7 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
                   suffixIcon: wide
                       ? const Padding(
                           padding: EdgeInsets.only(right: 10),
-                          child: UnconstrainedBox(
-                            child: KbdChip(label: '/'),
-                          ),
+                          child: UnconstrainedBox(child: KbdChip(label: '/')),
                         )
                       : null,
                 ),
@@ -129,10 +127,11 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
             ),
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        Padding(
           padding: EdgeInsets.fromLTRB(padH, 12, padH, 8),
-          child: Row(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _StateChip(
                 chipKey: NotebookKeys.stateAll,
@@ -158,11 +157,8 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
         ),
         Expanded(
           child: entries.when(
-            data: (items) => _NotebookList(
-              entries: items,
-              query: query,
-              wide: wide,
-            ),
+            data: (items) =>
+                _NotebookList(entries: items, query: query, wide: wide),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Center(
               child: Padding(
@@ -201,21 +197,22 @@ class _StateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        key: chipKey,
-        label: Text(label),
-        selected: selected,
-        showCheckmark: false,
-        selectedColor: tokens.overlayPrimaria,
-        backgroundColor: tokens.surface,
-        labelStyle: AppTypeScale.metadados12.copyWith(
-          color: selected ? tokens.text : tokens.text2,
-        ),
-        side: BorderSide(color: selected ? tokens.coral : tokens.border),
-        onSelected: (_) => onSelected(),
+    return FilterChip(
+      key: chipKey,
+      label: Text(label),
+      selected: selected,
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+      selectedColor: tokens.overlayPrimaria,
+      backgroundColor: tokens.surface,
+      labelStyle: AppTypeScale.metadados12.copyWith(
+        color: selected ? tokens.text : tokens.text2,
       ),
+      side: BorderSide(color: selected ? tokens.coral : tokens.border),
+      onSelected: (_) => onSelected(),
     );
   }
 }

@@ -200,11 +200,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      const NotebookWordRoute(id: wordId).go(tester.element(find.byType(HomePage)));
+      const NotebookWordRoute(id: wordId)
+          .go(tester.element(find.byType(HomePage)));
       await tester.pumpAndSettle();
 
       expect(find.byType(NotebookWordPage), findsOneWidget);
-      expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, 'ぴよ');
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
+        'ぴよ',
+      );
       expect(find.byKey(NotebookWordKeys.gloss), findsNothing);
       expect(
         tester.widget<Text>(find.byKey(NotebookWordKeys.note)).data,
@@ -253,7 +257,7 @@ void main() {
       tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
       'Aprendendo',
     );
-    expect(find.byKey(NotebookWordKeys.learn), findsOneWidget);
+    expect(find.byKey(NotebookWordKeys.learn), findsNothing);
     _expectNoOutOfScopeControls(tester);
 
     final state = (await env.db.select(env.db.userWordStates).get()).single;
@@ -271,7 +275,7 @@ void main() {
     expect(srs.engineId, kSm2JrEngineId);
   });
 
-  testWidgets('second Aprender tap is a no-op when already learning', (
+  testWidgets('Aprender is hidden when the word is already learning', (
     tester,
   ) async {
     final env = await _openWord(
@@ -285,12 +289,7 @@ void main() {
     final beforeState =
         (await env.db.select(env.db.userWordStates).get()).single;
 
-    await tester.ensureVisible(find.byKey(NotebookWordKeys.learn));
-    await tester.tap(find.byKey(NotebookWordKeys.learn));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(NotebookWordKeys.learn));
-    await tester.pumpAndSettle();
-
+    expect(find.byKey(NotebookWordKeys.learn), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
       'Aprendendo',
@@ -1046,9 +1045,8 @@ void main() {
       await _tapRemoveFromNotebook(tester, confirmFirst: true);
       expect(find.byType(NotebookPage), findsOneWidget);
 
-      NotebookWordRoute(
-        id: env.wordId,
-      ).go(tester.element(find.byType(NotebookPage)));
+      NotebookWordRoute(id: env.wordId)
+          .go(tester.element(find.byType(NotebookPage)));
       await tester.pumpAndSettle();
 
       expect(find.text(NotebookLabels.empty), findsOneWidget);
@@ -1057,6 +1055,108 @@ void main() {
       expect(find.text(NotebookLabels.watermark), findsOneWidget);
       expect(find.byKey(NotebookWordKeys.learn), findsNothing);
     });
+
+    testWidgets(
+      'Caderno hides Aprender when the word is already learning at $label',
+      (tester) async {
+        await _openWord(
+          tester,
+          jmdictPath: jmdictPath,
+          size: size,
+          state: WordState.learning,
+          card: true,
+        );
+
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+          'Aprendendo',
+        );
+        expect(find.byKey(NotebookWordKeys.learn), findsNothing);
+        expect(find.text(NotebookLabels.aprender), findsNothing);
+        expect(find.byKey(NotebookWordKeys.known), findsOneWidget);
+        expect(find.byKey(NotebookWordKeys.ignore), findsOneWidget);
+
+        final coralPrimaries = tester
+            .widgetList<FilledButton>(find.byType(FilledButton))
+            .where(
+              (btn) =>
+                  btn.style?.side?.resolve(const <WidgetState>{})?.color ==
+                  AppColors.coral,
+            );
+        expect(coralPrimaries, isEmpty);
+      },
+    );
+
+    testWidgets('Caderno Remover actions are danger text at $label', (
+      tester,
+    ) async {
+      await _openWord(tester, jmdictPath: jmdictPath, size: size);
+
+      for (final key in [
+        NotebookWordKeys.deleteCard,
+        NotebookWordKeys.removeFromNotebook,
+      ]) {
+        final button = tester.widget<TextButton>(find.byKey(key));
+        expect(
+          button.style?.foregroundColor?.resolve(const <WidgetState>{}),
+          AppColors.danger,
+        );
+      }
+    });
+
+    testWidgets(
+      'Caderno confirm dialog is danger filled and ghost cancel at $label',
+      (tester) async {
+        await _openWord(tester, jmdictPath: jmdictPath, size: size);
+
+        await tester.scrollUntilVisible(
+          find.byKey(NotebookWordKeys.removeFromNotebook),
+          80,
+          scrollable: find.descendant(
+            of: find.byType(NotebookWordPage),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebook));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsOneWidget);
+        final cancel = tester.widget<OutlinedButton>(
+          find.byKey(NotebookWordKeys.removeFromNotebookCancel),
+        );
+        expect(cancel, isA<OutlinedButton>());
+        final confirm = tester.widget<FilledButton>(
+          find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
+        );
+        expect(
+          confirm.style?.side?.resolve(const <WidgetState>{})?.color,
+          AppColors.danger,
+        );
+        expect(
+          confirm.style?.foregroundColor?.resolve(const <WidgetState>{}),
+          AppColors.danger,
+        );
+        expect(
+          confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
+          Color.alphaBlend(AppColors.dangerBg, AppColors.surfaceRaised),
+        );
+
+        final filledDanger = tester
+            .widgetList<FilledButton>(find.byType(FilledButton))
+            .where(
+              (btn) =>
+                  btn.style?.side?.resolve(const <WidgetState>{})?.color ==
+                  AppColors.danger,
+            );
+        expect(filledDanger, hasLength(1));
+
+        await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebookCancel));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+      },
+    );
   }
 }
 
