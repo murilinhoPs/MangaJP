@@ -398,7 +398,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CapturePage), findsOneWidget);
-    expect(find.text('Captura'), findsOneWidget);
+    expect(find.byKey(CaptureKeys.page), findsOneWidget);
     expect(find.text('Confirmar crop'), findsOneWidget);
     expect(find.byKey(CaptureKeys.pickGallery), findsNothing);
     expect(find.text('Caderno'), findsNothing);
@@ -573,12 +573,12 @@ void main() {
       ],
     );
 
-    expect(find.byKey(HomeKeys.typingProbe), findsNothing);
+    expect(find.byKey(_typingProbeKey), findsNothing);
     final probe = _insertChromeTypingProbe(tester);
     await tester.pump();
 
     final editable = find.descendant(
-      of: find.byKey(HomeKeys.typingProbe),
+      of: find.byKey(_typingProbeKey),
       matching: find.byType(EditableText),
     );
     expect(editable, findsOneWidget);
@@ -677,6 +677,8 @@ Color? _queueCountColor(WidgetTester tester, Key key) {
   return (span.children!.first as TextSpan).style?.color;
 }
 
+const _typingProbeKey = Key('home-typing-probe');
+
 OverlayEntry _insertChromeTypingProbe(WidgetTester tester) {
   final overlay = Overlay.of(tester.element(find.byType(HomePage)));
   final entry = OverlayEntry(
@@ -688,7 +690,7 @@ OverlayEntry _insertChromeTypingProbe(WidgetTester tester) {
           height: 40,
           child: Material(
             child: TextField(
-              key: HomeKeys.typingProbe,
+              key: _typingProbeKey,
               decoration: InputDecoration.collapsed(hintText: ''),
             ),
           ),

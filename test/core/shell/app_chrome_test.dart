@@ -121,7 +121,9 @@ void main() {
     expect(find.text('Caderno'), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
     expect(find.byKey(CaptureKeys.confirm), findsOneWidget);
-    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
+    expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+    expect(find.text('1 recorte · ordem ← automática'), findsOneWidget);
+    expect(find.text('arraste para criar'), findsOneWidget);
   });
 
   testWidgets('dock without meta renders no empty pill', (tester) async {
@@ -271,6 +273,23 @@ void main() {
       isNot(AppColors.coral),
     );
     expect(find.byKey(ShellKeys.commandBar), findsNothing);
+  });
+
+  testWidgets('palette with no pages does not show Abrir página recente', (
+    tester,
+  ) async {
+    await _pumpShell(tester, size: _desktop);
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ShellKeys.palette), findsOneWidget);
+    expect(find.text('Abrir página recente'), findsNothing);
+    expect(find.byKey(ShellKeys.paletteItem('pagina-recente')), findsNothing);
   });
 
   testWidgets('Ctrl+K opens the palette and an item navigates', (tester) async {

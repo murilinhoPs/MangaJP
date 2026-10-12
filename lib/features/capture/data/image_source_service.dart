@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/capture_shot.dart';
 import '../domain/incoming_image.dart';
 import 'share_supported.dart';
 
@@ -24,6 +25,10 @@ class ImageSourceService {
 
   /// Cold-start share (app launched as the SEND / Share Extension target).
   Future<IncomingImage?> initialMedia() async {
+    final shot = captureShotImage();
+    if (shot != null) {
+      return IncomingImage(bytes: shot);
+    }
     if (!_nativeShare) return null;
     try {
       final image = _firstImage(

@@ -56,7 +56,7 @@ class _NavCard extends StatelessWidget {
       ),
       child: InkWell(
         key: ShellKeys.navCard(destination.id),
-        onTap: () => destination.go(context),
+        onTap: destination.go == null ? null : () => destination.go!(context),
         borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
         child: SizedBox(
           height: AppTargets.navCards,

@@ -38,6 +38,15 @@ class PagesRepository {
         createdAt: now,
       ),
     );
+    final existing = await cropsForPage(pageId);
+    for (final crop in existing) {
+      if (crop.left == left &&
+          crop.top == top &&
+          crop.width == width &&
+          crop.height == height) {
+        return crop;
+      }
+    }
     final cropId = newId();
     await _db.pagesDao.insertCrop(
       CapturedCropsCompanion.insert(

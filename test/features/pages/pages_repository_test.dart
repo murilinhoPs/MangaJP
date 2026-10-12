@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
+import 'package:manga_jp/features/pages/domain/page_crop.dart';
 
 import '../capture/fixture_png.dart';
 
@@ -35,6 +36,32 @@ void main() {
     final page = await repo.pageById('page-1');
     expect(page, isNotNull);
     expect(page!.sha256, sha256Hex(png));
+  });
+
+  test('saveRecognizedCrop is idempotent for the same page geometry', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = PagesRepository(db);
+    const pageId = 'page-retry';
+
+    Future<PageCrop> save() {
+      return repo.saveRecognizedCrop(
+        pageId: pageId,
+        sourceSha256: 'sha',
+        left: 0.2,
+        top: 0.2,
+        width: 0.6,
+        height: 0.6,
+        ocrText: 'よぉ、相棒',
+        engineId: 'fake',
+      );
+    }
+
+    final first = await save();
+    final second = await save();
+    expect(second.id, first.id);
+    expect(await repo.listCrops(), hasLength(1));
+    expect(await repo.cropsForPage(pageId), hasLength(1));
   });
 
   test(
