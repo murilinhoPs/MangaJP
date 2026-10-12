@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../router/routes.dart';
 import '../theme/app_theme.dart';
 import 'shell_layout.dart';
 
@@ -32,15 +31,12 @@ class AppRail extends StatelessWidget {
               const SizedBox(height: 14),
               const _JpSeal(),
               const SizedBox(height: 16),
-              for (final dest in DesktopRail.items)
+              for (final dest in DesktopRail.items(recentPageId: recentPageId))
                 _RailItem(
                   destination: dest,
                   selected: dest.isActive(path),
                   badge: dest.id == 'revisar' ? reviewBadge : 0,
-                  enabled: dest.id != 'leitor' || recentPageId != null,
-                  onTap: dest.id == 'leitor'
-                      ? _leitorTap(context)
-                      : () => dest.go(context),
+                  enabled: dest.go != null,
                 ),
               const Spacer(),
               _RailItem(
@@ -54,14 +50,6 @@ class AppRail extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  VoidCallback? _leitorTap(BuildContext context) {
-    final id = recentPageId;
-    if (id == null) {
-      return null;
-    }
-    return () => PageDetailRoute(id: id).go(context);
   }
 }
 
@@ -98,14 +86,12 @@ class _RailItem extends StatelessWidget {
     required this.selected,
     this.badge = 0,
     this.enabled = true,
-    this.onTap,
   });
 
   final ShellDestination destination;
   final bool selected;
   final int badge;
   final bool enabled;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +105,9 @@ class _RailItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: InkWell(
         key: ShellKeys.railItem(destination.id),
-        onTap: enabled ? (onTap ?? () => destination.go(context)) : null,
+        onTap: !enabled || destination.go == null
+            ? null
+            : () => destination.go!(context),
         borderRadius: BorderRadius.circular(AppRadius.railBarra),
         child: SizedBox(
           width: 64,

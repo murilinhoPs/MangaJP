@@ -112,14 +112,16 @@ class ShellDestination {
     required this.id,
     required this.label,
     required this.icon,
-    required this.go,
+    this.go,
     required this.isActive,
   });
 
   final String id;
   final String label;
   final IconData icon;
-  final void Function(BuildContext context) go;
+
+  /// Null means the item is disabled (Leitor with no pages).
+  final void Function(BuildContext context)? go;
   final bool Function(String path) isActive;
 }
 
@@ -159,43 +161,48 @@ abstract final class MobileNav {
 
 /// Desktop rail: Biblioteca, Leitor, Revisar, Caderno, Deck; Ajustes pinned.
 abstract final class DesktopRail {
-  static const items = <ShellDestination>[
-    ShellDestination(
-      id: 'biblioteca',
-      label: 'Biblioteca',
-      icon: Icons.auto_stories_outlined,
-      go: _goHome,
-      isActive: _homeActive,
-    ),
-    ShellDestination(
-      id: 'leitor',
-      label: 'Leitor',
-      icon: Icons.chrome_reader_mode_outlined,
-      go: _leitorGo,
-      isActive: _pagesActive,
-    ),
-    ShellDestination(
-      id: 'revisar',
-      label: 'Revisar',
-      icon: Icons.style_outlined,
-      go: _goReview,
-      isActive: _reviewActive,
-    ),
-    ShellDestination(
-      id: 'caderno',
-      label: 'Caderno',
-      icon: Icons.menu_book_outlined,
-      go: _goNotebook,
-      isActive: _notebookActive,
-    ),
-    ShellDestination(
-      id: 'deck',
-      label: 'Deck',
-      icon: Icons.layers_outlined,
-      go: _goDeck,
-      isActive: _deckActive,
-    ),
-  ];
+  /// [recentPageId] wires **Leitor** to `/pages/:id`. Null disables the item.
+  static List<ShellDestination> items({String? recentPageId}) {
+    return [
+      const ShellDestination(
+        id: 'biblioteca',
+        label: 'Biblioteca',
+        icon: Icons.auto_stories_outlined,
+        go: _goHome,
+        isActive: _homeActive,
+      ),
+      ShellDestination(
+        id: 'leitor',
+        label: 'Leitor',
+        icon: Icons.chrome_reader_mode_outlined,
+        go: recentPageId == null
+            ? null
+            : (context) => PageDetailRoute(id: recentPageId).go(context),
+        isActive: _pagesActive,
+      ),
+      const ShellDestination(
+        id: 'revisar',
+        label: 'Revisar',
+        icon: Icons.style_outlined,
+        go: _goReview,
+        isActive: _reviewActive,
+      ),
+      const ShellDestination(
+        id: 'caderno',
+        label: 'Caderno',
+        icon: Icons.menu_book_outlined,
+        go: _goNotebook,
+        isActive: _notebookActive,
+      ),
+      const ShellDestination(
+        id: 'deck',
+        label: 'Deck',
+        icon: Icons.layers_outlined,
+        go: _goDeck,
+        isActive: _deckActive,
+      ),
+    ];
+  }
 
   static const ajustes = ShellDestination(
     id: 'ajustes',
@@ -238,9 +245,6 @@ abstract final class ShellPaletteNav {
 }
 
 void _goHome(BuildContext context) => const HomeRoute().go(context);
-
-/// [AppRail] opens the latest `/pages/:id` instead. `/pages` redirects to Home.
-void _leitorGo(BuildContext context) {}
 
 void _goReview(BuildContext context) => const ReviewRoute().go(context);
 void _goNotebook(BuildContext context) => const NotebookRoute().go(context);

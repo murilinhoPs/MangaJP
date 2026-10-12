@@ -273,6 +273,23 @@ void main() {
     expect(find.byKey(ShellKeys.commandBar), findsNothing);
   });
 
+  testWidgets('palette with no pages does not show Abrir página recente', (
+    tester,
+  ) async {
+    await _pumpShell(tester, size: _desktop);
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ShellKeys.palette), findsOneWidget);
+    expect(find.text('Abrir página recente'), findsNothing);
+    expect(find.byKey(ShellKeys.paletteItem('pagina-recente')), findsNothing);
+  });
+
   testWidgets('Ctrl+K opens the palette and an item navigates', (tester) async {
     await _pumpShell(tester, size: _desktop);
     await tester.tap(find.byType(HomePage));
