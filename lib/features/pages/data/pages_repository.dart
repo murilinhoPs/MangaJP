@@ -20,6 +20,12 @@ class PagesRepository {
 
   final AppDatabase _db;
 
+  /// Persist one OCR crop on [pageId].
+  ///
+  /// Dedupes by **geometry** (`left`/`top`/`width`/`height`) on that page:
+  /// identical rects count as one row, and an OCR retry of a crop already
+  /// written for this page returns the existing row instead of inserting
+  /// another. A different rect on the same page is a new crop.
   Future<PageCrop> saveRecognizedCrop({
     required String pageId,
     required String sourceSha256,
