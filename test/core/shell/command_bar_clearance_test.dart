@@ -31,6 +31,11 @@ import '../../features/dictionary/bake_jmdict_fixture.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('commandBarClearance uses the real 66px bar, not 60', () {
+    expect(ShellLayout.commandBarHeight, 66);
+    expect(ShellLayout.commandBarClearance, 24 + 66);
+  });
+
   late Directory tmp;
   late String jmdictPath;
 
@@ -88,6 +93,11 @@ void main() {
             tester,
             find.byKey(CaptureKeys.recortesPanel),
             size: size,
+          );
+          final bar = tester.getRect(find.byKey(ShellKeys.commandBar));
+          expect(
+            bar.height - ShellLayout.commandBarBottom,
+            closeTo(ShellLayout.commandBarHeight, 1.5),
           );
           _expectContentAboveBar(tester, find.byKey(CaptureKeys.recorteRow(1)));
           _expectContentAboveBar(tester, find.byKey(CaptureKeys.canvas));
@@ -238,13 +248,12 @@ void _expectSidePanelFullBleed(
 void _expectContentAboveBar(WidgetTester tester, Finder content) {
   final bar = find.byKey(ShellKeys.commandBar);
   expect(bar, findsOneWidget);
-  // Compare to commandBarClearance, not getRect(bar).top: Ahem can wrap the
-  // meta pill and make the Material taller than the 84px inset.
-  final limit =
-      tester.getRect(bar).bottom - ShellLayout.commandBarClearance;
+  // Compare to the measured bar top (~66px visual + 24 offset), not a 60px
+  // constant. commandBarClearance matches that real height so Captura's
+  // canvas stays above the bar.
   expect(
     tester.getRect(content).bottom,
-    lessThanOrEqualTo(limit + 0.5),
+    lessThanOrEqualTo(tester.getRect(bar).top + 0.5),
   );
 }
 
