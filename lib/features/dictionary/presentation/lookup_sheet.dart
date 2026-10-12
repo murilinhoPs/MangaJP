@@ -213,9 +213,8 @@ class _LookupSheetState extends State<LookupSheet> {
         return;
       }
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Falha ao salvar: $error')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Falha ao salvar: $error')));
     }
   }
 
@@ -265,7 +264,12 @@ class _LookupSheetState extends State<LookupSheet> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    0,
+                    16,
+                    16 + ShellLayout.commandBarPaddingOf(context),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

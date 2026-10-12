@@ -20,6 +20,14 @@ abstract final class ShellLayout {
   static const double commandBarClearance = commandBarBottom + commandBarHeight;
   static const double jpSealSize = 34;
 
+  /// Extra height [AppChrome] reserved under the body for the floating bar.
+  ///
+  /// Side panels read this (via [MediaQuery.padding]) so they can paint their
+  /// full border through the gap without covering bar actions.
+  static double commandBarPaddingOf(BuildContext context) {
+    return MediaQuery.paddingOf(context).bottom;
+  }
+
   static bool isWide(BuildContext context) {
     return MediaQuery.sizeOf(context).width >= AppBreakpoints.wide;
   }
@@ -33,6 +41,39 @@ abstract final class ShellLayout {
   }
 
   static bool showMobileNavCards(String path) => !isTask(path);
+}
+
+/// Full-bleed side drawer / inspector next to padded shell content.
+///
+/// [AppChrome] still insets the route body by [ShellLayout.commandBarClearance]
+/// so lists and buttons stay above the CommandBar. This box paints through that
+/// inset so the panel's border and radius are not cut off.
+class ShellSidePanel extends StatelessWidget {
+  const ShellSidePanel({super.key, required this.width, required this.child});
+
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final extra = ShellLayout.commandBarPaddingOf(context);
+    final panel = extra <= 0
+        ? child
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              final height = constraints.maxHeight + extra;
+              return OverflowBox(
+                alignment: Alignment.topCenter,
+                minWidth: width,
+                maxWidth: width,
+                minHeight: height,
+                maxHeight: height,
+                child: SizedBox(width: width, height: height, child: child),
+              );
+            },
+          );
+    return SizedBox(width: width, child: panel);
+  }
 }
 
 /// Widget keys for shell tests and screenshots.

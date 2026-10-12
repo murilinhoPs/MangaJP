@@ -214,6 +214,10 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final barActions = _barActions(context);
     Widget body = widget.child;
     if (wide) {
+      final clearance = barActions.isEmpty
+          ? 0.0
+          : ShellLayout.commandBarClearance;
+      final media = MediaQuery.of(context);
       body = Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -224,14 +228,23 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           ),
           Expanded(
             child: Stack(
+              // Side panels paint through [clearance]; clipping here cuts
+              // their bottom border / radius (M1.24).
+              clipBehavior: Clip.none,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(
-                    bottom: barActions.isEmpty
-                        ? 0
-                        : ShellLayout.commandBarClearance,
+                  padding: EdgeInsets.only(bottom: clearance),
+                  child: MediaQuery(
+                    data: media.copyWith(
+                      padding: media.padding.copyWith(
+                        bottom: media.padding.bottom + clearance,
+                      ),
+                      viewPadding: media.viewPadding.copyWith(
+                        bottom: media.viewPadding.bottom + clearance,
+                      ),
+                    ),
+                    child: body,
                   ),
-                  child: body,
                 ),
                 Positioned(
                   left: 0,
