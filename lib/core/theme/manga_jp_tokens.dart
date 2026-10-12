@@ -27,6 +27,8 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     required this.mint,
     required this.onCoral,
     required this.onMint,
+    required this.danger,
+    required this.dangerBg,
     required this.overlaySelecaoToque,
     required this.overlayPalavraNaFrase,
     required this.overlayPrimaria,
@@ -64,6 +66,8 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     mint: AppColors.mint,
     onCoral: AppColors.onCoral,
     onMint: AppColors.onMint,
+    danger: AppColors.danger,
+    dangerBg: AppColors.dangerBg,
     overlaySelecaoToque: AppColors.overlaySelecaoToque,
     overlayPalavraNaFrase: AppColors.overlayPalavraNaFrase,
     overlayPrimaria: AppColors.overlayPrimaria,
@@ -99,6 +103,8 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
   final Color mint;
   final Color onCoral;
   final Color onMint;
+  final Color danger;
+  final Color dangerBg;
   final Color overlaySelecaoToque;
   final Color overlayPalavraNaFrase;
   final Color overlayPrimaria;
@@ -147,6 +153,8 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     Color? mint,
     Color? onCoral,
     Color? onMint,
+    Color? danger,
+    Color? dangerBg,
     Color? overlaySelecaoToque,
     Color? overlayPalavraNaFrase,
     Color? overlayPrimaria,
@@ -182,8 +190,11 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
       mint: mint ?? this.mint,
       onCoral: onCoral ?? this.onCoral,
       onMint: onMint ?? this.onMint,
+      danger: danger ?? this.danger,
+      dangerBg: dangerBg ?? this.dangerBg,
       overlaySelecaoToque: overlaySelecaoToque ?? this.overlaySelecaoToque,
-      overlayPalavraNaFrase: overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
+      overlayPalavraNaFrase:
+          overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
       overlayPrimaria: overlayPrimaria ?? this.overlayPrimaria,
       overlayEstadoAtivo: overlayEstadoAtivo ?? this.overlayEstadoAtivo,
       overlayRailAtivo: overlayRailAtivo ?? this.overlayRailAtivo,
@@ -227,6 +238,8 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
       mint: Color.lerp(mint, other.mint, t)!,
       onCoral: Color.lerp(onCoral, other.onCoral, t)!,
       onMint: Color.lerp(onMint, other.onMint, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      dangerBg: Color.lerp(dangerBg, other.dangerBg, t)!,
       overlaySelecaoToque: Color.lerp(
         overlaySelecaoToque,
         other.overlaySelecaoToque,
@@ -243,7 +256,11 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
         other.overlayEstadoAtivo,
         t,
       )!,
-      overlayRailAtivo: Color.lerp(overlayRailAtivo, other.overlayRailAtivo, t)!,
+      overlayRailAtivo: Color.lerp(
+        overlayRailAtivo,
+        other.overlayRailAtivo,
+        t,
+      )!,
       srsErreiFill: Color.lerp(srsErreiFill, other.srsErreiFill, t)!,
       srsBomFill: Color.lerp(srsBomFill, other.srsBomFill, t)!,
       queueNovos: Color.lerp(queueNovos, other.queueNovos, t)!,

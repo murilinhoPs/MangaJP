@@ -67,7 +67,10 @@ void main() {
     expect(tokens.borderStrong, const Color(0xFF403D4B));
     expect(tokens.rail, const Color(0xFF121117));
     expect(tokens.bg, const Color(0xFF0E0D12));
-    expect(tokens.overlaySelecaoToque, const Color.fromRGBO(255, 92, 122, 0.25));
+    expect(
+      tokens.overlaySelecaoToque,
+      const Color.fromRGBO(255, 92, 122, 0.25),
+    );
     expect(
       tokens.overlayPalavraNaFrase,
       const Color.fromRGBO(124, 99, 245, 0.22),
@@ -84,6 +87,16 @@ void main() {
     expect(tokens.wordState('known'), tokens.mint);
     expect(tokens.wordState('ignored'), tokens.text3);
     expect(tokens.wordState('saved'), tokens.text);
+    expect(tokens.danger, const Color(0xFFFF6A4D));
+    expect(tokens.dangerBg, const Color.fromRGBO(255, 106, 77, 0.14));
+  });
+
+  test('danger tokens live in tokens.json (danger-bg is 14% alpha)', () {
+    expect(AppColors.danger, const Color(0xFFFF6A4D));
+    expect(AppColors.dangerBg, const Color.fromRGBO(255, 106, 77, 0.14));
+    final json = File('lib/core/theme/tokens.json').readAsStringSync();
+    expect(json, contains('"danger": "#FF6A4D"'));
+    expect(json, contains('"danger-bg": "rgba(255,106,77,0.14)"'));
   });
 
   test('no amber, blue, or #FF4D6D in ColorScheme or tokens', () {
@@ -98,7 +111,9 @@ void main() {
       0xFF42A5F5,
       0xFF1B4D3E, // previous seed
     };
-    for (final color in _schemeColors(scheme).followedBy(_tokenColors(tokens))) {
+    for (final color in _schemeColors(
+      scheme,
+    ).followedBy(_tokenColors(tokens))) {
       final argb = color.toARGB32();
       expect(forbidden.contains(argb), isFalse, reason: 'unexpected $color');
       expect(
@@ -206,7 +221,10 @@ void main() {
         theme: AppTheme.dark,
         home: Builder(
           builder: (context) {
-            return Text('Caderno', style: Theme.of(context).textTheme.bodyMedium);
+            return Text(
+              'Caderno',
+              style: Theme.of(context).textTheme.bodyMedium,
+            );
           },
         ),
       ),
@@ -337,6 +355,8 @@ Iterable<Color> _tokenColors(MangaJpTokens tokens) {
     tokens.mint,
     tokens.onCoral,
     tokens.onMint,
+    tokens.danger,
+    tokens.dangerBg,
     tokens.overlaySelecaoToque,
     tokens.overlayPalavraNaFrase,
     tokens.overlayPrimaria,
