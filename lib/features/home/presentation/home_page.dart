@@ -701,7 +701,7 @@ class _DesktopCounts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final revisoes = counts?.revisoes ?? 0;
+    final waiting = counts?.waiting ?? 0;
     final novos = counts?.novos ?? 0;
     final drill = counts?.drill ?? 0;
     return Row(
@@ -709,10 +709,10 @@ class _DesktopCounts extends StatelessWidget {
       children: [
         Expanded(
           child: _DesktopCount(
-            key: HomeKeys.revisoes,
-            value: revisoes,
+            key: HomeKeys.due,
+            value: waiting,
             label: 'para revisar',
-            color: tokens.mint,
+            color: tokens.text,
           ),
         ),
         Expanded(

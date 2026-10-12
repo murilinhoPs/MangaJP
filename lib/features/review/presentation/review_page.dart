@@ -197,7 +197,6 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
           id: 'mostrar',
           label: ReviewLabels.mostrar,
           shortcut: 'Espaço',
-          primary: true,
           onPressed: _reveal,
         ),
     ];
@@ -482,10 +481,10 @@ ButtonStyle _ratingStyle(
   MangaJpTokens tokens, {
   required bool wide,
 }) {
-  // Bom is the only filled primary. Errei keeps the coral border from
-  // `srs.errei` but uses `surface` so two buttons are not highlighted.
+  // Bom is the only primary (mint fill + border). Errei / Difícil / Fácil
+  // share border + surface; only Errei's interval caption stays coral.
   final (Color border, Color fill, Color fg) = switch (rating) {
-    ReviewRating.again => (tokens.coral, tokens.surface, tokens.text),
+    ReviewRating.again => (tokens.border, tokens.surface, tokens.text),
     ReviewRating.hard => (tokens.border, tokens.surface, tokens.text),
     ReviewRating.good => (tokens.mint, tokens.srsBomFill, tokens.text),
     ReviewRating.easy => (tokens.border, tokens.surface, tokens.text),

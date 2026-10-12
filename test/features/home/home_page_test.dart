@@ -24,6 +24,7 @@ import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/review/domain/new_per_day.dart';
+import 'package:manga_jp/features/review/domain/review_labels.dart';
 import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/settings/presentation/settings_page.dart';
@@ -652,7 +653,7 @@ void main() {
         .widget<Text>(
           find
               .descendant(
-                of: find.byKey(HomeKeys.revisoes),
+                of: find.byKey(HomeKeys.due),
                 matching: find.byType(Text),
               )
               .first,
@@ -666,7 +667,7 @@ void main() {
           ),
         )
         .data;
-    expect(paraRevisar, '1');
+    expect(paraRevisar, '4');
     Color? desktopCountColor(Key key) {
       return tester
           .widget<Text>(
@@ -678,11 +679,78 @@ void main() {
           ?.color;
     }
 
-    expect(desktopCountColor(HomeKeys.revisoes), AppColors.mint);
+    expect(desktopCountColor(HomeKeys.due), AppColors.text);
     expect(desktopCountColor(HomeKeys.novos), AppColors.violet);
     expect(desktopCountColor(HomeKeys.drill), AppColors.coral);
     expect(badge, paraRevisar);
   });
+
+  for (final size in [const Size(390, 844), const Size(1280, 800)]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= 900;
+
+    testWidgets('Home due count matches Review remaining at $label', (
+      tester,
+    ) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: size,
+        cards: [
+          _SeedCard(
+            id: 'rev',
+            lemma: '残る',
+            phase: CardPhase.review,
+            dueAt: DateTime.utc(2026, 9, 1),
+          ),
+          _SeedCard(
+            id: 'new-a',
+            lemma: '新A',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1),
+          ),
+          _SeedCard(
+            id: 'new-b',
+            lemma: '新B',
+            phase: CardPhase.neu,
+            dueAt: DateTime.utc(2026, 10, 1, 0, 1),
+          ),
+          _SeedCard(
+            id: 'drill',
+            lemma: 'ドリル',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            drillToday: true,
+          ),
+        ],
+      );
+
+      final due = _homeDueCount(tester);
+      expect(due, '4');
+
+      if (wide) {
+        await tester.tap(find.byKey(ShellKeys.command('revisar')));
+      } else {
+        await tester.tap(find.byKey(HomeKeys.review));
+      }
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ReviewPage), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
+        ReviewLabels.restantes(int.parse(due)),
+      );
+    });
+  }
+}
+
+String _homeDueCount(WidgetTester tester) {
+  final due = find.byKey(HomeKeys.due);
+  final nested = find.descendant(of: due, matching: find.byType(Text));
+  if (nested.evaluate().isNotEmpty) {
+    return tester.widget<Text>(nested.first).data!;
+  }
+  return tester.widget<Text>(due).data!;
 }
 
 Color? _queueCountColor(WidgetTester tester, Key key) {

@@ -172,7 +172,7 @@ void main() {
           .style
           ?.backgroundColor
           ?.resolve(const <WidgetState>{});
-      expect(ratingSide(ReviewRating.again)?.color, AppColors.coral);
+      expect(ratingSide(ReviewRating.again)?.color, AppColors.border);
       expect(ratingFill(ReviewRating.again), AppColors.surface);
       expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
       expect(ratingFill(ReviewRating.hard), AppColors.surface);
@@ -696,8 +696,48 @@ void main() {
           tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data,
           ReviewLabels.restantes(1),
         );
-        expect(find.text(ReviewLabels.mostrar), findsWidgets);
         expect(find.text('Revelar'), findsNothing);
+        expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+        expect(find.byType(FilledButton), findsOneWidget);
+        if (wide) {
+          expect(find.text(ReviewLabels.mostrar), findsNWidgets(2));
+          expect(find.byKey(ShellKeys.command('mostrar')), findsOneWidget);
+          final bar = tester.widget<Material>(
+            find
+                .ancestor(
+                  of: find.byKey(ShellKeys.command('mostrar')),
+                  matching: find.byType(Material),
+                )
+                .first,
+          );
+          expect(bar.color, isNot(AppColors.overlayPrimaria));
+          expect(bar.color, isNot(AppColors.coral));
+          final shape = bar.shape! as RoundedRectangleBorder;
+          expect(shape.side.color, AppColors.border);
+          expect(shape.side.color, isNot(AppColors.coral));
+          expect(find.text('Espaço'), findsOneWidget);
+          final chip = tester.widget<Container>(
+            find
+                .ancestor(
+                  of: find.text('Espaço'),
+                  matching: find.byType(Container),
+                )
+                .first,
+          );
+          final chipBorder = (chip.decoration! as BoxDecoration).border!;
+          expect(chipBorder.top.color, isNot(AppColors.coral));
+        } else {
+          expect(find.text(ReviewLabels.mostrar), findsOneWidget);
+          expect(find.byKey(ShellKeys.command('mostrar')), findsNothing);
+          expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+          expect(
+            find.descendant(
+              of: find.byKey(ShellKeys.taskDock),
+              matching: find.text(ReviewLabels.mostrar),
+            ),
+            findsNothing,
+          );
+        }
       },
     );
 
@@ -757,12 +797,28 @@ void main() {
             .style
             ?.backgroundColor
             ?.resolve(const <WidgetState>{});
+        BorderSide? ratingSide(ReviewRating rating) => tester
+            .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+            .style
+            ?.side
+            ?.resolve(const <WidgetState>{});
         expect(ratingFill(ReviewRating.again), AppColors.surface);
+        expect(ratingSide(ReviewRating.again)?.color, AppColors.border);
         expect(ratingFill(ReviewRating.hard), AppColors.surface);
+        expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
         expect(ratingFill(ReviewRating.good), AppColors.srsBomFill);
+        expect(ratingSide(ReviewRating.good)?.color, AppColors.mint);
         expect(ratingFill(ReviewRating.easy), AppColors.surface);
+        expect(ratingSide(ReviewRating.easy)?.color, AppColors.border);
         expect(ratingFill(ReviewRating.again), isNot(AppColors.srsBomFill));
         expect(ratingFill(ReviewRating.again), isNot(AppColors.srsErreiFill));
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+              .style
+              ?.color,
+          AppColors.coralText,
+        );
 
         final ratingHeight = tester
             .getSize(find.byKey(ReviewKeys.rating(ReviewRating.good)))
@@ -770,6 +826,22 @@ void main() {
         if (wide) {
           expect(ratingHeight, greaterThanOrEqualTo(AppTargets.min));
           expect(find.byKey(ShellKeys.taskDock), findsNothing);
+          // Rail badge uses waiting (= remaining), so "1" is badge + keycap.
+          expect(
+            tester
+                .widget<Text>(
+                  find.descendant(
+                    of: find.byKey(ShellKeys.reviewBadge),
+                    matching: find.byType(Text),
+                  ),
+                )
+                .data,
+            '1',
+          );
+          expect(find.text('1'), findsNWidgets(2));
+          expect(find.text('2'), findsOneWidget);
+          expect(find.text('3'), findsOneWidget);
+          expect(find.text('4'), findsOneWidget);
         } else {
           expect(ratingHeight, AppTargets.respostaReviewMobile);
           final goodBox = tester.getRect(
@@ -777,11 +849,11 @@ void main() {
           );
           final dockBox = tester.getRect(find.byKey(ShellKeys.taskDock));
           expect(goodBox.bottom, lessThanOrEqualTo(dockBox.top + 0.5));
+          expect(find.text('1'), findsNothing);
+          expect(find.text('2'), findsNothing);
+          expect(find.text('3'), findsNothing);
+          expect(find.text('4'), findsNothing);
         }
-        expect(find.text('1'), wide ? findsOneWidget : findsNothing);
-        expect(find.text('2'), wide ? findsOneWidget : findsNothing);
-        expect(find.text('3'), wide ? findsOneWidget : findsNothing);
-        expect(find.text('4'), wide ? findsOneWidget : findsNothing);
       },
     );
 

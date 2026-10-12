@@ -212,7 +212,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final path = _path;
     final wide = ShellLayout.isWide(context);
     final counts = ref.watch(homeReviewCountsProvider);
-    final revisoes = counts.asData?.value.revisoes ?? 0;
+    final waiting = counts.asData?.value.waiting ?? 0;
     ref.watch(homeRecentPagesProvider);
     final task = ShellLayout.isTask(path);
 
@@ -224,7 +224,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         children: [
           AppRail(
             path: path,
-            reviewBadge: revisoes,
+            reviewBadge: waiting,
             recentPageId: _recentPageId,
           ),
           Expanded(
