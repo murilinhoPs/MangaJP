@@ -12,6 +12,11 @@ const kCaptureShotCrops = int.fromEnvironment(
   defaultValue: 0,
 );
 
+/// After the shot loads, open the discard-confirm dialog (print helper).
+const kCaptureShotExitDialog = bool.fromEnvironment(
+  'MANGAJP_CAPTURE_EXIT_DIALOG',
+);
+
 Uint8List? captureShotImage() {
   if (kCaptureShotCrops <= 0) {
     return null;

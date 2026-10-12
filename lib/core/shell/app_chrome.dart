@@ -162,6 +162,17 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     if (_paletteOpen) {
       return;
     }
+    // `/capture` owns Esc (confirm if there are unsaved crops). Same path as
+    // the dock X and Android back — AppBar back is gone.
+    if (_path == '/capture') {
+      for (final action in _registry.task?.actions ?? const <ShellAction>[]) {
+        if (action.id == 'cancel') {
+          action.onPressed();
+          return;
+        }
+      }
+      return;
+    }
     final router = GoRouter.maybeOf(context);
     if (router != null && router.canPop()) {
       router.pop();

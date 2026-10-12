@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
@@ -36,6 +37,9 @@ abstract final class CaptureKeys {
   static const pickGallery = Key('capture-pick-gallery');
   static const overlay = Key('capture-overlay');
   static const recortesPanel = Key('capture-recortes-panel');
+  static const discardDialog = Key('capture-discard-dialog');
+  static const discardCancel = Key('capture-discard-cancel');
+  static const discardConfirm = Key('capture-discard-confirm');
 
   static Key cropNumber(int number) => Key('capture-crop-number-$number');
   static Key recorteRow(int number) => Key('capture-recorte-row-$number');
@@ -73,15 +77,20 @@ class _CapturePageState extends ConsumerState<CapturePage> {
   String? _pageId;
   String? _error;
   bool _busy = false;
+  bool _exitDialogOpen = false;
 
   @override
   void initState() {
     super.initState();
     _incoming = widget.image;
     _applyInitialCrops();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      await _load();
+      if (kCaptureShotExitDialog && mounted) {
+        await _requestExit();
       }
     });
   }
@@ -164,7 +173,52 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     await _load();
   }
 
-  void _cancel() => popTaskOrHome(context);
+  bool get _hasUnsavedCrops => _bytes != null && _crops.isNotEmpty;
+
+  void _leave() => popTaskOrHome(context);
+
+  /// Esc, dock X, and Android back. Confirm only when there are drawn crops.
+  Future<void> _requestExit() async {
+    if (_exitDialogOpen) {
+      return;
+    }
+    if (!_hasUnsavedCrops) {
+      _leave();
+      return;
+    }
+    _exitDialogOpen = true;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final tokens = dialogContext.tokens;
+        return AlertDialog(
+          key: CaptureKeys.discardDialog,
+          title: const Text(CaptureLabels.descartarTitulo),
+          content: const Text(CaptureLabels.descartarCorpo),
+          actions: [
+            TextButton(
+              key: CaptureKeys.discardCancel,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(CaptureLabels.cancelar),
+            ),
+            TextButton(
+              key: CaptureKeys.discardConfirm,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                CaptureLabels.descartar,
+                style: TextStyle(color: tokens.coral),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    _exitDialogOpen = false;
+    if (!mounted || discard != true) {
+      return;
+    }
+    _leave();
+  }
 
   Future<void> _confirm() async {
     final bytes = _bytes;
@@ -245,7 +299,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
           id: 'cancel',
           label: CaptureLabels.cancelar,
           shortcut: 'Esc',
-          onPressed: _cancel,
+          onPressed: _requestExit,
         ),
         ShellAction(
           id: 'confirm',
@@ -258,90 +312,119 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     );
     return ShellBinder(
       task: task,
-      child: Column(
-        key: CaptureKeys.page,
-        children: [
-          Expanded(
-            child: _workspace(wide: wide, tokens: tokens),
-          ),
-          if (cropped != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Crop PNG: ${cropped.bytes.length} bytes '
-                '(${cropped.width}×${cropped.height})',
-                key: CaptureKeys.cropBytes,
-                textAlign: TextAlign.center,
-              ),
+      child: Shortcuts(
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.escape): _CaptureExitIntent(),
+        },
+        child: Actions(
+          actions: {
+            _CaptureExitIntent: CallbackAction<_CaptureExitIntent>(
+              onInvoke: (_) {
+                _requestExit();
+                return null;
+              },
             ),
-          if (_ocr != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
-                key: CaptureKeys.ocrText,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          if (!wide) ...[
-            if (meta.isNotEmpty)
-              Padding(
-                key: ShellKeys.dockMeta,
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-                child: Row(
-                  children: [
-                    Expanded(
+          },
+          child: Focus(
+            autofocus: true,
+            child: PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, _) {
+                if (didPop) {
+                  return;
+                }
+                _requestExit();
+              },
+              child: Column(
+                key: CaptureKeys.page,
+                children: [
+                  Expanded(
+                    child: _workspace(wide: wide, tokens: tokens),
+                  ),
+                  if (cropped != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                       child: Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypeScale.metadados12.copyWith(
-                          color: tokens.text2,
-                        ),
+                        'Crop PNG: ${cropped.bytes.length} bytes '
+                        '(${cropped.width}×${cropped.height})',
+                        key: CaptureKeys.cropBytes,
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    if (hint != null) ...[
-                      const SizedBox(width: 12),
-                      Text(
-                        hint,
-                        style: AppTypeScale.metadados11.copyWith(
-                          color: tokens.text3,
+                  if (_ocr != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Text(
+                        'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
+                        key: CaptureKeys.ocrText,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  if (!wide) ...[
+                    if (meta.isNotEmpty)
+                      Padding(
+                        key: ShellKeys.dockMeta,
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                meta,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypeScale.metadados12.copyWith(
+                                  color: tokens.text2,
+                                ),
+                              ),
+                            ),
+                            if (hint != null) ...[
+                              const SizedBox(width: 12),
+                              Text(
+                                hint,
+                                style: AppTypeScale.metadados11.copyWith(
+                                  color: tokens.text3,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    ],
+                    TaskDock(
+                      leading: [
+                        DockIconButton(
+                          key: ShellKeys.dockAction('close'),
+                          icon: Icons.close,
+                          tooltip: CaptureLabels.cancelar,
+                          onPressed: _requestExit,
+                        ),
+                      ],
+                      trailing: [
+                        DockTextButton(
+                          key: CaptureKeys.confirm,
+                          label: CaptureLabels.confirmar,
+                          primary: true,
+                          enabled: canConfirm,
+                          onPressed: canConfirm ? _confirm : null,
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                ],
               ),
-            TaskDock(
-              leading: [
-                DockIconButton(
-                  key: ShellKeys.dockAction('close'),
-                  icon: Icons.close,
-                  tooltip: CaptureLabels.cancelar,
-                  onPressed: _cancel,
-                ),
-              ],
-              trailing: [
-                DockTextButton(
-                  key: CaptureKeys.confirm,
-                  label: CaptureLabels.confirmar,
-                  primary: true,
-                  enabled: canConfirm,
-                  onPressed: canConfirm ? _confirm : null,
-                ),
-              ],
             ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -531,4 +614,8 @@ class _RecortesPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CaptureExitIntent extends Intent {
+  const _CaptureExitIntent();
 }

@@ -6,6 +6,12 @@ abstract final class CaptureLabels {
   static const arrasteParaCriar = 'arraste para criar';
   static const escolherGaleria = 'Escolher da galeria';
 
+  /// Exit-confirm copy. Motif / draft review — not in the Deck.
+  static const descartarTitulo = 'Descartar recortes?';
+  static const descartarCorpo =
+      'Os recortes ainda não passaram pelo OCR e serão perdidos.';
+  static const descartar = 'Descartar';
+
   static String recortesMeta(int count) {
     if (count <= 0) {
       return '';

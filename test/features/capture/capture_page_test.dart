@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
+import 'package:manga_jp/core/router/routes.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
@@ -310,7 +312,9 @@ void main() {
     expect(find.text(CaptureLabels.arrasteParaCriar), findsOneWidget);
   });
 
-  testWidgets('cancel from gallery crop returns to Home', (tester) async {
+  testWidgets('cancel from gallery crop confirms then returns to Home', (
+    tester,
+  ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
@@ -332,6 +336,9 @@ void main() {
 
     await tester.tap(find.byKey(ShellKeys.dockAction('close')));
     await tester.pumpAndSettle();
+    expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
+    await tester.tap(find.byKey(CaptureKeys.discardConfirm));
+    await tester.pumpAndSettle();
 
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(CapturePage), findsNothing);
@@ -339,6 +346,77 @@ void main() {
       GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
       '/home',
     );
+  });
+
+  testWidgets('Esc with no crops exits to Home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openEmptyCapture(tester, db: db);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+  });
+
+  testWidgets('dock X with no crops exits to Home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openEmptyCapture(tester, db: db);
+
+    await tester.tap(find.byKey(ShellKeys.dockAction('close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+  });
+
+  testWidgets('Esc with crops shows dialog; cancel keeps the crops', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openGalleryCrop(tester, db: db, png: png);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
+    expect(find.text(CaptureLabels.descartarTitulo), findsOneWidget);
+    expect(find.text(CaptureLabels.descartarCorpo), findsOneWidget);
+
+    await tester.tap(find.byKey(CaptureKeys.discardCancel));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CapturePage), findsOneWidget);
+    expect(find.byKey(CaptureKeys.overlay), findsOneWidget);
+    expect(find.text(CaptureLabels.recortesMeta(1)), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('dock X with crops shows dialog; confirm exits to Home', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openGalleryCrop(tester, db: db, png: png);
+
+    await tester.tap(find.byKey(ShellKeys.dockAction('close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
+    expect(find.byType(CapturePage), findsOneWidget);
+
+    await tester.tap(find.byKey(CaptureKeys.discardConfirm));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CapturePage), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
   });
 
   testWidgets('confirm persists every crop in RTL order', (tester) async {
@@ -362,6 +440,49 @@ const _threeCrops = <CropRect>[
   CropRect(left: 0.54, top: 0.06, width: 0.38, height: 0.30),
   CropRect(left: 0.52, top: 0.54, width: 0.40, height: 0.32),
 ];
+
+Future<void> _openEmptyCapture(
+  WidgetTester tester, {
+  required AppDatabase db,
+}) async {
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(MangaJpApp(overrides: _harness(db: db)));
+  await tester.pumpAndSettle();
+  final ctx = tester.element(find.byType(HomePage));
+  const CaptureRoute().go(ctx);
+  await tester.pumpAndSettle();
+  expect(find.byType(CapturePage), findsOneWidget);
+  expect(find.byKey(CaptureKeys.pickGallery), findsOneWidget);
+}
+
+Future<void> _openGalleryCrop(
+  WidgetTester tester, {
+  required AppDatabase db,
+  required Uint8List png,
+}) async {
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(
+    MangaJpApp(
+      overrides: _harness(
+        db: db,
+        source: FakeImageSourceService(galleryImage: IncomingImage(bytes: png)),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(HomeKeys.gallery));
+  await tester.pumpAndSettle();
+  expect(find.byType(CapturePage), findsOneWidget);
+  expect(find.byKey(CaptureKeys.overlay), findsOneWidget);
+}
 
 Future<void> _pumpCrop(
   WidgetTester tester, {
