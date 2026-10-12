@@ -466,6 +466,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         ),
         Expanded(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(child: canvas),
               _RecortesPanel(

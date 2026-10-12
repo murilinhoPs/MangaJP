@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import 'settings_controller.dart';
 
@@ -15,7 +16,10 @@ class SettingsPage extends ConsumerWidget {
       backgroundColor: context.tokens.bg,
       appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: ShellLayout.withCommandBarPadding(
+          context,
+          const EdgeInsets.all(16),
+        ),
         children: [
           hello.when(
             data: (value) => Card(

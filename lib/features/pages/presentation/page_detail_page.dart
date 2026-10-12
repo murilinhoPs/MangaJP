@@ -510,7 +510,10 @@ class _PageOcrBody extends ConsumerWidget {
         : AppTypeScale.balaoPaginaMobileJp;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      ),
       children: [
         for (final crop in crops)
           Padding(

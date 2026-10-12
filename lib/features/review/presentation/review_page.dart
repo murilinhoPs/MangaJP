@@ -277,9 +277,12 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
             metaHint: remaining,
             actions: actions,
             child: Padding(
-              padding: wide
-                  ? const EdgeInsets.fromLTRB(48, 36, 48, 24)
-                  : const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              padding: ShellLayout.withCommandBarPadding(
+                context,
+                wide
+                    ? const EdgeInsets.fromLTRB(48, 36, 48, 24)
+                    : const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -450,7 +453,10 @@ class _ReviewStatus extends StatelessWidget {
     final tokens = context.tokens;
     final body = Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: ShellLayout.withCommandBarPadding(
+          context,
+          const EdgeInsets.all(24),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(

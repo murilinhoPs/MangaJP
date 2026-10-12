@@ -118,9 +118,7 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
                   suffixIcon: wide
                       ? const Padding(
                           padding: EdgeInsets.only(right: 10),
-                          child: UnconstrainedBox(
-                            child: KbdChip(label: '/'),
-                          ),
+                          child: UnconstrainedBox(child: KbdChip(label: '/')),
                         )
                       : null,
                 ),
@@ -158,11 +156,8 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
         ),
         Expanded(
           child: entries.when(
-            data: (items) => _NotebookList(
-              entries: items,
-              query: query,
-              wide: wide,
-            ),
+            data: (items) =>
+                _NotebookList(entries: items, query: query, wide: wide),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Center(
               child: Padding(
@@ -248,7 +243,10 @@ class _NotebookList extends StatelessWidget {
     final padH = wide ? 48.0 : 16.0;
     return ListView.separated(
       key: NotebookKeys.list,
-      padding: EdgeInsets.fromLTRB(padH, 4, padH, wide ? 32 : 16),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        EdgeInsets.fromLTRB(padH, 4, padH, wide ? 32 : 16),
+      ),
       itemCount: entries.length,
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {

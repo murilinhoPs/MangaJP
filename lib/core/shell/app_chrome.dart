@@ -228,23 +228,20 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           ),
           Expanded(
             child: Stack(
-              // Side panels paint through [clearance]; clipping here cuts
-              // their bottom border / radius (M1.24).
-              clipBehavior: Clip.none,
               children: [
-                Padding(
-                  padding: EdgeInsets.only(bottom: clearance),
-                  child: MediaQuery(
-                    data: media.copyWith(
-                      padding: media.padding.copyWith(
-                        bottom: media.padding.bottom + clearance,
-                      ),
-                      viewPadding: media.viewPadding.copyWith(
-                        bottom: media.viewPadding.bottom + clearance,
-                      ),
+                // Full-size body: physical bottom padding cut side-panel
+                // borders at [clearance] (M1.24). MediaQuery.padding carries
+                // the inset so lists keep actions above the bar.
+                MediaQuery(
+                  data: media.copyWith(
+                    padding: media.padding.copyWith(
+                      bottom: media.padding.bottom + clearance,
                     ),
-                    child: body,
+                    viewPadding: media.viewPadding.copyWith(
+                      bottom: media.viewPadding.bottom + clearance,
+                    ),
                   ),
+                  child: body,
                 ),
                 Positioned(
                   left: 0,

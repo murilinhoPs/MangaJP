@@ -147,9 +147,12 @@ class _NotebookWordBody extends ConsumerWidget {
         : AppTypeScale.detalheMobileJp;
 
     return SingleChildScrollView(
-      padding: wide
-          ? const EdgeInsets.fromLTRB(48, 24, 48, 48)
-          : const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        wide
+            ? const EdgeInsets.fromLTRB(48, 24, 48, 48)
+            : const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      ),
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(

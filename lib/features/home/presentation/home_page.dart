@@ -84,7 +84,10 @@ class _MobileHome extends StatelessWidget {
         ? null
         : recent!.first;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      ),
       children: [
         const Text('MangaJP', style: AppTypeScale.tituloTela),
         const SizedBox(height: 4),
@@ -131,7 +134,10 @@ class _DesktopHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(48, 36, 48, 24),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        const EdgeInsets.fromLTRB(48, 36, 48, 24),
+      ),
       children: [
         _DesktopCounts(counts: counts),
         const SizedBox(height: 40),

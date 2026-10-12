@@ -20,12 +20,23 @@ abstract final class ShellLayout {
   static const double commandBarClearance = commandBarBottom + commandBarHeight;
   static const double jpSealSize = 34;
 
-  /// Extra height [AppChrome] reserved under the body for the floating bar.
+  /// Bottom inset [AppChrome] publishes as [MediaQuery.padding] for the bar.
   ///
-  /// Side panels read this (via [MediaQuery.padding]) so they can paint their
-  /// full border through the gap without covering bar actions.
+  /// The route body is full-height so side panels paint their border to the
+  /// window edge. Scrollables should add this to their own padding so actions
+  /// stay above the CommandBar.
   static double commandBarPaddingOf(BuildContext context) {
     return MediaQuery.paddingOf(context).bottom;
+  }
+
+  /// [padding] with [commandBarPaddingOf] added to the bottom.
+  static EdgeInsets withCommandBarPadding(
+    BuildContext context,
+    EdgeInsets padding,
+  ) {
+    return padding.copyWith(
+      bottom: padding.bottom + commandBarPaddingOf(context),
+    );
   }
 
   static bool isWide(BuildContext context) {
@@ -43,11 +54,11 @@ abstract final class ShellLayout {
   static bool showMobileNavCards(String path) => !isTask(path);
 }
 
-/// Full-bleed side drawer / inspector next to padded shell content.
+/// Full-height side drawer / inspector.
 ///
-/// [AppChrome] still insets the route body by [ShellLayout.commandBarClearance]
-/// so lists and buttons stay above the CommandBar. This box paints through that
-/// inset so the panel's border and radius are not cut off.
+/// [AppChrome] sizes the route to the window and publishes the bar inset as
+/// [MediaQuery.padding]. This box stretches to that height so border and
+/// radius paint in full; inner lists use [ShellLayout.commandBarPaddingOf].
 class ShellSidePanel extends StatelessWidget {
   const ShellSidePanel({super.key, required this.width, required this.child});
 
@@ -56,23 +67,7 @@ class ShellSidePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final extra = ShellLayout.commandBarPaddingOf(context);
-    final panel = extra <= 0
-        ? child
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              final height = constraints.maxHeight + extra;
-              return OverflowBox(
-                alignment: Alignment.topCenter,
-                minWidth: width,
-                maxWidth: width,
-                minHeight: height,
-                maxHeight: height,
-                child: SizedBox(width: width, height: height, child: child),
-              );
-            },
-          );
-    return SizedBox(width: width, child: panel);
+    return SizedBox(width: width, child: child);
   }
 }
 
