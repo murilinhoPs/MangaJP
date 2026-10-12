@@ -46,7 +46,11 @@ class DictionaryLookup {
         if (len > bestLen || (len == bestLen && start < bestStart)) {
           bestLen = len;
           bestStart = start;
-          best = LookupResult(surface: surface, entries: entries);
+          best = LookupResult(
+            surface: surface,
+            entries: entries,
+            start: start,
+          );
         }
         break;
       }
@@ -56,6 +60,14 @@ class DictionaryLookup {
 
   /// Contiguous kana/kanji run covering [tapIndex], used when JMdict misses.
   String? missSurface(String text, {int tapIndex = 0}) {
+    return missAt(text, tapIndex: tapIndex)?.surface;
+  }
+
+  /// Same run as [missSurface], with UTF-16 offsets into [text].
+  ({String surface, int start, int end})? missAt(
+    String text, {
+    int tapIndex = 0,
+  }) {
     if (text.isEmpty) {
       return null;
     }
@@ -73,7 +85,7 @@ class DictionaryLookup {
     while (end < text.length && _isJapaneseUnit(text.codeUnitAt(end))) {
       end++;
     }
-    return text.substring(start, end);
+    return (surface: text.substring(start, end), start: start, end: end);
   }
 
   List<DictEntry> _entriesForSurface(String surface) {

@@ -18,6 +18,17 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
     return into(capturedCrops).insert(row);
   }
 
+  Future<void> updateCropOcr({
+    required String cropId,
+    required String ocrText,
+  }) {
+    return (update(
+      capturedCrops,
+    )..where((t) => t.id.equals(cropId))).write(
+      CapturedCropsCompanion(ocrText: Value(ocrText)),
+    );
+  }
+
   Future<List<CapturedCrop>> listCrops() {
     return (select(
       capturedCrops,

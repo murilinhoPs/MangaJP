@@ -5,6 +5,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/app_database_provider.dart';
 import '../../../core/utils/ids.dart';
 import '../domain/word_state.dart';
+import '../domain/word_state_index.dart';
 
 part 'words_repository.g.dart';
 
@@ -33,8 +34,8 @@ class WordsRepository {
   ///
   /// Writes `words` (keyed by `seq`), `word_states=saved` when missing, and
   /// `crop_words`. A second save is a no-op. Existing learning / known /
-  /// ignored states are left as-is.
-  Future<void> saveFromLookup({
+  /// ignored states are left as-is. Returns the word id.
+  Future<String> saveFromLookup({
     required String cropId,
     required int seq,
     required String lemma,
@@ -63,6 +64,7 @@ class WordsRepository {
           createdAt: DateTime.now().toUtc(),
         ),
       );
+      return wordId;
     });
   }
 
@@ -70,7 +72,8 @@ class WordsRepository {
   ///
   /// [surface] becomes `lemma` / `reading`. [userNote] is required (trimmed
   /// non-empty). Id is `custom:<uuid>`. Gloss is not stored. No card.
-  Future<void> saveCustomFromLookup({
+  /// Returns the new word id.
+  Future<String> saveCustomFromLookup({
     required String cropId,
     required String surface,
     required String userNote,
@@ -104,7 +107,21 @@ class WordsRepository {
           createdAt: DateTime.now().toUtc(),
         ),
       );
+      return wordId;
     });
+  }
+
+  /// Listed Caderno states for Página coloring (`seq` and `lemma`).
+  Future<WordStateIndex> stateIndex() async {
+    final rows = await _db.wordsDao.listWithStates();
+    final bySeq = <int, WordState>{};
+    final byLemma = <String, WordState>{};
+    for (final (word, stateRow) in rows) {
+      final state = WordState.fromDb(stateRow.state);
+      bySeq[word.seq] = state;
+      byLemma[word.lemma] = state;
+    }
+    return WordStateIndex(bySeq: bySeq, byLemma: byLemma);
   }
 
   /// Delete [wordId] from the Caderno.

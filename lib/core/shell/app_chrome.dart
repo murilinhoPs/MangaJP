@@ -242,7 +242,11 @@ class _AppChromeState extends ConsumerState<AppChrome> {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: CommandBar(actions: barActions),
+                  child: CommandBar(
+                    actions: barActions,
+                    meta: _registry.task?.meta,
+                    metaHint: _registry.task?.metaHint,
+                  ),
                 ),
               ],
             ),

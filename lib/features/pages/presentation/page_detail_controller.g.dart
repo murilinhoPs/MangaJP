@@ -106,3 +106,47 @@ abstract class _$PageCrops extends $AsyncNotifier<List<PageCrop>> {
     return element.handleCreate(ref, () => build(_$args));
   }
 }
+
+/// Caderno states for Página token colors. Invalidate after lookup actions.
+
+@ProviderFor(listedWordStates)
+final listedWordStatesProvider = ListedWordStatesProvider._();
+
+/// Caderno states for Página token colors. Invalidate after lookup actions.
+
+final class ListedWordStatesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<WordStateIndex>,
+          WordStateIndex,
+          FutureOr<WordStateIndex>
+        >
+    with $FutureModifier<WordStateIndex>, $FutureProvider<WordStateIndex> {
+  /// Caderno states for Página token colors. Invalidate after lookup actions.
+  ListedWordStatesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'listedWordStatesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$listedWordStatesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<WordStateIndex> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<WordStateIndex> create(Ref ref) {
+    return listedWordStates(ref);
+  }
+}
+
+String _$listedWordStatesHash() => r'5897a49da614ebf72af35ff064ae9829f3f0606d';

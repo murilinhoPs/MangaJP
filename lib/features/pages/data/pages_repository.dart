@@ -20,6 +20,12 @@ class PagesRepository {
 
   final AppDatabase _db;
 
+  /// Persist one OCR crop on [pageId].
+  ///
+  /// Dedupes by **geometry** (`left`/`top`/`width`/`height`) on that page:
+  /// identical rects count as one row, and an OCR retry of a crop already
+  /// written for this page returns the existing row instead of inserting
+  /// another. A different rect on the same page is a new crop.
   Future<PageCrop> saveRecognizedCrop({
     required String pageId,
     required String sourceSha256,
@@ -82,6 +88,13 @@ class PagesRepository {
   Future<List<PageCrop>> cropsForPage(String pageId) async {
     final rows = await _db.pagesDao.cropsForPage(pageId);
     return [for (final row in rows) _toCrop(row)];
+  }
+
+  Future<void> updateCropOcr({
+    required String cropId,
+    required String ocrText,
+  }) {
+    return _db.pagesDao.updateCropOcr(cropId: cropId, ocrText: ocrText);
   }
 
   Future<MangaPage?> pageById(String id) async {

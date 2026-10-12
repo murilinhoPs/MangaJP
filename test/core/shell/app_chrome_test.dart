@@ -92,6 +92,8 @@ void main() {
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
     expect(find.byKey(ShellKeys.dockAction('back')), findsOneWidget);
     expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.edit), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.add), findsOneWidget);
     expect(find.text(pageId), findsWidgets);
   });
 
