@@ -161,12 +161,13 @@ void main() {
         final list = tester.widget<ListView>(listFinder);
         const base = 24.0;
         final extra = size == desktop ? ShellLayout.commandBarClearance : 0.0;
+        final bottom = (list.padding! as EdgeInsets).bottom;
         expect(
-          list.padding?.bottom,
+          bottom,
           base + extra,
           reason:
-              'Página list padding.bottom must be $base + command-bar '
-              '($extra), not device safe area 34',
+              'Página list padding.bottom=$bottom must be $base + '
+              'command-bar ($extra), not device safe area 34',
         );
       },
     );
