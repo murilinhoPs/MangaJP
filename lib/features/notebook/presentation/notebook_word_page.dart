@@ -409,12 +409,11 @@ List<Widget> _dangerDialogActions(
     FilledButton(
       key: confirmKey,
       style: FilledButton.styleFrom(
-        backgroundColor: Color.alphaBlend(
-          tokens.dangerBg,
-          tokens.surfaceRaised,
-        ),
-        foregroundColor: tokens.danger,
+        backgroundColor: tokens.danger,
+        foregroundColor: tokens.onCoral,
         surfaceTintColor: Colors.transparent,
+        // `side` must be set: filledButtonTheme's coral outline would
+        // otherwise show around the solid danger fill.
         side: BorderSide(color: tokens.danger),
       ),
       onPressed: () => Navigator.of(context).pop(true),

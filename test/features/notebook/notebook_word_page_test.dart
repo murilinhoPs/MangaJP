@@ -1131,23 +1131,27 @@ void main() {
           find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
         );
         expect(
-          confirm.style?.side?.resolve(const <WidgetState>{})?.color,
-          AppColors.danger,
-        );
-        expect(
-          confirm.style?.foregroundColor?.resolve(const <WidgetState>{}),
+          confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
           AppColors.danger,
         );
         expect(
           confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
-          Color.alphaBlend(AppColors.dangerBg, AppColors.surfaceRaised),
+          const Color(0xFFFF6A4D),
+        );
+        expect(
+          confirm.style?.foregroundColor?.resolve(const <WidgetState>{}),
+          AppColors.onCoral,
+        );
+        expect(
+          confirm.style?.side?.resolve(const <WidgetState>{})?.color,
+          AppColors.danger,
         );
 
         final filledDanger = tester
             .widgetList<FilledButton>(find.byType(FilledButton))
             .where(
               (btn) =>
-                  btn.style?.side?.resolve(const <WidgetState>{})?.color ==
+                  btn.style?.backgroundColor?.resolve(const <WidgetState>{}) ==
                   AppColors.danger,
             );
         expect(filledDanger, hasLength(1));
