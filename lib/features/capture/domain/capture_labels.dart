@@ -1,3 +1,5 @@
+import '../../../core/copy/recortes_label.dart';
+
 /// Portuguese copy for `/capture` (Design Deck Crop / Captura).
 abstract final class CaptureLabels {
   static const confirmar = 'Confirmar crop';
@@ -16,7 +18,7 @@ abstract final class CaptureLabels {
     if (count <= 0) {
       return '';
     }
-    final noun = count == 1 ? '1 recorte' : '$count recortes';
+    final noun = RecortesLabel.count(count);
     return '$noun · ordem ← automática';
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/copy/recortes_label.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
@@ -833,9 +834,7 @@ class _RecentPageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final radius = BorderRadius.circular(AppRadius.linha);
-    final recortes = page.cropCount == 1
-        ? '1 recorte'
-        : '${page.cropCount} recortes';
+    final recortes = RecortesLabel.count(page.cropCount);
     final when = HomeDates.relativeDay(page.createdAt, now);
     return Material(
       color: tokens.surface,

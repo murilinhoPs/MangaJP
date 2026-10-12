@@ -24,8 +24,9 @@ abstract final class PageLayout {
   static const double lookupSheetFraction = 0.5;
 }
 
-/// Screenshot helper. Off by default.
+/// Screenshot / print helper only — not a production feature.
 ///
-/// `flutter run --dart-define=MANGAJP_PAGE_LOOKUP=true` opens lookup on 食べた
-/// (or the first crop) after the page loads.
+/// Default `false`, so release tree-shaking drops `_maybeAutoLookup`.
+/// Enable with `flutter run --dart-define=MANGAJP_PAGE_LOOKUP=true` to open
+/// lookup on 食べた (or the first crop) after the page loads.
 const kPageShotLookup = bool.fromEnvironment('MANGAJP_PAGE_LOOKUP');

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../dictionary/data/dictionary_lookup.dart';
 import '../../words/domain/word_state.dart';
 import '../../words/domain/word_state_index.dart';
@@ -35,25 +37,14 @@ List<OcrTokenSpan> tokenizeOcr(
   while (i < text.length) {
     final hit = lookup.findAt(text, tapIndex: i);
     if (hit != null && hit.end > i && hit.start <= i) {
-      if (hit.start < i) {
-        spans.add(
-          OcrTokenSpan(
-            start: i,
-            end: hit.end,
-            seq: hit.selected.seq,
-            state: states.ofSeq(hit.selected.seq),
-          ),
-        );
-      } else {
-        spans.add(
-          OcrTokenSpan(
-            start: hit.start,
-            end: hit.end,
-            seq: hit.selected.seq,
-            state: states.ofSeq(hit.selected.seq),
-          ),
-        );
-      }
+      spans.add(
+        OcrTokenSpan(
+          start: math.max(hit.start, i),
+          end: hit.end,
+          seq: hit.selected.seq,
+          state: states.ofSeq(hit.selected.seq),
+        ),
+      );
       i = hit.end;
       continue;
     }
