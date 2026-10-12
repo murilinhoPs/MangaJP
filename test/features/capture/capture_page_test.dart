@@ -19,6 +19,8 @@ import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/capture/presentation/crop_overlay.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
+import 'package:manga_jp/features/ocr/domain/ocr_engine.dart';
+import 'package:manga_jp/features/ocr/domain/ocr_result.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 
 import '../ocr/fake_ocr_engine.dart';
@@ -28,7 +30,7 @@ import 'fixture_png.dart';
 List<Override> _harness({
   required AppDatabase db,
   ImageSourceService? source,
-  FakeOcrEngine ocr = const FakeOcrEngine(),
+  OcrEngine ocr = const FakeOcrEngine(),
 }) {
   return [
     appDatabaseProvider.overrideWith((ref) => db),
@@ -310,7 +312,7 @@ void main() {
     expect(find.text(CaptureLabels.arrasteParaCriar), findsOneWidget);
   });
 
-  testWidgets('cancel from gallery crop confirms then returns to Home', (
+  testWidgets('cancel from gallery crop without edit returns to Home', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
@@ -334,10 +336,8 @@ void main() {
 
     await tester.tap(find.byKey(ShellKeys.dockAction('close')));
     await tester.pumpAndSettle();
-    expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
-    await tester.tap(find.byKey(CaptureKeys.discardConfirm));
-    await tester.pumpAndSettle();
 
+    expect(find.byType(AlertDialog), findsNothing);
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(CapturePage), findsNothing);
     expect(
@@ -372,12 +372,26 @@ void main() {
     expect(find.byType(CapturePage), findsNothing);
   });
 
-  testWidgets('Esc with crops shows dialog; cancel keeps the crops', (
+  testWidgets('Esc without edit exits to Home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openGalleryCrop(tester, db: db, png: png);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+  });
+
+  testWidgets('Esc after edit shows dialog; cancel keeps the crops', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await _openGalleryCrop(tester, db: db, png: png);
+    await _editActiveCrop(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -396,12 +410,13 @@ void main() {
     expect(find.byType(HomePage), findsNothing);
   });
 
-  testWidgets('dock X with crops shows dialog; confirm exits to Home', (
+  testWidgets('dock X after edit shows dialog; confirm exits to Home', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await _openGalleryCrop(tester, db: db, png: png);
+    await _editActiveCrop(tester);
 
     await tester.tap(find.byKey(ShellKeys.dockAction('close')));
     await tester.pumpAndSettle();
@@ -415,6 +430,73 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.byType(CapturePage), findsNothing);
     expect(find.byType(HomePage), findsOneWidget);
+  });
+
+  testWidgets(
+    'Android back after edit shows dialog; cancel keeps; discard goes Home',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _openGalleryCrop(tester, db: db, png: png);
+      await _editActiveCrop(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
+      expect(find.text(CaptureLabels.descartarTitulo), findsOneWidget);
+
+      await tester.tap(find.byKey(CaptureKeys.discardCancel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.byKey(CaptureKeys.overlay), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byKey(CaptureKeys.discardDialog), findsOneWidget);
+      await tester.tap(find.byKey(CaptureKeys.discardConfirm));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(CapturePage), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+    },
+  );
+
+  testWidgets('Android back without image exits to Home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _openEmptyCapture(tester, db: db);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+  });
+
+  testWidgets('OCR retry does not duplicate already saved crops', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final ocr = _FlakyOcrEngine(failOnCall: 2);
+    await _pumpCrop(tester, crops: _threeCrops, db: db, ocr: ocr);
+
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CapturePage), findsOneWidget);
+    expect(await db.pagesDao.listCrops(), hasLength(1));
+
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    expect(await db.pagesDao.listCrops(), hasLength(3));
+    expect(ocr.calls, 4);
   });
 
   testWidgets('confirm persists every crop in RTL order', (tester) async {
@@ -482,11 +564,17 @@ Future<void> _openGalleryCrop(
   expect(find.byKey(CaptureKeys.overlay), findsOneWidget);
 }
 
+Future<void> _editActiveCrop(WidgetTester tester) async {
+  await tester.drag(find.byKey(CaptureKeys.overlay), const Offset(-24, 0));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pumpCrop(
   WidgetTester tester, {
   required List<CropRect> crops,
   int activeIndex = 0,
   AppDatabase? db,
+  OcrEngine ocr = const FakeOcrEngine(),
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
@@ -502,9 +590,34 @@ Future<void> _pumpCrop(
       image: IncomingImage(bytes: fixturePng()),
       initialCrops: crops,
       initialActiveIndex: activeIndex,
-    ).wrap(overrides: _harness(db: database)),
+    ).wrap(
+      overrides: _harness(db: database, ocr: ocr),
+    ),
   );
   await tester.pumpAndSettle();
+}
+
+class _FlakyOcrEngine implements OcrEngine {
+  _FlakyOcrEngine({required this.failOnCall});
+
+  final int failOnCall;
+  int calls = 0;
+
+  @override
+  String get engineId => 'fake';
+
+  @override
+  Future<OcrResult> recognize(Uint8List image) async {
+    calls += 1;
+    if (calls == failOnCall) {
+      throw Exception('ocr failed on call $calls');
+    }
+    return const OcrResult(
+      fullText: 'よぉ、相棒',
+      blocks: [OcrBlock(text: 'よぉ、相棒')],
+      engineId: 'fake',
+    );
+  }
 }
 
 extension on CapturePage {

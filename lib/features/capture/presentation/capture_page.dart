@@ -76,6 +76,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
   String? _error;
   bool _busy = false;
   bool _exitDialogOpen = false;
+  bool _dirty = false;
+  final _savedCropKeys = <String>{};
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       }
       await _load();
       if (kCaptureShotExitDialog && mounted) {
+        _dirty = true;
         await _requestExit();
       }
     });
@@ -100,6 +103,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       _incoming = widget.image;
       _crops = const [CropRect.initial];
       _activeIndex = 0;
+      _dirty = false;
+      _savedCropKeys.clear();
       _load();
     }
   }
@@ -167,20 +172,28 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       _incoming = picked;
       _crops = const [CropRect.initial];
       _activeIndex = 0;
+      _dirty = false;
+      _savedCropKeys.clear();
     });
     await _load();
   }
 
-  bool get _hasUnsavedCrops => _bytes != null && _crops.isNotEmpty;
+  /// True after the user moves, creates, or deletes a crop. The automatic
+  /// initial rect does not count.
+  bool get _shouldConfirmExit => _dirty;
 
   void _leave() => popTaskOrHome(context);
 
-  /// Esc, dock X, and Android back. Confirm only when there are drawn crops.
+  static String _geometryKey(CropRect rect) {
+    return '${rect.left}|${rect.top}|${rect.width}|${rect.height}';
+  }
+
+  /// Esc, dock X, and Android back. Confirm only after a real crop edit.
   Future<void> _requestExit() async {
     if (_exitDialogOpen) {
       return;
     }
-    if (!_hasUnsavedCrops) {
+    if (!_shouldConfirmExit) {
       _leave();
       return;
     }
@@ -196,6 +209,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
           actions: [
             TextButton(
               key: CaptureKeys.discardCancel,
+              style: TextButton.styleFrom(foregroundColor: tokens.text2),
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text(CaptureLabels.cancelar),
             ),
@@ -235,6 +249,10 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       final sha = sha256Hex(bytes);
       for (final index in order) {
         final rect = _crops[index];
+        final key = _geometryKey(rect);
+        if (_savedCropKeys.contains(key)) {
+          continue;
+        }
         final cropped = cropToPng(bytes, rect);
         last = cropped;
         widget.onCropped?.call(cropped.bytes);
@@ -254,6 +272,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
               ocrText: ocr.fullText,
               engineId: ocr.engineId,
             );
+        _savedCropKeys.add(key);
         debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');
       }
       debugPrint('M0.8 crop PNG bytes.length=${last?.bytes.length}');
@@ -497,9 +516,15 @@ class _CapturePageState extends ConsumerState<CapturePage> {
           crops: _crops,
           activeIndex: _activeIndex,
           onChanged: (crops, active) {
+            final edited =
+                crops.length != _crops.length ||
+                !_cropListEquals(crops, _crops);
             setState(() {
               _crops = crops;
               _activeIndex = active;
+              if (edited) {
+                _dirty = true;
+              }
             });
           },
         ),
@@ -612,6 +637,18 @@ class _RecortesPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _cropListEquals(List<CropRect> a, List<CropRect> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class _CaptureExitIntent extends Intent {
