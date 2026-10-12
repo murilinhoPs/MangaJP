@@ -6,6 +6,7 @@ import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
+import '../../words/domain/word_state.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 import 'notebook_page.dart';
@@ -237,19 +238,21 @@ class _NotebookWordBody extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              FilledButton(
-                key: NotebookWordKeys.learn,
-                style: FilledButton.styleFrom(
-                  minimumSize: detalheSize,
-                  backgroundColor: tokens.overlayEstadoAtivo,
-                  foregroundColor: tokens.violetText,
-                  surfaceTintColor: Colors.transparent,
-                  side: BorderSide(color: tokens.coral),
+              if (detail.state != WordState.learning) ...[
+                FilledButton(
+                  key: NotebookWordKeys.learn,
+                  style: FilledButton.styleFrom(
+                    minimumSize: detalheSize,
+                    backgroundColor: tokens.overlayEstadoAtivo,
+                    foregroundColor: tokens.violetText,
+                    surfaceTintColor: Colors.transparent,
+                    side: BorderSide(color: tokens.coral),
+                  ),
+                  onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
+                  child: const Text(NotebookLabels.aprender),
                 ),
-                onPressed: () => _runStudy(ref, (repo) => repo.learn(wordId)),
-                child: const Text(NotebookLabels.aprender),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
+              ],
               OutlinedButton(
                 key: NotebookWordKeys.known,
                 style: OutlinedButton.styleFrom(
@@ -275,15 +278,17 @@ class _NotebookWordBody extends ConsumerWidget {
                     _runStudy(ref, (repo) => repo.markIgnored(wordId)),
                 child: const Text(NotebookLabels.ignorar),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               TextButton(
                 key: NotebookWordKeys.deleteCard,
+                style: _dangerTextButtonStyle(tokens),
                 onPressed: () => _confirmDeleteCard(context, ref),
                 child: const Text(NotebookLabels.removerCard),
               ),
               const SizedBox(height: 8),
               TextButton(
                 key: NotebookWordKeys.removeFromNotebook,
+                style: _dangerTextButtonStyle(tokens),
                 onPressed: () => _confirmRemoveFromNotebook(context, ref),
                 child: const Text(NotebookLabels.removerDoCaderno),
               ),
@@ -304,18 +309,11 @@ class _NotebookWordBody extends ConsumerWidget {
             'O card e o progresso SRS serão apagados. '
             'A palavra continua no Caderno.',
           ),
-          actions: [
-            TextButton(
-              key: NotebookWordKeys.deleteCardCancel,
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              key: NotebookWordKeys.deleteCardConfirm,
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Remover'),
-            ),
-          ],
+          actions: _dangerDialogActions(
+            dialogContext,
+            cancelKey: NotebookWordKeys.deleteCardCancel,
+            confirmKey: NotebookWordKeys.deleteCardConfirm,
+          ),
         );
       },
     );
@@ -341,18 +339,11 @@ class _NotebookWordBody extends ConsumerWidget {
         return AlertDialog(
           title: const Text('Remover do Caderno?'),
           content: const Text('A palavra será apagada do Caderno.'),
-          actions: [
-            TextButton(
-              key: NotebookWordKeys.removeFromNotebookCancel,
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              key: NotebookWordKeys.removeFromNotebookConfirm,
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Remover'),
-            ),
-          ],
+          actions: _dangerDialogActions(
+            dialogContext,
+            cancelKey: NotebookWordKeys.removeFromNotebookCancel,
+            confirmKey: NotebookWordKeys.removeFromNotebookConfirm,
+          ),
         );
       },
     );
@@ -370,18 +361,11 @@ class _NotebookWordBody extends ConsumerWidget {
               'O card, o progresso SRS e o histórico de revisão '
               'também serão apagados.',
             ),
-            actions: [
-              TextButton(
-                key: NotebookWordKeys.removeFromNotebookCardCancel,
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Cancelar'),
-              ),
-              TextButton(
-                key: NotebookWordKeys.removeFromNotebookCardConfirm,
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Remover'),
-              ),
-            ],
+            actions: _dangerDialogActions(
+              dialogContext,
+              cancelKey: NotebookWordKeys.removeFromNotebookCardCancel,
+              confirmKey: NotebookWordKeys.removeFromNotebookCardConfirm,
+            ),
           );
         },
       );
@@ -407,4 +391,53 @@ class _NotebookWordBody extends ConsumerWidget {
     ref.invalidate(notebookWordProvider(wordId));
     ref.invalidate(notebookEntriesProvider);
   }
+}
+
+/// Confirm = filled danger; Cancel = ghost TextButton. Same on both layouts.
+List<Widget> _dangerDialogActions(
+  BuildContext context, {
+  required Key cancelKey,
+  required Key confirmKey,
+}) {
+  final tokens = context.tokens;
+  return [
+    TextButton(
+      key: cancelKey,
+      style: TextButton.styleFrom(
+        foregroundColor: tokens.text2,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        side: BorderSide.none,
+      ),
+      onPressed: () => Navigator.of(context).pop(false),
+      child: const Text('Cancelar'),
+    ),
+    FilledButton(
+      key: confirmKey,
+      style: FilledButton.styleFrom(
+        backgroundColor: tokens.danger,
+        foregroundColor: tokens.onCoral,
+        surfaceTintColor: Colors.transparent,
+        // `side` must be set: filledButtonTheme's coral outline would
+        // otherwise show around the solid danger fill.
+        side: BorderSide(color: tokens.danger),
+      ),
+      onPressed: () => Navigator.of(context).pop(true),
+      child: const Text('Remover'),
+    ),
+  ];
+}
+
+ButtonStyle _dangerTextButtonStyle(MangaJpTokens tokens) {
+  return TextButton.styleFrom(foregroundColor: tokens.danger).copyWith(
+    overlayColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.hovered) ||
+          states.contains(WidgetState.pressed) ||
+          states.contains(WidgetState.focused)) {
+        return tokens.dangerBg;
+      }
+      return Colors.transparent;
+    }),
+  );
 }

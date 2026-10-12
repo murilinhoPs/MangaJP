@@ -251,6 +251,18 @@ void main() {
       expect(todos.selected, isTrue);
       expect(todos.side?.color, AppColors.coral);
       expect(todos.selectedColor, AppColors.overlayPrimaria);
+
+      final ignored = find.byKey(NotebookKeys.stateFilter(WordState.ignored));
+      expect(ignored, findsOneWidget);
+      final ignoredRect = tester.getRect(ignored);
+      expect(ignoredRect.left, greaterThanOrEqualTo(-0.5));
+      expect(ignoredRect.right, lessThanOrEqualTo(size.width + 0.5));
+      expect(ignoredRect.top, greaterThanOrEqualTo(-0.5));
+      expect(ignoredRect.bottom, lessThanOrEqualTo(size.height + 0.5));
+      expect(
+        find.descendant(of: ignored, matching: find.text('Ignorado')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Caderno empty state is not a search miss at $label', (

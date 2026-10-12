@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Color tokens from `tokens.json` (MangaJP Study · M1). No extra hex roles.
+/// Color tokens from `tokens.json` (MangaJP Study · M1). Extra hex only when
+/// the DS adds a named role (`danger` / `danger-bg` in M1.25).
 abstract final class AppColors {
   // Surfaces
   static const Color bg = Color(0xFF0E0D12);
@@ -25,6 +26,10 @@ abstract final class AppColors {
   static const Color mint = Color(0xFF4BE3A3);
   static const Color onCoral = Color(0xFF1A0F14);
   static const Color onMint = Color(0xFF06261A);
+  static const Color danger = Color(0xFFFF6A4D);
+
+  /// `danger` at 12% alpha (0x1F). DS: `Color(0x1FFF6A4D)`.
+  static const Color dangerBg = Color(0x1FFF6A4D);
 
   // Overlays (`overlay` in tokens.json)
   static const Color overlaySelecaoToque = Color.fromRGBO(255, 92, 122, 0.25);

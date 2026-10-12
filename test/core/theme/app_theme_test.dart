@@ -84,6 +84,17 @@ void main() {
     expect(tokens.wordState('known'), tokens.mint);
     expect(tokens.wordState('ignored'), tokens.text3);
     expect(tokens.wordState('saved'), tokens.text);
+    expect(tokens.danger, const Color(0xFFFF6A4D));
+    expect(tokens.dangerBg, const Color(0x1FFF6A4D));
+  });
+
+  test('danger tokens live in tokens.json (danger-bg is 12% alpha)', () {
+    expect(AppColors.danger, const Color(0xFFFF6A4D));
+    expect(AppColors.dangerBg, const Color(0x1FFF6A4D));
+    expect(AppColors.dangerBg.toARGB32() >> 24, 0x1F);
+    final json = File('lib/core/theme/tokens.json').readAsStringSync();
+    expect(json, contains('"danger": "#FF6A4D"'));
+    expect(json, contains('"danger-bg": "rgba(255,106,77,0.12)"'));
   });
 
   test('no amber, blue, or #FF4D6D in ColorScheme or tokens', () {
@@ -337,6 +348,8 @@ Iterable<Color> _tokenColors(MangaJpTokens tokens) {
     tokens.mint,
     tokens.onCoral,
     tokens.onMint,
+    tokens.danger,
+    tokens.dangerBg,
     tokens.overlaySelecaoToque,
     tokens.overlayPalavraNaFrase,
     tokens.overlayPrimaria,

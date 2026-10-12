@@ -13,8 +13,10 @@ abstract final class ShellLayout {
   static const double railWidth = 76;
   static const double commandBarBottom = 24;
 
-  /// Visual bar row: 8 padding + [AppTargets.min] + 8 padding.
-  static const double commandBarHeight = 8 + AppTargets.min + 8;
+  /// Visual bar row with the real UI fonts (~66px): 1px border + 8 pad +
+  /// [AppTargets.dockTela] (TaskMeta) + 8 pad + 1px border. The previous
+  /// `8 + min + 8` (=60) left Captura's canvas ~6px under the CommandBar.
+  static const double commandBarHeight = 1 + 8 + AppTargets.dockTela + 8 + 1;
 
   /// Bottom inset so shell content clears the floating bar + 24 offset.
   static const double commandBarClearance = commandBarBottom + commandBarHeight;
