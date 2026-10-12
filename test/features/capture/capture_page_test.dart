@@ -478,6 +478,20 @@ void main() {
     expect(find.byType(CapturePage), findsNothing);
   });
 
+  testWidgets('drag on empty canvas creates a new crop', (tester) async {
+    await _pumpCrop(tester, crops: const [CropRect.initial]);
+
+    expect(find.byKey(CaptureKeys.cropNumber(1)), findsOneWidget);
+    expect(find.byKey(CaptureKeys.cropNumber(2)), findsNothing);
+    expect(find.text(CaptureLabels.recortesMeta(1)), findsOneWidget);
+
+    await _dragNewCrop(tester);
+
+    expect(find.byKey(CaptureKeys.cropNumber(1)), findsOneWidget);
+    expect(find.byKey(CaptureKeys.cropNumber(2)), findsOneWidget);
+    expect(find.text(CaptureLabels.recortesMeta(2)), findsOneWidget);
+  });
+
   testWidgets('OCR retry does not duplicate already saved crops', (
     tester,
   ) async {
@@ -566,6 +580,18 @@ Future<void> _openGalleryCrop(
 
 Future<void> _editActiveCrop(WidgetTester tester) async {
   await tester.drag(find.byKey(CaptureKeys.overlay), const Offset(-24, 0));
+  await tester.pumpAndSettle();
+}
+
+/// Pan starts outside the initial 0.2–0.8 crop so overlay `_Hit.create` fires.
+Future<void> _dragNewCrop(WidgetTester tester) async {
+  final overlay = find.byKey(CaptureKeys.overlay);
+  final paint = tester.widget<CustomPaint>(overlay);
+  final dest = (paint.painter! as CropOverlayPainter).dest;
+  final origin = tester.getTopLeft(overlay);
+  final start = origin + dest.topLeft + const Offset(8, 8);
+  final delta = Offset(dest.width * 0.15, dest.height * 0.15);
+  await tester.timedDragFrom(start, delta, const Duration(milliseconds: 280));
   await tester.pumpAndSettle();
 }
 
