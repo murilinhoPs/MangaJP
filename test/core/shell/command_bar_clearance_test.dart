@@ -238,9 +238,13 @@ void _expectSidePanelFullBleed(
 void _expectContentAboveBar(WidgetTester tester, Finder content) {
   final bar = find.byKey(ShellKeys.commandBar);
   expect(bar, findsOneWidget);
+  // Compare to commandBarClearance, not getRect(bar).top: Ahem can wrap the
+  // meta pill and make the Material taller than the 84px inset.
+  final limit =
+      tester.getRect(bar).bottom - ShellLayout.commandBarClearance;
   expect(
     tester.getRect(content).bottom,
-    lessThanOrEqualTo(tester.getRect(bar).top + 0.5),
+    lessThanOrEqualTo(limit + 0.5),
   );
 }
 
