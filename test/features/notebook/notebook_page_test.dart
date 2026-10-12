@@ -137,6 +137,9 @@ void main() {
       ],
     );
 
+    await tester.ensureVisible(
+      find.byKey(NotebookKeys.stateFilter(WordState.known)),
+    );
     await tester.tap(find.byKey(NotebookKeys.stateFilter(WordState.known)));
     await tester.pumpAndSettle();
 
@@ -157,7 +160,7 @@ void main() {
       await _openNotebook(
         tester,
         size: size,
-        words: const [
+        words: [
           _Seed(
             id: 'eat',
             seq: 10,
@@ -277,7 +280,7 @@ void main() {
       await _openNotebook(
         tester,
         size: size,
-        words: const [
+        words: [
           _Seed(
             id: 'eat',
             seq: 10,
@@ -319,7 +322,7 @@ void main() {
         await _openNotebook(
           tester,
           size: size,
-          words: const [
+          words: [
             _Seed(
               id: 'eat',
               seq: 10,
@@ -403,12 +406,14 @@ const _desktop = Size(1280, 800);
 Future<void> _openNotebook(
   WidgetTester tester, {
   required List<_Seed> words,
-  Size size = _phone,
+  Size? size,
 }) async {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.resetPhysicalSize);
-  addTearDown(tester.view.resetDevicePixelRatio);
+  if (size != null) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
 
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
