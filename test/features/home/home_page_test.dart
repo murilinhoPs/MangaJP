@@ -798,20 +798,19 @@ void main() {
             _expectLiveWaiting(tester, waiting: n, wide: wide);
 
         Future<void> openLeitor() async {
-          const PageDetailRoute(id: pageId)
-              .go(tester.element(find.byType(MangaJpApp)));
+          const PageDetailRoute(id: pageId).go(_shellContext(tester));
           await tester.pumpAndSettle();
           expect(find.byType(PageDetailPage), findsOneWidget);
         }
 
         Future<void> openHome() async {
-          const HomeRoute().go(tester.element(find.byType(MangaJpApp)));
+          const HomeRoute().go(_shellContext(tester));
           await tester.pumpAndSettle();
           expect(find.byType(HomePage), findsOneWidget);
         }
 
         Future<void> openReview() async {
-          const ReviewRoute().go(tester.element(find.byType(MangaJpApp)));
+          const ReviewRoute().go(_shellContext(tester));
           await tester.pumpAndSettle();
           expect(find.byType(ReviewPage), findsOneWidget);
         }
@@ -941,8 +940,21 @@ int? _restantesCount(WidgetTester tester) {
   return int.parse(data.split(' ').first);
 }
 
+BuildContext _shellContext(WidgetTester tester) {
+  for (final finder in [
+    find.byType(ReviewPage),
+    find.byType(PageDetailPage),
+    find.byType(HomePage),
+  ]) {
+    if (finder.evaluate().isNotEmpty) {
+      return tester.element(finder);
+    }
+  }
+  return tester.element(find.byType(MangaJpMaterialApp));
+}
+
 int _providerWaiting(WidgetTester tester) {
-  return ProviderScope.containerOf(tester.element(find.byType(MangaJpApp)))
+  return ProviderScope.containerOf(_shellContext(tester))
       .read(homeReviewCountsProvider)
       .value!
       .waiting;
