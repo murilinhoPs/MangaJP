@@ -278,17 +278,17 @@ class _NotebookWordBody extends ConsumerWidget {
                     _runStudy(ref, (repo) => repo.markIgnored(wordId)),
                 child: const Text(NotebookLabels.ignorar),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               TextButton(
                 key: NotebookWordKeys.deleteCard,
-                style: TextButton.styleFrom(foregroundColor: tokens.danger),
+                style: _dangerTextButtonStyle(tokens),
                 onPressed: () => _confirmDeleteCard(context, ref),
                 child: const Text(NotebookLabels.removerCard),
               ),
               const SizedBox(height: 8),
               TextButton(
                 key: NotebookWordKeys.removeFromNotebook,
-                style: TextButton.styleFrom(foregroundColor: tokens.danger),
+                style: _dangerTextButtonStyle(tokens),
                 onPressed: () => _confirmRemoveFromNotebook(context, ref),
                 child: const Text(NotebookLabels.removerDoCaderno),
               ),
@@ -393,7 +393,7 @@ class _NotebookWordBody extends ConsumerWidget {
   }
 }
 
-/// Confirm = filled danger; Cancel = ghost. Same on both layouts.
+/// Confirm = filled danger; Cancel = ghost TextButton. Same on both layouts.
 List<Widget> _dangerDialogActions(
   BuildContext context, {
   required Key cancelKey,
@@ -401,8 +401,15 @@ List<Widget> _dangerDialogActions(
 }) {
   final tokens = context.tokens;
   return [
-    OutlinedButton(
+    TextButton(
       key: cancelKey,
+      style: TextButton.styleFrom(
+        foregroundColor: tokens.text2,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        side: BorderSide.none,
+      ),
       onPressed: () => Navigator.of(context).pop(false),
       child: const Text('Cancelar'),
     ),
@@ -420,4 +427,17 @@ List<Widget> _dangerDialogActions(
       child: const Text('Remover'),
     ),
   ];
+}
+
+ButtonStyle _dangerTextButtonStyle(MangaJpTokens tokens) {
+  return TextButton.styleFrom(foregroundColor: tokens.danger).copyWith(
+    overlayColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.hovered) ||
+          states.contains(WidgetState.pressed) ||
+          states.contains(WidgetState.focused)) {
+        return tokens.dangerBg;
+      }
+      return Colors.transparent;
+    }),
+  );
 }

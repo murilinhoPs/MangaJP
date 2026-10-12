@@ -200,15 +200,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      const NotebookWordRoute(id: wordId)
-          .go(tester.element(find.byType(HomePage)));
+      const NotebookWordRoute(id: wordId).go(tester.element(find.byType(HomePage)));
       await tester.pumpAndSettle();
 
       expect(find.byType(NotebookWordPage), findsOneWidget);
-      expect(
-        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
-        'ぴよ',
-      );
+      expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, 'ぴよ');
       expect(find.byKey(NotebookWordKeys.gloss), findsNothing);
       expect(
         tester.widget<Text>(find.byKey(NotebookWordKeys.note)).data,
@@ -1093,6 +1089,22 @@ void main() {
     ) async {
       await _openWord(tester, jmdictPath: jmdictPath, size: size);
 
+      await tester.scrollUntilVisible(
+        find.byKey(NotebookWordKeys.removeFromNotebook),
+        80,
+        scrollable: find.descendant(
+          of: find.byType(NotebookWordPage),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byKey(NotebookWordKeys.deleteCard)).top -
+            tester.getRect(find.byKey(NotebookWordKeys.ignore)).bottom,
+        closeTo(16, 0.5),
+      );
+
       for (final key in [
         NotebookWordKeys.deleteCard,
         NotebookWordKeys.removeFromNotebook,
@@ -1101,6 +1113,32 @@ void main() {
         expect(
           button.style?.foregroundColor?.resolve(const <WidgetState>{}),
           AppColors.danger,
+        );
+        final overlay = button.style?.overlayColor;
+        expect(overlay, isNotNull);
+        expect(
+          overlay!.resolve(const {WidgetState.hovered}),
+          AppColors.dangerBg,
+        );
+        expect(
+          overlay.resolve(const {WidgetState.pressed}),
+          AppColors.dangerBg,
+        );
+        expect(
+          overlay.resolve(const {WidgetState.focused}),
+          AppColors.dangerBg,
+        );
+        expect(
+          overlay.resolve(const {
+            WidgetState.hovered,
+            WidgetState.pressed,
+            WidgetState.focused,
+          }),
+          AppColors.dangerBg,
+        );
+        expect(
+          overlay.resolve(const <WidgetState>{}),
+          Colors.transparent,
         );
       }
     });
@@ -1123,10 +1161,32 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(AlertDialog), findsOneWidget);
-        final cancel = tester.widget<OutlinedButton>(
+        expect(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(OutlinedButton),
+          ),
+          findsNothing,
+        );
+        final cancel = tester.widget<TextButton>(
           find.byKey(NotebookWordKeys.removeFromNotebookCancel),
         );
-        expect(cancel, isA<OutlinedButton>());
+        expect(cancel, isA<TextButton>());
+        expect(
+          cancel.style?.foregroundColor?.resolve(const <WidgetState>{}),
+          AppColors.text2,
+        );
+        expect(
+          cancel.style?.backgroundColor?.resolve(const <WidgetState>{}),
+          Colors.transparent,
+        );
+        final cancelSide = cancel.style?.side?.resolve(const <WidgetState>{});
+        expect(
+          cancelSide == null ||
+              cancelSide.style == BorderStyle.none ||
+              cancelSide.width == 0,
+          isTrue,
+        );
         final confirm = tester.widget<FilledButton>(
           find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
         );
