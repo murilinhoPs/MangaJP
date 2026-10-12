@@ -19,6 +19,19 @@ class CropRect {
 
   double get right => left + width;
   double get bottom => top + height;
+  double get centerX => left + width / 2;
+  double get centerY => top + height / 2;
+
+  static CropRect fromPoints(double x0, double y0, double x1, double y1) {
+    final l = x0 < x1 ? x0 : x1;
+    final t = y0 < y1 ? y0 : y1;
+    return CropRect(
+      left: l,
+      top: t,
+      width: (x0 - x1).abs(),
+      height: (y0 - y1).abs(),
+    );
+  }
 
   CropRect shift(double dx, double dy) {
     return CropRect(
@@ -38,4 +51,16 @@ class CropRect {
     h = h.clamp(minSize, 1.0 - t);
     return CropRect(left: l, top: t, width: w, height: h);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CropRect &&
+        other.left == left &&
+        other.top == top &&
+        other.width == width &&
+        other.height == height;
+  }
+
+  @override
+  int get hashCode => Object.hash(left, top, width, height);
 }

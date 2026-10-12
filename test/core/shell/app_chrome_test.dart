@@ -121,7 +121,9 @@ void main() {
     expect(find.text('Caderno'), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
     expect(find.byKey(CaptureKeys.confirm), findsOneWidget);
-    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
+    expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+    expect(find.text('1 recorte · ordem ← automática'), findsOneWidget);
+    expect(find.text('arraste para criar'), findsOneWidget);
   });
 
   testWidgets('dock without meta renders no empty pill', (tester) async {

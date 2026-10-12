@@ -9,10 +9,14 @@ import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
+import 'package:manga_jp/features/capture/domain/capture_labels.dart';
+import 'package:manga_jp/features/capture/domain/crop_rect.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
+import 'package:manga_jp/features/capture/presentation/crop_overlay.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
@@ -57,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Captura'), findsOneWidget);
+    expect(find.byKey(CaptureKeys.page), findsOneWidget);
     expect(find.text('Confirmar crop'), findsOneWidget);
 
     await tester.tap(find.byKey(CaptureKeys.confirm));
@@ -87,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CapturePage), findsOneWidget);
-    expect(find.text('Captura'), findsOneWidget);
+    expect(find.byKey(CaptureKeys.page), findsOneWidget);
     expect(find.text('Caderno'), findsNothing);
     expect(find.text('Review'), findsNothing);
 
@@ -251,13 +255,147 @@ void main() {
       );
     },
   );
+
+  testWidgets('RTL numbers: right-to-left then top-to-bottom', (tester) async {
+    await _pumpCrop(tester, crops: _threeCrops, activeIndex: 0);
+
+    expect(find.byKey(CaptureKeys.cropNumber(1)), findsOneWidget);
+    expect(find.byKey(CaptureKeys.cropNumber(2)), findsOneWidget);
+    expect(find.byKey(CaptureKeys.cropNumber(3)), findsOneWidget);
+
+    final n1 = tester.getCenter(find.byKey(CaptureKeys.cropNumber(1)));
+    final n2 = tester.getCenter(find.byKey(CaptureKeys.cropNumber(2)));
+    final n3 = tester.getCenter(find.byKey(CaptureKeys.cropNumber(3)));
+    expect(n1.dx, greaterThan(n2.dx));
+    expect(n1.dy, lessThan(n3.dy));
+    expect(n2.dy, lessThan(n3.dy));
+  });
+
+  testWidgets('active crop uses coral ring; inactive is dashed violet', (
+    tester,
+  ) async {
+    await _pumpCrop(tester, crops: _threeCrops, activeIndex: 0);
+
+    final paint = tester.widget<CustomPaint>(find.byKey(CaptureKeys.overlay));
+    final painter = paint.painter! as CropOverlayPainter;
+    expect(painter.activeColor, AppColors.coral);
+    expect(painter.inactiveColor, AppColors.violet);
+    expect(painter.inactiveDashed, isTrue);
+    expect(painter.activeIndex, 0);
+    expect(painter.rects, hasLength(3));
+  });
+
+  testWidgets('dock hides central info without an image; shows it with crops', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await tester.pumpWidget(
+      const CapturePage().wrap(overrides: _harness(db: db)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+    expect(find.byKey(ShellKeys.dockMeta), findsNothing);
+    expect(find.text(CaptureLabels.arrasteParaCriar), findsNothing);
+
+    await tester.pumpWidget(
+      CapturePage(image: IncomingImage(bytes: png))
+          .wrap(overrides: _harness(db: db)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
+    expect(find.text(CaptureLabels.recortesMeta(1)), findsOneWidget);
+    expect(find.text(CaptureLabels.arrasteParaCriar), findsOneWidget);
+  });
+
+  testWidgets('cancel from gallery crop returns to Home', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      MangaJpApp(
+        overrides: _harness(
+          db: db,
+          source: FakeImageSourceService(
+            galleryImage: IncomingImage(bytes: png),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(HomeKeys.gallery));
+    await tester.pumpAndSettle();
+    expect(find.byType(CapturePage), findsOneWidget);
+
+    await tester.tap(find.byKey(ShellKeys.dockAction('close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(CapturePage), findsNothing);
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
+  });
+
+  testWidgets('confirm persists every crop in RTL order', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _pumpCrop(tester, crops: _threeCrops, db: db);
+
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    final crops = await db.pagesDao.listCrops();
+    expect(crops, hasLength(3));
+    expect(crops.first.left, closeTo(_threeCrops[1].left, 1e-9));
+    expect(crops[1].left, closeTo(_threeCrops[0].left, 1e-9));
+    expect(crops[2].left, closeTo(_threeCrops[2].left, 1e-9));
+  });
+}
+
+const _threeCrops = <CropRect>[
+  CropRect(left: 0.08, top: 0.10, width: 0.36, height: 0.32),
+  CropRect(left: 0.54, top: 0.06, width: 0.38, height: 0.30),
+  CropRect(left: 0.52, top: 0.54, width: 0.40, height: 0.32),
+];
+
+Future<void> _pumpCrop(
+  WidgetTester tester, {
+  required List<CropRect> crops,
+  int activeIndex = 0,
+  AppDatabase? db,
+}) async {
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  final database = db ?? AppDatabase(NativeDatabase.memory());
+  if (db == null) {
+    addTearDown(database.close);
+  }
+  await tester.pumpWidget(
+    CapturePage(
+      image: IncomingImage(bytes: fixturePng()),
+      initialCrops: crops,
+      initialActiveIndex: activeIndex,
+    ).wrap(overrides: _harness(db: database)),
+  );
+  await tester.pumpAndSettle();
 }
 
 extension on CapturePage {
   Widget wrap({List<Override> overrides = const []}) {
     return ProviderScope(
       overrides: overrides,
-      child: MaterialApp(theme: AppTheme.dark, home: this),
+      child: MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(body: this),
+      ),
     );
   }
 }

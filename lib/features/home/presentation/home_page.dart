@@ -5,6 +5,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/crop_number_badge.dart';
 import '../../capture/presentation/gallery_import.dart';
 import '../../review/domain/home_review_counts.dart';
 import '../../review/domain/new_per_day.dart';
@@ -27,9 +28,6 @@ abstract final class HomeKeys {
   static const gallery = Key('home-gallery');
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
-
-  /// Test-only key for a TextField injected into the shell overlay.
-  static const typingProbe = Key('home-typing-probe');
   static const queueBar = Key('home-queue-bar');
 
   static Key recentThumb(String pageId) => Key('home-recent-thumb-$pageId');
@@ -632,7 +630,7 @@ class _RecentThumb extends StatelessWidget {
                   Positioned(
                     top: 6,
                     left: 6,
-                    child: _CropNumber(number: number),
+                    child: CropNumberBadge(number: number),
                   ),
                 ],
               ),
@@ -653,34 +651,6 @@ class _RecentThumb extends StatelessWidget {
           style: AppTypeScale.metadados11.copyWith(color: tokens.text3),
         ),
       ],
-    );
-  }
-}
-
-class _CropNumber extends StatelessWidget {
-  const _CropNumber({required this.number});
-
-  final int number;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Container(
-      width: 18,
-      height: 18,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: tokens.coral,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-      ),
-      child: Text(
-        '$number',
-        style: AppTypeScale.mono10.copyWith(
-          color: tokens.onCoral,
-          fontWeight: FontWeight.w700,
-          fontSize: 9,
-        ),
-      ),
     );
   }
 }
