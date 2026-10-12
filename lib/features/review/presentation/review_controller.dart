@@ -18,11 +18,15 @@ class ReviewView {
     required this.remaining,
     required this.startedWith,
     this.card,
+    this.reading = '',
     this.glossText = '',
     this.showSeq = 0,
   });
 
   final ReviewCard? card;
+
+  /// Kana from JMdict `data_json`, else the stored `words.reading`.
+  final String reading;
 
   /// Copied from JMdict `entries.data_json` for [ReviewCard.seq].
   final String glossText;
@@ -88,8 +92,10 @@ class ReviewSession extends _$ReviewSession {
     }
     final card = remaining.first;
     final entry = jmdict.entryBySeq(card.seq);
+    final kana = entry?.reading;
     return ReviewView(
       card: card,
+      reading: (kana != null && kana.isNotEmpty) ? kana : card.reading,
       glossText: entry?.glossText ?? '',
       remaining: remaining.length,
       startedWith: _startedWith,

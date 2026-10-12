@@ -667,6 +667,20 @@ void main() {
         )
         .data;
     expect(paraRevisar, '1');
+    Color? desktopCountColor(Key key) {
+      return tester
+          .widget<Text>(
+            find
+                .descendant(of: find.byKey(key), matching: find.byType(Text))
+                .first,
+          )
+          .style
+          ?.color;
+    }
+
+    expect(desktopCountColor(HomeKeys.revisoes), AppColors.mint);
+    expect(desktopCountColor(HomeKeys.novos), AppColors.violet);
+    expect(desktopCountColor(HomeKeys.drill), AppColors.coral);
     expect(badge, paraRevisar);
   });
 }

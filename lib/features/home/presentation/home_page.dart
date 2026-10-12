@@ -717,6 +717,7 @@ class _DesktopCounts extends StatelessWidget {
         ),
         Expanded(
           child: _DesktopCount(
+            key: HomeKeys.novos,
             value: novos,
             label: 'novos',
             color: tokens.violet,
@@ -724,6 +725,7 @@ class _DesktopCounts extends StatelessWidget {
         ),
         Expanded(
           child: _DesktopCount(
+            key: HomeKeys.drill,
             value: drill,
             label: 'drill',
             color: tokens.coral,

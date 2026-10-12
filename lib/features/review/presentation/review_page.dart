@@ -8,7 +8,6 @@ import '../../../core/shell/shell_nav.dart';
 import '../../../core/shell/shell_registry.dart';
 import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
-import '../domain/interval_preview.dart';
 import '../domain/review_labels.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
@@ -32,10 +31,10 @@ abstract final class ReviewKeys {
 }
 
 /// `/review` — session snapshot of the due queue (at most 15 new cards
-/// per study-day). Front is the lemma; Mostrar shows reading + JMdict
-/// gloss, then Errei / Difícil / Bom / Fácil with the `sm2-jr@1` interval
-/// that rating would schedule (hidden on drill). Again/Hard go to the
-/// back of this session; Good/Easy leave it.
+/// per study-day). Front is the lemma; Mostrar shows kana + JMdict
+/// gloss, then Errei / Difícil / Bom / Fácil with DS interval captions
+/// (`srs.*.interval`). Bom is the only filled primary. Again/Hard go to
+/// the back of this session; Good/Easy leave it.
 class ReviewPage extends ConsumerWidget {
   const ReviewPage({super.key});
 
@@ -183,7 +182,8 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
     final wide = ShellLayout.isWide(context);
     final card = widget.view.card!;
     final gloss = widget.view.glossText;
-    final previews = ratingPreviewLabels(card.srs, isDrill: card.isDrill);
+    final kana = widget.view.reading;
+    final showKana = _revealed && kana.isNotEmpty && kana != card.lemma;
     final remaining = ReviewLabels.restantes(widget.view.remaining);
     final actions = <ShellAction>[
       ShellAction(
@@ -252,7 +252,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                         child: _ReviewCard(
                           lemma: card.lemma,
                           remaining: remaining,
-                          reading: _revealed ? card.reading : null,
+                          reading: showKana ? kana : null,
                           gloss: _revealed && gloss.isNotEmpty ? gloss : null,
                           note:
                               _revealed &&
@@ -280,7 +280,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
                       child: const Text(ReviewLabels.mostrar),
                     )
                   else
-                    _RatingRow(previews: previews, wide: wide, onRate: _rate),
+                    _RatingRow(wide: wide, onRate: _rate),
                 ],
               ),
             ),
@@ -447,13 +447,8 @@ class _ReviewStatus extends StatelessWidget {
 }
 
 class _RatingRow extends StatelessWidget {
-  const _RatingRow({
-    required this.previews,
-    required this.wide,
-    required this.onRate,
-  });
+  const _RatingRow({required this.wide, required this.onRate});
 
-  final Map<ReviewRating, String>? previews;
   final bool wide;
   final ValueChanged<ReviewRating> onRate;
 
@@ -471,7 +466,7 @@ class _RatingRow extends StatelessWidget {
                 onPressed: () => onRate(rating),
                 child: _RatingButtonLabel(
                   rating: rating,
-                  interval: previews?[rating],
+                  interval: ReviewLabels.interval(rating),
                   wide: wide,
                 ),
               ),
@@ -487,8 +482,10 @@ ButtonStyle _ratingStyle(
   MangaJpTokens tokens, {
   required bool wide,
 }) {
+  // Bom is the only filled primary. Errei keeps the coral border from
+  // `srs.errei` but uses `surface` so two buttons are not highlighted.
   final (Color border, Color fill, Color fg) = switch (rating) {
-    ReviewRating.again => (tokens.coral, tokens.srsErreiFill, tokens.text),
+    ReviewRating.again => (tokens.coral, tokens.surface, tokens.text),
     ReviewRating.hard => (tokens.border, tokens.surface, tokens.text),
     ReviewRating.good => (tokens.mint, tokens.srsBomFill, tokens.text),
     ReviewRating.easy => (tokens.border, tokens.surface, tokens.text),
@@ -499,6 +496,7 @@ ButtonStyle _ratingStyle(
   return FilledButton.styleFrom(
     backgroundColor: fill,
     foregroundColor: fg,
+    surfaceTintColor: Colors.transparent,
     minimumSize: Size.fromHeight(
       wide ? AppTargets.min : AppTargets.respostaReviewMobile,
     ),
@@ -514,11 +512,11 @@ class _RatingButtonLabel extends StatelessWidget {
   const _RatingButtonLabel({
     required this.rating,
     required this.wide,
-    this.interval,
+    required this.interval,
   });
 
   final ReviewRating rating;
-  final String? interval;
+  final String interval;
   final bool wide;
 
   @override
@@ -533,13 +531,12 @@ class _RatingButtonLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(ReviewLabels.rating(rating), textAlign: TextAlign.center),
-        if (interval != null)
-          Text(
-            interval!,
-            key: ReviewKeys.interval(rating),
-            textAlign: TextAlign.center,
-            style: AppTypeScale.mono10.copyWith(color: intervalColor),
-          ),
+        Text(
+          interval,
+          key: ReviewKeys.interval(rating),
+          textAlign: TextAlign.center,
+          style: AppTypeScale.mono10.copyWith(color: intervalColor),
+        ),
         if (wide) ...[
           const SizedBox(height: 4),
           KbdChip(label: ReviewLabels.ratingShortcut(rating)),

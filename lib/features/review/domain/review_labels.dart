@@ -30,4 +30,14 @@ abstract final class ReviewLabels {
     ReviewRating.good => '3',
     ReviewRating.easy => '4',
   };
+
+  /// Captions from `tokens.json` `srs.*.interval`. Always on the rating
+  /// row (including drill). Live `sm2-jr@1` day copy lives in
+  /// `interval_preview.dart`.
+  static String interval(ReviewRating rating) => switch (rating) {
+    ReviewRating.again => 'agora',
+    ReviewRating.hard => '10 min',
+    ReviewRating.good => '1 dia',
+    ReviewRating.easy => '4 dias',
+  };
 }

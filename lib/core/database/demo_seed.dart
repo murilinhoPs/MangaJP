@@ -105,6 +105,7 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       required String state,
       bool card = false,
       String phase = 'learning',
+      DateTime? dueAt,
     }) async {
       await db.wordsDao.insertWord(
         UserWordsCompanion.insert(
@@ -154,7 +155,7 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
               easeFactor: kDefaultEaseFactor,
               intervalDays: phase == 'neu' ? 0 : 6,
               repetitions: phase == 'neu' ? 0 : 2,
-              dueAt: due,
+              dueAt: dueAt ?? due,
               phase: phase,
               engineId: kSm2JrEngineId,
             ),
@@ -168,6 +169,9 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       reading: 'たべる',
       state: 'learning',
       card: true,
+      // Oldest learning due so `/review` opens on 食べる (kana + JMdict gloss),
+      // not a later extra card whose id sorts first.
+      dueAt: due.subtract(const Duration(minutes: 30)),
     );
     await word(
       id: 'demo-takai',
@@ -196,6 +200,7 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       required String id,
       required int seq,
       required String lemma,
+      required String reading,
       required String phase,
       bool drill = false,
     }) async {
@@ -203,7 +208,7 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
         id: id,
         seq: seq,
         lemma: lemma,
-        reading: lemma,
+        reading: reading,
         state: 'learning',
         card: true,
         phase: phase,
@@ -228,42 +233,49 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       id: 'demo-review-1',
       seq: 9990101,
       lemma: '残る',
+      reading: 'のこる',
       phase: 'review',
     );
     await extraCard(
       id: 'demo-review-2',
       seq: 9990102,
       lemma: '町',
+      reading: 'まち',
       phase: 'review',
     );
     await extraCard(
       id: 'demo-learn-2',
       seq: 9990103,
       lemma: '早い',
+      reading: 'はやい',
       phase: 'learning',
     );
     await extraCard(
       id: 'demo-new-1',
       seq: 9990104,
       lemma: '誰',
+      reading: 'だれ',
       phase: 'neu',
     );
     await extraCard(
       id: 'demo-new-2',
       seq: 9990105,
       lemma: 'もう',
+      reading: 'もう',
       phase: 'neu',
     );
     await extraCard(
       id: 'demo-new-3',
       seq: 9990106,
       lemma: 'いない',
+      reading: 'いない',
       phase: 'neu',
     );
     await extraCard(
       id: 'demo-drill-1',
       seq: 9990107,
       lemma: '逃げる',
+      reading: 'にげる',
       phase: 'learning',
       drill: true,
     );
@@ -271,6 +283,7 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       id: 'demo-drill-2',
       seq: 9990108,
       lemma: '見せる',
+      reading: 'みせる',
       phase: 'relearning',
       drill: true,
     );

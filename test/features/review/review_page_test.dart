@@ -46,6 +46,13 @@ void main() {
     }
   });
 
+  test('DS rating intervals match tokens.json srs.*.interval', () {
+    expect(ReviewLabels.interval(ReviewRating.again), 'agora');
+    expect(ReviewLabels.interval(ReviewRating.hard), '10 min');
+    expect(ReviewLabels.interval(ReviewRating.good), '1 dia');
+    expect(ReviewLabels.interval(ReviewRating.easy), '4 dias');
+  });
+
   test('gloss is loaded from JMdict by seq, not stored or hardcoded', () {
     expect(JmdictService.assetPath, 'assets/dict/jmdict.sqlite');
     for (final path in [
@@ -166,7 +173,7 @@ void main() {
           ?.backgroundColor
           ?.resolve(const <WidgetState>{});
       expect(ratingSide(ReviewRating.again)?.color, AppColors.coral);
-      expect(ratingFill(ReviewRating.again), AppColors.srsErreiFill);
+      expect(ratingFill(ReviewRating.again), AppColors.surface);
       expect(ratingSide(ReviewRating.hard)?.color, AppColors.border);
       expect(ratingFill(ReviewRating.hard), AppColors.surface);
       expect(ratingSide(ReviewRating.good)?.color, AppColors.mint);
@@ -176,9 +183,27 @@ void main() {
       expect(find.byKey(ReviewKeys.note), findsNothing);
       expect(
         tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+            .data,
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+            .data,
+        ReviewLabels.interval(ReviewRating.hard),
+      );
+      expect(
+        tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
             .data,
-        '1 dia',
+        ReviewLabels.interval(ReviewRating.good),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
+            .data,
+        ReviewLabels.interval(ReviewRating.easy),
       );
       _expectNoOutOfScopeControls(tester);
     },
@@ -217,7 +242,8 @@ void main() {
     await tester.tap(find.byKey(ReviewKeys.reveal));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'ぴよ');
+    // Kana identical to the lemma is not repeated; the note is the back.
+    expect(find.byKey(ReviewKeys.reading), findsNothing);
     expect(find.byKey(ReviewKeys.gloss), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(ReviewKeys.note)).data,
@@ -260,7 +286,7 @@ void main() {
   );
 
   testWidgets(
-    'interval 6 EF 2.5 shows Again hoje and Easy 16 dias from sm2-jr@1',
+    'rating row uses DS interval captions, not live sm2-jr day counts',
     (tester) async {
       await _openReview(
         tester,
@@ -289,79 +315,97 @@ void main() {
         tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
             .data,
-        'hoje',
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+            .data,
+        ReviewLabels.interval(ReviewRating.hard),
       );
       expect(
         tester
             .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
             .data,
-        '16 dias',
+        ReviewLabels.interval(ReviewRating.easy),
       );
-    },
-  );
-
-  testWidgets(
-    'drill answer (second same study-day) shows no interval preview',
-    (tester) async {
-      await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
-
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(ReviewKeys.interval(ReviewRating.good)),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.again)));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsOneWidget);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.hard)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-      expect(find.byKey(ReviewKeys.interval(ReviewRating.easy)), findsNothing);
       expect(find.text('hoje'), findsNothing);
-      expect(find.text('1 dia'), findsNothing);
+      expect(find.text('16 dias'), findsNothing);
     },
   );
 
-  testWidgets('a card already answered this study-day opens with no preview', (
-    tester,
-  ) async {
-    await _openReview(
-      tester,
-      jmdictPath: jmdictPath,
-      cards: [_taberuCard],
-      customizeDb: (db) async {
-        await db.cardsDao.insertLog(
-          UserReviewLogsCompanion.insert(
-            id: 'log-eat',
-            cardId: 'card-eat',
-            ratedAt: _now,
-            rating: 1,
-            quality: 0,
-            engineId: kSm2JrEngineId,
-            isDrill: 0,
-          ),
-        );
-      },
-    );
+  testWidgets('drill answer still shows DS interval captions', (tester) async {
+    await _openReview(tester, jmdictPath: jmdictPath, cards: [_taberuCard]);
+
+    await tester.tap(find.byKey(ReviewKeys.reveal));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsOneWidget);
+
+    await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.again)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ReviewKeys.reveal), findsOneWidget);
+    expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
 
     await tester.tap(find.byKey(ReviewKeys.reveal));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
-    expect(find.byKey(ReviewKeys.interval(ReviewRating.again)), findsNothing);
-    expect(find.byKey(ReviewKeys.interval(ReviewRating.good)), findsNothing);
-    expect(find.text('1 dia'), findsNothing);
+    expect(find.byKey(ReviewKeys.rating(ReviewRating.again)), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+          .data,
+      ReviewLabels.interval(ReviewRating.again),
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+          .data,
+      ReviewLabels.interval(ReviewRating.good),
+    );
+    expect(find.text('hoje'), findsNothing);
   });
+
+  testWidgets(
+    'a card already answered this study-day still shows DS intervals',
+    (tester) async {
+      await _openReview(
+        tester,
+        jmdictPath: jmdictPath,
+        cards: [_taberuCard],
+        customizeDb: (db) async {
+          await db.cardsDao.insertLog(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: 'card-eat',
+              ratedAt: _now,
+              rating: 1,
+              quality: 0,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+        },
+      );
+
+      await tester.tap(find.byKey(ReviewKeys.reveal));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.rating(ReviewRating.good)), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+            .data,
+        ReviewLabels.interval(ReviewRating.again),
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+            .data,
+        ReviewLabels.interval(ReviewRating.good),
+      );
+    },
+  );
 
   testWidgets('Good writes rating 3 / quality 4, updates SRS, keeps learning', (
     tester,
@@ -657,35 +701,89 @@ void main() {
       },
     );
 
-    testWidgets('revealed ratings use PT labels and SRS fills at $label', (
-      tester,
-    ) async {
-      await _openReview(
-        tester,
-        jmdictPath: jmdictPath,
-        cards: [_taberuCard],
-        size: size,
-      );
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'revealed back is kana+meaning, DS intervals, Bom-only fill at $label',
+      (tester) async {
+        await _openReview(
+          tester,
+          jmdictPath: jmdictPath,
+          cards: [_taberuCard],
+          size: size,
+        );
+        await tester.tap(find.byKey(ReviewKeys.reveal));
+        await tester.pumpAndSettle();
 
-      expect(find.text(ReviewLabels.errei), findsOneWidget);
-      expect(find.text(ReviewLabels.dificil), findsOneWidget);
-      expect(find.text(ReviewLabels.bom), findsOneWidget);
-      expect(find.text(ReviewLabels.facil), findsOneWidget);
-      final ratingHeight = tester
-          .getSize(find.byKey(ReviewKeys.rating(ReviewRating.good)))
-          .height;
-      if (wide) {
-        expect(ratingHeight, greaterThanOrEqualTo(AppTargets.min));
-      } else {
-        expect(ratingHeight, AppTargets.respostaReviewMobile);
-      }
-      expect(find.text('1'), wide ? findsOneWidget : findsNothing);
-      expect(find.text('2'), wide ? findsOneWidget : findsNothing);
-      expect(find.text('3'), wide ? findsOneWidget : findsNothing);
-      expect(find.text('4'), wide ? findsOneWidget : findsNothing);
-    });
+        expect(
+          tester.widget<Text>(find.byKey(ReviewKeys.lemma)).style?.fontSize,
+          wide ? 120 : 72,
+        );
+        expect(tester.widget<Text>(find.byKey(ReviewKeys.reading)).data, 'たべる');
+        expect(find.text('食べる'), findsWidgets);
+        final gloss = tester.widget<Text>(find.byKey(ReviewKeys.gloss)).data!;
+        expect(gloss, contains('to eat'));
+
+        expect(find.text(ReviewLabels.errei), findsOneWidget);
+        expect(find.text(ReviewLabels.dificil), findsOneWidget);
+        expect(find.text(ReviewLabels.bom), findsOneWidget);
+        expect(find.text(ReviewLabels.facil), findsOneWidget);
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.again)))
+              .data,
+          ReviewLabels.interval(ReviewRating.again),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.hard)))
+              .data,
+          ReviewLabels.interval(ReviewRating.hard),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.good)))
+              .data,
+          ReviewLabels.interval(ReviewRating.good),
+        );
+        expect(
+          tester
+              .widget<Text>(find.byKey(ReviewKeys.interval(ReviewRating.easy)))
+              .data,
+          ReviewLabels.interval(ReviewRating.easy),
+        );
+        expect(find.text('hoje'), findsNothing);
+
+        Color? ratingFill(ReviewRating rating) => tester
+            .widget<FilledButton>(find.byKey(ReviewKeys.rating(rating)))
+            .style
+            ?.backgroundColor
+            ?.resolve(const <WidgetState>{});
+        expect(ratingFill(ReviewRating.again), AppColors.surface);
+        expect(ratingFill(ReviewRating.hard), AppColors.surface);
+        expect(ratingFill(ReviewRating.good), AppColors.srsBomFill);
+        expect(ratingFill(ReviewRating.easy), AppColors.surface);
+        expect(ratingFill(ReviewRating.again), isNot(AppColors.srsBomFill));
+        expect(ratingFill(ReviewRating.again), isNot(AppColors.srsErreiFill));
+
+        final ratingHeight = tester
+            .getSize(find.byKey(ReviewKeys.rating(ReviewRating.good)))
+            .height;
+        if (wide) {
+          expect(ratingHeight, greaterThanOrEqualTo(AppTargets.min));
+          expect(find.byKey(ShellKeys.taskDock), findsNothing);
+        } else {
+          expect(ratingHeight, AppTargets.respostaReviewMobile);
+          final goodBox = tester.getRect(
+            find.byKey(ReviewKeys.rating(ReviewRating.good)),
+          );
+          final dockBox = tester.getRect(find.byKey(ShellKeys.taskDock));
+          expect(goodBox.bottom, lessThanOrEqualTo(dockBox.top + 0.5));
+        }
+        expect(find.text('1'), wide ? findsOneWidget : findsNothing);
+        expect(find.text('2'), wide ? findsOneWidget : findsNothing);
+        expect(find.text('3'), wide ? findsOneWidget : findsNothing);
+        expect(find.text('4'), wide ? findsOneWidget : findsNothing);
+      },
+    );
 
     testWidgets('Good leaves the session on the done state at $label', (
       tester,
