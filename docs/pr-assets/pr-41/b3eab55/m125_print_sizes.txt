@@ -1,0 +1,21 @@
+m125_desktop_caderno_detail_learning.png       1280x800   42585 bytes
+m125_desktop_caderno_detail_saved.png          1280x800   40560 bytes
+m125_desktop_caderno_dialog.png                1280x800   45375 bytes
+m125_desktop_caderno_list.png                  1280x800   47171 bytes
+m125_desktop_caderno_no_results.png            1280x800   28572 bytes
+m125_desktop_captura.png                       1280x800   43547 bytes
+m125_phone_caderno_chip_ignorado.png            390x844   36588 bytes
+m125_phone_caderno_detail_learning.png          390x844   32438 bytes
+m125_phone_caderno_detail_saved.png             390x844   30458 bytes
+m125_phone_caderno_dialog.png                   390x844   34816 bytes
+m125_phone_caderno_list.png                     390x844   36588 bytes
+m125_phone_caderno_no_results.png               390x844   22135 bytes
+m125_phone_captura.png                          390x844   18996 bytes
+
+Pixel checks (RGB distance ≤6 unless noted)
+- phone/desktop dialog confirm: solid fill 111×36, 3414 px ~#FF6A4D, center exact #FF6A4D (255,106,77)
+- inner fill ratio 0.872 (outline would be ~0.10); 0 coral pixels in the button
+- contrast text: 97 px near onCoral #1A0F14 / 140 dark in interior
+- Cancel sample (92,91,97) ghost, not danger fill
+- chip Ignorado: full canvas 390×844 (was 118×54 crop); chip label x=31..75 y=177..188 (inside 390)
+- IHDR phone 390×844 / desktop 1280×800 for every print
