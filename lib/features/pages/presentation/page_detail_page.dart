@@ -510,7 +510,10 @@ class _PageOcrBody extends ConsumerWidget {
         : AppTypeScale.balaoPaginaMobileJp;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      ),
       children: [
         for (final crop in crops)
           Padding(
@@ -682,15 +685,17 @@ class _LookupDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final body = _body(context, tokens);
-    return Material(
-      color: tokens.bg,
-      child: Container(
-        key: LookupSheetKeys.drawer,
-        width: PageLayout.lookupDrawerWidth,
-        decoration: BoxDecoration(
-          border: Border(left: BorderSide(color: tokens.border)),
+    return ShellSidePanel(
+      width: PageLayout.lookupDrawerWidth,
+      child: Material(
+        color: tokens.bg,
+        child: Container(
+          key: LookupSheetKeys.drawer,
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: tokens.border)),
+          ),
+          child: body,
         ),
-        child: body,
       ),
     );
   }

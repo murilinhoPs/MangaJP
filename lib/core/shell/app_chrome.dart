@@ -214,6 +214,10 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final barActions = _barActions(context);
     Widget body = widget.child;
     if (wide) {
+      final clearance = barActions.isEmpty
+          ? 0.0
+          : ShellLayout.commandBarClearance;
+      final media = MediaQuery.of(context);
       body = Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -225,13 +229,20 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           Expanded(
             child: Stack(
               children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    bottom: barActions.isEmpty
-                        ? 0
-                        : ShellLayout.commandBarClearance,
+                // Full-size body so side-panel borders paint to the window
+                // edge (M1.24). [CommandBarInset] is the bar clearance only —
+                // not the device safe area. MediaQuery.padding gets the same
+                // extra so SafeArea still clears the bar.
+                CommandBarInset(
+                  bottom: clearance,
+                  child: MediaQuery(
+                    data: media.copyWith(
+                      padding: media.padding.copyWith(
+                        bottom: media.padding.bottom + clearance,
+                      ),
+                    ),
+                    child: body,
                   ),
-                  child: body,
                 ),
                 Positioned(
                   left: 0,

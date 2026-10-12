@@ -34,6 +34,7 @@ abstract final class CaptureKeys {
   static const ocrText = Key('capture-ocr-text');
   static const pickGallery = Key('capture-pick-gallery');
   static const overlay = Key('capture-overlay');
+  static const canvas = Key('capture-canvas');
   static const recortesPanel = Key('capture-recortes-panel');
   static const discardDialog = Key('capture-discard-dialog');
   static const discardCancel = Key('capture-discard-cancel');
@@ -466,8 +467,16 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         ),
         Expanded(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: canvas),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: ShellLayout.commandBarPaddingOf(context),
+                  ),
+                  child: canvas,
+                ),
+              ),
               _RecortesPanel(
                 crops: _crops,
                 activeIndex: _activeIndex,
@@ -508,6 +517,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     }
 
     return Stack(
+      key: CaptureKeys.canvas,
       fit: StackFit.expand,
       children: [
         Image.memory(bytes, fit: BoxFit.contain, gaplessPlayback: true),
@@ -554,85 +564,97 @@ class _RecortesPanel extends StatelessWidget {
     final tokens = context.tokens;
     final numbers = rtlCropNumbers(crops);
     final order = rtlCropOrder(crops);
-    return Material(
-      key: CaptureKeys.recortesPanel,
-      color: tokens.bg,
-      child: Container(
-        width: width,
-        decoration: BoxDecoration(
-          border: Border(left: BorderSide(color: tokens.border)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Row(
-                children: [
-                  Text(
-                    CaptureLabels.recortes,
-                    style: AppTypeScale.ui14.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    CaptureLabels.recortesCountHint(crops.length),
-                    style: AppTypeScale.metadados11.copyWith(
-                      color: tokens.text3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                itemCount: order.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, i) {
-                  final index = order[i];
-                  final number = numbers[index];
-                  final selected = index == activeIndex;
-                  return Material(
-                    key: CaptureKeys.recorteRow(number),
-                    color: selected ? tokens.overlayPrimaria : tokens.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.linha),
-                      side: BorderSide(
-                        color: selected ? tokens.coral : tokens.border,
+    return ShellSidePanel(
+      width: width,
+      child: Material(
+        key: CaptureKeys.recortesPanel,
+        color: tokens.bg,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: tokens.border)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    Text(
+                      CaptureLabels.recortes,
+                      style: AppTypeScale.ui14.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: InkWell(
-                      onTap: () => onSelect(index),
-                      borderRadius: BorderRadius.circular(AppRadius.linha),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        CaptureLabels.recortesCountHint(crops.length),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: AppTypeScale.metadados11.copyWith(
+                          color: tokens.text3,
                         ),
-                        child: Row(
-                          children: [
-                            CropNumberBadge(number: number),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                CaptureLabels.recorteRow(number),
-                                style: AppTypeScale.ui13.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: tokens.text,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    0,
+                    12,
+                    12 + ShellLayout.commandBarPaddingOf(context),
+                  ),
+                  itemCount: order.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) {
+                    final index = order[i];
+                    final number = numbers[index];
+                    final selected = index == activeIndex;
+                    return Material(
+                      key: CaptureKeys.recorteRow(number),
+                      color: selected ? tokens.overlayPrimaria : tokens.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.linha),
+                        side: BorderSide(
+                          color: selected ? tokens.coral : tokens.border,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () => onSelect(index),
+                        borderRadius: BorderRadius.circular(AppRadius.linha),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              CropNumberBadge(number: number),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  CaptureLabels.recorteRow(number),
+                                  style: AppTypeScale.ui13.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: tokens.text,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

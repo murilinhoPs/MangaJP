@@ -248,7 +248,10 @@ class _NotebookList extends StatelessWidget {
     final padH = wide ? 48.0 : 16.0;
     return ListView.separated(
       key: NotebookKeys.list,
-      padding: EdgeInsets.fromLTRB(padH, 4, padH, wide ? 32 : 16),
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        EdgeInsets.fromLTRB(padH, 4, padH, wide ? 32 : 16),
+      ),
       itemCount: entries.length,
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {

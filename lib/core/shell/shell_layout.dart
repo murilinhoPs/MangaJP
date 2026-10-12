@@ -20,6 +20,23 @@ abstract final class ShellLayout {
   static const double commandBarClearance = commandBarBottom + commandBarHeight;
   static const double jpSealSize = 34;
 
+  /// Extra bottom inset [AppChrome] reserves for the floating CommandBar.
+  ///
+  /// Device safe area is not included — that stays on [MediaQuery.viewPadding].
+  static double commandBarPaddingOf(BuildContext context) {
+    return CommandBarInset.of(context);
+  }
+
+  /// [padding] with [commandBarPaddingOf] added to the bottom.
+  static EdgeInsets withCommandBarPadding(
+    BuildContext context,
+    EdgeInsets padding,
+  ) {
+    return padding.copyWith(
+      bottom: padding.bottom + commandBarPaddingOf(context),
+    );
+  }
+
   static bool isWide(BuildContext context) {
     return MediaQuery.sizeOf(context).width >= AppBreakpoints.wide;
   }
@@ -33,6 +50,46 @@ abstract final class ShellLayout {
   }
 
   static bool showMobileNavCards(String path) => !isTask(path);
+}
+
+/// Command-bar clearance published by [AppChrome] (0 when the bar is absent).
+class CommandBarInset extends InheritedWidget {
+  const CommandBarInset({
+    super.key,
+    required this.bottom,
+    required super.child,
+  });
+
+  final double bottom;
+
+  static double of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<CommandBarInset>()
+            ?.bottom ??
+        0;
+  }
+
+  @override
+  bool updateShouldNotify(CommandBarInset oldWidget) =>
+      bottom != oldWidget.bottom;
+}
+
+/// Full-height side drawer / inspector.
+///
+/// [AppChrome] sizes the route to the window and publishes the bar inset as
+/// [CommandBarInset] / extra [MediaQuery.padding]. This box stretches to that
+/// height so border and radius paint in full; inner lists use
+/// [ShellLayout.commandBarPaddingOf].
+class ShellSidePanel extends StatelessWidget {
+  const ShellSidePanel({super.key, required this.width, required this.child});
+
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: width, child: child);
+  }
 }
 
 /// Widget keys for shell tests and screenshots.
