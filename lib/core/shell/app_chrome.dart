@@ -229,19 +229,20 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           Expanded(
             child: Stack(
               children: [
-                // Full-size body: physical bottom padding cut side-panel
-                // borders at [clearance] (M1.24). MediaQuery.padding carries
-                // the inset so lists keep actions above the bar.
-                MediaQuery(
-                  data: media.copyWith(
-                    padding: media.padding.copyWith(
-                      bottom: media.padding.bottom + clearance,
+                // Full-size body so side-panel borders paint to the window
+                // edge (M1.24). [CommandBarInset] is the bar clearance only —
+                // not the device safe area. MediaQuery.padding gets the same
+                // extra so SafeArea still clears the bar.
+                CommandBarInset(
+                  bottom: clearance,
+                  child: MediaQuery(
+                    data: media.copyWith(
+                      padding: media.padding.copyWith(
+                        bottom: media.padding.bottom + clearance,
+                      ),
                     ),
-                    viewPadding: media.viewPadding.copyWith(
-                      bottom: media.viewPadding.bottom + clearance,
-                    ),
+                    child: body,
                   ),
-                  child: body,
                 ),
                 Positioned(
                   left: 0,

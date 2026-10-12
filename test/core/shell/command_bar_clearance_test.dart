@@ -90,6 +90,7 @@ void main() {
             size: size,
           );
           _expectContentAboveBar(tester, find.byKey(CaptureKeys.recorteRow(1)));
+          _expectContentAboveBar(tester, find.byKey(CaptureKeys.canvas));
         } else {
           _expectPanelVisible(
             tester,
@@ -119,6 +120,9 @@ void main() {
             find.byKey(LookupSheetKeys.drawer),
             size: size,
           );
+          await tester.tap(find.byKey(PageDetailKeys.ocrText));
+          await tester.pumpAndSettle();
+          _expectContentAboveBar(tester, find.byKey(LookupSheetKeys.learn));
         } else {
           await tester.tap(find.byKey(PageDetailKeys.ocrText));
           await tester.pumpAndSettle();
@@ -129,6 +133,41 @@ void main() {
             size: size,
           );
         }
+      },
+    );
+
+    testWidgets(
+      'withCommandBarPadding does not add device safe area ($label)',
+      (tester) async {
+        const notch = FakeViewPadding(top: 47, bottom: 34);
+        tester.view.padding = notch;
+        tester.view.viewPadding = notch;
+        addTearDown(tester.view.resetPadding);
+        addTearDown(tester.view.resetViewPadding);
+
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+        await _seedPage(db, id: 'notch-page');
+        await _pump(tester, size: size, db: db, jmdictPath: jmdictPath);
+        const PageDetailRoute(id: 'notch-page')
+            .go(tester.element(find.byType(HomePage)));
+        await tester.pumpAndSettle();
+
+        final listFinder = find.ancestor(
+          of: find.byKey(PageDetailKeys.ocrText),
+          matching: find.byType(ListView),
+        );
+        expect(listFinder, findsOneWidget);
+        final list = tester.widget<ListView>(listFinder);
+        const base = 24.0;
+        final extra = size == desktop ? ShellLayout.commandBarClearance : 0.0;
+        expect(
+          list.padding?.bottom,
+          base + extra,
+          reason:
+              'Página list padding.bottom must be $base + command-bar '
+              '($extra), not device safe area 34',
+        );
       },
     );
 

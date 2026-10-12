@@ -118,7 +118,9 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
                   suffixIcon: wide
                       ? const Padding(
                           padding: EdgeInsets.only(right: 10),
-                          child: UnconstrainedBox(child: KbdChip(label: '/')),
+                          child: UnconstrainedBox(
+                            child: KbdChip(label: '/'),
+                          ),
                         )
                       : null,
                 ),
@@ -156,8 +158,11 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
         ),
         Expanded(
           child: entries.when(
-            data: (items) =>
-                _NotebookList(entries: items, query: query, wide: wide),
+            data: (items) => _NotebookList(
+              entries: items,
+              query: query,
+              wide: wide,
+            ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Center(
               child: Padding(

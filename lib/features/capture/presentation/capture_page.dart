@@ -34,6 +34,7 @@ abstract final class CaptureKeys {
   static const ocrText = Key('capture-ocr-text');
   static const pickGallery = Key('capture-pick-gallery');
   static const overlay = Key('capture-overlay');
+  static const canvas = Key('capture-canvas');
   static const recortesPanel = Key('capture-recortes-panel');
   static const discardDialog = Key('capture-discard-dialog');
   static const discardCancel = Key('capture-discard-cancel');
@@ -468,7 +469,14 @@ class _CapturePageState extends ConsumerState<CapturePage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: canvas),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: ShellLayout.commandBarPaddingOf(context),
+                  ),
+                  child: canvas,
+                ),
+              ),
               _RecortesPanel(
                 crops: _crops,
                 activeIndex: _activeIndex,
@@ -509,6 +517,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     }
 
     return Stack(
+      key: CaptureKeys.canvas,
       fit: StackFit.expand,
       children: [
         Image.memory(bytes, fit: BoxFit.contain, gaplessPlayback: true),
@@ -577,8 +586,8 @@ class _RecortesPanel extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Spacer(),
-                    Flexible(
+                    const SizedBox(width: 8),
+                    Expanded(
                       child: Text(
                         CaptureLabels.recortesCountHint(crops.length),
                         maxLines: 1,
