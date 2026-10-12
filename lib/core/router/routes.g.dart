@@ -64,15 +64,6 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
             ),
           ],
         ),
-        StatefulShellBranchData.$branch(
-          routes: [
-            GoRouteData.$route(
-              path: '/more',
-              hasOverriddenOnExit: false,
-              factory: $MoreRoute._fromState,
-            ),
-          ],
-        ),
       ],
     ),
     GoRouteData.$route(
@@ -89,6 +80,11 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
       path: '/deck',
       hasOverriddenOnExit: false,
       factory: $DeckRoute._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/more',
+      hasOverriddenOnExit: false,
+      factory: $MoreRoute._fromState,
     ),
   ],
 );
@@ -230,26 +226,6 @@ mixin $NotebookWordRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $MoreRoute on GoRouteData {
-  static MoreRoute _fromState(GoRouterState state) => const MoreRoute();
-
-  @override
-  String get location => GoRouteData.$location('/more');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
 mixin $CaptureRoute on GoRouteData {
   static CaptureRoute _fromState(GoRouterState state) =>
       CaptureRoute($extra: state.extra as IncomingImage?);
@@ -300,6 +276,26 @@ mixin $DeckRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/deck');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $MoreRoute on GoRouteData {
+  static MoreRoute _fromState(GoRouterState state) => const MoreRoute();
+
+  @override
+  String get location => GoRouteData.$location('/more');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -190,7 +190,7 @@ void main() {
     expect(find.byKey(ShellKeys.reviewBadge), findsNothing);
   });
 
-  testWidgets('desktop Revisar mint badge shows due count', (tester) async {
+  testWidgets('desktop Revisar mint badge shows para revisar', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await _seedDue(db, count: 3);
@@ -207,6 +207,55 @@ void main() {
           )
           .data,
       '3',
+    );
+  });
+
+  testWidgets('rail Leitor is disabled when there are no pages', (
+    tester,
+  ) async {
+    await _pumpShell(tester, size: _desktop);
+
+    final ink = tester.widget<InkWell>(
+      find.byKey(ShellKeys.railItem('leitor')),
+    );
+    expect(ink.onTap, isNull);
+    expect(_railLabelColor(tester, 'leitor', 'Leitor'), AppColors.text4);
+
+    await tester.tap(find.byKey(ShellKeys.railItem('leitor')));
+    await tester.pumpAndSettle();
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
+    expect(find.byType(PageDetailPage), findsNothing);
+  });
+
+  testWidgets('rail Leitor opens the most recent page', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _seedCapturedPage(
+      db,
+      id: 'older',
+      createdAt: DateTime.utc(2026, 10, 1),
+    );
+    await _seedCapturedPage(
+      db,
+      id: 'newest',
+      createdAt: DateTime.utc(2026, 10, 8),
+    );
+    await _pumpShell(tester, size: _desktop, db: db);
+
+    final ink = tester.widget<InkWell>(
+      find.byKey(ShellKeys.railItem('leitor')),
+    );
+    expect(ink.onTap, isNotNull);
+    expect(_railLabelColor(tester, 'leitor', 'Leitor'), isNot(AppColors.text4));
+
+    await tester.tap(find.byKey(ShellKeys.railItem('leitor')));
+    await tester.pumpAndSettle();
+    expect(
+      GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
+      '/pages/newest',
     );
   });
 
@@ -236,6 +285,11 @@ void main() {
 
     expect(find.byKey(ShellKeys.palette), findsOneWidget);
     expect(find.byKey(ShellKeys.paletteItem('caderno')), findsOneWidget);
+    expect(find.byKey(ShellKeys.paletteItem('more')), findsNothing);
+    expect(find.byKey(ShellKeys.paletteItem('paginas')), findsNothing);
+    expect(find.text('Páginas'), findsNothing);
+    expect(find.text('Abrir página recente'), findsNothing);
+    expect(find.text('Mais'), findsNothing);
 
     await tester.tap(find.byKey(ShellKeys.paletteItem('caderno')));
     await tester.pumpAndSettle();
@@ -244,6 +298,40 @@ void main() {
     expect(
       GoRouter.of(tester.element(find.byType(NotebookPage))).state.uri.path,
       '/notebook',
+    );
+  });
+
+  testWidgets('palette Abrir página recente opens the latest page', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await _seedCapturedPage(
+      db,
+      id: 'older',
+      createdAt: DateTime.utc(2026, 10, 1),
+    );
+    await _seedCapturedPage(
+      db,
+      id: 'newest',
+      createdAt: DateTime.utc(2026, 10, 8),
+    );
+    await _pumpShell(tester, size: _desktop, db: db);
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Abrir página recente'), findsOneWidget);
+    expect(find.text('Páginas'), findsNothing);
+    await tester.tap(find.byKey(ShellKeys.paletteItem('pagina-recente')));
+    await tester.pumpAndSettle();
+    expect(
+      GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
+      '/pages/newest',
     );
   });
 
@@ -336,6 +424,33 @@ Future<void> _pumpShell(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<void> _seedCapturedPage(
+  AppDatabase db, {
+  required String id,
+  required DateTime createdAt,
+}) async {
+  await db.pagesDao.insertPage(
+    CapturedPagesCompanion.insert(
+      id: id,
+      sha256: 'sha-$id',
+      createdAt: createdAt,
+    ),
+  );
+  await db.pagesDao.insertCrop(
+    CapturedCropsCompanion.insert(
+      id: 'crop-$id',
+      pageId: id,
+      ocrText: '文',
+      engineId: 'test',
+      left: 0.1,
+      top: 0.1,
+      width: 0.4,
+      height: 0.4,
+      createdAt: createdAt,
+    ),
+  );
 }
 
 Future<void> _seedDue(AppDatabase db, {required int count}) async {

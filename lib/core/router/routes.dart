@@ -5,7 +5,6 @@ import '../../features/capture/domain/incoming_image.dart';
 import '../../features/capture/presentation/capture_page.dart';
 import '../../features/flashcards/presentation/deck_page.dart';
 import '../../features/home/presentation/home_page.dart';
-import '../../features/home/presentation/more_page.dart';
 import '../../features/notebook/presentation/notebook_page.dart';
 import '../../features/notebook/presentation/notebook_word_page.dart';
 import '../../features/pages/presentation/page_detail_page.dart';
@@ -51,16 +50,12 @@ part 'routes.g.dart';
             ),
           ],
         ),
-        TypedStatefulShellBranch<MoreBranch>(
-          routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<MoreRoute>(path: '/more'),
-          ],
-        ),
       ],
     ),
     TypedGoRoute<CaptureRoute>(path: '/capture'),
     TypedGoRoute<SettingsRoute>(path: '/settings'),
     TypedGoRoute<DeckRoute>(path: '/deck'),
+    TypedGoRoute<MoreRoute>(path: '/more'),
   ],
 )
 class AppChromeRoute extends ShellRouteData {
@@ -101,10 +96,6 @@ class NotebookBranch extends StatefulShellBranchData {
   const NotebookBranch();
 }
 
-class MoreBranch extends StatefulShellBranchData {
-  const MoreBranch();
-}
-
 class HomeRoute extends GoRouteData with $HomeRoute {
   const HomeRoute();
 
@@ -114,6 +105,15 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
 class PagesRoute extends GoRouteData with $PagesRoute {
   const PagesRoute();
+
+  /// The `/pages` list moved to Home (**Páginas recentes**). Keep `/pages/:id`.
+  @override
+  String? redirect(BuildContext context, GoRouterState state) {
+    if (state.uri.path == '/pages') {
+      return '/home';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
@@ -159,11 +159,12 @@ class NotebookWordRoute extends GoRouteData with $NotebookWordRoute {
   }
 }
 
+/// Deep-link shim: `/more` (Mais) now opens Ajustes.
 class MoreRoute extends GoRouteData with $MoreRoute {
   const MoreRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => const MorePage();
+  String? redirect(BuildContext context, GoRouterState state) => '/settings';
 }
 
 class CaptureRoute extends GoRouteData with $CaptureRoute {

@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../router/routes.dart';
 import '../theme/app_theme.dart';
 import 'shell_layout.dart';
 
 /// Desktop left rail: 76px, `rail` fill, JP seal, destinations, Ajustes pinned.
 class AppRail extends StatelessWidget {
-  const AppRail({super.key, required this.path, required this.dueCount});
+  const AppRail({
+    super.key,
+    required this.path,
+    required this.reviewBadge,
+    this.recentPageId,
+  });
 
   final String path;
-  final int dueCount;
+  final int reviewBadge;
+  final String? recentPageId;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +36,11 @@ class AppRail extends StatelessWidget {
                 _RailItem(
                   destination: dest,
                   selected: dest.isActive(path),
-                  badge: dest.id == 'revisar' ? dueCount : 0,
+                  badge: dest.id == 'revisar' ? reviewBadge : 0,
+                  enabled: dest.id != 'leitor' || recentPageId != null,
+                  onTap: dest.id == 'leitor'
+                      ? _leitorTap(context)
+                      : () => dest.go(context),
                 ),
               const Spacer(),
               _RailItem(
@@ -43,6 +54,14 @@ class AppRail extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  VoidCallback? _leitorTap(BuildContext context) {
+    final id = recentPageId;
+    if (id == null) {
+      return null;
+    }
+    return () => PageDetailRoute(id: id).go(context);
   }
 }
 
@@ -78,21 +97,29 @@ class _RailItem extends StatelessWidget {
     required this.destination,
     required this.selected,
     this.badge = 0,
+    this.enabled = true,
+    this.onTap,
   });
 
   final ShellDestination destination;
   final bool selected;
   final int badge;
+  final bool enabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final ink = selected ? tokens.coral : tokens.text3;
+    final ink = !enabled
+        ? tokens.text4
+        : selected
+        ? tokens.coral
+        : tokens.text3;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: InkWell(
         key: ShellKeys.railItem(destination.id),
-        onTap: () => destination.go(context),
+        onTap: enabled ? (onTap ?? () => destination.go(context)) : null,
         borderRadius: BorderRadius.circular(AppRadius.railBarra),
         child: SizedBox(
           width: 64,

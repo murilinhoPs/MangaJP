@@ -27,6 +27,18 @@ void main() {
     expect(StudyDay.isDrill(at0400, at0400), isTrue);
   });
 
+  test('weekStartOf is Monday 04:00 of the current study week', () {
+    final monday0359 = StudyDay.instant(2026, 10, 5, 3, 59);
+    expect(StudyDay.weekStartOf(monday0359), StudyDay.instant(2026, 9, 28, 4));
+
+    final monday0400 = StudyDay.instant(2026, 10, 5, 4);
+    expect(StudyDay.weekStartOf(monday0400), monday0400);
+    expect(
+      StudyDay.weekStartOf(StudyDay.instant(2026, 10, 11, 23)),
+      monday0400,
+    );
+  });
+
   test('new year 03:59 rolls back to 31 Dec 04:00', () {
     final at0359 = StudyDay.instant(2026, 1, 1, 3, 59);
     expect(StudyDay.startOf(at0359), StudyDay.instant(2025, 12, 31, 4));

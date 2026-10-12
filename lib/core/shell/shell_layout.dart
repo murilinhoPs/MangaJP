@@ -151,8 +151,8 @@ abstract final class MobileNav {
       id: 'ajustes',
       label: 'Ajustes',
       icon: Icons.wb_sunny_outlined,
-      go: _goMore,
-      isActive: _ajustesActive,
+      go: _goSettings,
+      isActive: _settingsActive,
     ),
   ];
 }
@@ -171,7 +171,7 @@ abstract final class DesktopRail {
       id: 'leitor',
       label: 'Leitor',
       icon: Icons.chrome_reader_mode_outlined,
-      go: _goPages,
+      go: _leitorGo,
       isActive: _pagesActive,
     ),
     ShellDestination(
@@ -220,23 +220,31 @@ class PaletteAction {
 
 /// Palette entries that always navigate (existing routes only).
 abstract final class ShellPaletteNav {
-  static const items = <PaletteAction>[
-    PaletteAction(id: 'inicio', label: 'Início', run: _goHome),
-    PaletteAction(id: 'paginas', label: 'Páginas', run: _goPages),
-    PaletteAction(id: 'revisar', label: 'Revisar', run: _goReview),
-    PaletteAction(id: 'caderno', label: 'Caderno', run: _goNotebook),
-    PaletteAction(id: 'deck', label: 'Deck', run: _goDeck),
-    PaletteAction(id: 'more', label: 'Mais', run: _goMore),
-    PaletteAction(id: 'ajustes', label: 'Ajustes', run: _goSettings),
-  ];
+  static List<PaletteAction> items({String? recentPageId}) {
+    return [
+      const PaletteAction(id: 'inicio', label: 'Início', run: _goHome),
+      if (recentPageId != null)
+        PaletteAction(
+          id: 'pagina-recente',
+          label: 'Abrir página recente',
+          run: (context) => PageDetailRoute(id: recentPageId).go(context),
+        ),
+      const PaletteAction(id: 'revisar', label: 'Revisar', run: _goReview),
+      const PaletteAction(id: 'caderno', label: 'Caderno', run: _goNotebook),
+      const PaletteAction(id: 'deck', label: 'Deck', run: _goDeck),
+      const PaletteAction(id: 'ajustes', label: 'Ajustes', run: _goSettings),
+    ];
+  }
 }
 
 void _goHome(BuildContext context) => const HomeRoute().go(context);
-void _goPages(BuildContext context) => const PagesRoute().go(context);
+
+/// [AppRail] opens the latest `/pages/:id` instead. `/pages` redirects to Home.
+void _leitorGo(BuildContext context) {}
+
 void _goReview(BuildContext context) => const ReviewRoute().go(context);
 void _goNotebook(BuildContext context) => const NotebookRoute().go(context);
 void _goDeck(BuildContext context) => const DeckRoute().go(context);
-void _goMore(BuildContext context) => const MoreRoute().go(context);
 void _goSettings(BuildContext context) => const SettingsRoute().go(context);
 
 bool _homeActive(String path) => path == '/home';
@@ -245,5 +253,4 @@ bool _pagesActive(String path) =>
 bool _reviewActive(String path) => path == '/review';
 bool _notebookActive(String path) => path.startsWith('/notebook');
 bool _deckActive(String path) => path == '/deck';
-bool _ajustesActive(String path) => path == '/more' || path == '/settings';
 bool _settingsActive(String path) => path == '/settings';

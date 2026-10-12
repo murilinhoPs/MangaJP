@@ -56,7 +56,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
   }
 
   Map<ShortcutActivator, Intent> get _shortcuts {
-    return {
+    final map = <ShortcutActivator, Intent>{
       const SingleActivator(LogicalKeyboardKey.keyR): const ShellShortcutIntent(
         'r',
       ),
@@ -69,6 +69,15 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       const SingleActivator(LogicalKeyboardKey.escape):
           const _ShellEscapeIntent(),
     };
+    if (_path == '/home') {
+      map[const SingleActivator(LogicalKeyboardKey.digit1)] =
+          const ShellShortcutIntent('home-1');
+      map[const SingleActivator(LogicalKeyboardKey.digit2)] =
+          const ShellShortcutIntent('home-2');
+      map[const SingleActivator(LogicalKeyboardKey.digit3)] =
+          const ShellShortcutIntent('home-3');
+    }
+    return map;
   }
 
   Map<Type, Action<Intent>> _actions(BuildContext context) {
@@ -98,13 +107,36 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         importFromGallery(context, ref);
       case 'slash':
         _focusNotebookSearch(context);
+      case 'home-1':
+        _openRecentPage(context, 0);
+      case 'home-2':
+        _openRecentPage(context, 1);
+      case 'home-3':
+        _openRecentPage(context, 2);
     }
+  }
+
+  String? get _recentPageId {
+    final pages = ref.read(homeRecentPagesProvider).asData?.value;
+    if (pages == null || pages.isEmpty) {
+      return null;
+    }
+    return pages.first.id;
+  }
+
+  void _openRecentPage(BuildContext context, int index) {
+    final pages = ref.read(homeRecentPagesProvider).asData?.value;
+    if (pages == null || index < 0 || index >= pages.length) {
+      return;
+    }
+    PageDetailRoute(id: pages[index].id).go(context);
   }
 
   Future<void> _openPalette(BuildContext context) async {
     _paletteOpen = true;
+    final recentPageId = _recentPageId;
     final items = <PaletteAction>[
-      ...ShellPaletteNav.items,
+      ...ShellPaletteNav.items(recentPageId: recentPageId),
       for (final action in _barActions(context))
         PaletteAction(
           id: 'bar-${action.id}',
@@ -160,7 +192,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       ];
     }
     // Task screens bind their own bar actions. Other destinations (Caderno,
-    // Deck, Mais, Páginas) keep R as a shortcut but do not duplicate Home's bar.
+    // Deck, Ajustes, Páginas) keep R as a shortcut but do not duplicate Home's bar.
     return _registry.task?.actions ?? const <ShellAction>[];
   }
 
@@ -169,7 +201,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     final path = _path;
     final wide = ShellLayout.isWide(context);
     final counts = ref.watch(homeReviewCountsProvider);
-    final due = counts.asData?.value.due ?? 0;
+    final revisoes = counts.asData?.value.revisoes ?? 0;
+    ref.watch(homeRecentPagesProvider);
     final task = ShellLayout.isTask(path);
 
     final barActions = _barActions(context);
@@ -178,7 +211,11 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       body = Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppRail(path: path, dueCount: due),
+          AppRail(
+            path: path,
+            reviewBadge: revisoes,
+            recentPageId: _recentPageId,
+          ),
           Expanded(
             child: Stack(
               children: [

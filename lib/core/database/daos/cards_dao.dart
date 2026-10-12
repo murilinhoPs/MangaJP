@@ -102,6 +102,12 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
     return ids.difference(seenBefore).length;
   }
 
+  Future<List<ReviewLogRow>> logsSince(DateTime since) {
+    return (select(
+      userReviewLogs,
+    )..where((t) => t.ratedAt.isBiggerOrEqualValue(since))).get();
+  }
+
   /// Due, unsuspended cards: learning/relearning, then review, then new
   /// (`neu`). Oldest `card_srs.due_at` first inside each group.
   Future<List<(UserCard, CardSrsRow, UserWord)>> dueQueue(DateTime now) async {

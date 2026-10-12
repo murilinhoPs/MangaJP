@@ -91,6 +91,8 @@ class PagesRepository {
     return [for (final row in rows) _toPage(row)];
   }
 
+  Future<int> countPages() => _db.pagesDao.countPages();
+
   static MangaPage _toPage(CapturedPage row) {
     return MangaPage(id: row.id, sha256: row.sha256, createdAt: row.createdAt);
   }

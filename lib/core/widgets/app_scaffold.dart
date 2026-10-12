@@ -17,7 +17,6 @@ class AppScaffold extends StatelessWidget {
     'Páginas',
     'Review',
     'Caderno',
-    'Ajustes',
   ];
 
   @override
