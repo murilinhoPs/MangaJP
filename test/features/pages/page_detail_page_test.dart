@@ -708,18 +708,7 @@ void main() {
         jmdictPath: jmdictPath,
         pageId: 'page-drawer-learn',
         ocrText: '食べた',
-        seed: (db, cropId) async {
-          final words = WordsRepository(db);
-          final cards = FlashcardsRepository(db);
-          await cards.learn(
-            await words.saveFromLookup(
-              cropId: cropId,
-              seq: 1358280,
-              lemma: '食べる',
-              reading: 'たべる',
-            ),
-          );
-        },
+        seed: _seedTaberuLearning,
       );
 
       await tester.tap(find.byKey(PageDetailKeys.ocrText));
@@ -727,34 +716,79 @@ void main() {
 
       expect(find.byKey(LookupSheetKeys.drawer), findsOneWidget);
       expect(find.byKey(LookupSheetKeys.modal), findsNothing);
-      final learn = tester.widget<LookupActionButton>(
-        find.byKey(LookupSheetKeys.learn),
-      );
-      expect(learn.active, isTrue);
-      expect(
-        tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.known)).active,
-        isFalse,
-      );
-      expect(
-        tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).active,
-        isFalse,
-      );
-
-      final material = tester.widget<Material>(
-        find.descendant(
-          of: find.byKey(LookupSheetKeys.learn),
-          matching: find.byType(Material),
-        ),
-      );
-      expect(
-        material.color,
-        Color.alphaBlend(AppColors.overlayEstadoAtivo, AppColors.surface),
-      );
-      final shape = material.shape! as RoundedRectangleBorder;
-      expect(shape.side.color, AppColors.coral);
-      expect(shape.side.width, 1.5);
+      _expectAprendendoActive(tester);
     },
   );
+
+  testWidgets(
+    'mobile lookup sheet marks Aprendendo active with coral ring and 14% ink',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-sheet-learn',
+        ocrText: '食べた',
+        seed: _seedTaberuLearning,
+      );
+
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(LookupSheetKeys.modal), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.drawer), findsNothing);
+      expect(
+        tester.getSize(find.byKey(LookupSheetKeys.modal)).height,
+        closeTo(844 * PageLayout.lookupSheetFraction, 0.5),
+      );
+      _expectAprendendoActive(tester);
+    },
+  );
+}
+
+Future<void> _seedTaberuLearning(AppDatabase db, String cropId) async {
+  final words = WordsRepository(db);
+  final cards = FlashcardsRepository(db);
+  await cards.learn(
+    await words.saveFromLookup(
+      cropId: cropId,
+      seq: 1358280,
+      lemma: '食べる',
+      reading: 'たべる',
+    ),
+  );
+}
+
+void _expectAprendendoActive(WidgetTester tester) {
+  expect(
+    tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.learn)).active,
+    isTrue,
+  );
+  expect(
+    tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.known)).active,
+    isFalse,
+  );
+  expect(
+    tester.widget<LookupActionButton>(find.byKey(LookupSheetKeys.save)).active,
+    isFalse,
+  );
+  final material = tester.widget<Material>(
+    find.descendant(
+      of: find.byKey(LookupSheetKeys.learn),
+      matching: find.byType(Material),
+    ),
+  );
+  expect(
+    material.color,
+    Color.alphaBlend(AppColors.overlayEstadoAtivo, AppColors.surface),
+  );
+  final shape = material.shape! as RoundedRectangleBorder;
+  expect(shape.side.color, AppColors.coral);
+  expect(shape.side.width, 1.5);
 }
 
 Future<AppDatabase> _openPage(
