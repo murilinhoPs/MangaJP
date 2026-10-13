@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -251,6 +252,217 @@ void main() {
     await tester.pumpAndSettle();
     await _expectTakaiLookup(tester);
   });
+
+  testWidgets('tap empty space after line 1 of wrapped OCR does not select', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ocr = 'あいうえおかきくけこさしすせ高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-empty-line1',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _emptyAfterLine(paragraph, lineIndex: 0);
+    expect(charIndexAt(paragraph, local), isNull);
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.text('Nenhuma entrada no dicionário.'), findsNothing);
+  });
+
+  testWidgets('tap empty space after line 2 of wrapped OCR does not select', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ocr = 'あいうえおかきくけこさしすせ高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-empty-line2',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _emptyAfterLine(paragraph, lineIndex: 1);
+    expect(charIndexAt(paragraph, local), isNull);
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.text('Nenhuma entrada no dicionário.'), findsNothing);
+  });
+
+  testWidgets('tap a character after missing empty space still opens lookup', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ocr = 'あいうえおかきくけこさしすせ高い';
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-empty-then-char',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final empty = _emptyAfterLine(paragraph, lineIndex: 0);
+    expect(charIndexAt(paragraph, empty), isNull);
+    await tester.tapAt(paragraph.localToGlobal(empty));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+
+    final start = ocr.indexOf('高い');
+    final local = _glyphLocal(
+      paragraph,
+      start: start,
+      end: start + 1,
+      rightHalf: false,
+    );
+    expect(charIndexAt(paragraph, local), start);
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    await _expectTakaiLookup(tester);
+  });
+
+  testWidgets(
+    'tap left and right halves of a surrogate kanji in the middle select it whole',
+    (tester) async {
+      const kanji = '𠮟';
+      const ocr = '猫${kanji}を';
+      expect(kanji.length, 2);
+      final start = ocr.indexOf(kanji);
+      expect(start, 1);
+
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-surrogate-mid',
+        ocrText: ocr,
+      );
+
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.byKey(PageDetailKeys.ocrText),
+      );
+      for (final rightHalf in [false, true]) {
+        final local = _glyphLocal(
+          paragraph,
+          start: start,
+          end: start + kanji.length,
+          rightHalf: rightHalf,
+        );
+        expect(
+          charIndexAt(paragraph, local),
+          start,
+          reason:
+              'surrogate ${rightHalf ? 'right' : 'left'} half must be '
+              'the pair start, not a code unit',
+        );
+        expect(charIndexAt(paragraph, local), isNot(start + 1));
+      }
+
+      await tester.tapAt(
+        paragraph.localToGlobal(
+          _glyphLocal(
+            paragraph,
+            start: start,
+            end: start + kanji.length,
+            rightHalf: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(LookupSheetKeys.sheet),
+          matching: find.textContaining(kanji),
+        ),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets(
+    'tap left and right halves of a trailing surrogate kanji select it whole',
+    (tester) async {
+      const kanji = '𩸽';
+      const ocr = '猫$kanji';
+      expect(kanji.length, 2);
+      final start = ocr.indexOf(kanji);
+
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-surrogate-end',
+        ocrText: ocr,
+      );
+
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.byKey(PageDetailKeys.ocrText),
+      );
+      for (final rightHalf in [false, true]) {
+        final local = _glyphLocal(
+          paragraph,
+          start: start,
+          end: start + kanji.length,
+          rightHalf: rightHalf,
+        );
+        expect(
+          charIndexAt(paragraph, local),
+          start,
+          reason:
+              'trailing surrogate ${rightHalf ? 'right' : 'left'} half '
+              'must cover both code units',
+        );
+        expect(charIndexAt(paragraph, local), isNot(ocr.length - 1));
+      }
+
+      await tester.tapAt(
+        paragraph.localToGlobal(
+          _glyphLocal(
+            paragraph,
+            start: start,
+            end: start + kanji.length,
+            rightHalf: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(LookupSheetKeys.sheet),
+          matching: find.textContaining(kanji),
+        ),
+        findsWidgets,
+      );
+    },
+  );
 
   testWidgets('tap conjugated OCR form shows lemma gloss from JMdict', (
     tester,
@@ -849,18 +1061,18 @@ const _lookupShortcuts =
         state: WordState.learning,
         createsCard: true,
       ),
-  (
-    label: 'K',
-    key: LogicalKeyboardKey.keyK,
-    state: WordState.known,
-    createsCard: false,
-  ),
-  (
-    label: 'I',
-    key: LogicalKeyboardKey.keyI,
-    state: WordState.ignored,
-    createsCard: false,
-  ),
+      (
+        label: 'K',
+        key: LogicalKeyboardKey.keyK,
+        state: WordState.known,
+        createsCard: false,
+      ),
+      (
+        label: 'I',
+        key: LogicalKeyboardKey.keyI,
+        state: WordState.ignored,
+        createsCard: false,
+      ),
       (
         label: 'S',
         key: LogicalKeyboardKey.keyS,
@@ -1014,9 +1226,37 @@ Offset _glyphLocal(
     TextSelection(baseOffset: start, extentOffset: end),
   );
   expect(boxes, isNotEmpty);
-  final rect = boxes.first.toRect();
+  var rect = boxes.first.toRect();
+  for (final box in boxes.skip(1)) {
+    rect = rect.expandToInclude(box.toRect());
+  }
   expect(rect.width, greaterThan(4));
   return Offset(rightHalf ? rect.right - 2 : rect.left + 2, rect.center.dy);
+}
+
+Offset _emptyAfterLine(RenderParagraph paragraph, {required int lineIndex}) {
+  final text = paragraph.text.toPlainText();
+  final boxes = paragraph
+      .getBoxesForSelection(
+        TextSelection(baseOffset: 0, extentOffset: text.length),
+      )
+      .map((box) => box.toRect())
+      .toList();
+  expect(boxes, isNotEmpty);
+  final tops = boxes.map((rect) => rect.top).toSet().toList()..sort();
+  expect(tops.length, greaterThan(lineIndex));
+  final top = tops[lineIndex];
+  final onLine = boxes.where((rect) => (rect.top - top).abs() < 1);
+  final last = onLine.reduce((a, b) => a.right >= b.right ? a : b);
+  final x = math.min(last.right + 8, paragraph.size.width - 1);
+  expect(x, greaterThan(last.right));
+  final local = Offset(x, last.center.dy);
+  expect(
+    boxes.any((rect) => rect.contains(local)),
+    isFalse,
+    reason: 'probe must sit outside every glyph box',
+  );
+  return local;
 }
 
 Color? _spanColor(WidgetTester tester, String needle) {

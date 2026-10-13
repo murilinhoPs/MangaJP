@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../../../core/utils/graphemes.dart';
 import '../../dictionary/data/dictionary_lookup.dart';
 import '../../words/domain/word_state.dart';
 import '../../words/domain/word_state_index.dart';
@@ -67,8 +68,9 @@ List<OcrTokenSpan> tokenizeOcr(
       i = miss.end;
       continue;
     }
-    spans.add(OcrTokenSpan(start: i, end: i + 1));
-    i++;
+    final end = graphemeEnd(text, i);
+    spans.add(OcrTokenSpan(start: i, end: end));
+    i = end;
   }
   return spans;
 }
@@ -98,7 +100,8 @@ void _emitUntil(
       i = miss.end;
       continue;
     }
-    spans.add(OcrTokenSpan(start: i, end: i + 1));
-    i++;
+    final end = graphemeEnd(text, i);
+    spans.add(OcrTokenSpan(start: i, end: end));
+    i = end;
   }
 }

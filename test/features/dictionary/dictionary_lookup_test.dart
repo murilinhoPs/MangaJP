@@ -136,4 +136,26 @@ void main() {
     expect(lookup.missSurface('よぉ、相棒', tapIndex: 0), 'よぉ');
     expect(lookup.findAt('ぴよ'), isNull);
   });
+
+  test('surrogate-pair kanji is one miss character, never half', () {
+    const kanji = '𠮟';
+    const mid = '猫${kanji}を';
+    const trailing = '猫$kanji';
+    expect(kanji.length, 2);
+
+    final midStart = mid.indexOf(kanji);
+    expect(lookup.missAt(mid, tapIndex: midStart)?.start, 0);
+    expect(lookup.missAt(mid, tapIndex: midStart)?.end, mid.length);
+    expect(lookup.missAt(mid, tapIndex: midStart)?.surface, mid);
+    expect(
+      lookup.missAt(mid, tapIndex: midStart + 1)?.surface,
+      mid,
+      reason: 'low surrogate must snap to the same run',
+    );
+
+    final endStart = trailing.indexOf(kanji);
+    expect(lookup.missAt(trailing, tapIndex: endStart)?.surface, trailing);
+    expect(lookup.missAt(trailing, tapIndex: endStart + 1)?.surface, trailing);
+    expect(lookup.findAt(kanji), isNull);
+  });
 }

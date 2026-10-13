@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../../core/deinflect/deinflector.dart';
+import '../../../core/utils/graphemes.dart';
 import '../domain/dict_entry.dart';
 import '../domain/lookup_result.dart';
 import 'jmdict_service.dart';
@@ -20,20 +21,25 @@ class DictionaryLookup {
     if (text.isEmpty) {
       return null;
     }
-    final cover = tapIndex < 0
-        ? 0
-        : (tapIndex >= text.length ? text.length - 1 : tapIndex);
+    final cover = graphemeStart(
+      text,
+      tapIndex < 0 ? 0 : (tapIndex >= text.length ? text.length - 1 : tapIndex),
+    );
     final cache = <String, List<DictEntry>>{};
 
     LookupResult? best;
     var bestLen = -1;
     var bestStart = 1 << 30;
 
-    for (var start = 0; start <= cover; start++) {
+    for (var start = 0; start <= cover; start = graphemeEnd(text, start)) {
       final maxLen = math.min(text.length - start, 24);
       for (var len = maxLen; len >= 1; len--) {
         if (start + len <= cover) {
           break;
+        }
+        if (graphemeStart(text, start + len) != start + len &&
+            start + len < text.length) {
+          continue;
         }
         final surface = text.substring(start, start + len);
         final entries = cache.putIfAbsent(
@@ -46,11 +52,7 @@ class DictionaryLookup {
         if (len > bestLen || (len == bestLen && start < bestStart)) {
           bestLen = len;
           bestStart = start;
-          best = LookupResult(
-            surface: surface,
-            entries: entries,
-            start: start,
-          );
+          best = LookupResult(surface: surface, entries: entries, start: start);
         }
         break;
       }
@@ -71,19 +73,24 @@ class DictionaryLookup {
     if (text.isEmpty) {
       return null;
     }
-    final cover = tapIndex < 0
-        ? 0
-        : (tapIndex >= text.length ? text.length - 1 : tapIndex);
-    if (!_isJapaneseUnit(text.codeUnitAt(cover))) {
+    final cover = graphemeStart(
+      text,
+      tapIndex < 0 ? 0 : (tapIndex >= text.length ? text.length - 1 : tapIndex),
+    );
+    if (!_isJapaneseAt(text, cover)) {
       return null;
     }
     var start = cover;
-    var end = cover + 1;
-    while (start > 0 && _isJapaneseUnit(text.codeUnitAt(start - 1))) {
-      start--;
+    var end = graphemeEnd(text, cover);
+    while (start > 0) {
+      final prev = graphemeStart(text, start - 1);
+      if (!_isJapaneseAt(text, prev)) {
+        break;
+      }
+      start = prev;
     }
-    while (end < text.length && _isJapaneseUnit(text.codeUnitAt(end))) {
-      end++;
+    while (end < text.length && _isJapaneseAt(text, end)) {
+      end = graphemeEnd(text, end);
     }
     return (surface: text.substring(start, end), start: start, end: end);
   }
@@ -189,11 +196,21 @@ String? _yomitanCondition(String pos) {
   return null;
 }
 
-bool _isJapaneseUnit(int unit) {
+bool _isJapaneseAt(String text, int offset) {
+  if (offset < 0 || offset >= text.length) {
+    return false;
+  }
+  final end = graphemeEnd(text, offset);
+  return _isJapaneseCodePoint(text.substring(offset, end).runes.first);
+}
+
+bool _isJapaneseCodePoint(int unit) {
   return (unit >= 0x3040 && unit <= 0x30FF) ||
       (unit >= 0x31F0 && unit <= 0x31FF) ||
       (unit >= 0x3400 && unit <= 0x9FFF) ||
       (unit >= 0xF900 && unit <= 0xFAFF) ||
       unit == 0x3005 ||
-      (unit >= 0xFF66 && unit <= 0xFF9D);
+      (unit >= 0xFF66 && unit <= 0xFF9D) ||
+      (unit >= 0x20000 && unit <= 0x2FA1F) ||
+      (unit >= 0x30000 && unit <= 0x323AF);
 }
