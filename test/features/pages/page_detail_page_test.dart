@@ -540,7 +540,7 @@ void main() {
     const first = '辻$ivs';
     const second = '葛$ivs';
     const ocr = '$first$second';
-    final start = first.length;
+    const start = first.length;
 
     await _openPage(
       tester,
