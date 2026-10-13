@@ -43,6 +43,11 @@
 	<string>MangaJP usa a galeria para abrir páginas de manga e recortar.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>MangaJP usa a câmera se você fotografar uma página de manga.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

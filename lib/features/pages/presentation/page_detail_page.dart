@@ -515,7 +515,7 @@ class _PageOcrBody extends ConsumerWidget {
         : AppTypeScale.balaoPaginaMobileJp;
 
     return ListView(
-      padding: ShellLayout.withCommandBarPadding(
+      padding: ShellLayout.withSafePadding(
         context,
         const EdgeInsets.fromLTRB(20, 16, 20, 24),
       ),

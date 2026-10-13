@@ -39,6 +39,37 @@ abstract final class ShellLayout {
     );
   }
 
+  /// [withCommandBarPadding] plus unused [MediaQuery.padding] on top / start /
+  /// end so custom headers clear the notch. Bottom stays the command bar /
+  /// dock / nav — they own the home indicator.
+  static EdgeInsets withSafePadding(BuildContext context, EdgeInsets padding) {
+    final insets = MediaQuery.paddingOf(context);
+    return withCommandBarPadding(
+      context,
+      padding.copyWith(
+        top: padding.top + insets.top,
+        left: padding.left + insets.left,
+        right: padding.right + insets.right,
+      ),
+    );
+  }
+
+  /// Insets still unused after the 76px rail took the start edge.
+  ///
+  /// Wide [AppChrome] publishes this as the content [MediaQuery.padding] so
+  /// [withSafePadding] does not add the notch twice beside the rail.
+  static EdgeInsets paddingBesideRail(
+    EdgeInsets padding, {
+    required TextDirection textDirection,
+  }) {
+    if (textDirection == TextDirection.rtl) {
+      final leftover = padding.right - railWidth;
+      return padding.copyWith(right: leftover < 0 ? 0.0 : leftover);
+    }
+    final leftover = padding.left - railWidth;
+    return padding.copyWith(left: leftover < 0 ? 0.0 : leftover);
+  }
+
   static bool isWide(BuildContext context) {
     return MediaQuery.sizeOf(context).width >= AppBreakpoints.wide;
   }

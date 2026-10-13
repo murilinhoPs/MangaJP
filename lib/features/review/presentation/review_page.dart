@@ -277,7 +277,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
             metaHint: remaining,
             actions: actions,
             child: Padding(
-              padding: ShellLayout.withCommandBarPadding(
+              padding: ShellLayout.withSafePadding(
                 context,
                 wide
                     ? const EdgeInsets.fromLTRB(48, 36, 48, 24)
@@ -453,7 +453,7 @@ class _ReviewStatus extends StatelessWidget {
     final tokens = context.tokens;
     final body = Center(
       child: Padding(
-        padding: ShellLayout.withCommandBarPadding(
+        padding: ShellLayout.withSafePadding(
           context,
           const EdgeInsets.all(24),
         ),

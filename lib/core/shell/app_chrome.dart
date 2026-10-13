@@ -237,9 +237,10 @@ class _AppChromeState extends ConsumerState<AppChrome> {
                   bottom: clearance,
                   child: MediaQuery(
                     data: media.copyWith(
-                      padding: media.padding.copyWith(
-                        bottom: media.padding.bottom + clearance,
-                      ),
+                      padding: ShellLayout.paddingBesideRail(
+                        media.padding,
+                        textDirection: Directionality.of(context),
+                      ).copyWith(bottom: media.padding.bottom + clearance),
                     ),
                     child: body,
                   ),
