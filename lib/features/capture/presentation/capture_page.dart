@@ -189,7 +189,8 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     return '${rect.left}|${rect.top}|${rect.width}|${rect.height}';
   }
 
-  /// Esc, dock X, and Android back. Confirm only after a real crop edit.
+  /// Esc, dock X, and Android / iOS back (PopScope). Confirm only after a
+  /// real crop edit.
   Future<void> _requestExit() async {
     if (_exitDialogOpen) {
       return;
