@@ -1,0 +1,2 @@
+m125_desktop_caderno_chip_ignorado.png             1280x800   24950 bytes
+m125_phone_caderno_chip_ignorado.png               390x844   19936 bytes
