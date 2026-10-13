@@ -200,11 +200,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      const NotebookWordRoute(id: wordId).go(tester.element(find.byType(HomePage)));
+      const NotebookWordRoute(id: wordId)
+          .go(tester.element(find.byType(HomePage)));
       await tester.pumpAndSettle();
 
       expect(find.byType(NotebookWordPage), findsOneWidget);
-      expect(tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data, 'ぴよ');
+      expect(
+        tester.widget<Text>(find.byKey(NotebookWordKeys.lemma)).data,
+        'ぴよ',
+      );
       expect(find.byKey(NotebookWordKeys.gloss), findsNothing);
       expect(
         tester.widget<Text>(find.byKey(NotebookWordKeys.note)).data,
@@ -1136,10 +1140,7 @@ void main() {
           }),
           AppColors.dangerBg,
         );
-        expect(
-          overlay.resolve(const <WidgetState>{}),
-          Colors.transparent,
-        );
+        expect(overlay.resolve(const <WidgetState>{}), Colors.transparent);
       }
     });
 
@@ -1160,68 +1161,205 @@ void main() {
         await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebook));
         await tester.pumpAndSettle();
 
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(
-          find.descendant(
-            of: find.byType(AlertDialog),
-            matching: find.byType(OutlinedButton),
-          ),
-          findsNothing,
+        _expectDangerDialogChrome(
+          tester,
+          title: 'Remover do Caderno?',
+          cancelKey: NotebookWordKeys.removeFromNotebookCancel,
+          confirmKey: NotebookWordKeys.removeFromNotebookConfirm,
         );
-        final cancel = tester.widget<TextButton>(
-          find.byKey(NotebookWordKeys.removeFromNotebookCancel),
-        );
-        expect(cancel, isA<TextButton>());
-        expect(
-          cancel.style?.foregroundColor?.resolve(const <WidgetState>{}),
-          AppColors.text2,
-        );
-        expect(
-          cancel.style?.backgroundColor?.resolve(const <WidgetState>{}),
-          Colors.transparent,
-        );
-        final cancelSide = cancel.style?.side?.resolve(const <WidgetState>{});
-        expect(
-          cancelSide == null ||
-              cancelSide.style == BorderStyle.none ||
-              cancelSide.width == 0,
-          isTrue,
-        );
-        final confirm = tester.widget<FilledButton>(
-          find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
-        );
-        expect(
-          confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
-          AppColors.danger,
-        );
-        expect(
-          confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
-          const Color(0xFFFF6A4D),
-        );
-        expect(
-          confirm.style?.foregroundColor?.resolve(const <WidgetState>{}),
-          AppColors.onCoral,
-        );
-        expect(
-          confirm.style?.side?.resolve(const <WidgetState>{})?.color,
-          AppColors.danger,
-        );
-
-        final filledDanger = tester
-            .widgetList<FilledButton>(find.byType(FilledButton))
-            .where(
-              (btn) =>
-                  btn.style?.backgroundColor?.resolve(const <WidgetState>{}) ==
-                  AppColors.danger,
-            );
-        expect(filledDanger, hasLength(1));
 
         await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebookCancel));
         await tester.pumpAndSettle();
         expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Remover card dialog is danger filled and ghost cancel at $label',
+      (tester) async {
+        final env = await _openWord(
+          tester,
+          jmdictPath: jmdictPath,
+          size: size,
+          state: WordState.learning,
+          card: true,
+        );
+        final before = await _studySnapshot(env.db);
+
+        await tester.scrollUntilVisible(
+          find.byKey(NotebookWordKeys.deleteCard),
+          80,
+          scrollable: find.descendant(
+            of: find.byType(NotebookWordPage),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(NotebookWordKeys.deleteCard));
+        await tester.pumpAndSettle();
+
+        _expectDangerDialogChrome(
+          tester,
+          title: 'Remover card?',
+          cancelKey: NotebookWordKeys.deleteCardCancel,
+          confirmKey: NotebookWordKeys.deleteCardConfirm,
+        );
+
+        await tester.tap(find.byKey(NotebookWordKeys.deleteCardCancel));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(await _studySnapshot(env.db), before);
+
+        await tester.tap(find.byKey(NotebookWordKeys.deleteCard));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(NotebookWordKeys.deleteCardConfirm));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(NotebookWordKeys.state)).data,
+          'Salvo',
+        );
+        expect(await env.db.select(env.db.userCards).get(), isEmpty);
+      },
+    );
+
+    testWidgets(
+      'Apagar o card também dialog is danger filled and ghost cancel at $label',
+      (tester) async {
+        final env = await _openWord(
+          tester,
+          jmdictPath: jmdictPath,
+          size: size,
+          state: WordState.learning,
+          card: true,
+        );
+        final before = await _persistSnapshot(env.db);
+
+        await tester.scrollUntilVisible(
+          find.byKey(NotebookWordKeys.removeFromNotebook),
+          80,
+          scrollable: find.descendant(
+            of: find.byType(NotebookWordPage),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebook));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
+        );
+        await tester.pumpAndSettle();
+
+        _expectDangerDialogChrome(
+          tester,
+          title: 'Apagar o card também?',
+          cancelKey: NotebookWordKeys.removeFromNotebookCardCancel,
+          confirmKey: NotebookWordKeys.removeFromNotebookCardConfirm,
+        );
+
+        await tester.tap(
+          find.byKey(NotebookWordKeys.removeFromNotebookCardCancel),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(await _persistSnapshot(env.db), before);
+
+        await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebook));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(NotebookWordKeys.removeFromNotebookConfirm),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(NotebookWordKeys.removeFromNotebookCardConfirm),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(NotebookPage), findsOneWidget);
+        expect(find.byKey(NotebookKeys.row(env.wordId)), findsNothing);
+        expect(await env.db.select(env.db.userWords).get(), isEmpty);
       },
     );
   }
+}
+
+void _expectDangerDialogChrome(
+  WidgetTester tester, {
+  required String title,
+  required Key cancelKey,
+  required Key confirmKey,
+}) {
+  expect(find.byType(AlertDialog), findsOneWidget);
+  expect(find.text(title), findsOneWidget);
+  expect(
+    find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(OutlinedButton),
+    ),
+    findsNothing,
+  );
+  expect(
+    find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('Cancelar'),
+    ),
+    findsOneWidget,
+  );
+  expect(
+    find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('Remover'),
+    ),
+    findsOneWidget,
+  );
+  final cancel = tester.widget<TextButton>(find.byKey(cancelKey));
+  expect(cancel, isA<TextButton>());
+  expect(
+    cancel.style?.foregroundColor?.resolve(const <WidgetState>{}),
+    AppColors.text2,
+  );
+  expect(
+    cancel.style?.backgroundColor?.resolve(const <WidgetState>{}),
+    Colors.transparent,
+  );
+  final cancelSide = cancel.style?.side?.resolve(const <WidgetState>{});
+  expect(
+    cancelSide == null ||
+        cancelSide.style == BorderStyle.none ||
+        cancelSide.width == 0,
+    isTrue,
+  );
+  final confirm = tester.widget<FilledButton>(find.byKey(confirmKey));
+  expect(
+    confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
+    AppColors.danger,
+  );
+  expect(
+    confirm.style?.backgroundColor?.resolve(const <WidgetState>{}),
+    const Color(0xFFFF6A4D),
+  );
+  expect(
+    confirm.style?.foregroundColor?.resolve(const <WidgetState>{}),
+    AppColors.onCoral,
+  );
+  expect(
+    confirm.style?.side?.resolve(const <WidgetState>{})?.color,
+    AppColors.danger,
+  );
+
+  final filledDanger = tester
+      .widgetList<FilledButton>(find.byType(FilledButton))
+      .where(
+        (btn) =>
+            btn.style?.backgroundColor?.resolve(const <WidgetState>{}) ==
+            AppColors.danger,
+      );
+  expect(filledDanger, hasLength(1));
 }
 
 const _phone = Size(390, 844);

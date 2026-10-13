@@ -43,12 +43,40 @@ void main() {
       spans.firstWhere((span) => slice(span) == '高い').state,
       WordState.saved,
     );
-    expect(spans.firstWhere((span) => slice(span) == '猫').state, WordState.known);
+    expect(
+      spans.firstWhere((span) => slice(span) == '猫').state,
+      WordState.known,
+    );
     expect(
       spans.firstWhere((span) => slice(span) == '食べた').state,
       WordState.learning,
     );
-    expect(spans.firstWhere((span) => slice(span) == 'ぴよ').state, WordState.ignored);
-    expect(spans.firstWhere((span) => slice(span) == '。').state, WordState.unknown);
+    expect(
+      spans.firstWhere((span) => slice(span) == 'ぴよ').state,
+      WordState.ignored,
+    );
+    expect(
+      spans.firstWhere((span) => slice(span) == '。').state,
+      WordState.unknown,
+    );
+  });
+
+  test('surrogate-pair kanji is one unknown span', () {
+    const kanji = '𩸽';
+    const text = '猫$kanji。';
+    final spans = tokenizeOcr(text, lookup, WordStateIndex.empty);
+    String slice(OcrTokenSpan span) => text.substring(span.start, span.end);
+    expect(kanji.length, 2);
+    expect(slice(spans.firstWhere((span) => slice(span) == kanji)), kanji);
+    expect(
+      spans.where(
+        (span) =>
+            span.end - span.start == 1 &&
+            slice(span) != '猫' &&
+            slice(span) != '。',
+      ),
+      isEmpty,
+      reason: 'must not emit a half-surrogate span',
+    );
   });
 }

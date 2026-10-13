@@ -9,6 +9,7 @@ import '../../../core/shell/shell_nav.dart';
 import '../../../core/shell/shell_registry.dart';
 import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/graphemes.dart';
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/domain/dict_entry.dart';
 import '../../dictionary/domain/lookup_result.dart';
@@ -207,18 +208,22 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
   }
 
   Future<void> _lookup(PageCrop crop, int tapIndex) async {
-    final startGuess = tapIndex < 0
+    final text = crop.ocrText;
+    final startGuess = text.isEmpty
         ? 0
-        : (tapIndex >= crop.ocrText.length
-              ? crop.ocrText.length - 1
-              : tapIndex);
+        : graphemeStart(
+            text,
+            tapIndex < 0
+                ? 0
+                : (tapIndex >= text.length ? text.length - 1 : tapIndex),
+          );
     setState(() {
       _lookupLoading = true;
       _lookupError = null;
       _touch = _TouchRange(
         cropId: crop.id,
         start: startGuess,
-        end: startGuess + 1,
+        end: graphemeEnd(text, startGuess),
       );
     });
     try {
