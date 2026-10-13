@@ -17,6 +17,9 @@ class DictionaryLookup {
   final Deinflector deinflector;
 
   /// Longest `forms` hit whose span covers [tapIndex] (UTF-16 offset).
+  ///
+  /// Variation selectors are stripped only from the JMdict query. [LookupResult]
+  /// surface, start, and end stay on the original OCR string.
   LookupResult? findAt(String text, {int tapIndex = 0}) {
     if (text.isEmpty) {
       return null;
@@ -25,6 +28,11 @@ class DictionaryLookup {
       text,
       tapIndex < 0 ? 0 : (tapIndex >= text.length ? text.length - 1 : tapIndex),
     );
+    final boundaries = <int>{0};
+    for (var i = 0; i < text.length; i = graphemeEnd(text, i)) {
+      boundaries.add(i);
+    }
+    boundaries.add(text.length);
     final cache = <String, List<DictEntry>>{};
 
     LookupResult? best;
@@ -37,13 +45,12 @@ class DictionaryLookup {
         if (start + len <= cover) {
           break;
         }
-        if (graphemeStart(text, start + len) != start + len &&
-            start + len < text.length) {
+        if (!boundaries.contains(start + len) && start + len < text.length) {
           continue;
         }
         final surface = text.substring(start, start + len);
         final entries = cache.putIfAbsent(
-          surface,
+          stripVariationSelectors(surface),
           () => _entriesForSurface(surface),
         );
         if (entries.isEmpty) {
@@ -96,7 +103,11 @@ class DictionaryLookup {
   }
 
   List<DictEntry> _entriesForSurface(String surface) {
-    final transformed = deinflector.transform(surface);
+    final query = stripVariationSelectors(surface);
+    if (query.isEmpty) {
+      return const [];
+    }
+    final transformed = deinflector.transform(query);
     final byText = <String, List<DeinflectedText>>{};
     for (final item in transformed) {
       byText.putIfAbsent(item.text, () => []).add(item);
