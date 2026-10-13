@@ -139,7 +139,7 @@ void main() {
 
   test('surrogate-pair kanji is one miss character, never half', () {
     const kanji = '𠮟';
-    const mid = '猫${kanji}を';
+    const mid = '猫$kanjiを';
     const trailing = '猫$kanji';
     expect(kanji.length, 2);
 

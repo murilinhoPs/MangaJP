@@ -351,7 +351,7 @@ void main() {
     'tap left and right halves of a surrogate kanji in the middle select it whole',
     (tester) async {
       const kanji = '𠮟';
-      const ocr = '猫${kanji}を';
+      const ocr = '猫$kanjiを';
       expect(kanji.length, 2);
       final start = ocr.indexOf(kanji);
       expect(start, 1);
