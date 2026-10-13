@@ -1186,6 +1186,89 @@ void main() {
 
   for (final size in [_phone, _desktop]) {
     testWidgets(
+      'custom IVS and plain miss share one Caderno row at '
+      '${size.width.toInt()}x${size.height.toInt()}',
+      (tester) async {
+        _setSize(tester, size);
+        const ivs = '\u{E0100}';
+        const withIvs = 'ぴよ$ivs';
+        final db = await _openPage(
+          tester,
+          jmdictPath: jmdictPath,
+          pageId: 'page-ivs-${size.width.toInt()}',
+          ocrText: 'ぴよ',
+          seed: (db, cropId) async {
+            final words = WordsRepository(db);
+            final cards = FlashcardsRepository(db);
+            await cards.markIgnored(
+              await words.saveCustomFromLookup(
+                cropId: cropId,
+                surface: withIvs,
+                userNote: 'nome ivs',
+              ),
+            );
+          },
+        );
+
+        expect(_spanColor(tester, 'ぴよ'), AppColors.text3);
+        await tester.tap(find.byKey(PageDetailKeys.ocrText));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+        expect(
+          tester
+              .widget<LookupActionButton>(find.byKey(LookupSheetKeys.ignore))
+              .active,
+          isTrue,
+        );
+        expect(
+          find.descendant(
+            of: find.byKey(LookupSheetKeys.sheet),
+            matching: find.text('ぴよ'),
+          ),
+          findsWidgets,
+          reason: 'lookup header keeps the tapped OCR form',
+        );
+
+        await tester.enterText(find.byKey(LookupSheetKeys.note), 'outra nota');
+        await tester.pumpAndSettle();
+        await _tapSave(tester);
+
+        final words = await db.select(db.userWords).get();
+        expect(words, hasLength(1));
+        expect(words.single.lemma, withIvs);
+        expect(words.single.reading, withIvs);
+        expect(words.single.userNote, 'nome ivs');
+        expect(
+          (await db.select(db.userWordStates).get()).single.state,
+          WordState.ignored.name,
+        );
+        expect(await db.select(db.userCards).get(), isEmpty);
+
+        const NotebookRoute().go(
+          tester.element(find.byKey(PageDetailKeys.ocrText)),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(NotebookPage), findsOneWidget);
+        expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
+        final tile = tester.widget<ListTile>(
+          find.byKey(NotebookKeys.row(words.single.id)),
+        );
+        expect((tile.title as Text).data, withIvs);
+        expect((tile.subtitle as Text).data, withIvs);
+        expect(
+          find.descendant(
+            of: find.byKey(NotebookKeys.list),
+            matching: find.byType(ListTile),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+  }
+
+  for (final size in [_phone, _desktop]) {
+    testWidgets(
       'page meta is 1 recorte singular at ${size.width.toInt()}x${size.height.toInt()}',
       (tester) async {
         _setSize(tester, size);

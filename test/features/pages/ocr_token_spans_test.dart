@@ -75,6 +75,26 @@ void main() {
     expect(text.substring(spans[1].start, spans[1].end), second);
   });
 
+  test('custom IVS lemma colors the unadorned miss and keeps IVS offsets', () {
+    const ivs = '\u{E0100}';
+    const vs16 = '\u{FE0F}';
+    const withIvs = 'ぴよ$ivs$vs16';
+    const states = WordStateIndex(
+      bySeq: {},
+      byLemma: {'ぴよ': WordState.ignored},
+    );
+
+    final ivsSpans = tokenizeOcr(withIvs, lookup, states);
+    expect(ivsSpans, hasLength(1));
+    expect(ivsSpans.single.start, 0);
+    expect(ivsSpans.single.end, withIvs.length);
+    expect(ivsSpans.single.state, WordState.ignored);
+    expect(withIvs.substring(ivsSpans.single.start, ivsSpans.single.end), withIvs);
+
+    final plain = tokenizeOcr('ぴよ', lookup, states);
+    expect(plain.single.state, WordState.ignored);
+  });
+
   test('surrogate-pair kanji is one unknown span', () {
     const kanji = '𩸽';
     const text = '猫$kanji。';

@@ -31,4 +31,13 @@ void main() {
     expect(stripVariationSelectors(''), '');
     expect(stripVariationSelectors(ivs), '');
   });
+
+  test('stripVariationSelectors drops stacked selectors and surrogate IVS', () {
+    expect(('𠮷$ivs').length, 4, reason: 'surrogate pair + IVS is 4 UTF-16');
+    expect(stripVariationSelectors('葛$ivs$vs16'), '葛');
+    expect(stripVariationSelectors('葛$ivs$vs1'), '葛');
+    expect(stripVariationSelectors('𠮷$ivs$vs16'), '𠮷');
+    expect(stripVariationSelectors('𠮷$ivs葛$vs16'), '𠮷葛');
+    expect(stripVariationSelectors('辻$ivs葛$vs1𠮷$vs16'), '辻葛𠮷');
+  });
 }

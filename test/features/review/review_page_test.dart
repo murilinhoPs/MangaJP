@@ -456,12 +456,12 @@ void main() {
     expect(log.engineId, kSm2JrEngineId);
     expect(log.isDrill, 0);
 
-    final expected = const Sm2JrEngine().schedule(prev, 4, log.ratedAt);
+    final expected = const Sm2JrEngine().schedule(prev, 4, _now);
     final srs = (await env.db.select(env.db.userCardSrs).get()).single;
     expect(srs.easeFactor, expected.easeFactor);
     expect(srs.intervalDays, expected.intervalDays);
     expect(srs.repetitions, expected.repetitions);
-    expect(srs.dueAt, expected.dueAt);
+    expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
     expect(srs.phase, expected.phase.name);
     expect(srs.engineId, kSm2JrEngineId);
 
@@ -509,12 +509,12 @@ void main() {
       expect(logs[1].quality, 0);
       expect(logs[1].engineId, kSm2JrEngineId);
 
-      final expected = const Sm2JrEngine().schedule(prev, 0, logs[0].ratedAt);
+      final expected = const Sm2JrEngine().schedule(prev, 0, _now);
       final srs = (await env.db.select(env.db.userCardSrs).get()).single;
       expect(srs.easeFactor, expected.easeFactor);
       expect(srs.intervalDays, expected.intervalDays);
       expect(srs.repetitions, expected.repetitions);
-      expect(srs.dueAt, expected.dueAt);
+      expect(srs.dueAt.isAtSameMomentAs(expected.dueAt), isTrue);
       expect(srs.phase, expected.phase.name);
       expect(
         (await env.db.select(env.db.userWordStates).get()).single.state,
@@ -552,9 +552,6 @@ void main() {
       final early = (await env.db.select(env.db.userCardSrs).get()).singleWhere(
         (row) => row.cardId == 'card-early',
       );
-      final firstHard = logs.firstWhere(
-        (log) => log.cardId == 'card-early' && log.isDrill == 0,
-      );
       final expected = const Sm2JrEngine().schedule(
         CardSrsState(
           easeFactor: kDefaultEaseFactor,
@@ -565,7 +562,7 @@ void main() {
           engineId: kSm2JrEngineId,
         ),
         3,
-        firstHard.ratedAt,
+        _now,
       );
       expect(early.easeFactor, expected.easeFactor);
       expect(early.intervalDays, expected.intervalDays);

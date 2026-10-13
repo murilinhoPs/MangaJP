@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/app_database_provider.dart';
+import '../../../core/utils/graphemes.dart';
 import '../../../core/utils/ids.dart';
 import '../domain/word_state.dart';
 import '../domain/word_state_index.dart';
@@ -72,7 +73,10 @@ class WordsRepository {
   ///
   /// [surface] becomes `lemma` / `reading`. [userNote] is required (trimmed
   /// non-empty). Id is `custom:<uuid>`. Gloss is not stored. No card.
-  /// Returns the new word id.
+  ///
+  /// Dedupes against existing custom rows by [stripVariationSelectors]
+  /// (M1.26). The stored lemma keeps the first-saved form, selectors included.
+  /// Returns the word id.
   Future<String> saveCustomFromLookup({
     required String cropId,
     required String surface,
@@ -88,17 +92,20 @@ class WordsRepository {
     }
 
     return _db.transaction(() async {
-      final wordId = newCustomWordId();
-      await _db.wordsDao.insertWord(
-        UserWordsCompanion.insert(
-          id: wordId,
-          seq: await _unusedCustomSeq(),
-          lemma: dictForm,
-          reading: dictForm,
-          userNote: Value(note),
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
+      final existing = await _existingCustomWord(dictForm);
+      final wordId = existing?.id ?? newCustomWordId();
+      if (existing == null) {
+        await _db.wordsDao.insertWord(
+          UserWordsCompanion.insert(
+            id: wordId,
+            seq: await _unusedCustomSeq(),
+            lemma: dictForm,
+            reading: dictForm,
+            userNote: Value(note),
+            createdAt: DateTime.now().toUtc(),
+          ),
+        );
+      }
       await _ensureSavedState(wordId);
       await _db.wordsDao.insertCropWord(
         CropWordsCompanion.insert(
@@ -119,7 +126,7 @@ class WordsRepository {
     for (final (word, stateRow) in rows) {
       final state = WordState.fromDb(stateRow.state);
       bySeq[word.seq] = state;
-      byLemma[word.lemma] = state;
+      byLemma[stripVariationSelectors(word.lemma)] = state;
     }
     return WordStateIndex(bySeq: bySeq, byLemma: byLemma);
   }
@@ -170,6 +177,21 @@ class WordsRepository {
         updatedAt: DateTime.now().toUtc(),
       );
     }
+  }
+
+  /// Custom row whose lemma matches [surface] with variation selectors dropped.
+  Future<UserWord?> _existingCustomWord(String surface) async {
+    final key = stripVariationSelectors(surface);
+    if (key.isEmpty) {
+      return null;
+    }
+    final rows = await _db.wordsDao.customWords();
+    for (final word in rows) {
+      if (stripVariationSelectors(word.lemma) == key) {
+        return word;
+      }
+    }
+    return null;
   }
 
   /// Negative seq so custom rows never collide with JMdict (positive) seqs.
