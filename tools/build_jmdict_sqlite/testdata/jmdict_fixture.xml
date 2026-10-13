@@ -112,4 +112,40 @@
 <gloss>low-priority fixture homograph</gloss>
 </sense>
 </entry>
+<entry>
+<ent_seq>1408440</ent_seq>
+<k_ele>
+<keb>辻</keb>
+<ke_pri>news2</ke_pri>
+<ke_pri>nf27</ke_pri>
+</k_ele>
+<r_ele>
+<reb>つじ</reb>
+<re_pri>news2</re_pri>
+<re_pri>nf27</re_pri>
+</r_ele>
+<sense>
+<pos>&n;</pos>
+<gloss>intersection</gloss>
+<gloss>crossing</gloss>
+<gloss>crossroad</gloss>
+<gloss>street corner</gloss>
+<gloss>street</gloss>
+</sense>
+</entry>
+<entry>
+<ent_seq>1214560</ent_seq>
+<k_ele>
+<keb>葛</keb>
+</k_ele>
+<r_ele>
+<reb>くず</reb>
+</r_ele>
+<sense>
+<pos>&n;</pos>
+<gloss>kudzu</gloss>
+<gloss>Japanese arrowroot</gloss>
+<gloss>Pueraria lobata</gloss>
+</sense>
+</entry>
 </JMdict>

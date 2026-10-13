@@ -137,6 +137,67 @@ void main() {
     expect(lookup.findAt('ぴよ'), isNull);
   });
 
+  test('IVS and VS are stripped only from the JMdict query', () {
+    const ivs = '\u{E0100}';
+    const vs16 = '\u{FE0F}';
+    const vs1 = '\u{FE00}';
+    const tsujiIvs = '辻$ivs';
+    const kuzuIvs = '葛$ivs';
+    const tsujiVs = '辻$vs16';
+    expect(tsujiIvs.length, 3);
+    expect(kuzuIvs.length, 3);
+    expect(tsujiVs.length, 2);
+
+    final byIvs = lookup.findAt(tsujiIvs);
+    expect(byIvs, isNotNull);
+    expect(byIvs!.selected.lemma, '辻');
+    expect(byIvs.surface, tsujiIvs, reason: 'displayed surface keeps the IVS');
+    expect(byIvs.start, 0);
+    expect(byIvs.end, tsujiIvs.length);
+
+    final byVs16 = lookup.findAt(tsujiVs);
+    expect(byVs16, isNotNull);
+    expect(byVs16!.selected.lemma, '辻');
+    expect(byVs16.surface, tsujiVs);
+    expect(byVs16.end, tsujiVs.length);
+
+    final byVs1 = lookup.findAt('葛$vs1');
+    expect(byVs1, isNotNull);
+    expect(byVs1!.selected.lemma, '葛');
+    expect(byVs1.surface, '葛$vs1');
+
+    expect(lookup.findAt(kuzuIvs)!.selected.lemma, '葛');
+    expect(lookup.findAt(kuzuIvs)!.surface, kuzuIvs);
+  });
+
+  test(
+    'two IVS kanji in a row: second highlight range stays on the original',
+    () {
+      const ivs = '\u{E0100}';
+      const first = '辻$ivs';
+      const second = '葛$ivs';
+      const text = '$first$second';
+      expect(first.length, 3);
+      expect(text.length, 6);
+
+      for (final tap in [first.length, first.length + 1, first.length + 2]) {
+        final hit = lookup.findAt(text, tapIndex: tap);
+        expect(hit, isNotNull, reason: 'tap $tap');
+        expect(hit!.selected.lemma, '葛', reason: 'tap $tap');
+        expect(hit.surface, second, reason: 'tap $tap keeps the second IVS');
+        expect(hit.start, first.length, reason: 'tap $tap');
+        expect(hit.end, text.length, reason: 'tap $tap');
+      }
+
+      final firstHit = lookup.findAt(text, tapIndex: 1);
+      expect(firstHit, isNotNull);
+      expect(firstHit!.selected.lemma, '辻');
+      expect(firstHit.surface, first);
+      expect(firstHit.start, 0);
+      expect(firstHit.end, first.length);
+    },
+  );
+
   test('surrogate-pair kanji is one miss character, never half', () {
     const kanji = '𠮟';
     const mid = '猫$kanjiを';

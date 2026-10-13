@@ -1,5 +1,6 @@
-import 'package:characters/characters.dart';
 import 'package:flutter/rendering.dart';
+
+import '../../../core/utils/graphemes.dart';
 
 /// UTF-16 index of the glyph under [local] in a laid-out [paragraph].
 ///
@@ -8,20 +9,27 @@ import 'package:flutter/rendering.dart';
 /// null so nothing is selected.
 ///
 /// Offsets are grapheme starts ([Characters]): a supplementary-plane kanji
-/// (surrogate pair) is one character, never half.
+/// (surrogate pair) or a kanji plus variation selector is one character,
+/// never half and never a leftover selector.
 int? charIndexAt(RenderParagraph paragraph, Offset local) {
   final text = paragraph.text.toPlainText();
   if (text.isEmpty) {
     return null;
   }
 
-  var start = 0;
-  for (final grapheme in text.characters) {
-    final end = start + grapheme.length;
-    if (_boxContains(paragraph, local, start, end)) {
-      return start;
+  final offset = paragraph.getPositionForOffset(local).offset;
+  final probed = offset < 0
+      ? 0
+      : (offset >= text.length ? text.length - 1 : offset);
+  final current = graphemeStart(text, probed);
+  if (_boxContains(paragraph, local, current, graphemeEnd(text, current))) {
+    return current;
+  }
+  if (current > 0) {
+    final previous = graphemeStart(text, current - 1);
+    if (_boxContains(paragraph, local, previous, graphemeEnd(text, previous))) {
+      return previous;
     }
-    start = end;
   }
   return null;
 }

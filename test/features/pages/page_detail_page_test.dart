@@ -407,6 +407,181 @@ void main() {
   );
 
   testWidgets(
+    'tap right half of trailing 葛+IVS (3 UTF-16 units) selects the cluster',
+    (tester) async {
+      const ivs = '\u{E0100}';
+      const cluster = '葛$ivs';
+      const ocr = '猫$cluster';
+      expect(cluster.length, 3);
+      final start = ocr.indexOf('葛');
+
+      await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-kuzu-ivs-end',
+        ocrText: ocr,
+      );
+
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.byKey(PageDetailKeys.ocrText),
+      );
+      final local = _glyphLocal(
+        paragraph,
+        start: start,
+        end: start + cluster.length,
+        rightHalf: true,
+      );
+      expect(charIndexAt(paragraph, local), start);
+      expect(charIndexAt(paragraph, local), isNot(start + 1));
+      expect(charIndexAt(paragraph, local), isNot(start + 2));
+
+      await tester.tapAt(paragraph.localToGlobal(local));
+      await tester.pumpAndSettle();
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.miss), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(LookupSheetKeys.sheet),
+          matching: find.text('葛'),
+        ),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets('tap right half of 𠮷+IVS (4 UTF-16 units) selects the cluster', (
+    tester,
+  ) async {
+    const ivs = '\u{E0100}';
+    const cluster = '𠮷$ivs';
+    const ocr = '猫$cluster';
+    expect(cluster.length, 4);
+    final start = ocr.indexOf('𠮷');
+
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-yoshi-ivs',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _glyphLocal(
+      paragraph,
+      start: start,
+      end: start + cluster.length,
+      rightHalf: true,
+    );
+    expect(charIndexAt(paragraph, local), start);
+    expect(charIndexAt(paragraph, local), isNot(start + 1));
+    expect(charIndexAt(paragraph, local), isNot(start + 2));
+    expect(charIndexAt(paragraph, local), isNot(start + 3));
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.textContaining('𠮷'),
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('tap right half of kanji+VS16 selects the cluster', (
+    tester,
+  ) async {
+    const vs16 = '\u{FE0F}';
+    const cluster = '葛$vs16';
+    const ocr = '猫$cluster';
+    expect(cluster.length, 2);
+    final start = ocr.indexOf('葛');
+
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-kuzu-vs16',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _glyphLocal(
+      paragraph,
+      start: start,
+      end: start + cluster.length,
+      rightHalf: true,
+    );
+    expect(charIndexAt(paragraph, local), start);
+    expect(charIndexAt(paragraph, local), isNot(start + 1));
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(find.byKey(LookupSheetKeys.miss), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.text('葛'),
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('two IVS kanji: tap on the second highlights only that cluster', (
+    tester,
+  ) async {
+    const ivs = '\u{E0100}';
+    const first = '辻$ivs';
+    const second = '葛$ivs';
+    const ocr = '$first$second';
+    const start = first.length;
+
+    await _openPage(
+      tester,
+      jmdictPath: jmdictPath,
+      pageId: 'page-two-ivs',
+      ocrText: ocr,
+    );
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byKey(PageDetailKeys.ocrText),
+    );
+    final local = _glyphLocal(
+      paragraph,
+      start: start,
+      end: start + second.length,
+      rightHalf: true,
+    );
+    expect(charIndexAt(paragraph, local), start);
+
+    await tester.tapAt(paragraph.localToGlobal(local));
+    await tester.pumpAndSettle();
+    expect(_spanBackground(tester, second), AppColors.overlaySelecaoToque);
+    expect(_spanBackground(tester, first), isNull);
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.text('葛'),
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(LookupSheetKeys.sheet),
+        matching: find.text('辻'),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
     'tap left and right halves of a trailing surrogate kanji select it whole',
     (tester) async {
       const kanji = '𩸽';

@@ -61,6 +61,20 @@ void main() {
     );
   });
 
+  test('two IVS kanji stay separate spans on original offsets', () {
+    const ivs = '\u{E0100}';
+    const first = '辻$ivs';
+    const second = '葛$ivs';
+    const text = '$first$second';
+    final spans = tokenizeOcr(text, lookup, WordStateIndex.empty);
+    expect(spans, hasLength(2));
+    expect(spans[0].start, 0);
+    expect(spans[0].end, first.length);
+    expect(spans[1].start, first.length);
+    expect(spans[1].end, text.length);
+    expect(text.substring(spans[1].start, spans[1].end), second);
+  });
+
   test('surrogate-pair kanji is one unknown span', () {
     const kanji = '𩸽';
     const text = '猫$kanji。';
