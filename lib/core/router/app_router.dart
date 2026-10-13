@@ -7,9 +7,19 @@ import 'routes.dart';
 
 part 'app_router.g.dart';
 
+/// Screenshot helper. Default `/home`. Override with
+/// `--dart-define=MANGAJP_INITIAL_LOCATION=/pages/demo-page`.
+const kMangaJpInitialLocation = String.fromEnvironment(
+  'MANGAJP_INITIAL_LOCATION',
+  defaultValue: '/home',
+);
+
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
-  final router = GoRouter(initialLocation: '/home', routes: $appRoutes);
+  final initial = kMangaJpInitialLocation.isEmpty
+      ? '/home'
+      : kMangaJpInitialLocation;
+  final router = GoRouter(initialLocation: initial, routes: $appRoutes);
   final binder = ShareIntentBinder(
     router: router,
     source: ref.read(imageSourceServiceProvider),
