@@ -358,7 +358,10 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                 key: CaptureKeys.page,
                 children: [
                   Expanded(
-                    child: _workspace(wide: wide, tokens: tokens),
+                    child: SafeArea(
+                      bottom: false,
+                      child: _workspace(wide: wide, tokens: tokens),
+                    ),
                   ),
                   if (cropped != null)
                     Padding(

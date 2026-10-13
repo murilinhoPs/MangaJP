@@ -512,6 +512,44 @@ void main() {
     );
   }
 
+  for (final size in [const Size(390, 844), const Size(1280, 800)]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    testWidgets('Crop canvas sits below a 62px top inset at $label', (
+      tester,
+    ) async {
+      tester.view.padding = const FakeViewPadding(top: 62);
+      tester.view.viewPadding = const FakeViewPadding(top: 62);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _openCropWithImage(tester, db: db, png: png, size: size);
+
+      final canvas = tester.getRect(find.byKey(CaptureKeys.canvas));
+      expect(canvas.top, greaterThanOrEqualTo(62));
+
+      if (size.width < 900) {
+        expect(find.byKey(CaptureKeys.confirm), findsOneWidget);
+        expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
+        expect(
+          canvas.bottom,
+          lessThanOrEqualTo(
+            tester.getRect(find.byKey(ShellKeys.taskDock)).top + 0.5,
+          ),
+        );
+      } else {
+        expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
+        expect(
+          canvas.bottom,
+          lessThanOrEqualTo(
+            tester.getRect(find.byKey(ShellKeys.commandBar)).top + 0.5,
+          ),
+        );
+      }
+    });
+  }
+
   testWidgets('Android back without image exits to Home', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
