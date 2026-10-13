@@ -39,6 +39,21 @@ abstract final class ShellLayout {
     );
   }
 
+  /// [withCommandBarPadding] plus unused [MediaQuery.padding] on top / start /
+  /// end so custom headers clear the notch. Bottom stays the command bar /
+  /// dock / nav — they own the home indicator.
+  static EdgeInsets withSafePadding(BuildContext context, EdgeInsets padding) {
+    final insets = MediaQuery.paddingOf(context);
+    return withCommandBarPadding(
+      context,
+      padding.copyWith(
+        top: padding.top + insets.top,
+        left: padding.left + insets.left,
+        right: padding.right + insets.right,
+      ),
+    );
+  }
+
   static bool isWide(BuildContext context) {
     return MediaQuery.sizeOf(context).width >= AppBreakpoints.wide;
   }

@@ -58,6 +58,18 @@ void main() {
     }
   });
 
+  testWidgets('Home title sits below a 62px top inset', (tester) async {
+    tester.view.padding = const FakeViewPadding(top: 62);
+    tester.view.viewPadding = const FakeViewPadding(top: 62);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await _openHome(tester, jmdictPath: jmdictPath);
+
+    final title = tester.getRect(find.byKey(HomeKeys.title));
+    expect(title.top, greaterThanOrEqualTo(62));
+  });
+
   testWidgets('empty Revisar block stays visible and opens /review', (
     tester,
   ) async {

@@ -26,6 +26,7 @@ abstract final class HomeKeys {
   static const recentCaptures = Key('home-recent-captures');
   static const recentPages = Key('home-recent-pages');
   static const recentEmpty = Key('home-recent-empty');
+  static const title = Key('home-title');
   static const gallery = Key('home-gallery');
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
@@ -84,12 +85,16 @@ class _MobileHome extends StatelessWidget {
         ? null
         : recent!.first;
     return ListView(
-      padding: ShellLayout.withCommandBarPadding(
+      padding: ShellLayout.withSafePadding(
         context,
         const EdgeInsets.fromLTRB(16, 20, 16, 24),
       ),
       children: [
-        const Text('MangaJP', style: AppTypeScale.tituloTela),
+        const Text(
+          'MangaJP',
+          key: HomeKeys.title,
+          style: AppTypeScale.tituloTela,
+        ),
         const SizedBox(height: 4),
         Text(
           HomeDates.headerSubline(now),
@@ -134,7 +139,7 @@ class _DesktopHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: ShellLayout.withCommandBarPadding(
+      padding: ShellLayout.withSafePadding(
         context,
         const EdgeInsets.fromLTRB(48, 36, 48, 24),
       ),
