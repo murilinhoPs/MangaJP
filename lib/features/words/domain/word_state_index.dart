@@ -1,3 +1,4 @@
+import '../../../core/utils/graphemes.dart';
 import 'word_state.dart';
 
 /// Listed Caderno states keyed for Página coloring and lookup actions.
@@ -11,5 +12,8 @@ class WordStateIndex {
 
   WordState ofSeq(int seq) => bySeq[seq] ?? WordState.unknown;
 
-  WordState ofLemma(String lemma) => byLemma[lemma] ?? WordState.unknown;
+  WordState ofLemma(String lemma) {
+    final stripped = stripVariationSelectors(lemma);
+    return byLemma[stripped] ?? byLemma[lemma] ?? WordState.unknown;
+  }
 }

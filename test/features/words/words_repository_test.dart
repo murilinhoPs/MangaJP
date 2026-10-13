@@ -4,6 +4,7 @@ import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/core/utils/ids.dart';
+import 'package:manga_jp/features/flashcards/data/flashcards_repository.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/words/data/words_repository.dart';
@@ -14,6 +15,9 @@ import '../capture/fixture_png.dart';
 const _taberuSeq = 1358280;
 const _highHomographSeq = 9990001;
 const _lowHomographSeq = 9990002;
+const _ivs = '\u{E0100}';
+const _vs1 = '\u{FE00}';
+const _vs16 = '\u{FE0F}';
 
 void main() {
   test('onCreate has words / word_states / crop_words / cards', () async {
@@ -101,6 +105,124 @@ void main() {
     expect(links.single.cropId, env.cropId);
     expect(links.single.wordId, words.single.id);
     expect(await _cardRowCount(env.db), 0);
+  });
+
+  test(
+    'custom IVS and plain 葛 share one row; lemma keeps the first-saved form',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      const withIvs = '葛$_ivs';
+
+      final first = await env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: withIvs,
+        userNote: 'kuzu ivs',
+      );
+      final second = await env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: '葛',
+        userNote: 'plain kuzu',
+      );
+
+      expect(second, first);
+      final words = await env.db.select(env.db.userWords).get();
+      expect(words, hasLength(1));
+      expect(words.single.id, first);
+      expect(words.single.lemma, withIvs);
+      expect(words.single.reading, withIvs);
+      expect(words.single.userNote, 'kuzu ivs');
+      expect(await env.db.select(env.db.userWordStates).get(), hasLength(1));
+      expect(await env.db.select(env.db.cropWords).get(), hasLength(1));
+      expect(await _cardRowCount(env.db), 0);
+
+      final index = await env.words.stateIndex();
+      expect(index.ofLemma('葛'), WordState.saved);
+      expect(index.ofLemma(withIvs), WordState.saved);
+    },
+  );
+
+  test('custom plain then IVS keeps the unadorned lemma', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+
+    await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: '葛',
+      userNote: 'plain first',
+    );
+    await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: '葛$_ivs',
+      userNote: 'ivs later',
+    );
+
+    final words = await env.db.select(env.db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.lemma, '葛');
+    expect(words.single.userNote, 'plain first');
+  });
+
+  test(
+    'custom surrogate + stacked selectors dedupe to one row and one card',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      final cards = FlashcardsRepository(env.db);
+      const yoshiIvs = '𠮷$_ivs$_vs16';
+      expect(yoshiIvs.length, 5, reason: 'surrogate + IVS + VS16');
+
+      final first = await env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: yoshiIvs,
+        userNote: 'yoshi',
+      );
+      await cards.learn(first);
+
+      final second = await env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: '𠮷',
+        userNote: 'plain yoshi',
+      );
+      await cards.learn(second);
+
+      expect(second, first);
+      final words = await env.db.select(env.db.userWords).get();
+      expect(words, hasLength(1));
+      expect(words.single.lemma, yoshiIvs);
+      expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+      expect(await env.db.select(env.db.userCardSrs).get(), hasLength(1));
+
+      final twoSelectors = await env.words.saveCustomFromLookup(
+        cropId: env.cropId,
+        surface: '𠮷$_vs1$_ivs',
+        userNote: 'other selectors',
+      );
+      expect(twoSelectors, first);
+      expect(await env.db.select(env.db.userWords).get(), hasLength(1));
+      expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+    },
+  );
+
+  test('custom two-kanji IVS string matches the unadorned pair', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    const withIvs = '辻$_ivs葛$_vs16';
+
+    await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: withIvs,
+      userNote: 'pair',
+    );
+    await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: '辻葛',
+      userNote: 'plain pair',
+    );
+
+    final words = await env.db.select(env.db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.lemma, withIvs);
   });
 
   test('custom save rejects empty or whitespace-only note', () async {

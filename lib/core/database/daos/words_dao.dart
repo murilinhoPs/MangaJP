@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../utils/ids.dart';
 import '../app_database.dart';
 import '../tables/captured_crops.dart';
 import '../tables/crop_words.dart';
@@ -20,6 +21,13 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
     return (select(
       userWords,
     )..where((t) => t.seq.equals(seq))).getSingleOrNull();
+  }
+
+  /// Custom (`custom:<uuid>`) rows. Dedupe compares IVS-stripped lemmas in Dart.
+  Future<List<UserWord>> customWords() {
+    return (select(
+      userWords,
+    )..where((t) => t.id.like('$customWordIdPrefix%'))).get();
   }
 
   /// Earliest `crop_words` link for [wordId], with that crop's OCR sentence.
