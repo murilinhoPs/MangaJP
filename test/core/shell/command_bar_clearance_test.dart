@@ -196,6 +196,228 @@ void main() {
       _expectPanelVisible(tester, find.byKey(ReviewKeys.card), size: size);
     });
   }
+
+  test('paddingBesideRail drops start inset covered by the rail', () {
+    const pad = EdgeInsets.fromLTRB(24, 62, 18, 34);
+    final ltr = ShellLayout.paddingBesideRail(
+      pad,
+      textDirection: TextDirection.ltr,
+    );
+    expect(ltr.left, 0);
+    expect(ltr.top, 62);
+    expect(ltr.right, 18);
+    expect(ltr.bottom, 34);
+
+    final rtl = ShellLayout.paddingBesideRail(
+      pad,
+      textDirection: TextDirection.rtl,
+    );
+    expect(rtl.left, 24);
+    expect(rtl.right, 0);
+  });
+
+  test('paddingBesideRail keeps leftover when inset exceeds rail', () {
+    const pad = EdgeInsets.fromLTRB(100, 62, 18, 34);
+    expect(
+      ShellLayout.paddingBesideRail(pad, textDirection: TextDirection.ltr).left,
+      100 - ShellLayout.railWidth,
+    );
+  });
+
+  testWidgets('withSafePadding adds unused top and side insets', (
+    tester,
+  ) async {
+    late EdgeInsets result;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(
+          padding: EdgeInsets.fromLTRB(24, 62, 18, 34),
+        ),
+        child: CommandBarInset(
+          bottom: 0,
+          child: Builder(
+            builder: (context) {
+              result = ShellLayout.withSafePadding(
+                context,
+                const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              );
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+    expect(result.top, 20 + 62);
+    expect(result.left, 16 + 24);
+    expect(result.right, 16 + 18);
+    expect(result.bottom, 24);
+  });
+
+  const inset = FakeViewPadding(top: 62, left: 24);
+  for (final size in [phone, desktop]) {
+    final label = size == phone ? 'narrow 390x844' : 'wide 1280x800';
+    final wide = size == desktop;
+
+    Future<void> applyInset(WidgetTester tester) async {
+      tester.view.padding = inset;
+      tester.view.viewPadding = inset;
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+    }
+
+    testWidgets('Home clears top and side insets ($label)', (tester) async {
+      await applyInset(tester);
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _seedPage(db, id: 'home-inset');
+      await _pump(tester, size: size, db: db, jmdictPath: jmdictPath);
+
+      final content = wide
+          ? find.byKey(HomeKeys.due)
+          : find.byKey(HomeKeys.title);
+      expect(content, findsOneWidget);
+      _expectClearsInsets(tester, content, size: size, wide: wide);
+
+      final listFinder = find.ancestor(
+        of: content,
+        matching: find.byType(ListView),
+      );
+      expect(listFinder, findsOneWidget);
+      final pad = tester.widget<ListView>(listFinder).padding! as EdgeInsets;
+      if (wide) {
+        expect(pad.top, 36 + 62);
+        expect(
+          pad.left,
+          48,
+          reason: 'rail already consumed the 24px start inset',
+        );
+        expect(pad.right, 48);
+      } else {
+        expect(pad.top, 20 + 62);
+        expect(pad.left, 16 + 24);
+        expect(pad.right, 16);
+      }
+    });
+
+    testWidgets('Página clears top and side insets ($label)', (tester) async {
+      await applyInset(tester);
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _seedPage(db, id: 'page-inset');
+      await _pump(tester, size: size, db: db, jmdictPath: jmdictPath);
+      const PageDetailRoute(id: 'page-inset')
+          .go(tester.element(find.byType(HomePage)));
+      await tester.pumpAndSettle();
+      expect(find.byType(PageDetailPage), findsOneWidget);
+
+      final content = find.byKey(PageDetailKeys.ocrText);
+      expect(content, findsOneWidget);
+      _expectClearsInsets(
+        tester,
+        content,
+        size: size,
+        wide: wide,
+        packedToTop: false,
+      );
+
+      final listFinder = find.ancestor(
+        of: content,
+        matching: find.byType(ListView),
+      );
+      expect(listFinder, findsOneWidget);
+      final pad = tester.widget<ListView>(listFinder).padding! as EdgeInsets;
+      expect(pad.top, 16 + 62);
+      expect(pad.left, wide ? 20 : 20 + 24);
+      expect(pad.right, 20);
+    });
+
+    testWidgets('Review clears top and side insets ($label)', (tester) async {
+      await applyInset(tester);
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await _seedDue(db);
+      await _pump(tester, size: size, db: db, jmdictPath: jmdictPath);
+      const ReviewRoute().go(tester.element(find.byType(HomePage)));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReviewPage), findsOneWidget);
+      expect(find.byKey(ReviewKeys.card), findsOneWidget);
+
+      _expectClearsInsets(
+        tester,
+        find.byKey(ReviewKeys.card),
+        size: size,
+        wide: wide,
+        packedToTop: false,
+      );
+
+      final pad = _safeWrapPadding(tester, find.byKey(ReviewKeys.card));
+      expect(pad, isNotNull);
+      if (wide) {
+        expect(pad!.top, 36 + 62);
+        expect(
+          pad.left,
+          48,
+          reason: 'rail already consumed the 24px start inset',
+        );
+        expect(pad.right, 48);
+      } else {
+        expect(pad!.top, 16 + 62);
+        expect(pad.left, 16 + 24);
+        expect(pad.right, 16);
+      }
+    });
+  }
+}
+
+void _expectClearsInsets(
+  WidgetTester tester,
+  Finder content, {
+  required Size size,
+  required bool wide,
+  bool packedToTop = true,
+}) {
+  const topInset = 62.0;
+  const leftInset = 24.0;
+  final rect = tester.getRect(content);
+  expect(rect.top, greaterThanOrEqualTo(topInset));
+  if (packedToTop) {
+    expect(
+      rect.top,
+      lessThan(topInset * 2),
+      reason: 'top inset must not be counted twice',
+    );
+  }
+  if (wide) {
+    expect(rect.left, greaterThanOrEqualTo(ShellLayout.railWidth));
+    if (packedToTop) {
+      expect(
+        rect.left,
+        lessThan(ShellLayout.railWidth + 48 + leftInset),
+        reason: 'left inset beside the rail must not be counted twice',
+      );
+    }
+  } else {
+    expect(rect.left, greaterThanOrEqualTo(leftInset));
+    if (packedToTop) {
+      expect(
+        rect.left,
+        lessThan(leftInset * 2 + 16),
+        reason: 'left inset must not be counted twice',
+      );
+    }
+  }
+  expect(rect.right, lessThanOrEqualTo(size.width + 0.5));
+}
+
+EdgeInsets? _safeWrapPadding(WidgetTester tester, Finder inner) {
+  for (final el
+      in find.ancestor(of: inner, matching: find.byType(Padding)).evaluate()) {
+    final padding = (el.widget as Padding).padding;
+    if (padding is EdgeInsets && padding.top >= 62) {
+      return padding;
+    }
+  }
+  return null;
 }
 
 /// Cards / sheets sit in the visible area and above CommandBar or TaskDock.

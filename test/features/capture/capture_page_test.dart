@@ -506,6 +506,7 @@ void main() {
         expect(find.byType(CapturePage), findsNothing);
         expect(find.byType(HomePage), findsOneWidget);
 
+        // addTearDown runs after _verifyInvariants — reset here.
         debugDefaultTargetPlatformOverride = null;
       },
     );

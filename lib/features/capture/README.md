@@ -43,9 +43,13 @@ podspec). M0.8 only accepts images, matching Android `image/*`.
 - `ShareViewController` inherits `RSIShareViewController` and auto-redirects
   into `/capture` (no compose sheet).
 - Photo library + camera usage strings in `ios/Runner/Info.plist` for
-  `image_picker` (gallery is M0.8; camera is still Could / F28). ATS
-  `NSAllowsLocalNetworking` lets the manga-ocr sidecar speak HTTP on
+  `image_picker` (gallery is M0.8; camera is still Could / F28). No
+  `NSPhotoLibraryAddUsageDescription` — the app does not write to Photos.
+  ATS `NSAllowsLocalNetworking` lets the manga-ocr sidecar speak HTTP on
   `127.0.0.1`.
+- `pubspec.yaml` pins `receive_sharing_intent: 1.9.0` (no `^`) so a 1.9.x
+  bump cannot desync the Share Extension SPM path
+  `receive_sharing_intent-1.9.0` in `project.pbxproj`.
 
 Device-only remaining steps (need a Mac + Apple Developer team):
 
