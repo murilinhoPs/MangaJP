@@ -12,7 +12,6 @@ analyzer:
     - ios/**
     - web/**
     - lib/**/*_web.dart
-    - macos/**
 
 linter:
   rules:
