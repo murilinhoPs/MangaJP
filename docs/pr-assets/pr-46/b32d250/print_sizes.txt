@@ -1,0 +1,18 @@
+head_sha b32d2503985b1566b6f5dfdd3fd234698f6a4d95
+head_sha7 b32d250
+
+ios/page.png           1206x2622  128491 bytes
+ios/word.png           1206x2622  221733 bytes
+ios/crop.png           1206x2622  145386 bytes
+ios/swipe.png          1206x2622  196188 bytes
+android/page.png       390x844  22299 bytes
+android/word.png       390x844  46158 bytes
+android/crop.png       390x844  22491 bytes
+desktop/page.png       1280x800  92153 bytes
+desktop/word.png       1280x800  101671 bytes
+desktop/crop.png       1280x800  320644 bytes
+
+iOS iPhone 17 / iOS 27  simctl io  1206x2622
+Android pixel_390      adb screencap  390x844
+Desktop macOS          app area only  1280x800
+iOS swipe.png          mid back-swipe (Leitor over Home)
