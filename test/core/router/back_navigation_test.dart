@@ -10,6 +10,7 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
@@ -92,56 +93,113 @@ void main() {
       },
     );
 
-    testWidgets(
-      'word detail AppBar back pops to Caderno ($label)',
-      (tester) async {
+    testWidgets('word detail AppBar back pops to Caderno ($label)', (
+      tester,
+    ) async {
+      await _openWordDetail(tester, jmdictPath: jmdictPath, size: size);
+
+      expect(find.byKey(NotebookWordKeys.back), findsOneWidget);
+      expect(_path(tester), '/notebook/word/$_wordId');
+
+      await tester.tap(find.byKey(NotebookWordKeys.back));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotebookWordPage), findsNothing);
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(_path(tester), '/notebook');
+    });
+
+    testWidgets('word detail iOS back swipe pops to Caderno ($label)', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
         await _openWordDetail(tester, jmdictPath: jmdictPath, size: size);
 
-        expect(find.byKey(NotebookWordKeys.back), findsOneWidget);
         expect(_path(tester), '/notebook/word/$_wordId');
+        expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+        _expectCupertinoPage(tester);
 
-        await tester.tap(find.byKey(NotebookWordKeys.back));
-        await tester.pumpAndSettle();
+        await _iosEdgeSwipe(tester, size: size);
 
         expect(find.byType(NotebookWordPage), findsNothing);
         expect(find.byType(NotebookPage), findsOneWidget);
         expect(_path(tester), '/notebook');
-      },
-    );
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
 
-    testWidgets(
-      'word detail iOS back swipe pops to Caderno ($label)',
-      (tester) async {
-        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-        try {
-          await _openWordDetail(tester, jmdictPath: jmdictPath, size: size);
+    testWidgets('Leitor stays opaque mid iOS push and swipe ($label)', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await _openHomeWithPage(tester, jmdictPath: jmdictPath, size: size);
+        await _tapRecent(tester);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
 
-          expect(_path(tester), '/notebook/word/$_wordId');
-          expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
-          _expectCupertinoPage(tester);
+        expect(find.byType(PageDetailPage), findsOneWidget);
+        expect(find.byType(HomePage), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(PageDetailPage));
 
-          await _iosEdgeSwipe(tester, size: size);
+          await tester.pumpAndSettle();
+          final swipe = await _startIosEdgeSwipe(tester, size: size);
+          expect(find.byType(PageDetailPage), findsOneWidget);
+          expect(
+            find.byType(HomePage, skipOffstage: false),
+            findsOneWidget,
+          );
+          _expectOpaqueFill(tester, find.byType(PageDetailPage));
+          await swipe.up();
+          await tester.pumpAndSettle();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
 
-          expect(find.byType(NotebookWordPage), findsNothing);
-          expect(find.byType(NotebookPage), findsOneWidget);
-          expect(_path(tester), '/notebook');
-        } finally {
-          debugDefaultTargetPlatformOverride = null;
-        }
-      },
-    );
+    testWidgets('word detail stays opaque mid iOS push and swipe ($label)', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await _openNotebookList(tester, jmdictPath: jmdictPath, size: size);
+        await tester.tap(find.byKey(NotebookKeys.row(_wordId)));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
+
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(find.byType(NotebookPage), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(NotebookWordPage));
+
+        await tester.pumpAndSettle();
+        final swipe = await _startIosEdgeSwipe(tester, size: size);
+        expect(find.byType(NotebookWordPage), findsOneWidget);
+        expect(find.byType(NotebookPage), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(NotebookWordPage));
+        await swipe.up();
+        await tester.pumpAndSettle();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
   }
 }
 
 Future<void> _openReaderFromRecent(WidgetTester tester) async {
+  await _tapRecent(tester);
+  await tester.pumpAndSettle();
+  expect(find.byType(PageDetailPage), findsOneWidget);
+}
+
+Future<void> _tapRecent(WidgetTester tester) async {
   final thumb = find.byKey(HomeKeys.recentThumb(_pageId));
   final row = find.byKey(HomeKeys.recentPage(_pageId));
   final target = thumb.evaluate().isNotEmpty ? thumb : row;
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);
-  await tester.pumpAndSettle();
-  expect(find.byType(PageDetailPage), findsOneWidget);
 }
 
 /// Real iOS edge swipe. Must not fall back to [Navigator.maybePop] — that
@@ -156,6 +214,37 @@ Future<void> _iosEdgeSwipe(WidgetTester tester, {required Size size}) async {
   final start = Offset(tester.getTopLeft(page).dx + 5, size.height / 2);
   await tester.dragFrom(start, Offset(size.width * 0.6, 0));
   await tester.pumpAndSettle();
+}
+
+/// Hold the back-swipe mid-transition (finger down, previous route visible).
+Future<TestGesture> _startIosEdgeSwipe(
+  WidgetTester tester, {
+  required Size size,
+}) async {
+  final page = find.byType(PageDetailPage).evaluate().isNotEmpty
+      ? find.byType(PageDetailPage)
+      : find.byType(NotebookWordPage);
+  final start = Offset(tester.getTopLeft(page).dx + 5, size.height / 2);
+  final gesture = await tester.startGesture(start);
+  await tester.pump();
+  await gesture.moveBy(Offset(size.width * 0.4, 0));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+  return gesture;
+}
+
+void _expectOpaqueFill(WidgetTester tester, Finder page) {
+  final scaffold = tester.widget<Scaffold>(
+    find.descendant(of: page, matching: find.byType(Scaffold)).first,
+  );
+  expect(scaffold.backgroundColor, AppColors.bg);
+  expect(scaffold.backgroundColor!.a, 1.0);
+
+  final fill = tester.widget<ColoredBox>(
+    find.ancestor(of: page, matching: find.byType(ColoredBox)).first,
+  );
+  expect(fill.color, AppColors.bg);
+  expect(fill.color.a, 1.0);
 }
 
 void _expectCupertinoPage(WidgetTester tester) {
@@ -223,7 +312,7 @@ Future<void> _openHomeWithPage(
   await tester.pumpAndSettle();
 }
 
-Future<void> _openWordDetail(
+Future<void> _openNotebookList(
   WidgetTester tester, {
   required String jmdictPath,
   required Size size,
@@ -273,6 +362,15 @@ Future<void> _openWordDetail(
 
   const NotebookRoute().go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
+  expect(find.byType(NotebookPage), findsOneWidget);
+}
+
+Future<void> _openWordDetail(
+  WidgetTester tester, {
+  required String jmdictPath,
+  required Size size,
+}) async {
+  await _openNotebookList(tester, jmdictPath: jmdictPath, size: size);
   await tester.tap(find.byKey(NotebookKeys.row(_wordId)));
   await tester.pumpAndSettle();
   expect(find.byType(NotebookWordPage), findsOneWidget);

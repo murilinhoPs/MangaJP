@@ -56,7 +56,7 @@ class NotebookWordPage extends ConsumerWidget {
     final wide = ShellLayout.isWide(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.tokens.bg,
       appBar: AppBar(
         leading: BackButton(
           key: NotebookWordKeys.back,

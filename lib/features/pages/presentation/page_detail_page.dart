@@ -136,7 +136,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     return ShellBinder(
       task: task,
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: context.tokens.bg,
         appBar: AppBar(
           leading: BackButton(
             key: PageDetailKeys.back,
