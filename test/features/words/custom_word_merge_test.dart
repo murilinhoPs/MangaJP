@@ -17,10 +17,11 @@ void main() {
         mergeUserNotes('alpha', ['', '  ', 'alpha', 'beta', 'beta', null]),
         'alpha\nbeta',
       );
-      expect(
-        mergeUserNotes('alpha\nbeta', ['beta', 'alpha', 'gamma']),
-        'alpha\nbeta\ngamma',
-      );
+    });
+
+    test('dedupes by the whole trimmed note, not by line', () {
+      expect(mergeUserNotes('alpha\nbeta', ['alpha\nbeta']), 'alpha\nbeta');
+      expect(mergeUserNotes('alpha\nbeta', ['beta']), 'alpha\nbeta\nbeta');
     });
 
     test('returns null when every note is empty', () {

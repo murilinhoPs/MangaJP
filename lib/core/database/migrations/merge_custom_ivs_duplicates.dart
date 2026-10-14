@@ -4,16 +4,31 @@ part of '../app_database.dart';
 /// [stripVariationSelectors] into one survivor (M1.28).
 Future<void> backfillLemmaKeysAndMergeCustomIvsDuplicates(AppDatabase db) async {
   final words = await db.select(db.userWords).get();
-  for (final word in words) {
-    final key = stripVariationSelectors(word.lemma);
-    if (word.lemmaKey == key) {
-      continue;
+  await db.batch((batch) {
+    for (final word in words) {
+      final key = stripVariationSelectors(word.lemma);
+      if (word.lemmaKey == key) {
+        continue;
+      }
+      batch.update(
+        db.userWords,
+        UserWordsCompanion(lemmaKey: Value(key)),
+        where: (t) => t.id.equals(word.id),
+      );
     }
-    await (db.update(db.userWords)..where((t) => t.id.equals(word.id))).write(
-      UserWordsCompanion(lemmaKey: Value(key)),
-    );
-  }
+  });
   await mergeCustomIvsDuplicates(db);
+}
+
+Future<void> assertNoForeignKeyViolations(AppDatabase db) async {
+  final rows = await db.customSelect('PRAGMA foreign_key_check').get();
+  if (rows.isEmpty) {
+    return;
+  }
+  throw StateError(
+    'foreign_key_check failed after v8 merge: '
+    '${[for (final row in rows) row.data]}',
+  );
 }
 
 Future<void> mergeCustomIvsDuplicates(AppDatabase db) async {

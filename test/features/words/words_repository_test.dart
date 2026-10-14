@@ -237,19 +237,19 @@ void main() {
       surface: 'ぴよ',
       userNote: 'nome',
     );
+    final same = await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: 'ぴよ',
+      userNote: 'nome',
+    );
     final second = await env.words.saveCustomFromLookup(
       cropId: env.cropId,
       surface: 'ぴよ',
       userNote: 'outra nota',
     );
-    final again = await env.words.saveCustomFromLookup(
-      cropId: env.cropId,
-      surface: 'ぴよ',
-      userNote: 'outra nota',
-    );
 
+    expect(same, first);
     expect(second, first);
-    expect(again, first);
     final words = await env.db.select(env.db.userWords).get();
     expect(words, hasLength(1));
     expect(words.single.userNote, 'nome\noutra nota');

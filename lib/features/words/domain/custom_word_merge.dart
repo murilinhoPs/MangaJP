@@ -6,8 +6,9 @@
 /// [CustomWordMergeCandidate.createdAt]. [CustomWordMergeCandidate.id] is the
 /// last tie-break so the choice is stable.
 ///
-/// Notes: distinct trimmed non-empty strings, survivor first, then the other
-/// rows in the order given, joined with a newline. Identical notes appear once.
+/// Notes: distinct trimmed non-empty **whole** notes (not split on newlines),
+/// survivor first, then the other rows in the order given, joined with a
+/// newline. Identical notes appear once.
 library;
 
 class CustomWordMergeCandidate {
@@ -28,17 +29,12 @@ String? mergeUserNotes(String? primary, Iterable<String?> others) {
   final parts = <String>[];
   final seen = <String>{};
   void add(String? raw) {
-    if (raw == null) {
+    final note = raw?.trim() ?? '';
+    if (note.isEmpty) {
       return;
     }
-    for (final line in raw.split('\n')) {
-      final note = line.trim();
-      if (note.isEmpty) {
-        continue;
-      }
-      if (seen.add(note)) {
-        parts.add(note);
-      }
+    if (seen.add(note)) {
+      parts.add(note);
     }
   }
 

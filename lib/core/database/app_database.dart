@@ -122,16 +122,19 @@ class AppDatabase extends _$AppDatabase {
           );
         }
         if (from < 8) {
-          await m.addColumn(userWords, userWords.lemmaKey);
-          await backfillLemmaKeysAndMergeCustomIvsDuplicates(this);
-          await m.createIndex(idxWordsLemmaKey);
-          await m.createIndex(idxWordsCustomLemmaKey);
-          await into(appMeta).insert(
-            AppMetaCompanion.insert(key: 'schema_version', value: '8'),
-            onConflict: DoUpdate(
-              (_) => const AppMetaCompanion(value: Value('8')),
-            ),
-          );
+          await transaction(() async {
+            await m.addColumn(userWords, userWords.lemmaKey);
+            await backfillLemmaKeysAndMergeCustomIvsDuplicates(this);
+            await m.createIndex(idxWordsLemmaKey);
+            await m.createIndex(idxWordsCustomLemmaKey);
+            await into(appMeta).insert(
+              AppMetaCompanion.insert(key: 'schema_version', value: '8'),
+              onConflict: DoUpdate(
+                (_) => const AppMetaCompanion(value: Value('8')),
+              ),
+            );
+            await assertNoForeignKeyViolations(this);
+          });
         }
       },
       beforeOpen: (details) async {
