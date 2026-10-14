@@ -5,6 +5,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/app_database_provider.dart';
 import '../../../core/utils/graphemes.dart';
 import '../../../core/utils/ids.dart';
+import '../domain/custom_word_merge.dart';
 import '../domain/word_state.dart';
 import '../domain/word_state_index.dart';
 
@@ -52,6 +53,7 @@ class WordsRepository {
             seq: seq,
             lemma: lemma,
             reading: reading,
+            lemmaKey: Value(stripVariationSelectors(lemma)),
             createdAt: DateTime.now().toUtc(),
           ),
         );
@@ -75,8 +77,10 @@ class WordsRepository {
   /// non-empty). Id is `custom:<uuid>`. Gloss is not stored. No card.
   ///
   /// Dedupes against existing custom rows by [stripVariationSelectors]
-  /// (M1.26). The stored lemma keeps the first-saved form, selectors included.
-  /// Returns the word id.
+  /// (M1.26) via indexed [UserWords.lemmaKey]. The stored lemma keeps the
+  /// first-saved form, selectors included. A second save merges [userNote]
+  /// into the existing note (survivor first, distinct lines). Returns the
+  /// word id.
   Future<String> saveCustomFromLookup({
     required String cropId,
     required String surface,
@@ -102,9 +106,15 @@ class WordsRepository {
             lemma: dictForm,
             reading: dictForm,
             userNote: Value(note),
+            lemmaKey: Value(stripVariationSelectors(dictForm)),
             createdAt: DateTime.now().toUtc(),
           ),
         );
+      } else {
+        final merged = mergeUserNotes(existing.userNote, [note]);
+        if (merged != existing.userNote) {
+          await _db.wordsDao.updateUserNote(wordId, merged);
+        }
       }
       await _ensureSavedState(wordId);
       await _db.wordsDao.insertCropWord(
@@ -185,13 +195,7 @@ class WordsRepository {
     if (key.isEmpty) {
       return null;
     }
-    final rows = await _db.wordsDao.customWords();
-    for (final word in rows) {
-      if (stripVariationSelectors(word.lemma) == key) {
-        return word;
-      }
-    }
-    return null;
+    return _db.wordsDao.customWordByLemmaKey(key);
   }
 
   /// Negative seq so custom rows never collide with JMdict (positive) seqs.

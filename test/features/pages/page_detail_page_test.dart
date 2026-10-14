@@ -1235,7 +1235,7 @@ void main() {
         expect(words, hasLength(1));
         expect(words.single.lemma, withIvs);
         expect(words.single.reading, withIvs);
-        expect(words.single.userNote, 'nome ivs');
+        expect(words.single.userNote, 'nome ivs\noutra nota');
         expect(
           (await db.select(db.userWordStates).get()).single.state,
           WordState.ignored.name,
