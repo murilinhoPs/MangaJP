@@ -96,12 +96,6 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       metaHint: hint,
       actions: [
         ShellAction(
-          id: 'back',
-          label: PageLabels.voltar,
-          icon: Icons.chevron_left,
-          onPressed: () => popTaskOrHome(context),
-        ),
-        ShellAction(
           id: 'edit',
           label: PageLabels.editar,
           icon: Icons.edit_outlined,

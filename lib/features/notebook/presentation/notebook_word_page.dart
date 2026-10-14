@@ -157,13 +157,15 @@ class _NotebookWordBody extends ConsumerWidget {
     final lemmaStyle = wide
         ? AppTypeScale.detalheDesktopJp
         : AppTypeScale.detalheMobileJp;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final mobileBottom = 32.0 + (bottomInset > 24 ? bottomInset : 24.0);
 
     return SingleChildScrollView(
       padding: ShellLayout.withCommandBarPadding(
         context,
         wide
             ? const EdgeInsets.fromLTRB(48, 24, 48, 48)
-            : const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            : EdgeInsets.fromLTRB(16, 12, 16, mobileBottom),
       ),
       child: Align(
         alignment: Alignment.topCenter,

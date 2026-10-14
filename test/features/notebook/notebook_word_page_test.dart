@@ -306,6 +306,30 @@ void main() {
     expect(state.updatedAt, beforeState.updatedAt);
   });
 
+  testWidgets(
+    'known word detail scrolls Remover do Caderno above the nav cards',
+    (tester) async {
+      tester.view.padding = const FakeViewPadding(bottom: 34);
+      tester.view.viewPadding = const FakeViewPadding(bottom: 34);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+
+      await _openWord(
+        tester,
+        jmdictPath: jmdictPath,
+        state: WordState.known,
+      );
+
+      final last = find.byKey(NotebookWordKeys.removeFromNotebook);
+      await tester.ensureVisible(last);
+      await tester.pumpAndSettle();
+
+      final lastBox = tester.getRect(last);
+      final nav = tester.getRect(find.byKey(ShellKeys.navCards));
+      expect(lastBox.bottom, lessThanOrEqualTo(nav.top + 0.5));
+    },
+  );
+
   testWidgets('Aprender from known returns to learning without resetting SRS', (
     tester,
   ) async {

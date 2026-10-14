@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +10,6 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
-import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
@@ -79,8 +79,9 @@ void main() {
 
           expect(_path(tester), '/pages/$_pageId');
           expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+          _expectCupertinoPage(tester);
 
-          await _iosBackSwipe(tester, size: size);
+          await _iosEdgeSwipe(tester, size: size);
 
           expect(find.byType(PageDetailPage), findsNothing);
           expect(_path(tester), '/home');
@@ -117,8 +118,9 @@ void main() {
 
           expect(_path(tester), '/notebook/word/$_wordId');
           expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+          _expectCupertinoPage(tester);
 
-          await _iosBackSwipe(tester, size: size);
+          await _iosEdgeSwipe(tester, size: size);
 
           expect(find.byType(NotebookWordPage), findsNothing);
           expect(find.byType(NotebookPage), findsOneWidget);
@@ -142,30 +144,27 @@ Future<void> _openReaderFromRecent(WidgetTester tester) async {
   expect(find.byType(PageDetailPage), findsOneWidget);
 }
 
-Future<void> _iosBackSwipe(WidgetTester tester, {required Size size}) async {
-  final startX = ShellLayout.isWide(_routerContext(tester))
-      ? ShellLayout.railWidth + 8
-      : 8.0;
-  final start = Offset(startX, size.height / 2);
-  final gesture = await tester.startGesture(start);
-  await gesture.moveBy(Offset(size.width * 0.65, 0));
-  await tester.pump();
-  await gesture.up();
+/// Real iOS edge swipe. Must not fall back to [Navigator.maybePop] — that
+/// would still pass after swapping [CupertinoPage] for [MaterialPage].
+///
+/// Start 5px inside the route's left edge (`_kBackGestureWidth` is 20). On
+/// a phone that is `Offset(5, y)`; beside the rail it is `railWidth + 5`.
+Future<void> _iosEdgeSwipe(WidgetTester tester, {required Size size}) async {
+  final page = find.byType(PageDetailPage).evaluate().isNotEmpty
+      ? find.byType(PageDetailPage)
+      : find.byType(NotebookWordPage);
+  final start = Offset(tester.getTopLeft(page).dx + 5, size.height / 2);
+  await tester.dragFrom(start, Offset(size.width * 0.6, 0));
   await tester.pumpAndSettle();
+}
 
-  if (find.byType(PageDetailPage).evaluate().isNotEmpty ||
-      find.byType(NotebookWordPage).evaluate().isNotEmpty) {
-    // Cupertino back-swipe didn't finish the pop (wide rail / hit-test).
-    // Navigator.maybePop is the same path the iOS back gesture uses.
-    final nav = Navigator.of(_routerContext(tester));
-    expect(
-      nav.canPop(),
-      isTrue,
-      reason: 'pushed route must be on a Navigator stack',
-    );
-    expect(await nav.maybePop(), isTrue);
-    await tester.pumpAndSettle();
-  }
+void _expectCupertinoPage(WidgetTester tester) {
+  final route = ModalRoute.of(_routerContext(tester));
+  expect(
+    route is CupertinoRouteTransitionMixin,
+    isTrue,
+    reason: 'edge swipe requires CupertinoPage, not MaterialPage',
+  );
 }
 
 BuildContext _routerContext(WidgetTester tester) {

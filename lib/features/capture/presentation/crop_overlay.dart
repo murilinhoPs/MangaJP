@@ -19,8 +19,9 @@ class CropOverlay extends StatefulWidget {
     required this.onChanged,
   });
 
-  /// Extra gap under the status bar / SafeArea so a top-edge crop's badge
-  /// is not only ~6pt below the inset.
+  /// Extra gap from the crop canvas top. The overlay sits inside a [SafeArea],
+  /// so [MediaQuery.padding] here is 0 — this is 12pt from the canvas, not
+  /// from the status bar. When clamped, the badge leaves the crop corner.
   static const badgeMinGap = 12.0;
 
   final Size imageSize;
