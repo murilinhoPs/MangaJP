@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/copy/recortes_label.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
@@ -15,7 +14,7 @@ import '../domain/home_recent_entry.dart';
 import '../domain/home_week_rhythm.dart';
 import 'home_controller.dart';
 
-/// Keys for `/home` (Fila de hoje + Capturas recentes + Páginas recentes).
+/// Keys for `/home` (Fila de hoje + Capturas recentes).
 abstract final class HomeKeys {
   static const review = Key('home-review');
   static const due = Key('home-review-due');
@@ -24,10 +23,10 @@ abstract final class HomeKeys {
   static const revisoes = Key('home-queue-revisoes');
   static const drill = Key('home-queue-drill');
   static const recentCaptures = Key('home-recent-captures');
-  static const recentPages = Key('home-recent-pages');
   static const recentEmpty = Key('home-recent-empty');
   static const title = Key('home-title');
   static const gallery = Key('home-gallery');
+  static const galleryLink = Key('home-gallery-link');
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
   static const queueBar = Key('home-queue-bar');
@@ -36,7 +35,8 @@ abstract final class HomeKeys {
   static Key recentPage(String pageId) => Key('home-recent-page-$pageId');
 }
 
-/// `/home` — mobile **Fila de hoje**; desktop Biblioteca counts + **Páginas recentes**.
+/// `/home` — **Fila de hoje** / Biblioteca counts, then Continuar lendo,
+/// Capturas recentes (gallery tile first), Ritmo da semana.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -44,19 +44,24 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final counts = ref.watch(homeReviewCountsProvider).value;
     final recent = ref.watch(homeRecentPagesProvider).asData?.value;
-    final totalPages = ref.watch(homePageCountProvider).asData?.value;
     final week = ref.watch(homeWeekRhythmProvider).asData?.value;
     final now = DateTime.now();
+    void onGallery() => importFromGallery(context, ref);
     if (ShellLayout.isWide(context)) {
-      return _DesktopHome(counts: counts, recent: recent, now: now);
+      return _DesktopHome(
+        counts: counts,
+        recent: recent,
+        week: week,
+        now: now,
+        onGallery: onGallery,
+      );
     }
     return _MobileHome(
       counts: counts,
       recent: recent,
-      totalPages: totalPages,
       week: week,
       now: now,
-      onGallery: () => importFromGallery(context, ref),
+      onGallery: onGallery,
     );
   }
 }
@@ -65,7 +70,6 @@ class _MobileHome extends StatelessWidget {
   const _MobileHome({
     required this.counts,
     required this.recent,
-    required this.totalPages,
     required this.week,
     required this.now,
     required this.onGallery,
@@ -73,7 +77,6 @@ class _MobileHome extends StatelessWidget {
 
   final HomeReviewCounts? counts;
   final List<HomeRecentEntry>? recent;
-  final int? totalPages;
   final HomeWeekRhythm? week;
   final DateTime now;
   final VoidCallback onGallery;
@@ -113,14 +116,17 @@ class _MobileHome extends StatelessWidget {
                 PageDetailRoute(id: continuePage.id).push<void>(context),
           ),
         ],
+        const SizedBox(height: 20),
+        _RecentCapturesBlock(
+          pages: recent,
+          now: now,
+          onGallery: onGallery,
+          wide: false,
+        ),
         if (week != null) ...[
           const SizedBox(height: 12),
           _WeekRhythmCard(week: week!),
         ],
-        const SizedBox(height: 20),
-        _RecentCapturesBlock(pages: recent, total: totalPages, now: now),
-        const SizedBox(height: 12),
-        _GalleryBlock(onTap: onGallery),
       ],
     );
   }
@@ -130,15 +136,22 @@ class _DesktopHome extends StatelessWidget {
   const _DesktopHome({
     required this.counts,
     required this.recent,
+    required this.week,
     required this.now,
+    required this.onGallery,
   });
 
   final HomeReviewCounts? counts;
   final List<HomeRecentEntry>? recent;
+  final HomeWeekRhythm? week;
   final DateTime now;
+  final VoidCallback onGallery;
 
   @override
   Widget build(BuildContext context) {
+    final continuePage = recent == null || recent!.isEmpty
+        ? null
+        : recent!.first;
     return ListView(
       padding: ShellLayout.withSafePadding(
         context,
@@ -146,8 +159,25 @@ class _DesktopHome extends StatelessWidget {
       ),
       children: [
         _DesktopCounts(counts: counts),
-        const SizedBox(height: 40),
-        _RecentPagesList(pages: recent, now: now),
+        if (continuePage != null) ...[
+          const SizedBox(height: 28),
+          _ContinueReadingCard(
+            page: continuePage,
+            onTap: () =>
+                PageDetailRoute(id: continuePage.id).push<void>(context),
+          ),
+        ],
+        const SizedBox(height: 28),
+        _RecentCapturesBlock(
+          pages: recent,
+          now: now,
+          onGallery: onGallery,
+          wide: true,
+        ),
+        if (week != null) ...[
+          const SizedBox(height: 28),
+          _WeekRhythmCard(week: week!),
+        ],
       ],
     );
   }
@@ -528,42 +558,36 @@ class _WeekColumn extends StatelessWidget {
 class _RecentCapturesBlock extends StatelessWidget {
   const _RecentCapturesBlock({
     required this.pages,
-    required this.total,
     required this.now,
+    required this.onGallery,
+    required this.wide,
   });
 
   final List<HomeRecentEntry>? pages;
-  final int? total;
   final DateTime now;
+  final VoidCallback onGallery;
+  final bool wide;
+
+  static const _tileSize = Size(96, 132);
+  static const _gridGap = 12.0;
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final shown = pages?.length ?? 0;
-    final all = total ?? shown;
-    final countLabel = pages == null
-        ? ''
-        : all > shown
-        ? '$shown de $all'
-        : shown == 0
-        ? ''
-        : '$shown de $all';
     return Column(
       key: HomeKeys.recentCaptures,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Text(
-              'Capturas recentes',
-              style: AppTypeScale.ui14.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            if (countLabel.isNotEmpty)
-              Text(
-                countLabel,
-                style: AppTypeScale.metadados12.copyWith(color: tokens.text3),
+            Expanded(
+              child: Text(
+                'Capturas recentes',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypeScale.ui14.copyWith(fontWeight: FontWeight.w600),
               ),
+            ),
+            _GalleryHeaderLink(onTap: onGallery, showShortcut: wide),
           ],
         ),
         const SizedBox(height: 10),
@@ -580,33 +604,182 @@ class _RecentCapturesBlock extends StatelessWidget {
         child: Center(child: CircularProgressIndicator()),
       );
     }
-    if (items.isEmpty) {
-      return const Text('Nenhuma captura ainda.', key: HomeKeys.recentEmpty);
+    final tiles = <Widget>[
+      SizedBox(
+        key: items.isEmpty ? HomeKeys.recentEmpty : null,
+        width: _tileSize.width,
+        height: _tileSize.height,
+        child: _GalleryTile(onTap: onGallery),
+      ),
+      for (var i = 0; i < items.length; i++)
+        SizedBox(
+          width: _tileSize.width,
+          height: _tileSize.height,
+          child: _RecentThumb(
+            page: items[i],
+            number: i + 1,
+            now: now,
+            onTap: () => PageDetailRoute(id: items[i].id).push<void>(context),
+          ),
+        ),
+    ];
+    if (wide) {
+      return Wrap(spacing: _gridGap, runSpacing: _gridGap, children: tiles);
     }
     return SizedBox(
-      height: 132,
+      height: _tileSize.height,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            for (var i = 0; i < items.length; i++) ...[
+            for (var i = 0; i < tiles.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
-              SizedBox(
-                width: 96,
-                height: 132,
-                child: _RecentThumb(
-                  page: items[i],
-                  number: i + 1,
-                  now: now,
-                  onTap: () =>
-                      PageDetailRoute(id: items[i].id).push<void>(context),
-                ),
-              ),
+              tiles[i],
             ],
           ],
         ),
       ),
     );
+  }
+}
+
+class _GalleryHeaderLink extends StatelessWidget {
+  const _GalleryHeaderLink({required this.onTap, required this.showShortcut});
+
+  final VoidCallback onTap;
+  final bool showShortcut;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return InkWell(
+      key: HomeKeys.galleryLink,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.tecla),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Galeria +',
+              style: AppTypeScale.ui13.copyWith(
+                color: tokens.coral,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (showShortcut) ...[
+              const SizedBox(width: 8),
+              const KbdChip(label: 'G'),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryTile extends StatelessWidget {
+  const _GalleryTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final radius = BorderRadius.circular(AppRadius.linha);
+    return Material(
+      color: tokens.coral.withValues(alpha: 0.06),
+      shape: RoundedRectangleBorder(borderRadius: radius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: HomeKeys.gallery,
+        onTap: onTap,
+        borderRadius: radius,
+        child: CustomPaint(
+          painter: DashedRRectPainter(
+            color: tokens.coral,
+            radius: AppRadius.linha,
+            strokeWidth: 1.5,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_photo_alternate_outlined,
+                  color: tokens.coral,
+                  size: AppIcons.sizeMax,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '+ Nova da galeria',
+                  textAlign: TextAlign.center,
+                  style: AppTypeScale.metadados12.copyWith(color: tokens.coral),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dashed 1.5px coral stroke for the Home gallery tile.
+class DashedRRectPainter extends CustomPainter {
+  const DashedRRectPainter({
+    required this.color,
+    required this.radius,
+    this.strokeWidth = 1.5,
+    this.dashOn = 5,
+    this.dashOff = 4,
+  });
+
+  final Color color;
+  final double radius;
+  final double strokeWidth;
+  final double dashOn;
+  final double dashOff;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final inset = strokeWidth / 2;
+    final rect = Rect.fromLTWH(
+      inset,
+      inset,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    for (final metric in path.computeMetrics()) {
+      var dist = 0.0;
+      var draw = true;
+      while (dist < metric.length) {
+        final span = draw ? dashOn : dashOff;
+        final next = dist + span > metric.length ? metric.length : dist + span;
+        if (draw) {
+          canvas.drawPath(metric.extractPath(dist, next), paint);
+        }
+        dist = next;
+        draw = !draw;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DashedRRectPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.dashOn != dashOn ||
+        oldDelegate.dashOff != dashOff;
   }
 }
 
@@ -644,7 +817,7 @@ class _RecentThumb extends StatelessWidget {
                   Positioned(
                     top: 6,
                     left: 6,
-                    child: CropNumberBadge(number: number),
+                    child: CropNumberBadge(number: number, neutral: true),
                   ),
                 ],
               ),
@@ -681,26 +854,6 @@ class _Thumb extends StatelessWidget {
         Icons.person_outline,
         size: size,
         color: context.tokens.text4,
-      ),
-    );
-  }
-}
-
-class _GalleryBlock extends StatelessWidget {
-  const _GalleryBlock({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        key: HomeKeys.gallery,
-        leading: const Icon(Icons.add_photo_alternate_outlined),
-        title: const Text('Galeria'),
-        subtitle: const Text('Escolher da galeria'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
       ),
     );
   }
@@ -784,109 +937,6 @@ class _DesktopCount extends StatelessWidget {
           style: AppTypeScale.ui14.copyWith(color: context.tokens.text3),
         ),
       ],
-    );
-  }
-}
-
-class _RecentPagesList extends StatelessWidget {
-  const _RecentPagesList({required this.pages, required this.now});
-
-  final List<HomeRecentEntry>? pages;
-  final DateTime now;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final items = pages;
-    return Column(
-      key: HomeKeys.recentPages,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'PÁGINAS RECENTES',
-          style: AppTypeScale.mono10.copyWith(
-            color: tokens.text3,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (items == null)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (items.isEmpty)
-          const Text('Nenhuma captura ainda.', key: HomeKeys.recentEmpty)
-        else
-          for (var i = 0; i < items.length && i < 3; i++) ...[
-            if (i > 0) const SizedBox(height: 8),
-            _RecentPageRow(
-              page: items[i],
-              index: i + 1,
-              now: now,
-              onTap: () => PageDetailRoute(id: items[i].id).push<void>(context),
-            ),
-          ],
-      ],
-    );
-  }
-}
-
-class _RecentPageRow extends StatelessWidget {
-  const _RecentPageRow({
-    required this.page,
-    required this.index,
-    required this.now,
-    required this.onTap,
-  });
-
-  final HomeRecentEntry page;
-  final int index;
-  final DateTime now;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final radius = BorderRadius.circular(AppRadius.linha);
-    final recortes = RecortesLabel.count(page.cropCount);
-    final when = HomeDates.relativeDay(page.createdAt, now);
-    return Material(
-      color: tokens.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: BorderSide(color: tokens.border),
-      ),
-      child: InkWell(
-        key: HomeKeys.recentPage(page.id),
-        onTap: onTap,
-        borderRadius: radius,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Icon(Icons.menu_book_outlined, color: tokens.text3, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  page.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypeScale.ui14.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Text(
-                '$recortes · $when',
-                style: AppTypeScale.metadados12.copyWith(color: tokens.text3),
-              ),
-              const SizedBox(width: 10),
-              KbdChip(label: '$index'),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -13,6 +13,7 @@ import '../../home/presentation/home_controller.dart';
 import '../domain/review_labels.dart';
 import '../domain/review_rating.dart';
 import 'review_controller.dart';
+import 'review_exit_guard.dart';
 
 /// Keys for `/review` (front, reveal, ratings, empty / done).
 abstract final class ReviewKeys {
@@ -37,34 +38,37 @@ abstract final class ReviewKeys {
       Key('review-${rating.name}-interval');
 }
 
-bool _leaveDialogOpen = false;
-bool _allowNextReviewExit = false;
+ReviewExitGuard _reviewExitGuard(BuildContext context) {
+  return ProviderScope.containerOf(context).read(reviewExitGuardProvider);
+}
 
-/// Confirm when this session has ≥1 answer. Used by [PopScope] and
-/// [ReviewRoute.onExit] so swipe / system back / Fechar share one dialog.
+/// Confirm when this session has ≥1 answer and is not done. Used by
+/// [PopScope] and [ReviewRoute.onExit] so swipe / system back / Fechar
+/// share one dialog.
 Future<bool> confirmLeaveReviewIfNeeded(BuildContext context) async {
-  if (_allowNextReviewExit) {
-    _allowNextReviewExit = false;
+  final guard = _reviewExitGuard(context);
+  if (guard.consumeAllowNextExit()) {
     return true;
   }
-  final answered =
+  final needsConfirm =
       ProviderScope.containerOf(context)
           .read(reviewSessionProvider)
           .asData
           ?.value
-          ?.answeredCount ??
-      0;
-  if (answered == 0) {
+          ?.needsExitConfirm ??
+      false;
+  if (!needsConfirm) {
     return true;
   }
   return confirmLeaveReview(context);
 }
 
 Future<bool> confirmLeaveReview(BuildContext context) async {
-  if (_leaveDialogOpen) {
+  final guard = _reviewExitGuard(context);
+  if (guard.leaveDialogOpen) {
     return false;
   }
-  _leaveDialogOpen = true;
+  guard.leaveDialogOpen = true;
   try {
     final leave = await showDialog<bool>(
       context: context,
@@ -95,10 +99,10 @@ Future<bool> confirmLeaveReview(BuildContext context) async {
     if (leave == true) {
       return true;
     }
-    restoreBlockedCupertinoPop();
+    restoreBlockedCupertinoPop(guard.popRestorer);
     return false;
   } finally {
-    _leaveDialogOpen = false;
+    guard.leaveDialogOpen = false;
   }
 }
 
@@ -132,7 +136,7 @@ class ReviewPage extends ConsumerWidget {
         }
         final leave = await confirmLeaveReview(context);
         if (leave && context.mounted) {
-          _allowNextReviewExit = true;
+          _reviewExitGuard(context).allowNextExit = true;
           popTaskOrHome(context);
         }
       },

@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -26,6 +27,7 @@ import 'package:manga_jp/features/notebook/presentation/notebook_word_page.dart'
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/domain/review_labels.dart';
+import 'package:manga_jp/features/review/presentation/review_controller.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
@@ -324,6 +326,39 @@ void main() {
         }
       },
     );
+
+    testWidgets('Review done: app back leaves without confirm ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+      await _answerCurrentCard(tester, ReviewRating.good);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+
+      await tester.tap(_reviewClose(size));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+      expect(find.text(ReviewLabels.sairTitulo), findsNothing);
+      expect(find.byType(ReviewPage), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(_path(tester), '/home');
+    });
+
+    testWidgets('Review done: system back leaves without confirm ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+      await _answerCurrentCard(tester, ReviewRating.good);
+      expect(find.byKey(ReviewKeys.done), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+      expect(find.byType(ReviewPage), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(_path(tester), '/home');
+    });
   }
 }
 
@@ -610,11 +645,21 @@ Future<void> _openReviewSession(
   expect(find.byType(ReviewPage), findsOneWidget);
 }
 
-Future<void> _answerCurrentCard(WidgetTester tester) async {
+Future<void> _answerCurrentCard(
+  WidgetTester tester, [
+  ReviewRating rating = ReviewRating.again,
+]) async {
   await tester.tap(find.byKey(ReviewKeys.reveal));
   await tester.pumpAndSettle();
-  await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.good)));
+  await tester.tap(find.byKey(ReviewKeys.rating(rating)));
   await tester.pumpAndSettle();
+}
+
+ReviewView _reviewView(WidgetTester tester) {
+  return ProviderScope.containerOf(_routerContext(tester))
+      .read(reviewSessionProvider)
+      .asData!
+      .value!;
 }
 
 Future<void> _expectLeaveDialogThenStayAndConfirm(
@@ -625,11 +670,25 @@ Future<void> _expectLeaveDialogThenStayAndConfirm(
   expect(find.text(ReviewLabels.sairTitulo), findsOneWidget);
   expect(find.byType(ReviewPage), findsOneWidget);
 
+  final lemma = tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data;
+  final remaining = tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data;
+  final answered = _reviewView(tester).answeredCount;
+  final showSeq = _reviewView(tester).showSeq;
+  expect(answered, greaterThan(0));
+
   await tester.tap(find.byKey(ReviewKeys.leaveCancel));
   await tester.pumpAndSettle();
   expect(find.byType(AlertDialog), findsNothing);
   expect(find.byType(ReviewPage), findsOneWidget);
   expect(_path(tester), '/review');
+  expect(tester.widget<Text>(find.byKey(ReviewKeys.lemma)).data, lemma);
+  expect(tester.widget<Text>(find.byKey(ReviewKeys.remaining)).data, remaining);
+  expect(_reviewView(tester).answeredCount, answered);
+  expect(_reviewView(tester).showSeq, showSeq);
+  expect(
+    tester.getTopLeft(find.byType(ReviewPage)).dx,
+    anyOf(0.0, ShellLayout.railWidth),
+  );
 
   await exit();
   expect(find.byKey(ReviewKeys.leaveDialog), findsOneWidget);

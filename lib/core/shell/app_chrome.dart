@@ -60,6 +60,9 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       const SingleActivator(LogicalKeyboardKey.keyR): const ShellShortcutIntent(
         'r',
       ),
+      const SingleActivator(LogicalKeyboardKey.keyG): const ShellShortcutIntent(
+        'g',
+      ),
       ShellShortcuts.activator(LogicalKeyboardKey.keyK):
           const ShellShortcutIntent('k'),
       ShellShortcuts.activator(LogicalKeyboardKey.keyO):
@@ -95,6 +98,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         if (_path != '/review') {
           const ReviewRoute().push<void>(context);
         }
+      case 'g':
+        importFromGallery(context, ref);
       case 'k':
         if (!_paletteOpen) {
           _openPalette(context);

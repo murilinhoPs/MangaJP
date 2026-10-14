@@ -7,6 +7,7 @@ import '../data/review_repository.dart';
 import '../domain/review_card.dart';
 import '../domain/review_rating.dart';
 import '../domain/review_session_queue.dart';
+import 'review_exit_guard.dart';
 
 part 'review_controller.g.dart';
 
@@ -43,12 +44,13 @@ class ReviewView {
   /// Queue size when the session opened.
   final int startedWith;
 
-  /// Ratings given in this in-memory pass. Exit confirms when this is ≥1.
+  /// Ratings given in this in-memory pass. Exit confirms when this is ≥1
+  /// and the session still has a card (done has nothing left to lose).
   final int answeredCount;
 
   bool get isEmpty => card == null && startedWith == 0;
   bool get isDone => card == null && startedWith > 0;
-  bool get needsExitConfirm => answeredCount > 0;
+  bool get needsExitConfirm => answeredCount > 0 && !isDone;
 }
 
 /// `/review` session: order is an in-memory snapshot of
@@ -73,6 +75,7 @@ class ReviewSession extends _$ReviewSession {
     final jmdict = await ref.watch(jmdictServiceProvider.future);
     final queue = [...await repo.dueQueue()];
     if (_remaining == null) {
+      ref.read(reviewExitGuardProvider).resetSessionFlags();
       _remaining = queue;
       _startedWith = queue.length;
     }

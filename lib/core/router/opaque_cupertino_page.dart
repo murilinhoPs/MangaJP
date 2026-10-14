@@ -2,6 +2,21 @@ import 'package:flutter/cupertino.dart';
 
 import '../theme/app_theme.dart';
 
+/// Holds the active swipe route's restore callback (injected, not static).
+class BlockedPopRestorer {
+  VoidCallback? _restore;
+
+  void attach(VoidCallback restore) => _restore = restore;
+
+  void detach(VoidCallback restore) {
+    if (identical(_restore, restore)) {
+      _restore = null;
+    }
+  }
+
+  void restoreForward() => _restore?.call();
+}
+
 /// Cupertino slide keeps the previous route in view. A transparent child lets
 /// Home/Caderno text show through mid-transition; paint [MangaJpTokens.bg]
 /// (same as AppChrome at rest) so the incoming page is opaque.
@@ -10,10 +25,15 @@ Page<void> opaqueCupertinoPage(
   required LocalKey key,
   required Widget child,
   bool allowPopGestureWhenBlocked = false,
+  BlockedPopRestorer? restorer,
 }) {
   final wrapped = ColoredBox(color: context.tokens.bg, child: child);
   if (allowPopGestureWhenBlocked) {
-    return _SwipeableCupertinoPage(key: key, child: wrapped);
+    return _SwipeableCupertinoPage(
+      key: key,
+      child: wrapped,
+      restorer: restorer,
+    );
   }
   return CupertinoPage<void>(key: key, child: wrapped);
 }
@@ -21,14 +41,19 @@ Page<void> opaqueCupertinoPage(
 /// After a completed iOS back-swipe whose pop was vetoed (confirm dialog
 /// cancel), slide the page back on screen. No-op when the animation is
 /// already at 1.0 (system back / Fechar).
-void restoreBlockedCupertinoPop() {
-  _SwipeableCupertinoPageRoute.active?.restoreForward();
+void restoreBlockedCupertinoPop(BlockedPopRestorer? restorer) {
+  restorer?.restoreForward();
 }
 
 class _SwipeableCupertinoPage extends Page<void> {
-  const _SwipeableCupertinoPage({required super.key, required this.child});
+  const _SwipeableCupertinoPage({
+    required super.key,
+    required this.child,
+    this.restorer,
+  });
 
   final Widget child;
+  final BlockedPopRestorer? restorer;
 
   @override
   Route<void> createRoute(BuildContext context) {
@@ -45,8 +70,6 @@ class _SwipeableCupertinoPageRoute extends PageRoute<void>
     : super(settings: page) {
     assert(opaque);
   }
-
-  static _SwipeableCupertinoPageRoute? active;
 
   _SwipeableCupertinoPage get _page => settings as _SwipeableCupertinoPage;
 
@@ -82,23 +105,13 @@ class _SwipeableCupertinoPageRoute extends PageRoute<void>
 
   @override
   TickerFuture didPush() {
-    active = this;
+    _page.restorer?.attach(restoreForward);
     return super.didPush();
   }
 
   @override
-  bool didPop(void result) {
-    if (identical(active, this)) {
-      active = null;
-    }
-    return super.didPop(result);
-  }
-
-  @override
   void dispose() {
-    if (identical(active, this)) {
-      active = null;
-    }
+    _page.restorer?.detach(restoreForward);
     super.dispose();
   }
 

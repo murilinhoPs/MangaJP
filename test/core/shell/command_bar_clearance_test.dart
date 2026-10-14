@@ -66,7 +66,7 @@ void main() {
 
       final panel = size == phone
           ? find.byKey(HomeKeys.review)
-          : find.byKey(HomeKeys.recentPages);
+          : find.byKey(HomeKeys.recentCaptures);
       expect(panel, findsOneWidget);
       _expectPanelVisible(tester, panel, size: size);
     });
