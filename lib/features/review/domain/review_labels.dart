@@ -10,6 +10,9 @@ abstract final class ReviewLabels {
   static const done = 'Sessão concluída';
   static const doneHint = 'Nada mais na fila agora.';
   static const revisarDeNovo = 'Revisar de novo';
+  static const sairTitulo = 'Sair da revisão?';
+  static const sair = 'Sair';
+  static const cancelar = 'Cancelar';
   static const errei = 'Errei';
   static const dificil = 'Difícil';
   static const bom = 'Bom';

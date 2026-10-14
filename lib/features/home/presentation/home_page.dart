@@ -103,7 +103,7 @@ class _MobileHome extends StatelessWidget {
         const SizedBox(height: 20),
         _QueueCard(
           counts: counts,
-          onTap: () => const ReviewRoute().go(context),
+          onTap: () => const ReviewRoute().push<void>(context),
         ),
         if (continuePage != null) ...[
           const SizedBox(height: 12),
@@ -824,8 +824,7 @@ class _RecentPagesList extends StatelessWidget {
               page: items[i],
               index: i + 1,
               now: now,
-              onTap: () =>
-                  PageDetailRoute(id: items[i].id).push<void>(context),
+              onTap: () => PageDetailRoute(id: items[i].id).push<void>(context),
             ),
           ],
       ],

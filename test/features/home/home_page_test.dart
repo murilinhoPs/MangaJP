@@ -242,6 +242,7 @@ void main() {
 
       const HomeRoute().go(tester.element(find.byType(ReviewPage)));
       await tester.pumpAndSettle();
+      await _confirmLeaveReviewIfShown(tester);
       expect(
         GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
         '/home',
@@ -802,12 +803,14 @@ void main() {
         Future<void> openLeitor() async {
           const PageDetailRoute(id: pageId).go(_shellContext(tester));
           await tester.pumpAndSettle();
+          await _confirmLeaveReviewIfShown(tester);
           expect(find.byType(PageDetailPage), findsOneWidget);
         }
 
         Future<void> openHome() async {
           const HomeRoute().go(_shellContext(tester));
           await tester.pumpAndSettle();
+          await _confirmLeaveReviewIfShown(tester);
           expect(find.byType(HomePage), findsOneWidget);
         }
 
@@ -1293,5 +1296,14 @@ Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
   await tester.tap(find.byKey(ReviewKeys.reveal));
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(ReviewKeys.rating(rating)));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _confirmLeaveReviewIfShown(WidgetTester tester) async {
+  final dialog = find.byKey(ReviewKeys.leaveDialog);
+  if (dialog.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(find.byKey(ReviewKeys.leaveConfirm));
   await tester.pumpAndSettle();
 }

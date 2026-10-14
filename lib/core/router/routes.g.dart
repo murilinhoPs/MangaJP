@@ -26,15 +26,6 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
         StatefulShellBranchData.$branch(
           routes: [
             GoRouteData.$route(
-              path: '/review',
-              hasOverriddenOnExit: false,
-              factory: $ReviewRoute._fromState,
-            ),
-          ],
-        ),
-        StatefulShellBranchData.$branch(
-          routes: [
-            GoRouteData.$route(
               path: '/notebook',
               hasOverriddenOnExit: false,
               factory: $NotebookRoute._fromState,
@@ -59,6 +50,11 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
       path: '/pages',
       hasOverriddenOnExit: false,
       factory: $PagesRoute._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/review',
+      hasOverriddenOnExit: true,
+      factory: $ReviewRoute._fromState,
     ),
     GoRouteData.$route(
       path: '/capture',
@@ -97,26 +93,6 @@ mixin $HomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/home');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $ReviewRoute on GoRouteData {
-  static ReviewRoute _fromState(GoRouterState state) => const ReviewRoute();
-
-  @override
-  String get location => GoRouteData.$location('/review');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -205,6 +181,26 @@ mixin $PagesRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/pages');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ReviewRoute on GoRouteData {
+  static ReviewRoute _fromState(GoRouterState state) => const ReviewRoute();
+
+  @override
+  String get location => GoRouteData.$location('/review');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -22,6 +22,7 @@ class ReviewView {
     this.reading = '',
     this.glossText = '',
     this.showSeq = 0,
+    this.answeredCount = 0,
   });
 
   final ReviewCard? card;
@@ -42,8 +43,12 @@ class ReviewView {
   /// Queue size when the session opened.
   final int startedWith;
 
+  /// Ratings given in this in-memory pass. Exit confirms when this is ≥1.
+  final int answeredCount;
+
   bool get isEmpty => card == null && startedWith == 0;
   bool get isDone => card == null && startedWith > 0;
+  bool get needsExitConfirm => answeredCount > 0;
 }
 
 /// `/review` session: order is an in-memory snapshot of
@@ -58,6 +63,7 @@ class ReviewSession extends _$ReviewSession {
   List<ReviewCard>? _remaining;
   int _startedWith = 0;
   int _showSeq = 0;
+  int _answeredCount = 0;
 
   @override
   Future<ReviewView?> build() async {
@@ -81,6 +87,7 @@ class ReviewSession extends _$ReviewSession {
     }
     final repo = ref.read(reviewRepositoryProvider);
     await repo.answer(current!.card!.cardId, rating);
+    _answeredCount++;
     ref.read(reviewRevisionProvider.notifier).bump();
     final answeredId = current.card!.cardId;
     final next = [
@@ -117,7 +124,11 @@ class ReviewSession extends _$ReviewSession {
     required int waiting,
   }) {
     if (remaining.isEmpty) {
-      return ReviewView(remaining: waiting, startedWith: _startedWith);
+      return ReviewView(
+        remaining: waiting,
+        startedWith: _startedWith,
+        answeredCount: _answeredCount,
+      );
     }
     final card = remaining.first;
     final entry = jmdict.entryBySeq(card.seq);
@@ -129,6 +140,7 @@ class ReviewSession extends _$ReviewSession {
       remaining: waiting,
       startedWith: _startedWith,
       showSeq: _showSeq,
+      answeredCount: _answeredCount,
     );
   }
 }
