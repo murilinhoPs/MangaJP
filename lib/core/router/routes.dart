@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/capture/domain/incoming_image.dart';
@@ -8,7 +8,6 @@ import '../../features/home/presentation/home_page.dart';
 import '../../features/notebook/presentation/notebook_page.dart';
 import '../../features/notebook/presentation/notebook_word_page.dart';
 import '../../features/pages/presentation/page_detail_page.dart';
-import '../../features/pages/presentation/pages_list_page.dart';
 import '../../features/review/presentation/review_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../shell/app_chrome.dart';
@@ -23,16 +22,6 @@ part 'routes.g.dart';
         TypedStatefulShellBranch<HomeBranch>(
           routes: <TypedRoute<RouteData>>[
             TypedGoRoute<HomeRoute>(path: '/home'),
-          ],
-        ),
-        TypedStatefulShellBranch<PagesBranch>(
-          routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<PagesRoute>(
-              path: '/pages',
-              routes: <TypedRoute<RouteData>>[
-                TypedGoRoute<PageDetailRoute>(path: ':id'),
-              ],
-            ),
           ],
         ),
         TypedStatefulShellBranch<ReviewBranch>(
@@ -52,6 +41,8 @@ part 'routes.g.dart';
         ),
       ],
     ),
+    TypedGoRoute<PageDetailRoute>(path: '/pages/:id'),
+    TypedGoRoute<PagesRoute>(path: '/pages'),
     TypedGoRoute<CaptureRoute>(path: '/capture'),
     TypedGoRoute<SettingsRoute>(path: '/settings'),
     TypedGoRoute<DeckRoute>(path: '/deck'),
@@ -84,10 +75,6 @@ class HomeBranch extends StatefulShellBranchData {
   const HomeBranch();
 }
 
-class PagesBranch extends StatefulShellBranchData {
-  const PagesBranch();
-}
-
 class ReviewBranch extends StatefulShellBranchData {
   const ReviewBranch();
 }
@@ -103,22 +90,12 @@ class HomeRoute extends GoRouteData with $HomeRoute {
   Widget build(BuildContext context, GoRouterState state) => const HomePage();
 }
 
+/// `/pages` list moved to Home (**Páginas recentes** / **Capturas recentes**).
 class PagesRoute extends GoRouteData with $PagesRoute {
   const PagesRoute();
 
-  /// The `/pages` list moved to Home (**Páginas recentes**). Keep `/pages/:id`.
   @override
-  String? redirect(BuildContext context, GoRouterState state) {
-    if (state.uri.path == '/pages') {
-      return '/home';
-    }
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const PagesListPage();
-  }
+  String? redirect(BuildContext context, GoRouterState state) => '/home';
 }
 
 class PageDetailRoute extends GoRouteData with $PageDetailRoute {
@@ -127,8 +104,11 @@ class PageDetailRoute extends GoRouteData with $PageDetailRoute {
   final String id;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return PageDetailPage(pageId: id);
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return CupertinoPage<void>(
+      key: state.pageKey,
+      child: PageDetailPage(pageId: id),
+    );
   }
 }
 
@@ -154,8 +134,11 @@ class NotebookWordRoute extends GoRouteData with $NotebookWordRoute {
   final String id;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return NotebookWordPage(wordId: id);
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return CupertinoPage<void>(
+      key: state.pageKey,
+      child: NotebookWordPage(wordId: id),
+    );
   }
 }
 

@@ -14,7 +14,6 @@ class AppScaffold extends StatelessWidget {
 
   static const _titles = <String>[
     'Início',
-    'Páginas',
     'Review',
     'Caderno',
   ];
@@ -22,7 +21,10 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.path;
-    final hideBar = path == '/home' || ShellLayout.isTask(path);
+    final hideBar =
+        path == '/home' ||
+        ShellLayout.isTask(path) ||
+        path.startsWith('/notebook/word/');
     return Scaffold(
       backgroundColor: context.tokens.bg,
       appBar: hideBar

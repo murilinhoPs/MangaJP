@@ -90,7 +90,8 @@ void main() {
     expect(find.byType(PageDetailPage), findsOneWidget);
     expect(find.byKey(ShellKeys.navCards), findsNothing);
     expect(find.byKey(ShellKeys.taskDock), findsOneWidget);
-    expect(find.byKey(ShellKeys.dockAction('back')), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.back), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
     expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
     expect(find.byKey(PageDetailKeys.edit), findsOneWidget);
     expect(find.byKey(PageDetailKeys.add), findsOneWidget);

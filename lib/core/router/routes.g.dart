@@ -26,22 +26,6 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
         StatefulShellBranchData.$branch(
           routes: [
             GoRouteData.$route(
-              path: '/pages',
-              hasOverriddenOnExit: false,
-              factory: $PagesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  hasOverriddenOnExit: false,
-                  factory: $PageDetailRoute._fromState,
-                ),
-              ],
-            ),
-          ],
-        ),
-        StatefulShellBranchData.$branch(
-          routes: [
-            GoRouteData.$route(
               path: '/review',
               hasOverriddenOnExit: false,
               factory: $ReviewRoute._fromState,
@@ -65,6 +49,16 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
           ],
         ),
       ],
+    ),
+    GoRouteData.$route(
+      path: '/pages/:id',
+      hasOverriddenOnExit: false,
+      factory: $PageDetailRoute._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/pages',
+      hasOverriddenOnExit: false,
+      factory: $PagesRoute._fromState,
     ),
     GoRouteData.$route(
       path: '/capture',
@@ -103,50 +97,6 @@ mixin $HomeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/home');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $PagesRoute on GoRouteData {
-  static PagesRoute _fromState(GoRouterState state) => const PagesRoute();
-
-  @override
-  String get location => GoRouteData.$location('/pages');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $PageDetailRoute on GoRouteData {
-  static PageDetailRoute _fromState(GoRouterState state) =>
-      PageDetailRoute(id: state.pathParameters['id']!);
-
-  PageDetailRoute get _self => this as PageDetailRoute;
-
-  @override
-  String get location =>
-      GoRouteData.$location('/pages/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -211,6 +161,50 @@ mixin $NotebookWordRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/notebook/word/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $PageDetailRoute on GoRouteData {
+  static PageDetailRoute _fromState(GoRouterState state) =>
+      PageDetailRoute(id: state.pathParameters['id']!);
+
+  PageDetailRoute get _self => this as PageDetailRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/pages/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $PagesRoute on GoRouteData {
+  static PagesRoute _fromState(GoRouterState state) => const PagesRoute();
+
+  @override
+  String get location => GoRouteData.$location('/pages');
 
   @override
   void go(BuildContext context) => context.go(location);

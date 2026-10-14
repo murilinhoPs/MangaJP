@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/shell/shell_layout.dart';
+import '../../../core/shell/shell_nav.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
@@ -13,6 +14,7 @@ import 'notebook_page.dart';
 
 /// Keys for `/notebook/word/:id` (lemma / gloss / first crop / study actions).
 abstract final class NotebookWordKeys {
+  static const back = Key('notebook-word-back');
   static const lemma = Key('notebook-word-lemma');
   static const reading = Key('notebook-word-reading');
   static const state = Key('notebook-word-state');
@@ -53,21 +55,30 @@ class NotebookWordPage extends ConsumerWidget {
     final view = ref.watch(notebookWordProvider(wordId));
     final wide = ShellLayout.isWide(context);
 
-    return view.when(
-      data: (item) {
-        if (item == null) {
-          return _NotebookMissing(wide: wide);
-        }
-        return _NotebookWordBody(wordId: wordId, view: item, wide: wide);
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            '$error',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        leading: BackButton(
+          key: NotebookWordKeys.back,
+          onPressed: () => popTaskOrHome(context),
+        ),
+      ),
+      body: view.when(
+        data: (item) {
+          if (item == null) {
+            return _NotebookMissing(wide: wide);
+          }
+          return _NotebookWordBody(wordId: wordId, view: item, wide: wide);
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              '$error',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ),
       ),
@@ -233,7 +244,8 @@ class _NotebookWordBody extends ConsumerWidget {
                   child: TextButton(
                     key: NotebookWordKeys.pageLink,
                     style: TextButton.styleFrom(foregroundColor: tokens.text2),
-                    onPressed: () => PageDetailRoute(id: pageId).go(context),
+                    onPressed: () =>
+                        PageDetailRoute(id: pageId).push<void>(context),
                     child: const Text(NotebookLabels.verPagina),
                   ),
                 ),

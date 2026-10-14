@@ -514,6 +514,31 @@ void main() {
 
   for (final size in [const Size(390, 844), const Size(1280, 800)]) {
     final label = '${size.width.toInt()}x${size.height.toInt()}';
+    testWidgets(
+      'top-edge crop badge sits below status bar plus extra gap at $label',
+      (tester) async {
+        tester.view.padding = const FakeViewPadding(top: 62);
+        tester.view.viewPadding = const FakeViewPadding(top: 62);
+        addTearDown(tester.view.resetPadding);
+        addTearDown(tester.view.resetViewPadding);
+
+        await _pumpCrop(
+          tester,
+          crops: const [CropRect(left: 0.2, top: 0, width: 0.6, height: 0.4)],
+          size: size,
+        );
+
+        final canvas = tester.getRect(find.byKey(CaptureKeys.canvas));
+        expect(canvas.top, greaterThanOrEqualTo(62));
+        final badge = tester.getRect(find.byKey(CaptureKeys.cropNumber(1)));
+        expect(
+          badge.top,
+          greaterThanOrEqualTo(canvas.top + CropOverlay.badgeMinGap - 0.5),
+        );
+        expect(badge.top, greaterThanOrEqualTo(62 + CropOverlay.badgeMinGap - 0.5));
+      },
+    );
+
     testWidgets('Crop canvas sits below a 62px top inset at $label', (
       tester,
     ) async {
@@ -726,8 +751,9 @@ Future<void> _pumpCrop(
   int activeIndex = 0,
   AppDatabase? db,
   OcrEngine ocr = const FakeOcrEngine(),
+  Size size = const Size(390, 844),
 }) async {
-  tester.view.physicalSize = const Size(390, 844);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);

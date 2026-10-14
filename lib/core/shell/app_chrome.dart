@@ -125,7 +125,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     if (pages == null || index < 0 || index >= pages.length) {
       return;
     }
-    PageDetailRoute(id: pages[index].id).go(context);
+    PageDetailRoute(id: pages[index].id).push<void>(context);
   }
 
   Future<void> _openPalette(BuildContext context) async {

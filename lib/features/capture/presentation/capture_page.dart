@@ -282,7 +282,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         return;
       }
       if (GoRouter.maybeOf(context) != null) {
-        PageDetailRoute(id: pageId).go(context);
+        PageDetailRoute(id: pageId).pushReplacement(context);
         return;
       }
       setState(() {

@@ -284,7 +284,7 @@ class _NotebookList extends StatelessWidget {
                 color: tokens.wordState(entry.state.name),
               ),
             ),
-            onTap: () => NotebookWordRoute(id: entry.wordId).go(context),
+            onTap: () => NotebookWordRoute(id: entry.wordId).push<void>(context),
           ),
         );
       },

@@ -79,6 +79,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(NotebookWordPage), findsOneWidget);
+      expect(find.byKey(NotebookWordKeys.back), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
       expect(
         GoRouter.of(tester.element(find.byType(NotebookWordPage)))
             .state

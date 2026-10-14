@@ -267,7 +267,8 @@ abstract final class DesktopRail {
         icon: Icons.chrome_reader_mode_outlined,
         go: recentPageId == null
             ? null
-            : (context) => PageDetailRoute(id: recentPageId).go(context),
+            : (context) =>
+                  PageDetailRoute(id: recentPageId).push<void>(context),
         isActive: _pagesActive,
       ),
       const ShellDestination(
@@ -324,7 +325,8 @@ abstract final class ShellPaletteNav {
         PaletteAction(
           id: 'pagina-recente',
           label: 'Abrir página recente',
-          run: (context) => PageDetailRoute(id: recentPageId).go(context),
+          run: (context) =>
+              PageDetailRoute(id: recentPageId).push<void>(context),
         ),
       const PaletteAction(id: 'revisar', label: 'Revisar', run: _goReview),
       const PaletteAction(id: 'caderno', label: 'Caderno', run: _goNotebook),
