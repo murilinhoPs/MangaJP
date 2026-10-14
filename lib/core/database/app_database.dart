@@ -1,5 +1,8 @@
 import 'package:drift/drift.dart';
 
+import '../../features/words/domain/custom_word_merge.dart';
+import '../utils/graphemes.dart';
+import '../utils/ids.dart';
 import 'app_database_open.dart';
 import 'demo_seed.dart';
 import 'daos/app_meta_dao.dart';
@@ -17,6 +20,7 @@ import 'tables/user_word_states.dart';
 import 'tables/user_words.dart';
 
 part 'app_database.g.dart';
+part 'migrations/merge_custom_ivs_duplicates.dart';
 
 @DriftDatabase(
   tables: [
@@ -36,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
@@ -46,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '7'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '8'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -114,6 +118,18 @@ class AppDatabase extends _$AppDatabase {
             AppMetaCompanion.insert(key: 'schema_version', value: '7'),
             onConflict: DoUpdate(
               (_) => const AppMetaCompanion(value: Value('7')),
+            ),
+          );
+        }
+        if (from < 8) {
+          await m.addColumn(userWords, userWords.lemmaKey);
+          await backfillLemmaKeysAndMergeCustomIvsDuplicates(this);
+          await m.createIndex(idxWordsLemmaKey);
+          await m.createIndex(idxWordsCustomLemmaKey);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '8'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('8')),
             ),
           );
         }

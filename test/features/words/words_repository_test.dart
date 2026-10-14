@@ -24,7 +24,7 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '7');
+    expect(await db.appMetaDao.getValue('schema_version'), '8');
     final names = await _tableNames(db);
     expect(
       names,
@@ -40,7 +40,7 @@ void main() {
     final wordCols = await db.customSelect("PRAGMA table_info('words')").get();
     expect(
       {for (final row in wordCols) row.read<String>('name')},
-      contains('user_note'),
+      containsAll(<String>['user_note', 'lemma_key']),
     );
   });
 
@@ -93,6 +93,7 @@ void main() {
     expect(words.single.lemma, 'ぴよ');
     expect(words.single.reading, 'ぴよ');
     expect(words.single.userNote, 'nome do personagem');
+    expect(words.single.lemmaKey, 'ぴよ');
     expect(words.single.seq, lessThan(0));
 
     final states = await env.db.select(env.db.userWordStates).get();
@@ -131,7 +132,8 @@ void main() {
       expect(words.single.id, first);
       expect(words.single.lemma, withIvs);
       expect(words.single.reading, withIvs);
-      expect(words.single.userNote, 'kuzu ivs');
+      expect(words.single.userNote, 'kuzu ivs\nplain kuzu');
+      expect(words.single.lemmaKey, '葛');
       expect(await env.db.select(env.db.userWordStates).get(), hasLength(1));
       expect(await env.db.select(env.db.cropWords).get(), hasLength(1));
       expect(await _cardRowCount(env.db), 0);
@@ -160,7 +162,8 @@ void main() {
     final words = await env.db.select(env.db.userWords).get();
     expect(words, hasLength(1));
     expect(words.single.lemma, '葛');
-    expect(words.single.userNote, 'plain first');
+    expect(words.single.userNote, 'plain first\nivs later');
+    expect(words.single.lemmaKey, '葛');
   });
 
   test(
@@ -223,6 +226,56 @@ void main() {
     final words = await env.db.select(env.db.userWords).get();
     expect(words, hasLength(1));
     expect(words.single.lemma, withIvs);
+  });
+
+  test('second custom save merges a distinct note and keeps the lemma', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+
+    final first = await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: 'ぴよ',
+      userNote: 'nome',
+    );
+    final second = await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: 'ぴよ',
+      userNote: 'outra nota',
+    );
+    final again = await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: 'ぴよ',
+      userNote: 'outra nota',
+    );
+
+    expect(second, first);
+    expect(again, first);
+    final words = await env.db.select(env.db.userWords).get();
+    expect(words, hasLength(1));
+    expect(words.single.userNote, 'nome\noutra nota');
+    expect(words.single.lemma, 'ぴよ');
+    expect(words.single.lemmaKey, 'ぴよ');
+  });
+
+  test('customWordByLemmaKey finds the row by selector-free form', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    const withIvs = '葛$_ivs$_vs16';
+
+    final id = await env.words.saveCustomFromLookup(
+      cropId: env.cropId,
+      surface: withIvs,
+      userNote: 'kuzu',
+    );
+
+    expect(await env.db.wordsDao.customWordByLemmaKey('葛'), isNotNull);
+    expect((await env.db.wordsDao.customWordByLemmaKey('葛'))!.id, id);
+    expect(
+      (await env.db.wordsDao.customWordByLemmaKey('葛'))!.lemma,
+      withIvs,
+    );
+    expect(await env.db.wordsDao.customWordByLemmaKey('辻'), isNull);
+    expect(await env.db.wordsDao.customWordByLemmaKey(withIvs), isNull);
   });
 
   test('custom save rejects empty or whitespace-only note', () async {

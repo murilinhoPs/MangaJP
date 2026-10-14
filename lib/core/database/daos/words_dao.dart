@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../utils/graphemes.dart';
 import '../../utils/ids.dart';
 import '../app_database.dart';
 import '../tables/captured_crops.dart';
@@ -23,36 +24,29 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
     )..where((t) => t.seq.equals(seq))).getSingleOrNull();
   }
 
-  /// Custom (`custom:<uuid>`) rows. Dedupe compares IVS-stripped lemmas in Dart.
-  Future<List<UserWord>> customWords() {
-    return (select(
-      userWords,
-    )..where((t) => t.id.like('$customWordIdPrefix%'))).get();
-  }
-
-  /// Earliest `crop_words` link for [wordId], with that crop's OCR sentence.
-  Future<CapturedCrop?> firstCropFor(String wordId) async {
-    final query = select(capturedCrops).join([
-      innerJoin(cropWords, cropWords.cropId.equalsExp(capturedCrops.id)),
-    ]);
-    query.where(cropWords.wordId.equals(wordId));
-    query.orderBy([
-      OrderingTerm.asc(cropWords.createdAt),
-      OrderingTerm.asc(cropWords.cropId),
-    ]);
-    query.limit(1);
-    final row = await query.getSingleOrNull();
-    return row?.readTable(capturedCrops);
-  }
-
-  Future<UserWordState?> stateFor(String wordId) {
-    return (select(
-      userWordStates,
-    )..where((t) => t.wordId.equals(wordId))).getSingleOrNull();
+  /// Custom row whose [UserWords.lemmaKey] equals [lemmaKey].
+  Future<UserWord?> customWordByLemmaKey(String lemmaKey) {
+    return (select(userWords)..where(
+          (t) =>
+              t.id.like('$customWordIdPrefix%') & t.lemmaKey.equals(lemmaKey),
+        ))
+        .getSingleOrNull();
   }
 
   Future<void> insertWord(UserWordsCompanion row) {
+    if (row.lemma.present) {
+      final key = stripVariationSelectors(row.lemma.value);
+      if (!row.lemmaKey.present || row.lemmaKey.value != key) {
+        row = row.copyWith(lemmaKey: Value(key));
+      }
+    }
     return into(userWords).insert(row);
+  }
+
+  Future<void> updateUserNote(String wordId, String? note) {
+    return (update(userWords)..where((t) => t.id.equals(wordId))).write(
+      UserWordsCompanion(userNote: Value(note)),
+    );
   }
 
   Future<void> insertState(UserWordStatesCompanion row) {
@@ -85,6 +79,27 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
 
   Future<void> deleteWord(String wordId) {
     return (delete(userWords)..where((t) => t.id.equals(wordId))).go();
+  }
+
+  /// Earliest `crop_words` link for [wordId], with that crop's OCR sentence.
+  Future<CapturedCrop?> firstCropFor(String wordId) async {
+    final query = select(capturedCrops).join([
+      innerJoin(cropWords, cropWords.cropId.equalsExp(capturedCrops.id)),
+    ]);
+    query.where(cropWords.wordId.equals(wordId));
+    query.orderBy([
+      OrderingTerm.asc(cropWords.createdAt),
+      OrderingTerm.asc(cropWords.cropId),
+    ]);
+    query.limit(1);
+    final row = await query.getSingleOrNull();
+    return row?.readTable(capturedCrops);
+  }
+
+  Future<UserWordState?> stateFor(String wordId) {
+    return (select(
+      userWordStates,
+    )..where((t) => t.wordId.equals(wordId))).getSingleOrNull();
   }
 
   /// Words that have a listed study state, newest [UserWords.createdAt] first.
