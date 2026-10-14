@@ -2,17 +2,28 @@ head_sha b32d2503985b1566b6f5dfdd3fd234698f6a4d95
 head_sha7 b32d250
 
 ios/page.png           1206x2622  128491 bytes
+  sha256 a0c5a4cdf83a29790cda71e33a2edf3fae28d2da669fc7883c50e5527f887bb7
 ios/word.png           1206x2622  221733 bytes
-ios/crop.png           1206x2622  145386 bytes
+  sha256 124367849e3541a6ea84a5dbdeaa360b6c439c6934042df098d80245087bdd0e
+ios/crop.png           1206x2622  119168 bytes
+  sha256 13693b6e614f73e7f7d67415b35921051be21b0ca3ab7e9b985bde8cf140c905
 ios/swipe.png          1206x2622  196188 bytes
+  sha256 8c312c2d791a11f58f0f4a64dc6182e45d968d63be5977eb43b4ae6fd3bcd657
 android/page.png       390x844  22299 bytes
+  sha256 5d543fade6fba564e425c822790e0a5e6e7e8d9331fb3c9d9f783c7750d664b9
 android/word.png       390x844  46158 bytes
-android/crop.png       390x844  22491 bytes
-desktop/page.png       1280x800  92153 bytes
-desktop/word.png       1280x800  101671 bytes
-desktop/crop.png       1280x800  320644 bytes
+  sha256 1becb82aeffbee530b2c775e01fa812ac641061634f743225d4f4ef0eab8df93
+android/crop.png       390x844  18796 bytes
+  sha256 a149a6b06074d759c52b4e8a24e76906111bda9f380cdf186cfab0fd537c6665
+desktop/page.png       1280x800  83768 bytes
+  sha256 5414c852ea45c5cd8316cb2193f7f880857012396479614592e3853fd66a5cac
+desktop/word.png       1280x800  95677 bytes
+  sha256 7eebf09860f8bf0cbb5a616b2403e697c8843a09ffe81b53aac5c157d3b735c1
+desktop/crop.png       1280x800  112051 bytes
+  sha256 6707e6fe189240edebffe6cdd6c9f860d3b49a367a627f3ebd5d0d786c082eb8
 
 iOS iPhone 17 / iOS 27  simctl io  1206x2622
 Android pixel_390      adb screencap  390x844
-Desktop macOS          app area only  1280x800
+Desktop macOS          app area only  1280x800  (screencapture -o, no title/shadow)
 iOS swipe.png          mid back-swipe (Leitor over Home)
+crop.png files recaptured on this head (not copied from 038d401/bd489f7)
