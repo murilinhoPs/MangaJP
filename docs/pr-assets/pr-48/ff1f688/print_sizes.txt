@@ -17,8 +17,8 @@ desktop/review_dialog.png    1280x800  73270 bytes
   sha256 e78551791fb3594679ba3ac6ec9c6e33dd1cee85bd330cb93ef5d0f47313c840
 desktop/review_swipe.png     1280x800  82296 bytes
   sha256 32ae395a97b3987f998f854e860ce6b28adfcf1db2667193518de698ecc0cb7b
-desktop/crop.png             1280x800  71229 bytes
-  sha256 96888bffc45b0ef1c4c0b5081ce42153c0a26e7ba4b1b67b5f52d7947f35b3d6
+desktop/crop.png             1280x800  61306 bytes
+  sha256 c5a1db2205a2d70f6399420fcc23901c19f6268b50435c20857b25e6db4ca591
 
 iOS iPhone 17 / iOS 27  simctl io  1206x2622
 Android pixel_390      adb screencap  390x844
