@@ -92,7 +92,9 @@ class _AppChromeState extends ConsumerState<AppChrome> {
   void _invokeShortcut(BuildContext context, String id) {
     switch (id) {
       case 'r':
-        const ReviewRoute().go(context);
+        if (_path != '/review') {
+          const ReviewRoute().push<void>(context);
+        }
       case 'k':
         if (!_paletteOpen) {
           _openPalette(context);
@@ -188,7 +190,7 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           label: 'Revisar',
           shortcut: 'R',
           primary: true,
-          onPressed: () => const ReviewRoute().go(context),
+          onPressed: () => const ReviewRoute().push<void>(context),
         ),
         ShellAction(
           id: 'galeria',

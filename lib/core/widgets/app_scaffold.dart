@@ -12,11 +12,7 @@ class AppScaffold extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const _titles = <String>[
-    'Início',
-    'Review',
-    'Caderno',
-  ];
+  static const _titles = <String>['Início', 'Caderno'];
 
   @override
   Widget build(BuildContext context) {

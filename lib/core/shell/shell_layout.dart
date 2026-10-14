@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../router/routes.dart';
 import '../theme/app_theme.dart';
@@ -338,7 +339,13 @@ abstract final class ShellPaletteNav {
 
 void _goHome(BuildContext context) => const HomeRoute().go(context);
 
-void _goReview(BuildContext context) => const ReviewRoute().go(context);
+void _goReview(BuildContext context) {
+  if (GoRouter.of(context).state.uri.path == '/review') {
+    return;
+  }
+  const ReviewRoute().push<void>(context);
+}
+
 void _goNotebook(BuildContext context) => const NotebookRoute().go(context);
 void _goDeck(BuildContext context) => const DeckRoute().go(context);
 void _goSettings(BuildContext context) => const SettingsRoute().go(context);

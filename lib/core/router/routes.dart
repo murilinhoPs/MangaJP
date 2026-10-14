@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/capture/domain/incoming_image.dart';
@@ -11,8 +11,8 @@ import '../../features/pages/presentation/page_detail_page.dart';
 import '../../features/review/presentation/review_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../shell/app_chrome.dart';
-import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
+import 'opaque_cupertino_page.dart';
 
 part 'routes.g.dart';
 
@@ -23,11 +23,6 @@ part 'routes.g.dart';
         TypedStatefulShellBranch<HomeBranch>(
           routes: <TypedRoute<RouteData>>[
             TypedGoRoute<HomeRoute>(path: '/home'),
-          ],
-        ),
-        TypedStatefulShellBranch<ReviewBranch>(
-          routes: <TypedRoute<RouteData>>[
-            TypedGoRoute<ReviewRoute>(path: '/review'),
           ],
         ),
         TypedStatefulShellBranch<NotebookBranch>(
@@ -44,6 +39,7 @@ part 'routes.g.dart';
     ),
     TypedGoRoute<PageDetailRoute>(path: '/pages/:id'),
     TypedGoRoute<PagesRoute>(path: '/pages'),
+    TypedGoRoute<ReviewRoute>(path: '/review'),
     TypedGoRoute<CaptureRoute>(path: '/capture'),
     TypedGoRoute<SettingsRoute>(path: '/settings'),
     TypedGoRoute<DeckRoute>(path: '/deck'),
@@ -76,10 +72,6 @@ class HomeBranch extends StatefulShellBranchData {
   const HomeBranch();
 }
 
-class ReviewBranch extends StatefulShellBranchData {
-  const ReviewBranch();
-}
-
 class NotebookBranch extends StatefulShellBranchData {
   const NotebookBranch();
 }
@@ -106,7 +98,7 @@ class PageDetailRoute extends GoRouteData with $PageDetailRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return _opaqueCupertinoPage(
+    return opaqueCupertinoPage(
       context,
       key: state.pageKey,
       child: PageDetailPage(pageId: id),
@@ -118,7 +110,19 @@ class ReviewRoute extends GoRouteData with $ReviewRoute {
   const ReviewRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => const ReviewPage();
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return opaqueCupertinoPage(
+      context,
+      key: state.pageKey,
+      allowPopGestureWhenBlocked: true,
+      child: const ReviewPage(),
+    );
+  }
+
+  @override
+  Future<bool> onExit(BuildContext context, GoRouterState state) {
+    return confirmLeaveReviewIfNeeded(context);
+  }
 }
 
 class NotebookRoute extends GoRouteData with $NotebookRoute {
@@ -137,7 +141,7 @@ class NotebookWordRoute extends GoRouteData with $NotebookWordRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return _opaqueCupertinoPage(
+    return opaqueCupertinoPage(
       context,
       key: state.pageKey,
       child: NotebookWordPage(wordId: id),
@@ -160,8 +164,12 @@ class CaptureRoute extends GoRouteData with $CaptureRoute {
   final IncomingImage? $extra;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return CapturePage(image: $extra);
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return opaqueCupertinoPage(
+      context,
+      key: state.pageKey,
+      child: CapturePage(image: $extra),
+    );
   }
 }
 
@@ -179,18 +187,4 @@ class DeckRoute extends GoRouteData with $DeckRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) => const DeckPage();
-}
-
-/// Cupertino slide keeps the previous route in view. A transparent child lets
-/// Home/Caderno text show through mid-transition; paint [MangaJpTokens.bg]
-/// (same as AppChrome at rest) so the incoming page is opaque.
-Page<void> _opaqueCupertinoPage(
-  BuildContext context, {
-  required LocalKey key,
-  required Widget child,
-}) {
-  return CupertinoPage<void>(
-    key: key,
-    child: ColoredBox(color: context.tokens.bg, child: child),
-  );
 }

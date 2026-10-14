@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/router/opaque_cupertino_page.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/shell/shell_nav.dart';
@@ -19,6 +20,9 @@ abstract final class ReviewKeys {
   static const done = Key('review-done');
   static const requeued = Key('review-requeued');
   static const reload = Key('review-reload');
+  static const leaveDialog = Key('review-leave-dialog');
+  static const leaveCancel = Key('review-leave-cancel');
+  static const leaveConfirm = Key('review-leave-confirm');
   static const card = Key('review-card');
   static const remaining = Key('review-remaining');
   static const lemma = Key('review-lemma');
@@ -33,6 +37,75 @@ abstract final class ReviewKeys {
       Key('review-${rating.name}-interval');
 }
 
+bool _leaveDialogOpen = false;
+bool _allowNextReviewExit = false;
+
+/// Confirm when this session has ≥1 answer. Used by [PopScope] and
+/// [ReviewRoute.onExit] so swipe / system back / Fechar share one dialog.
+Future<bool> confirmLeaveReviewIfNeeded(BuildContext context) async {
+  if (_allowNextReviewExit) {
+    _allowNextReviewExit = false;
+    return true;
+  }
+  final answered =
+      ProviderScope.containerOf(context)
+          .read(reviewSessionProvider)
+          .asData
+          ?.value
+          ?.answeredCount ??
+      0;
+  if (answered == 0) {
+    return true;
+  }
+  return confirmLeaveReview(context);
+}
+
+Future<bool> confirmLeaveReview(BuildContext context) async {
+  if (_leaveDialogOpen) {
+    return false;
+  }
+  _leaveDialogOpen = true;
+  try {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final tokens = dialogContext.tokens;
+        return AlertDialog(
+          key: ReviewKeys.leaveDialog,
+          title: const Text(ReviewLabels.sairTitulo),
+          actions: [
+            TextButton(
+              key: ReviewKeys.leaveCancel,
+              style: TextButton.styleFrom(foregroundColor: tokens.text2),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(ReviewLabels.cancelar),
+            ),
+            TextButton(
+              key: ReviewKeys.leaveConfirm,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                ReviewLabels.sair,
+                style: TextStyle(color: tokens.coral),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (leave == true) {
+      return true;
+    }
+    restoreBlockedCupertinoPop();
+    return false;
+  } finally {
+    _leaveDialogOpen = false;
+  }
+}
+
+void _requestReviewExit(BuildContext context) {
+  Navigator.of(context).maybePop();
+}
+
 /// `/review` — session snapshot of the due queue (at most 15 new cards
 /// per study-day). Front is the lemma; Mostrar shows kana + JMdict
 /// gloss, then Errei / Difícil / Bom / Fácil with DS interval captions
@@ -45,56 +118,80 @@ class ReviewPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(reviewSessionProvider);
     final waiting = ref.watch(homeReviewCountsProvider).value?.waiting;
+    final needsConfirm = view.asData?.value?.needsExitConfirm ?? false;
 
-    return view.when(
-      data: (item) {
-        if (item == null || item.isEmpty) {
-          return const _ReviewEndState(
-            statusKey: ReviewKeys.empty,
-            title: ReviewLabels.empty,
-            hint: ReviewLabels.emptyHint,
-          );
+    return PopScope(
+      canPop: !needsConfirm,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) {
+          return;
         }
-        if (item.isDone) {
-          final n = waiting ?? item.remaining;
-          return _ReviewEndState(
-            statusKey: ReviewKeys.done,
-            title: ReviewLabels.done,
-            hint: ReviewLabels.doneRequeuedHint(n),
-            remaining: n,
-            onReload: n == 0
-                ? null
-                : () => ref.read(reviewSessionProvider.notifier).reloadQueue(),
-          );
+        if (!needsConfirm) {
+          popTaskOrHome(context);
+          return;
         }
-        final live = waiting ?? item.remaining;
-        return _ReviewCardBody(
-          key: ValueKey('${item.card!.cardId}-${item.showSeq}'),
-          view: live == item.remaining
-              ? item
-              : ReviewView(
-                  remaining: live,
-                  startedWith: item.startedWith,
-                  card: item.card,
-                  reading: item.reading,
-                  glossText: item.glossText,
-                  showSeq: item.showSeq,
-                ),
-        );
+        final leave = await confirmLeaveReview(context);
+        if (leave && context.mounted) {
+          _allowNextReviewExit = true;
+          popTaskOrHome(context);
+        }
       },
-      loading: () => const _ReviewScaffold(
-        meta: ReviewLabels.sessao,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => _ReviewScaffold(
-        meta: ReviewLabels.sessao,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              '$error',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+      child: Scaffold(
+        backgroundColor: context.tokens.bg,
+        body: view.when(
+          data: (item) {
+            if (item == null || item.isEmpty) {
+              return const _ReviewEndState(
+                statusKey: ReviewKeys.empty,
+                title: ReviewLabels.empty,
+                hint: ReviewLabels.emptyHint,
+              );
+            }
+            if (item.isDone) {
+              final n = waiting ?? item.remaining;
+              return _ReviewEndState(
+                statusKey: ReviewKeys.done,
+                title: ReviewLabels.done,
+                hint: ReviewLabels.doneRequeuedHint(n),
+                remaining: n,
+                onReload: n == 0
+                    ? null
+                    : () => ref
+                          .read(reviewSessionProvider.notifier)
+                          .reloadQueue(),
+              );
+            }
+            final live = waiting ?? item.remaining;
+            return _ReviewCardBody(
+              key: ValueKey('${item.card!.cardId}-${item.showSeq}'),
+              view: live == item.remaining
+                  ? item
+                  : ReviewView(
+                      remaining: live,
+                      startedWith: item.startedWith,
+                      card: item.card,
+                      reading: item.reading,
+                      glossText: item.glossText,
+                      showSeq: item.showSeq,
+                      answeredCount: item.answeredCount,
+                    ),
+            );
+          },
+          loading: () => const _ReviewScaffold(
+            meta: ReviewLabels.sessao,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => _ReviewScaffold(
+            meta: ReviewLabels.sessao,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  '$error',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             ),
           ),
         ),
@@ -130,7 +227,7 @@ class _ReviewEndState extends StatelessWidget {
           label: ReviewLabels.fechar,
           shortcut: 'Esc',
           primary: reload == null,
-          onPressed: () => popTaskOrHome(context),
+          onPressed: () => _requestReviewExit(context),
         ),
         if (reload != null)
           ShellAction(
@@ -191,7 +288,7 @@ class _ReviewScaffold extends StatelessWidget {
                   key: ShellKeys.dockAction('close'),
                   icon: Icons.close,
                   tooltip: ReviewLabels.fechar,
-                  onPressed: () => popTaskOrHome(context),
+                  onPressed: () => _requestReviewExit(context),
                 ),
               ],
             ),
@@ -230,7 +327,7 @@ class _ReviewCardBodyState extends ConsumerState<_ReviewCardBody> {
         id: 'close',
         label: ReviewLabels.fechar,
         shortcut: 'Esc',
-        onPressed: () => popTaskOrHome(context),
+        onPressed: () => _requestReviewExit(context),
       ),
       if (!_revealed)
         ShellAction(
@@ -453,10 +550,7 @@ class _ReviewStatus extends StatelessWidget {
     final tokens = context.tokens;
     final body = Center(
       child: Padding(
-        padding: ShellLayout.withSafePadding(
-          context,
-          const EdgeInsets.all(24),
-        ),
+        padding: ShellLayout.withSafePadding(context, const EdgeInsets.all(24)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(

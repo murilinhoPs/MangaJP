@@ -10,15 +10,23 @@ import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
+import 'package:manga_jp/core/srs/card_srs_state.dart';
+import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
+import 'package:manga_jp/features/capture/domain/incoming_image.dart';
+import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
+import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_word_page.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
+import 'package:manga_jp/features/review/domain/review_labels.dart';
+import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
 import '../../features/capture/fixture_png.dart';
@@ -144,16 +152,13 @@ void main() {
         expect(find.byType(HomePage), findsOneWidget);
         _expectOpaqueFill(tester, find.byType(PageDetailPage));
 
-          await tester.pumpAndSettle();
-          final swipe = await _startIosEdgeSwipe(tester, size: size);
-          expect(find.byType(PageDetailPage), findsOneWidget);
-          expect(
-            find.byType(HomePage, skipOffstage: false),
-            findsOneWidget,
-          );
-          _expectOpaqueFill(tester, find.byType(PageDetailPage));
-          await swipe.up();
-          await tester.pumpAndSettle();
+        await tester.pumpAndSettle();
+        final swipe = await _startIosEdgeSwipe(tester, size: size);
+        expect(find.byType(PageDetailPage), findsOneWidget);
+        expect(find.byType(HomePage, skipOffstage: false), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(PageDetailPage));
+        await swipe.up();
+        await tester.pumpAndSettle();
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
@@ -184,6 +189,141 @@ void main() {
         debugDefaultTargetPlatformOverride = null;
       }
     });
+
+    testWidgets('Capture stays opaque mid iOS push and swipe ($label)', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await _openHomeWithPage(tester, jmdictPath: jmdictPath, size: size);
+        final ctx = tester.element(find.byType(HomePage));
+        CaptureRoute($extra: IncomingImage(bytes: fixturePng()))
+            .push<void>(ctx);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
+
+        expect(find.byType(CapturePage), findsOneWidget);
+        expect(find.byType(HomePage), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(CapturePage));
+
+        await tester.pumpAndSettle();
+        final swipe = await _startIosEdgeSwipe(tester, size: size);
+        expect(find.byType(CapturePage), findsOneWidget);
+        expect(find.byType(HomePage, skipOffstage: false), findsOneWidget);
+        _expectOpaqueFill(tester, find.byType(CapturePage));
+        await swipe.up();
+        await tester.pumpAndSettle();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Review with 0 answers: app back leaves ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+      expect(find.byType(ReviewPage), findsOneWidget);
+      expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+
+      await tester.tap(_reviewClose(size));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ReviewPage), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(_path(tester), '/home');
+    });
+
+    testWidgets('Review with 0 answers: system back leaves ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ReviewPage), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(_path(tester), '/home');
+    });
+
+    testWidgets('Review with 0 answers: iOS back swipe leaves ($label)', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+        expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+        _expectCupertinoPage(tester);
+
+        await _iosEdgeSwipe(tester, size: size);
+
+        expect(find.byType(ReviewPage), findsNothing);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(HomePage), findsOneWidget);
+        expect(_path(tester), '/home');
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('Review with an answered card: app back confirms ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+      await _answerCurrentCard(tester);
+
+      await tester.tap(_reviewClose(size));
+      await tester.pumpAndSettle();
+      await _expectLeaveDialogThenStayAndConfirm(
+        tester,
+        exit: () async {
+          await tester.tap(_reviewClose(size));
+          await tester.pumpAndSettle();
+        },
+      );
+    });
+
+    testWidgets('Review with an answered card: system back confirms ($label)', (
+      tester,
+    ) async {
+      await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+      await _answerCurrentCard(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await _expectLeaveDialogThenStayAndConfirm(
+        tester,
+        exit: () async {
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+        },
+      );
+    });
+
+    testWidgets(
+      'Review with an answered card: iOS back swipe confirms ($label)',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+        try {
+          await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+          await _answerCurrentCard(tester);
+          expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+          _expectCupertinoPage(tester);
+
+          await _iosEdgeSwipe(tester, size: size);
+          await _expectLeaveDialogThenStayAndConfirm(
+            tester,
+            exit: () async {
+              await _iosEdgeSwipe(tester, size: size);
+            },
+          );
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      },
+    );
   }
 }
 
@@ -207,10 +347,22 @@ Future<void> _tapRecent(WidgetTester tester) async {
 ///
 /// Start 5px inside the route's left edge (`_kBackGestureWidth` is 20). On
 /// a phone that is `Offset(5, y)`; beside the rail it is `railWidth + 5`.
+Finder _swipePage(WidgetTester tester) {
+  for (final finder in [
+    find.byType(PageDetailPage),
+    find.byType(NotebookWordPage),
+    find.byType(ReviewPage),
+    find.byType(CapturePage),
+  ]) {
+    if (finder.evaluate().isNotEmpty) {
+      return finder;
+    }
+  }
+  throw StateError('no swipeable page on screen');
+}
+
 Future<void> _iosEdgeSwipe(WidgetTester tester, {required Size size}) async {
-  final page = find.byType(PageDetailPage).evaluate().isNotEmpty
-      ? find.byType(PageDetailPage)
-      : find.byType(NotebookWordPage);
+  final page = _swipePage(tester);
   final start = Offset(tester.getTopLeft(page).dx + 5, size.height / 2);
   await tester.dragFrom(start, Offset(size.width * 0.6, 0));
   await tester.pumpAndSettle();
@@ -221,9 +373,7 @@ Future<TestGesture> _startIosEdgeSwipe(
   WidgetTester tester, {
   required Size size,
 }) async {
-  final page = find.byType(PageDetailPage).evaluate().isNotEmpty
-      ? find.byType(PageDetailPage)
-      : find.byType(NotebookWordPage);
+  final page = _swipePage(tester);
   final start = Offset(tester.getTopLeft(page).dx + 5, size.height / 2);
   final gesture = await tester.startGesture(start);
   await tester.pump();
@@ -260,6 +410,8 @@ BuildContext _routerContext(WidgetTester tester) {
   for (final finder in [
     find.byType(PageDetailPage),
     find.byType(NotebookWordPage),
+    find.byType(ReviewPage),
+    find.byType(CapturePage),
     find.byType(NotebookPage),
     find.byType(HomePage),
   ]) {
@@ -374,4 +526,117 @@ Future<void> _openWordDetail(
   await tester.tap(find.byKey(NotebookKeys.row(_wordId)));
   await tester.pumpAndSettle();
   expect(find.byType(NotebookWordPage), findsOneWidget);
+}
+
+Finder _reviewClose(Size size) {
+  return size.width >= 900
+      ? find.byKey(ShellKeys.command('close'))
+      : find.byKey(ShellKeys.dockAction('close'));
+}
+
+Future<void> _openReviewSession(
+  WidgetTester tester, {
+  required String jmdictPath,
+  required Size size,
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  final db = AppDatabase(NativeDatabase.memory());
+  addTearDown(db.close);
+  final dueAt = DateTime.utc(2026, 1, 1);
+  await db
+      .into(db.userWords)
+      .insert(
+        UserWordsCompanion.insert(
+          id: _wordId,
+          seq: _taberuSeq,
+          lemma: '食べる',
+          reading: 'たべる',
+          createdAt: dueAt,
+        ),
+      );
+  await db
+      .into(db.userWordStates)
+      .insert(
+        UserWordStatesCompanion.insert(
+          wordId: _wordId,
+          state: WordState.learning.name,
+          updatedAt: dueAt,
+        ),
+      );
+  await db
+      .into(db.userCards)
+      .insert(
+        UserCardsCompanion.insert(
+          id: 'card-$_wordId',
+          wordId: _wordId,
+          kind: FlashcardKind.vocab.name,
+          createdAt: dueAt,
+        ),
+      );
+  await db
+      .into(db.userCardSrs)
+      .insert(
+        UserCardSrsCompanion.insert(
+          cardId: 'card-$_wordId',
+          easeFactor: kDefaultEaseFactor,
+          intervalDays: 0,
+          repetitions: 0,
+          dueAt: dueAt,
+          phase: CardPhase.learning.name,
+          engineId: kSm2JrEngineId,
+        ),
+      );
+
+  await tester.pumpWidget(
+    MangaJpApp(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => db),
+        jmdictServiceProvider.overrideWith((ref) async {
+          final service = JmdictService()..openFile(jmdictPath);
+          ref.onDispose(service.close);
+          return service;
+        }),
+      ],
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  const ReviewRoute().push<void>(tester.element(find.byType(HomePage)));
+  await tester.pumpAndSettle();
+  expect(find.byType(ReviewPage), findsOneWidget);
+}
+
+Future<void> _answerCurrentCard(WidgetTester tester) async {
+  await tester.tap(find.byKey(ReviewKeys.reveal));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.good)));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _expectLeaveDialogThenStayAndConfirm(
+  WidgetTester tester, {
+  required Future<void> Function() exit,
+}) async {
+  expect(find.byKey(ReviewKeys.leaveDialog), findsOneWidget);
+  expect(find.text(ReviewLabels.sairTitulo), findsOneWidget);
+  expect(find.byType(ReviewPage), findsOneWidget);
+
+  await tester.tap(find.byKey(ReviewKeys.leaveCancel));
+  await tester.pumpAndSettle();
+  expect(find.byType(AlertDialog), findsNothing);
+  expect(find.byType(ReviewPage), findsOneWidget);
+  expect(_path(tester), '/review');
+
+  await exit();
+  expect(find.byKey(ReviewKeys.leaveDialog), findsOneWidget);
+  await tester.tap(find.byKey(ReviewKeys.leaveConfirm));
+  await tester.pumpAndSettle();
+  expect(find.byType(AlertDialog), findsNothing);
+  expect(find.byType(ReviewPage), findsNothing);
+  expect(find.byType(HomePage), findsOneWidget);
+  expect(_path(tester), '/home');
 }

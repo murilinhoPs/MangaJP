@@ -356,95 +356,98 @@ class _CapturePageState extends ConsumerState<CapturePage> {
               },
               child: ColoredBox(
                 color: tokens.bg,
-                child: Column(
-                  key: CaptureKeys.page,
-                  children: [
-                    Expanded(
-                      child: SafeArea(
-                        bottom: false,
-                        child: _workspace(wide: wide, tokens: tokens),
-                      ),
-                    ),
-                    if (cropped != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Text(
-                          'Crop PNG: ${cropped.bytes.length} bytes '
-                          '(${cropped.width}×${cropped.height})',
-                          key: CaptureKeys.cropBytes,
-                          textAlign: TextAlign.center,
+                child: Scaffold(
+                  backgroundColor: tokens.bg,
+                  body: Column(
+                    key: CaptureKeys.page,
+                    children: [
+                      Expanded(
+                        child: SafeArea(
+                          bottom: false,
+                          child: _workspace(wide: wide, tokens: tokens),
                         ),
                       ),
-                    if (_ocr != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Text(
-                          'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
-                          key: CaptureKeys.ocrText,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Text(
-                          _error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    if (!wide) ...[
-                      if (meta.isNotEmpty)
+                      if (cropped != null)
                         Padding(
-                          key: ShellKeys.dockMeta,
-                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  meta,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypeScale.metadados12.copyWith(
-                                    color: tokens.text2,
-                                  ),
-                                ),
-                              ),
-                              if (hint != null) ...[
-                                const SizedBox(width: 12),
-                                Text(
-                                  hint,
-                                  style: AppTypeScale.metadados11.copyWith(
-                                    color: tokens.text3,
-                                  ),
-                                ),
-                              ],
-                            ],
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            'Crop PNG: ${cropped.bytes.length} bytes '
+                            '(${cropped.width}×${cropped.height})',
+                            key: CaptureKeys.cropBytes,
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      TaskDock(
-                        leading: [
-                          DockIconButton(
-                            key: ShellKeys.dockAction('close'),
-                            icon: Icons.close,
-                            tooltip: CaptureLabels.cancelar,
-                            onPressed: _requestExit,
+                      if (_ocr != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            'OCR (${_ocr!.engineId}): ${_ocr!.fullText}',
+                            key: CaptureKeys.ocrText,
+                            textAlign: TextAlign.center,
                           ),
-                        ],
-                        trailing: [
-                          DockTextButton(
-                            key: CaptureKeys.confirm,
-                            label: CaptureLabels.confirmar,
-                            primary: true,
-                            enabled: canConfirm,
-                            onPressed: canConfirm ? _confirm : null,
+                        ),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ],
-                      ),
+                        ),
+                      if (!wide) ...[
+                        if (meta.isNotEmpty)
+                          Padding(
+                            key: ShellKeys.dockMeta,
+                            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    meta,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypeScale.metadados12.copyWith(
+                                      color: tokens.text2,
+                                    ),
+                                  ),
+                                ),
+                                if (hint != null) ...[
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    hint,
+                                    style: AppTypeScale.metadados11.copyWith(
+                                      color: tokens.text3,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        TaskDock(
+                          leading: [
+                            DockIconButton(
+                              key: ShellKeys.dockAction('close'),
+                              icon: Icons.close,
+                              tooltip: CaptureLabels.cancelar,
+                              onPressed: _requestExit,
+                            ),
+                          ],
+                          trailing: [
+                            DockTextButton(
+                              key: CaptureKeys.confirm,
+                              label: CaptureLabels.confirmar,
+                              primary: true,
+                              enabled: canConfirm,
+                              onPressed: canConfirm ? _confirm : null,
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

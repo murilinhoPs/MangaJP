@@ -335,7 +335,7 @@ void main() {
       wordId: 'custom:plain',
       createdAt: older,
       repetitions: 2,
-      ratedAt: late,
+      ratedAt: early,
       logId: 'log-plain',
     );
     await _card(
@@ -344,17 +344,17 @@ void main() {
       wordId: 'custom:ivs',
       createdAt: newer,
       repetitions: 2,
-      ratedAt: early,
+      ratedAt: late,
       logId: 'log-ivs',
     );
     await env.old.close();
 
     final db = await _migrate(verifier, env.schema);
-    expect((await db.select(db.userWords).get()).single.id, 'custom:plain');
-    expect((await db.select(db.userCards).get()).single.id, 'card-plain');
+    expect((await db.select(db.userWords).get()).single.id, 'custom:ivs');
+    expect((await db.select(db.userCards).get()).single.id, 'card-ivs');
     expect(
       (await db.select(db.userReviewLogs).get()).map((row) => row.cardId).toSet(),
-      {'card-plain'},
+      {'card-ivs'},
     );
   });
 }
