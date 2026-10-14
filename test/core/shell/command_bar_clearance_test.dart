@@ -326,7 +326,9 @@ void main() {
       );
       expect(listFinder, findsOneWidget);
       final pad = tester.widget<ListView>(listFinder).padding! as EdgeInsets;
-      expect(pad.top, 16 + 62);
+      // AppBar consumes MediaQuery.padding.top; do not double-count the
+      // 62px status-bar inset on the OCR list.
+      expect(pad.top, 16);
       expect(pad.left, wide ? 20 : 20 + 24);
       expect(pad.right, 20);
     });

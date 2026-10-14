@@ -1079,7 +1079,7 @@ void main() {
     expect(find.text(PageLabels.toquePalavra), findsOneWidget);
   });
 
-  testWidgets('desktop command bar is Voltar · meta · Editar · +', (
+  testWidgets('desktop command bar is meta · Editar · + (AppBar has back)', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 800);
@@ -1097,7 +1097,8 @@ void main() {
 
     expect(find.byKey(ShellKeys.taskDock), findsNothing);
     expect(find.byKey(ShellKeys.commandBar), findsOneWidget);
-    expect(find.byKey(ShellKeys.command('back')), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.back), findsOneWidget);
+    expect(find.byKey(ShellKeys.command('back')), findsNothing);
     expect(find.byKey(ShellKeys.dockMeta), findsOneWidget);
     expect(find.byKey(ShellKeys.command('edit')), findsOneWidget);
     expect(find.byKey(ShellKeys.command('add')), findsOneWidget);
@@ -1116,15 +1117,11 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.getTopLeft(find.byKey(ShellKeys.command('back'))).dx,
+      tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx,
       lessThan(tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx),
     );
     expect(
       tester.getTopLeft(find.byKey(ShellKeys.dockMeta)).dx,
-      lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx),
-    );
-    expect(
-      tester.getTopLeft(find.byKey(ShellKeys.command('edit'))).dx,
       lessThan(tester.getTopLeft(find.byKey(ShellKeys.command('add'))).dx),
     );
   });

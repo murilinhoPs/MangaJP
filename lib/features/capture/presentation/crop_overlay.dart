@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -16,6 +18,11 @@ class CropOverlay extends StatefulWidget {
     required this.activeIndex,
     required this.onChanged,
   });
+
+  /// Extra gap from the crop canvas top. The overlay sits inside a [SafeArea],
+  /// so [MediaQuery.padding] here is 0 — this is 12pt from the canvas, not
+  /// from the status bar. When clamped, the badge leaves the crop corner.
+  static const badgeMinGap = 12.0;
 
   final Size imageSize;
   final List<CropRect> crops;
@@ -90,9 +97,10 @@ class _CropOverlayState extends State<CropOverlay> {
 
   Widget _badge(Rect rect, int number) {
     const half = CropNumberBadge.size / 2;
+    final minTop = MediaQuery.paddingOf(context).top + CropOverlay.badgeMinGap;
     return Positioned(
       left: rect.left - half,
-      top: rect.top - half,
+      top: math.max(rect.top - half, minTop),
       child: IgnorePointer(
         child: CropNumberBadge(
           key: Key('capture-crop-number-$number'),

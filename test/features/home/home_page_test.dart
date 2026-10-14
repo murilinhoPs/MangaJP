@@ -316,6 +316,8 @@ void main() {
       '/pages/page-7',
     );
     expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.text('/pages — stub (M0.1)'), findsNothing);
+    expect(find.byKey(PageDetailKeys.back), findsOneWidget);
   });
 
   testWidgets('Revisar still opens /review when recent pages exist', (

@@ -27,6 +27,7 @@ import 'page_detail_controller.dart';
 
 /// Keys for `/pages/:id` OCR text (persisted Drift `crops.ocr_text`).
 abstract final class PageDetailKeys {
+  static const back = Key('page-detail-back');
   static const ocrText = Key('page-detail-ocr-text');
   static const edit = Key('page-detail-edit');
   static const add = Key('page-detail-add');
@@ -95,12 +96,6 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       metaHint: hint,
       actions: [
         ShellAction(
-          id: 'back',
-          label: PageLabels.voltar,
-          icon: Icons.chevron_left,
-          onPressed: () => popTaskOrHome(context),
-        ),
-        ShellAction(
           id: 'edit',
           label: PageLabels.editar,
           icon: Icons.edit_outlined,
@@ -140,54 +135,55 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
 
     return ShellBinder(
       task: task,
-      child: Column(
-        children: [
-          Expanded(
-            child: wide
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: body),
-                      _LookupDrawer(
-                        loading: _lookupLoading,
-                        error: _lookupError,
-                        session: _session,
-                        onAction: _applyLookup,
-                        onCustomAction: _applyCustomLookup,
-                      ),
-                    ],
-                  )
-                : body,
+      child: Scaffold(
+        backgroundColor: context.tokens.bg,
+        appBar: AppBar(
+          leading: BackButton(
+            key: PageDetailKeys.back,
+            onPressed: () => popTaskOrHome(context),
           ),
-          if (!wide)
-            TaskDock(
-              meta: widget.pageId,
-              metaHint: hint,
-              leading: [
-                DockIconButton(
-                  key: ShellKeys.dockAction('back'),
-                  icon: Icons.chevron_left,
-                  tooltip: PageLabels.voltar,
-                  onPressed: () => popTaskOrHome(context),
-                ),
-              ],
-              trailing: [
-                DockIconButton(
-                  key: PageDetailKeys.edit,
-                  icon: Icons.edit_outlined,
-                  tooltip: PageLabels.editar,
-                  enabled: items.isNotEmpty,
-                  onPressed: () => _editOcr(items),
-                ),
-                DockIconButton(
-                  key: PageDetailKeys.add,
-                  icon: Icons.add,
-                  tooltip: PageLabels.adicionar,
-                  onPressed: () => const CaptureRoute().push<void>(context),
-                ),
-              ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: wide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: body),
+                        _LookupDrawer(
+                          loading: _lookupLoading,
+                          error: _lookupError,
+                          session: _session,
+                          onAction: _applyLookup,
+                          onCustomAction: _applyCustomLookup,
+                        ),
+                      ],
+                    )
+                  : body,
             ),
-        ],
+            if (!wide)
+              TaskDock(
+                meta: widget.pageId,
+                metaHint: hint,
+                trailing: [
+                  DockIconButton(
+                    key: PageDetailKeys.edit,
+                    icon: Icons.edit_outlined,
+                    tooltip: PageLabels.editar,
+                    enabled: items.isNotEmpty,
+                    onPressed: () => _editOcr(items),
+                  ),
+                  DockIconButton(
+                    key: PageDetailKeys.add,
+                    icon: Icons.add,
+                    tooltip: PageLabels.adicionar,
+                    onPressed: () => const CaptureRoute().push<void>(context),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

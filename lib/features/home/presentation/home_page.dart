@@ -109,7 +109,8 @@ class _MobileHome extends StatelessWidget {
           const SizedBox(height: 12),
           _ContinueReadingCard(
             page: continuePage,
-            onTap: () => PageDetailRoute(id: continuePage.id).go(context),
+            onTap: () =>
+                PageDetailRoute(id: continuePage.id).push<void>(context),
           ),
         ],
         if (week != null) ...[
@@ -597,7 +598,8 @@ class _RecentCapturesBlock extends StatelessWidget {
                   page: items[i],
                   number: i + 1,
                   now: now,
-                  onTap: () => PageDetailRoute(id: items[i].id).go(context),
+                  onTap: () =>
+                      PageDetailRoute(id: items[i].id).push<void>(context),
                 ),
               ),
             ],
@@ -822,7 +824,8 @@ class _RecentPagesList extends StatelessWidget {
               page: items[i],
               index: i + 1,
               now: now,
-              onTap: () => PageDetailRoute(id: items[i].id).go(context),
+              onTap: () =>
+                  PageDetailRoute(id: items[i].id).push<void>(context),
             ),
           ],
       ],
