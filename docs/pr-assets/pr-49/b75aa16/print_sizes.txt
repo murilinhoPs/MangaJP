@@ -1,0 +1,13 @@
+head_sha b75aa16955e6cc67594f31937a8e765b33d5fb1d
+head_sha7 b75aa16
+
+android/home.png             390x844  55376 bytes
+  sha256 69299f9ec7b68b18978b7f10e3015f922eef3dacd64ecd744c874206543b6d11
+desktop/home.png             1280x800  91378 bytes
+  sha256 78873e6fc66583afcee6c468c7d9c703d332853e203af867c83ada1a5b19213e
+ios/home.png                 1206x2622  267137 bytes
+  sha256 22a7f6ba409befab2a23dbd59e72cc15b0a8f2458e81c10738c0dffc468cc49d
+
+iOS iPhone 17 / iOS 27  simctl io  1206x2622
+Android pixel_390      adb screencap  390x844
+Desktop macOS          Flutter view  1280x800  (app area, opaque RGB corners)
