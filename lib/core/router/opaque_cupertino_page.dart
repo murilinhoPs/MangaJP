@@ -3,6 +3,11 @@ import 'package:flutter/cupertino.dart';
 import '../theme/app_theme.dart';
 
 /// Holds the active swipe route's restore callback (injected, not static).
+///
+/// One slot: a later [attach] replaces the previous callback. Review is a
+/// singleton task route (duplicate `/review` push is a no-op), so only one
+/// restorer is live. [detach] is identity-checked so a disposed route cannot
+/// clear a newer one.
 class BlockedPopRestorer {
   VoidCallback? _restore;
 

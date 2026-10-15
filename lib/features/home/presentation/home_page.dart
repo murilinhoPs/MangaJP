@@ -869,6 +869,7 @@ class _DesktopCounts extends StatelessWidget {
     final tokens = context.tokens;
     final waiting = counts?.waiting ?? 0;
     final novos = counts?.novos ?? 0;
+    final revisoes = counts?.revisoes ?? 0;
     final drill = counts?.drill ?? 0;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -887,6 +888,14 @@ class _DesktopCounts extends StatelessWidget {
             value: novos,
             label: 'novos',
             color: tokens.violet,
+          ),
+        ),
+        Expanded(
+          child: _DesktopCount(
+            key: HomeKeys.revisoes,
+            value: revisoes,
+            label: 'revisões',
+            color: tokens.mint,
           ),
         ),
         Expanded(

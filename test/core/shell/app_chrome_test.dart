@@ -264,6 +264,23 @@ void main() {
     );
   });
 
+  testWidgets('desktop rail marks Biblioteca selected on Home', (tester) async {
+    await _pumpShell(tester, size: _desktop);
+
+    expect(
+      _railLabelColor(tester, 'biblioteca', 'Biblioteca'),
+      AppColors.coral,
+    );
+    expect(
+      _railLabelColor(tester, 'caderno', 'Caderno'),
+      isNot(AppColors.coral),
+    );
+    expect(
+      GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+      '/home',
+    );
+  });
+
   testWidgets('desktop Caderno is active in the rail', (tester) async {
     await _pumpShell(tester, size: _desktop);
     await tester.tap(find.byKey(ShellKeys.railItem('caderno')));

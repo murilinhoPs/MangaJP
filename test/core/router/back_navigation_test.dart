@@ -359,6 +359,27 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
       expect(_path(tester), '/home');
     });
+
+    testWidgets('Review done: iOS back swipe leaves ($label)', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await _openReviewSession(tester, jmdictPath: jmdictPath, size: size);
+        await _answerCurrentCard(tester, ReviewRating.good);
+        expect(find.byKey(ReviewKeys.done), findsOneWidget);
+        expect(GoRouter.of(_routerContext(tester)).canPop(), isTrue);
+        _expectCupertinoPage(tester);
+
+        await _iosEdgeSwipe(tester, size: size);
+
+        expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+        expect(find.text(ReviewLabels.sairTitulo), findsNothing);
+        expect(find.byType(ReviewPage), findsNothing);
+        expect(find.byType(HomePage), findsOneWidget);
+        expect(_path(tester), '/home');
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
   }
 }
 

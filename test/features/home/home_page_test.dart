@@ -693,7 +693,11 @@ void main() {
 
     expect(desktopCountColor(HomeKeys.due), AppColors.text);
     expect(desktopCountColor(HomeKeys.novos), AppColors.violet);
+    expect(desktopCountColor(HomeKeys.revisoes), AppColors.mint);
     expect(desktopCountColor(HomeKeys.drill), AppColors.coral);
+    expect(_homeCountValue(tester, HomeKeys.novos), '2');
+    expect(_homeCountValue(tester, HomeKeys.revisoes), '1');
+    expect(_homeCountValue(tester, HomeKeys.drill), '1');
     expect(badge, paraRevisar);
   });
 
@@ -739,6 +743,9 @@ void main() {
 
       final due = _homeDueCount(tester);
       expect(due, '4');
+      expect(_homeCountValue(tester, HomeKeys.novos), '2');
+      expect(_homeCountValue(tester, HomeKeys.revisoes), '1');
+      expect(_homeCountValue(tester, HomeKeys.drill), '1');
 
       if (wide) {
         await tester.tap(find.byKey(ShellKeys.command('revisar')));
@@ -979,7 +986,7 @@ void main() {
       );
 
       _expectHomeOrder(tester, wide: wide);
-      _expectGalleryHighlight(tester, wide: wide);
+      _expectGalleryHighlight(tester, wide: wide, badges: 3);
       expect(find.text('3 de 3'), findsNothing);
       expect(find.text('Escolher da galeria'), findsNothing);
       expect(find.text('Galeria'), findsNothing);
@@ -1010,6 +1017,38 @@ void main() {
         expect(galleryLeft.dy, lessThan(firstThumb.dy));
       }
 
+      if (wide) {
+        expect(find.byKey(ShellKeys.command('revisar')), findsOneWidget);
+        expect(find.byKey(ShellKeys.command('galeria')), findsOneWidget);
+        expect(find.text('Abrir galeria'), findsOneWidget);
+        expect(
+          tester
+              .widget<Material>(
+                find
+                    .ancestor(
+                      of: find.byKey(ShellKeys.command('revisar')),
+                      matching: find.byType(Material),
+                    )
+                    .first,
+              )
+              .color,
+          AppColors.overlayPrimaria,
+        );
+        expect(
+          tester
+              .widget<Material>(
+                find
+                    .ancestor(
+                      of: find.byKey(ShellKeys.command('galeria')),
+                      matching: find.byType(Material),
+                    )
+                    .first,
+              )
+              .color,
+          isNull,
+        );
+      }
+
       await tester.tap(find.byType(HomePage));
       await tester.pump();
       expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyG), isTrue);
@@ -1038,13 +1077,23 @@ void main() {
   }
 }
 
-String _homeDueCount(WidgetTester tester) {
-  final due = find.byKey(HomeKeys.due);
-  final nested = find.descendant(of: due, matching: find.byType(Text));
+String _homeDueCount(WidgetTester tester) =>
+    _homeCountValue(tester, HomeKeys.due);
+
+String _homeCountValue(WidgetTester tester, Key key) {
+  final host = find.byKey(key);
+  final nested = find.descendant(of: host, matching: find.byType(Text));
+  final Text text;
   if (nested.evaluate().isNotEmpty) {
-    return tester.widget<Text>(nested.first).data!;
+    text = tester.widget<Text>(nested.first);
+  } else {
+    text = tester.widget<Text>(host);
   }
-  return tester.widget<Text>(due).data!;
+  if (text.data != null) {
+    return text.data!.split(' ').first;
+  }
+  final span = text.textSpan! as TextSpan;
+  return (span.children!.first as TextSpan).text!;
 }
 
 String? _railBadge(WidgetTester tester) {
@@ -1404,7 +1453,11 @@ void _expectHomeOrder(WidgetTester tester, {required bool wide}) {
   );
 }
 
-void _expectGalleryHighlight(WidgetTester tester, {required bool wide}) {
+void _expectGalleryHighlight(
+  WidgetTester tester, {
+  required bool wide,
+  int badges = 0,
+}) {
   expect(find.byKey(HomeKeys.gallery), findsOneWidget);
   expect(find.byKey(HomeKeys.galleryLink), findsOneWidget);
   expect(find.text('+ Nova da galeria'), findsOneWidget);
@@ -1454,25 +1507,28 @@ void _expectGalleryHighlight(WidgetTester tester, {required bool wide}) {
     expect(kbd, findsNothing);
   }
 
-  if (find.byType(CropNumberBadge).evaluate().isNotEmpty) {
-    final badge = tester.widget<CropNumberBadge>(
-      find.byType(CropNumberBadge).first,
-    );
-    expect(badge.neutral, isTrue);
-    final deco =
-        tester
-                .widget<Container>(
-                  find
-                      .descendant(
-                        of: find.byType(CropNumberBadge).first,
-                        matching: find.byType(Container),
-                      )
-                      .first,
-                )
-                .decoration!
-            as BoxDecoration;
-    expect(deco.color, AppColors.surfaceRaised);
+  expect(find.byType(CropNumberBadge), findsNWidgets(badges));
+  if (badges == 0) {
+    return;
   }
+  for (final badge in tester.widgetList<CropNumberBadge>(
+    find.byType(CropNumberBadge),
+  )) {
+    expect(badge.neutral, isTrue);
+  }
+  final deco =
+      tester
+              .widget<Container>(
+                find
+                    .descendant(
+                      of: find.byType(CropNumberBadge).first,
+                      matching: find.byType(Container),
+                    )
+                    .first,
+              )
+              .decoration!
+          as BoxDecoration;
+  expect(deco.color, AppColors.surfaceRaised);
 }
 
 List<String> _recentThumbIds(WidgetTester tester) {

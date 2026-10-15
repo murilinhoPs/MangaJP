@@ -251,6 +251,9 @@ abstract final class MobileNav {
 }
 
 /// Desktop rail: Biblioteca, Leitor, Revisar, Caderno, Deck; Ajustes pinned.
+///
+/// **Biblioteca** is `/home` (same destination as mobile Início). Selected
+/// on Home is intentional — there is no separate Início item on the rail.
 abstract final class DesktopRail {
   /// [recentPageId] wires **Leitor** to `/pages/:id`. Null disables the item.
   static List<ShellDestination> items({String? recentPageId}) {

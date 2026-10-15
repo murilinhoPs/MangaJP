@@ -197,6 +197,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           primary: true,
           onPressed: () => const ReviewRoute().push<void>(context),
         ),
+        // Secondary. Capturas header owns G (M1.31); this is the existing
+        // command-bar entry (⌘O / Ctrl+O). Revisar stays the only primary.
         ShellAction(
           id: 'galeria',
           label: 'Abrir galeria',
