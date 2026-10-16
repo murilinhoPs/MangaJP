@@ -16,14 +16,17 @@ import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
 import 'package:manga_jp/core/router/routes.dart';
+import 'package:manga_jp/core/shell/kbd_chip.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_theme.dart';
+import 'package:manga_jp/core/widgets/crop_number_badge.dart';
 import 'package:manga_jp/features/capture/data/image_source_service.dart';
 import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/home/presentation/home_controller.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
+import 'package:manga_jp/features/review/presentation/review_controller.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/review/domain/new_per_day.dart';
 import 'package:manga_jp/features/review/domain/review_labels.dart';
@@ -79,13 +82,13 @@ void main() {
     expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
     expect(find.text('Capturas recentes'), findsOneWidget);
     expect(find.byKey(HomeKeys.recentEmpty), findsOneWidget);
-    expect(find.text('Nenhuma captura ainda.'), findsOneWidget);
+    expect(find.text('Nenhuma captura ainda.'), findsNothing);
     expect(
       tester.getTopLeft(find.byKey(HomeKeys.review)).dy,
       lessThan(tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy),
     );
     _expectNoCardList(tester);
-    _expectGalleryBelowRecent(tester);
+    _expectGalleryHighlight(tester, wide: false);
 
     await tester.tap(find.byKey(HomeKeys.review));
     await tester.pumpAndSettle();
@@ -242,7 +245,7 @@ void main() {
 
       const HomeRoute().go(tester.element(find.byType(ReviewPage)));
       await tester.pumpAndSettle();
-      await _confirmLeaveReviewIfShown(tester);
+      expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
       expect(
         GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
         '/home',
@@ -260,8 +263,9 @@ void main() {
 
       expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
       expect(find.byKey(HomeKeys.recentEmpty), findsOneWidget);
-      expect(find.text('Nenhuma captura ainda.'), findsOneWidget);
+      expect(find.text('Nenhuma captura ainda.'), findsNothing);
       expect(find.text('Capturas recentes'), findsOneWidget);
+      expect(find.byKey(HomeKeys.gallery), findsOneWidget);
       expect(find.byKey(HomeKeys.review), findsOneWidget);
       expect(
         tester.getTopLeft(find.byKey(HomeKeys.review)).dy,
@@ -381,12 +385,14 @@ void main() {
 
     expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
     expect(find.byKey(HomeKeys.gallery), findsOneWidget);
-    expect(find.text('Galeria'), findsOneWidget);
-    expect(find.text('Escolher da galeria'), findsOneWidget);
+    expect(find.text('+ Nova da galeria'), findsOneWidget);
+    expect(find.text('Galeria +'), findsOneWidget);
+    expect(find.text('Galeria'), findsNothing);
+    expect(find.text('Escolher da galeria'), findsNothing);
     expect(find.text('Import → /capture (crop → OCR)'), findsNothing);
     expect(find.byKey(HomeKeys.review), findsOneWidget);
     expect(find.text('Capturas recentes'), findsOneWidget);
-    _expectGalleryBelowRecent(tester);
+    _expectGalleryHighlight(tester, wide: false);
   });
 
   testWidgets('Galeria pick opens /capture crop with the image', (
@@ -504,13 +510,13 @@ void main() {
       ],
     );
 
-    expect(find.text('PÁGINAS RECENTES'), findsOneWidget);
-    expect(find.byKey(HomeKeys.recentPage('page-a')), findsOneWidget);
-    expect(find.textContaining('3 recortes'), findsOneWidget);
-    expect(find.textContaining('1 recorte'), findsOneWidget);
-    expect(find.text('1 recortes'), findsNothing);
+    expect(find.text('Capturas recentes'), findsOneWidget);
+    expect(find.text('PÁGINAS RECENTES'), findsNothing);
+    expect(find.byKey(HomeKeys.recentThumb('page-a')), findsOneWidget);
+    expect(find.byKey(HomeKeys.gallery), findsOneWidget);
+    expect(find.text('Galeria +'), findsOneWidget);
 
-    await tester.tap(find.byKey(HomeKeys.recentPage('page-a')));
+    await tester.tap(find.byKey(HomeKeys.recentThumb('page-a')));
     await tester.pumpAndSettle();
     expect(
       GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
@@ -597,6 +603,7 @@ void main() {
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit2), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.digit3), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyR), isFalse);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyG), isFalse);
     expect(await tester.sendKeyEvent(LogicalKeyboardKey.slash), isFalse);
     expect(
       GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
@@ -686,7 +693,11 @@ void main() {
 
     expect(desktopCountColor(HomeKeys.due), AppColors.text);
     expect(desktopCountColor(HomeKeys.novos), AppColors.violet);
+    expect(desktopCountColor(HomeKeys.revisoes), AppColors.mint);
     expect(desktopCountColor(HomeKeys.drill), AppColors.coral);
+    expect(_homeCountValue(tester, HomeKeys.novos), '2');
+    expect(_homeCountValue(tester, HomeKeys.revisoes), '1');
+    expect(_homeCountValue(tester, HomeKeys.drill), '1');
     expect(badge, paraRevisar);
   });
 
@@ -732,6 +743,9 @@ void main() {
 
       final due = _homeDueCount(tester);
       expect(due, '4');
+      expect(_homeCountValue(tester, HomeKeys.novos), '2');
+      expect(_homeCountValue(tester, HomeKeys.revisoes), '1');
+      expect(_homeCountValue(tester, HomeKeys.drill), '1');
 
       if (wide) {
         await tester.tap(find.byKey(ShellKeys.command('revisar')));
@@ -801,16 +815,26 @@ void main() {
             _expectLiveWaiting(tester, waiting: n, wide: wide);
 
         Future<void> openLeitor() async {
+          final confirm = _reviewNeedsExitConfirm(tester);
           const PageDetailRoute(id: pageId).go(_shellContext(tester));
           await tester.pumpAndSettle();
-          await _confirmLeaveReviewIfShown(tester);
+          if (confirm) {
+            await _confirmLeaveReview(tester);
+          } else {
+            expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+          }
           expect(find.byType(PageDetailPage), findsOneWidget);
         }
 
         Future<void> openHome() async {
+          final confirm = _reviewNeedsExitConfirm(tester);
           const HomeRoute().go(_shellContext(tester));
           await tester.pumpAndSettle();
-          await _confirmLeaveReviewIfShown(tester);
+          if (confirm) {
+            await _confirmLeaveReview(tester);
+          } else {
+            expect(find.byKey(ReviewKeys.leaveDialog), findsNothing);
+          }
           expect(find.byType(HomePage), findsOneWidget);
         }
 
@@ -915,15 +939,161 @@ void main() {
       },
     );
   }
+
+  for (final size in [const Size(390, 844), const Size(1280, 800)]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= 900;
+
+    testWidgets('Home gallery highlight: order, tile, link, G at $label', (
+      tester,
+    ) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: size,
+        source: FakeImageSourceService(
+          galleryImage: IncomingImage(bytes: fixturePng()),
+        ),
+        pages: [
+          _SeedPage(
+            id: 'page-a',
+            createdAt: DateTime.utc(2026, 10, 5),
+            ocrText: 'この町には、もう誰も残っていない。',
+            crops: 1,
+          ),
+          _SeedPage(
+            id: 'page-b',
+            createdAt: DateTime.utc(2026, 10, 4),
+            ocrText: '見せる',
+            crops: 1,
+          ),
+          _SeedPage(
+            id: 'page-c',
+            createdAt: DateTime.utc(2026, 10, 3),
+            ocrText: '残る',
+            crops: 1,
+          ),
+        ],
+        cards: [
+          _SeedCard(
+            id: 'drill',
+            lemma: 'ドリル',
+            phase: CardPhase.learning,
+            dueAt: DateTime.utc(2026, 9, 8),
+            drillToday: true,
+          ),
+        ],
+      );
+
+      _expectHomeOrder(tester, wide: wide);
+      _expectGalleryHighlight(tester, wide: wide, badges: 3);
+      expect(find.text('3 de 3'), findsNothing);
+      expect(find.text('Escolher da galeria'), findsNothing);
+      expect(find.text('Galeria'), findsNothing);
+      expect(find.widgetWithText(ListTile, 'Galeria'), findsNothing);
+      expect(
+        find.widgetWithText(FilledButton, '+ Nova da galeria'),
+        findsNothing,
+      );
+      expect(find.widgetWithText(FilledButton, 'Galeria +'), findsNothing);
+
+      if (!wide) {
+        expect(
+          tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy,
+          lessThan(844),
+        );
+        expect(
+          tester.getTopLeft(find.byKey(HomeKeys.gallery)).dy,
+          lessThan(844),
+        );
+      }
+
+      final galleryLeft = tester.getTopLeft(find.byKey(HomeKeys.gallery));
+      final firstThumb = tester.getTopLeft(
+        find.byKey(HomeKeys.recentThumb('page-a')),
+      );
+      expect(galleryLeft.dx, lessThanOrEqualTo(firstThumb.dx));
+      if (galleryLeft.dx == firstThumb.dx) {
+        expect(galleryLeft.dy, lessThan(firstThumb.dy));
+      }
+
+      if (wide) {
+        expect(find.byKey(ShellKeys.command('revisar')), findsOneWidget);
+        expect(find.byKey(ShellKeys.command('galeria')), findsOneWidget);
+        expect(find.text('Abrir galeria'), findsOneWidget);
+        expect(
+          tester
+              .widget<Material>(
+                find
+                    .ancestor(
+                      of: find.byKey(ShellKeys.command('revisar')),
+                      matching: find.byType(Material),
+                    )
+                    .first,
+              )
+              .color,
+          AppColors.overlayPrimaria,
+        );
+        expect(
+          tester
+              .widget<Material>(
+                find
+                    .ancestor(
+                      of: find.byKey(ShellKeys.command('galeria')),
+                      matching: find.byType(Material),
+                    )
+                    .first,
+              )
+              .color,
+          isNull,
+        );
+      }
+
+      await tester.tap(find.byType(HomePage));
+      await tester.pump();
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyG), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(
+        GoRouter.of(tester.element(find.byType(CapturePage))).state.uri.path,
+        '/capture',
+      );
+    });
+
+    testWidgets('Galeria + link opens gallery at $label', (tester) async {
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: size,
+        source: FakeImageSourceService(
+          galleryImage: IncomingImage(bytes: fixturePng()),
+        ),
+      );
+
+      await tester.tap(find.byKey(HomeKeys.galleryLink));
+      await tester.pumpAndSettle();
+      expect(find.byType(CapturePage), findsOneWidget);
+    });
+  }
 }
 
-String _homeDueCount(WidgetTester tester) {
-  final due = find.byKey(HomeKeys.due);
-  final nested = find.descendant(of: due, matching: find.byType(Text));
+String _homeDueCount(WidgetTester tester) =>
+    _homeCountValue(tester, HomeKeys.due);
+
+String _homeCountValue(WidgetTester tester, Key key) {
+  final host = find.byKey(key);
+  final nested = find.descendant(of: host, matching: find.byType(Text));
+  final Text text;
   if (nested.evaluate().isNotEmpty) {
-    return tester.widget<Text>(nested.first).data!;
+    text = tester.widget<Text>(nested.first);
+  } else {
+    text = tester.widget<Text>(host);
   }
-  return tester.widget<Text>(due).data!;
+  if (text.data != null) {
+    return text.data!.split(' ').first;
+  }
+  final span = text.textSpan! as TextSpan;
+  return (span.children!.first as TextSpan).text!;
 }
 
 String? _railBadge(WidgetTester tester) {
@@ -1263,14 +1433,102 @@ void _expectNoCardList(WidgetTester tester) {
   expect(find.text('Resumo'), findsNothing);
 }
 
-void _expectGalleryBelowRecent(WidgetTester tester) {
-  expect(find.byKey(HomeKeys.gallery), findsOneWidget);
-  expect(find.text('Galeria'), findsOneWidget);
-  expect(find.text('Escolher da galeria'), findsOneWidget);
+void _expectHomeOrder(WidgetTester tester, {required bool wide}) {
+  final queue = wide ? find.byKey(HomeKeys.due) : find.byKey(HomeKeys.review);
+  expect(queue, findsOneWidget);
+  expect(find.byKey(HomeKeys.continueReading), findsOneWidget);
+  expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
+  expect(find.byKey(HomeKeys.weekRhythm), findsOneWidget);
+  expect(
+    tester.getTopLeft(queue).dy,
+    lessThan(tester.getTopLeft(find.byKey(HomeKeys.continueReading)).dy),
+  );
+  expect(
+    tester.getTopLeft(find.byKey(HomeKeys.continueReading)).dy,
+    lessThan(tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy),
+  );
   expect(
     tester.getTopLeft(find.byKey(HomeKeys.recentCaptures)).dy,
-    lessThan(tester.getTopLeft(find.byKey(HomeKeys.gallery)).dy),
+    lessThan(tester.getTopLeft(find.byKey(HomeKeys.weekRhythm)).dy),
   );
+}
+
+void _expectGalleryHighlight(
+  WidgetTester tester, {
+  required bool wide,
+  int badges = 0,
+}) {
+  expect(find.byKey(HomeKeys.gallery), findsOneWidget);
+  expect(find.byKey(HomeKeys.galleryLink), findsOneWidget);
+  expect(find.text('+ Nova da galeria'), findsOneWidget);
+  expect(find.text('Galeria +'), findsOneWidget);
+  expect(find.text('Escolher da galeria'), findsNothing);
+  expect(find.text('Galeria'), findsNothing);
+
+  final galleryMaterial = tester.widget<Material>(
+    find
+        .ancestor(
+          of: find.byKey(HomeKeys.gallery),
+          matching: find.byType(Material),
+        )
+        .first,
+  );
+  expect(galleryMaterial.color, AppColors.coral.withValues(alpha: 0.06));
+
+  final paint = tester.widget<CustomPaint>(
+    find.descendant(
+      of: find.byKey(HomeKeys.gallery),
+      matching: find.byType(CustomPaint),
+    ),
+  );
+  final painter = paint.painter! as DashedRRectPainter;
+  expect(painter.strokeWidth, 1.5);
+  expect(painter.color, AppColors.coral);
+
+  final label = tester.widget<Text>(find.text('+ Nova da galeria'));
+  expect(label.style?.color, AppColors.coral);
+
+  final kbd = find.descendant(
+    of: find.byKey(HomeKeys.galleryLink),
+    matching: find.byType(KbdChip),
+  );
+  if (wide) {
+    expect(kbd, findsOneWidget);
+    final chip = tester.widget<KbdChip>(kbd);
+    expect(chip.label, 'G');
+    expect(
+      tester
+          .widget<Text>(find.descendant(of: kbd, matching: find.text('G')))
+          .style
+          ?.fontFamily,
+      AppFonts.mono,
+    );
+  } else {
+    expect(kbd, findsNothing);
+  }
+
+  expect(find.byType(CropNumberBadge), findsNWidgets(badges));
+  if (badges == 0) {
+    return;
+  }
+  for (final badge in tester.widgetList<CropNumberBadge>(
+    find.byType(CropNumberBadge),
+  )) {
+    expect(badge.neutral, isTrue);
+  }
+  final deco =
+      tester
+              .widget<Container>(
+                find
+                    .descendant(
+                      of: find.byType(CropNumberBadge).first,
+                      matching: find.byType(Container),
+                    )
+                    .first,
+              )
+              .decoration!
+          as BoxDecoration;
+  expect(deco.color, AppColors.surfaceRaised);
 }
 
 List<String> _recentThumbIds(WidgetTester tester) {
@@ -1299,11 +1557,19 @@ Future<void> _revealAndRate(WidgetTester tester, ReviewRating rating) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _confirmLeaveReviewIfShown(WidgetTester tester) async {
-  final dialog = find.byKey(ReviewKeys.leaveDialog);
-  if (dialog.evaluate().isEmpty) {
-    return;
+bool _reviewNeedsExitConfirm(WidgetTester tester) {
+  if (find.byType(ReviewPage).evaluate().isEmpty) {
+    return false;
   }
+  final view = ProviderScope.containerOf(_shellContext(tester))
+      .read(reviewSessionProvider)
+      .asData
+      ?.value;
+  return view?.needsExitConfirm ?? false;
+}
+
+Future<void> _confirmLeaveReview(WidgetTester tester) async {
+  expect(find.byKey(ReviewKeys.leaveDialog), findsOneWidget);
   await tester.tap(find.byKey(ReviewKeys.leaveConfirm));
   await tester.pumpAndSettle();
 }

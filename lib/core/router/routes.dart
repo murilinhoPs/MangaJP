@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/capture/domain/incoming_image.dart';
@@ -8,6 +9,7 @@ import '../../features/home/presentation/home_page.dart';
 import '../../features/notebook/presentation/notebook_page.dart';
 import '../../features/notebook/presentation/notebook_word_page.dart';
 import '../../features/pages/presentation/page_detail_page.dart';
+import '../../features/review/presentation/review_exit_guard.dart';
 import '../../features/review/presentation/review_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../shell/app_chrome.dart';
@@ -111,10 +113,13 @@ class ReviewRoute extends GoRouteData with $ReviewRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
+    final guard = ProviderScope.containerOf(context)
+        .read(reviewExitGuardProvider);
     return opaqueCupertinoPage(
       context,
       key: state.pageKey,
       allowPopGestureWhenBlocked: true,
+      restorer: guard.popRestorer,
       child: const ReviewPage(),
     );
   }

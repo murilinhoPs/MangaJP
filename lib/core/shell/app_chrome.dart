@@ -60,6 +60,9 @@ class _AppChromeState extends ConsumerState<AppChrome> {
       const SingleActivator(LogicalKeyboardKey.keyR): const ShellShortcutIntent(
         'r',
       ),
+      const SingleActivator(LogicalKeyboardKey.keyG): const ShellShortcutIntent(
+        'g',
+      ),
       ShellShortcuts.activator(LogicalKeyboardKey.keyK):
           const ShellShortcutIntent('k'),
       ShellShortcuts.activator(LogicalKeyboardKey.keyO):
@@ -95,6 +98,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
         if (_path != '/review') {
           const ReviewRoute().push<void>(context);
         }
+      case 'g':
+        importFromGallery(context, ref);
       case 'k':
         if (!_paletteOpen) {
           _openPalette(context);
@@ -192,6 +197,8 @@ class _AppChromeState extends ConsumerState<AppChrome> {
           primary: true,
           onPressed: () => const ReviewRoute().push<void>(context),
         ),
+        // Secondary. Capturas header owns G (M1.31); this is the existing
+        // command-bar entry (⌘O / Ctrl+O). Revisar stays the only primary.
         ShellAction(
           id: 'galeria',
           label: 'Abrir galeria',
