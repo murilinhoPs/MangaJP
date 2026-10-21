@@ -133,6 +133,20 @@ flutter run
 
 Needs a Mac with Xcode. Bundle ID / display name match Android: `dev.murilinhops.mangajp` / **MangaJP**. Signing team and App Group `group.dev.murilinhops.mangajp` are configured in Xcode on first device run (see capture README).
 
+## Run on macOS desktop
+
+macOS is a **dev convenience** for the crop/gallery UI. There is no share target.
+Home **Galeria** opens `NSOpenPanel` (via `image_picker` → `file_selector_macos`).
+The App Sandbox entitlement `com.apple.security.files.user-selected.read-only`
+is in `macos/Runner/*.entitlements`; without it the panel never appears.
+
+```bash
+flutter run -d macos
+```
+
+Then Home → **Galeria** → pick an image → **Confirmar crop**. Canceling the
+picker stays on Home. `/capture` has no bottom tabs.
+
 ## Run on Linux desktop
 
 Linux is a **dev convenience** for the crop/gallery UI. There is no Linux share

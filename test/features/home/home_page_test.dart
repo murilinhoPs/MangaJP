@@ -430,6 +430,7 @@ void main() {
     expect(source.galleryCalls, 1);
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(CapturePage), findsNothing);
+    expect(find.byType(SnackBar), findsNothing);
     expect(find.byKey(HomeKeys.review), findsOneWidget);
     expect(find.byKey(HomeKeys.recentCaptures), findsOneWidget);
     expect(
@@ -1073,6 +1074,57 @@ void main() {
       await tester.tap(find.byKey(HomeKeys.galleryLink));
       await tester.pumpAndSettle();
       expect(find.byType(CapturePage), findsOneWidget);
+    });
+
+    testWidgets('Galeria tile pick opens /capture crop at $label', (
+      tester,
+    ) async {
+      final source = FakeImageSourceService(
+        galleryImage: IncomingImage(bytes: fixturePng()),
+      );
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: size,
+        source: source,
+      );
+
+      await tester.tap(find.byKey(HomeKeys.gallery));
+      await tester.pumpAndSettle();
+
+      expect(source.galleryCalls, 1);
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.text('Confirmar crop'), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(
+        GoRouter.of(tester.element(find.byType(CapturePage))).state.uri.path,
+        '/capture',
+      );
+    });
+
+    testWidgets('Galeria tile cancel stays on Home without error at $label', (
+      tester,
+    ) async {
+      final source = FakeImageSourceService();
+      await _openHome(
+        tester,
+        jmdictPath: jmdictPath,
+        size: size,
+        source: source,
+      );
+
+      await tester.tap(find.byKey(HomeKeys.gallery));
+      await tester.pumpAndSettle();
+
+      expect(source.galleryCalls, 1);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(CapturePage), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.textContaining('Erro'), findsNothing);
+      expect(
+        GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
+        '/home',
+      );
     });
   }
 }

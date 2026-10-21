@@ -55,6 +55,11 @@ class ImageSourceService {
   }
 
   /// System gallery. Cancel (or a picker error) returns `null` — a no-op.
+  ///
+  /// On macOS, `image_picker` delegates to `image_picker_macos` →
+  /// `file_selector_macos` (`NSOpenPanel`). The App Sandbox needs
+  /// `com.apple.security.files.user-selected.read-only` or the panel never
+  /// appears. Android / iOS keep using the Photos picker.
   Future<IncomingImage?> pickFromGallery() async {
     try {
       final file = await ImagePicker().pickImage(source: ImageSource.gallery);
