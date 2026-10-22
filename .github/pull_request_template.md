@@ -13,6 +13,7 @@ Conforme [`docs/qa/print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/
 - [ ] Cores: fundo `#0E0D12` **sempre**; coral `#FF5C7A` **só** se a tela tiver elemento coral
 - [ ] `print_sizes.txt` — `head:` SHA-1 completo (40) + sha256 (64) de cada arquivo **final** (já editado, se houver)
 - [ ] Dado sensível escondido: aviso no PR com motivo (borrar é o padrão; recortar só com declaração — o gate de tamanho só aceita fora de 390×844 / 1280×800 com esse aviso)
+- [ ] Print recortado: `recorte=<motivo>` na linha do `print_sizes.txt` **e** declaração no PR — [`print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/main/docs/qa/print-rules.md)
 - [ ] Prints no **head final** (head antigo não vale)
 - [ ] File picker: pasta neutra `~/MangaJP-QA/` + fixture `test/fixtures/manga_test_page.png` (nunca arquivo pessoal)
 - [ ] Layout largo (sidebar, Ctrl+K) em 1280×800, **não** no bloco Android — se couber

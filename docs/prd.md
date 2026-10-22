@@ -76,7 +76,7 @@ O4: ≤ 2 taps in-app share → texto OCR (confirm/nav contam; drag/pinch do cro
 Fonte detalhada: [`docs/qa/print-rules.md`](qa/print-rules.md).
 
 1. **iOS** — prints do simulador **iPhone 17**, qualquer resolução. Obrigatórios na nuvem: Android **390×844** retrato e Linux desktop **1280×800** (sem moldura nem title bar). [ADR-0003](adr/0003-ios-plataforma-secundaria.md) aponta pra essa regra.
-2. **Edição** — print sem edição, salvo esconder dado sensível, **declarado no PR** com motivo. Padrão: borrar ou cobrir (mantém 390×844 / 1280×800). Recortar é exceção e só sai do tamanho padrão se o PR declarar; o gate de tamanho só aceita com esse aviso. `print_sizes.txt` registra o sha256 do arquivo **final**.
+2. **Edição** — print sem edição, salvo esconder dado sensível, **declarado no PR** com motivo. Padrão: borrar ou cobrir (mantém 390×844 / 1280×800). Recortar é exceção e só sai do tamanho padrão se o PR declarar **e** a linha do `print_sizes.txt` tiver `recorte` ou `recorte=<motivo>`; sem o token, `telas.md` marca **fora da regra**. `print_sizes.txt` registra o sha256 do arquivo **final**.
 3. **Bundle ID** — `dev.murilinhops.mangajp` em todas as plataformas (Android, iOS, macOS, Linux). Linux alinhado no [#66](https://github.com/murilinhoPs/MangaJP/pull/66), com migração da pasta de dados antiga.
 
 ## Questões abertas (não-bloqueantes)
