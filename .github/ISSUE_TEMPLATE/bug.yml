@@ -1,0 +1,75 @@
+name: Bug
+description: Algo quebrado no comportamento atual
+title: "[bug] "
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      description: Corresponde à label `area:*`.
+      options:
+        - capture
+        - ocr
+        - dictionary
+        - review
+        - shell
+        - platform
+    validations:
+      required: true
+  - type: dropdown
+    id: plataforma
+    attributes:
+      label: Plataforma
+      options:
+        - Android
+        - iOS
+        - desktop
+        - macOS
+        - Linux
+        - web
+    validations:
+      required: true
+  - type: input
+    id: head
+    attributes:
+      label: Head
+      description: SHA-1 do commit em que reproduziu (completo, 40 caracteres, ou curto).
+      placeholder: 6180f055ebf95855502c87b6ffcf5176a46c4578
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Repro
+      description: Passos. Comece na tela, termine no bug.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Esperado
+      description: O que a spec diz que deveria acontecer.
+    validations:
+      required: true
+  - type: textarea
+    id: obtido
+    attributes:
+      label: Obtido
+      description: O que aconteceu de fato.
+    validations:
+      required: true
+  - type: textarea
+    id: ac
+    attributes:
+      label: Critérios de aceite
+      description: Checklist do conserto (quando o bug some).
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
