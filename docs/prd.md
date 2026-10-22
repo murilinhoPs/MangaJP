@@ -69,7 +69,7 @@ O4: ≤ 2 taps in-app share → texto OCR (confirm/nav contam; drag/pinch do cro
 - SRS: `engine_id = sm2-jr@1` (porta `sm2.clj`). Onde o PRD e o Clojure divergirem, **`sm2.clj` vence**.
 - Nav: Design System — [ADR-0004](adr/0004-nav-design-system.md).
 - Persistência local-first. Imagens não sobem à cloud salvo toggle Cloud OCR.
-- Bundle ID / `applicationId`: **`dev.murilinhops.mangajp`** em todas as plataformas (Murilo, 22/10). Linux ainda `dev.murilinhops.manga_jp` — [#62](https://github.com/murilinhoPs/MangaJP/issues/62).
+- Bundle ID / `applicationId`: **`dev.murilinhops.mangajp`** em todas as plataformas — Android, iOS, macOS, Linux (Murilo, 22/10). Linux alinhado no [#66](https://github.com/murilinhoPs/MangaJP/pull/66), com migração da pasta de dados antiga.
 
 ## Prints e QA (2026-10-22)
 
@@ -77,7 +77,7 @@ Fonte detalhada: [`docs/qa/print-rules.md`](qa/print-rules.md).
 
 1. **iOS** — prints do simulador **iPhone 17**, qualquer resolução. Obrigatórios na nuvem: Android **390×844** retrato e Linux desktop **1280×800** (sem moldura nem title bar). [ADR-0003](adr/0003-ios-plataforma-secundaria.md) aponta pra essa regra.
 2. **Edição** — print sem edição, salvo esconder dado sensível, **declarado no PR** com motivo. Padrão: borrar ou cobrir (mantém 390×844 / 1280×800). Recortar é exceção e só sai do tamanho padrão se o PR declarar; o gate de tamanho só aceita com esse aviso. `print_sizes.txt` registra o sha256 do arquivo **final**.
-3. **Bundle ID** — `dev.murilinhops.mangajp` em todas as plataformas. Linux ainda `manga_jp` em `linux/CMakeLists.txt` ([#62](https://github.com/murilinhoPs/MangaJP/issues/62)).
+3. **Bundle ID** — `dev.murilinhops.mangajp` em todas as plataformas (Android, iOS, macOS, Linux). Linux alinhado no [#66](https://github.com/murilinhoPs/MangaJP/pull/66), com migração da pasta de dados antiga.
 
 ## Questões abertas (não-bloqueantes)
 

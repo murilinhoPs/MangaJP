@@ -111,7 +111,7 @@ CI **falha** se `com.apple.security.files.user-selected.read-only` sair dos `.en
 
 ## Bundle ID
 
-Fonte: [convenções em `docs/README.md`](../README.md#convenções). Bundle ID / `applicationId` é **`dev.murilinhops.mangajp`** em todas as plataformas (Murilo, 22/10). O Linux ainda usa `dev.murilinhops.manga_jp` em `linux/CMakeLists.txt`; a troca está na [#62](https://github.com/murilinhoPs/MangaJP/issues/62).
+Fonte: [convenções em `docs/README.md`](../README.md#convenções). Bundle ID / `applicationId` é **`dev.murilinhops.mangajp`** em todas as plataformas — Android, iOS, macOS, Linux (Murilo, 22/10). Linux alinhado no [#66](https://github.com/murilinhoPs/MangaJP/pull/66), com migração da pasta de dados antiga.
 
 ## Layout largo (desktop)
 
