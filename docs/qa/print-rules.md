@@ -109,6 +109,10 @@ Prints de **Android 390×844** e **desktop Linux 1280×800** continuam obrigató
 
 CI **falha** se `com.apple.security.files.user-selected.read-only` sair dos `.entitlements` do macOS (`macos/Runner/DebugProfile.entitlements` e `Release.entitlements`). Sem essa key o `NSOpenPanel` não abre no Runner com sandbox.
 
+## Bundle ID
+
+Fonte: [convenções em `docs/README.md`](../README.md#convenções). Bundle ID / `applicationId` é **`dev.murilinhops.mangajp`** em todas as plataformas (Murilo, 22/10). O Linux ainda usa `dev.murilinhops.manga_jp` em `linux/CMakeLists.txt`; a troca está na [#62](https://github.com/murilinhoPs/MangaJP/issues/62).
+
 ## Layout largo (desktop)
 
 Só aqui: telas e chrome que **não existem** no Android 390×844.
