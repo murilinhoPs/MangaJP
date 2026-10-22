@@ -1,17 +1,30 @@
+import 'dart:io';
+
+import 'package:drift/drift.dart' show Value;
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:manga_jp/app.dart';
+import 'package:manga_jp/core/database/app_database.dart';
+import 'package:manga_jp/core/database/app_database_provider.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
 import 'package:manga_jp/core/theme/app_breakpoints.dart';
+import 'package:manga_jp/features/flashcards/data/flashcards_repository.dart';
 import 'package:manga_jp/features/flashcards/presentation/deck_page.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_word_page.dart';
+import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 import 'package:manga_jp/features/review/domain/review_labels.dart';
 import 'package:manga_jp/features/review/domain/review_rating.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/settings/presentation/settings_page.dart';
+import 'package:manga_jp/features/words/data/words_repository.dart';
+import 'package:path_provider/path_provider.dart';
+
+/// Fail-message fragment when a step still needs the demo fixture.
+const _kDemoSeedHint = 'rode com --dart-define=MANGAJP_DEMO_SEED=true';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -39,10 +52,9 @@ void main() {
         return;
       }
 
-      await tester.pumpWidget(const MangaJpApp());
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      final fixture = await _openIsolatedApp(tester);
 
-      await _openLeitor(tester);
+      await _openLeitor(tester, fixture.pageId);
       await _edgeSwipe(tester);
       expect(find.byType(PageDetailPage), findsNothing);
       expect(find.byType(HomePage), findsOneWidget);
@@ -51,8 +63,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(NotebookPage), findsOneWidget);
 
-      await tester.tap(find.byKey(NotebookKeys.row('demo-taberu')));
-      await tester.pumpAndSettle();
+      await _tapNotebookWord(tester, fixture.wordId);
       expect(find.byType(NotebookWordPage), findsOneWidget);
 
       await _edgeSwipe(tester);
@@ -67,8 +78,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(ReviewPage), findsOneWidget);
 
-      await tester.tap(find.byKey(ReviewKeys.reveal));
-      await tester.pumpAndSettle();
+      await _tapReveal(tester);
       await tester.tap(find.byKey(ReviewKeys.rating(ReviewRating.good)));
       await tester.pumpAndSettle();
 
@@ -108,8 +118,7 @@ void main() {
         return;
       }
 
-      await tester.pumpWidget(const MangaJpApp());
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      await _openIsolatedApp(tester);
 
       expect(find.byType(HomePage), findsOneWidget);
 
@@ -126,7 +135,14 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
 
       await _tapRail(tester, 'leitor');
-      expect(find.byType(PageDetailPage), findsOneWidget);
+      expect(
+        find.byType(PageDetailPage),
+        findsOneWidget,
+        reason:
+            'Leitor did not open PageDetailPage. recentPageId is null when '
+            'the isolated DB has no page; this test creates one via '
+            'PagesRepository before tapping the rail. $_kDemoSeedHint',
+      );
 
       await _tapRail(tester, 'revisar');
       expect(find.byType(ReviewPage), findsOneWidget);
@@ -134,15 +150,127 @@ void main() {
   );
 }
 
-Future<void> _openLeitor(WidgetTester tester) async {
-  final thumb = find.byKey(HomeKeys.recentThumb('demo-page'));
-  final row = find.byKey(HomeKeys.recentPage('demo-page'));
+class _ItestFixture {
+  const _ItestFixture({required this.pageId, required this.wordId});
+
+  final String pageId;
+  final String wordId;
+}
+
+/// Isolated Drift file under the app temp dir (not `mangajp.sqlite`).
+Future<_ItestFixture> _openIsolatedApp(WidgetTester tester) async {
+  final tmp = await getTemporaryDirectory();
+  final dir = await Directory(
+    '${tmp.path}/mangajp_itest_${DateTime.now().microsecondsSinceEpoch}',
+  ).create(recursive: true);
+
+  final db = AppDatabase(
+    driftDatabase(
+      name: 'mangajp_itest',
+      native: DriftNativeOptions(databaseDirectory: () async => dir),
+    ),
+  );
+  addTearDown(() async {
+    await db.close();
+    if (dir.existsSync()) {
+      dir.deleteSync(recursive: true);
+    }
+  });
+
+  const pageId = 'itest-page';
+  final pages = PagesRepository(db);
+  final crop = await pages.saveRecognizedCrop(
+    pageId: pageId,
+    sourceSha256: 'itest-sha',
+    left: 0.2,
+    top: 0.2,
+    width: 0.6,
+    height: 0.6,
+    ocrText: 'あいうえおかきくけこさしすせ高い猫を食べた。',
+    engineId: 'itest',
+  );
+  // Drift stores DateTime as whole seconds. Demo seed uses DateTime.now()
+  // in beforeOpen, so bump so this page is strictly the most recent.
+  await (db.update(db.capturedPages)..where((t) => t.id.equals(pageId))).write(
+    CapturedPagesCompanion(
+      createdAt: Value(DateTime.now().toUtc().add(const Duration(seconds: 2))),
+    ),
+  );
+
+  final recent = await pages.listRecentPages(limit: 1);
+  if (recent.isEmpty || recent.first.id != pageId) {
+    fail(
+      'PagesRepository did not persist $pageId as the recent page. '
+      '$_kDemoSeedHint',
+    );
+  }
+
+  final words = WordsRepository(db);
+  final cards = FlashcardsRepository(db);
+  final wordId = await words.saveFromLookup(
+    cropId: crop.id,
+    seq: 1358280,
+    lemma: '食べる',
+    reading: 'たべる',
+  );
+  await cards.learn(wordId);
+  // Leave-review dialog only shows when ≥1 card was rated and the
+  // session is not done. One due card + Good → isDone, no dialog.
+  final extraId = await words.saveFromLookup(
+    cropId: crop.id,
+    seq: 9990201,
+    lemma: '残る',
+    reading: 'のこる',
+  );
+  await cards.learn(extraId);
+
+  await tester.pumpWidget(
+    MangaJpApp(overrides: [appDatabaseProvider.overrideWith((ref) => db)]),
+  );
+  await tester.pumpAndSettle(const Duration(seconds: 5));
+
+  return _ItestFixture(pageId: pageId, wordId: wordId);
+}
+
+Future<void> _openLeitor(WidgetTester tester, String pageId) async {
+  final thumb = find.byKey(HomeKeys.recentThumb(pageId));
+  final row = find.byKey(HomeKeys.recentPage(pageId));
   final target = thumb.evaluate().isNotEmpty ? thumb : row;
+  if (target.evaluate().isEmpty) {
+    fail(
+      'No recent page $pageId on Home. Isolated DB should have created it '
+      'via PagesRepository. $_kDemoSeedHint',
+    );
+  }
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);
   await tester.pumpAndSettle();
   expect(find.byType(PageDetailPage), findsOneWidget);
+}
+
+Future<void> _tapNotebookWord(WidgetTester tester, String wordId) async {
+  final row = find.byKey(NotebookKeys.row(wordId));
+  if (row.evaluate().isEmpty) {
+    fail(
+      'Notebook row $wordId missing. Isolated DB should have saved it via '
+      'WordsRepository. $_kDemoSeedHint',
+    );
+  }
+  await tester.tap(row);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapReveal(WidgetTester tester) async {
+  final reveal = find.byKey(ReviewKeys.reveal);
+  if (reveal.evaluate().isEmpty) {
+    fail(
+      'Review reveal missing — due queue empty. Isolated DB should have '
+      'a due card via FlashcardsRepository.learn. $_kDemoSeedHint',
+    );
+  }
+  await tester.tap(reveal);
+  await tester.pumpAndSettle();
 }
 
 Future<void> _edgeSwipe(WidgetTester tester) async {

@@ -10,9 +10,9 @@ Para regenerar (lê `pr-assets` via git, sem fazer checkout):
 dart run tool/gen_telas.dart
 ```
 
-Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×844 ou múltiplo inteiro de DPR; desktop/macOS 1280×800. Prints fora da regra são marcados com **fora da regra**. iOS: retrato, resolução pendente — não marcado.
+Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×844 ou múltiplo inteiro de DPR; desktop/macOS 1280×800. iOS: simulador iPhone 17, qualquer resolução — não marcado. Obrigatórios: Android 390×844 e Linux 1280×800. Prints fora da regra são marcados com **fora da regra**. Recorte declarado (`recorte` no print_sizes.txt, dado sensível) pode sair do tamanho e não é marcado.
 
-Último print de cada tela primeiro: PR mais alto, depois a pasta `<sha7>` mais recente no `pr-assets` (commit que a adicionou). 85 print(s) em 11 arquivo(s).
+Último print de cada tela primeiro: PR mais alto, depois a pasta `<sha7>` mais recente no `pr-assets` (commit que a adicionou). 86 print(s) em 12 arquivo(s).
 
 ## Home
 
@@ -27,6 +27,7 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
+| [#66](https://github.com/murilinhoPs/MangaJP/pull/66) | `1068371` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-66/1068371/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-66/1068371/desktop/home.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `79cb04e` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/79cb04e/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/79cb04e/desktop/home.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) |
 

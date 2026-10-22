@@ -80,6 +80,7 @@ class PrintSizesEntry {
     this.sha256Valid = true,
     this.coral,
     this.bg,
+    this.declaredCrop = false,
   });
 
   /// Path as written in the file (`macos/crop.png` or `m125_phone_home.png`).
@@ -91,6 +92,10 @@ class PrintSizesEntry {
   final bool sha256Valid;
   final int? coral;
   final int? bg;
+
+  /// PR-declared crop for sensitive data (`recorte` / `recorte=` on the line).
+  /// Off-size prints with this flag are allowed by print-rules.
+  final bool declaredCrop;
 
   String get fileName {
     final i = relativePath.lastIndexOf('/');
@@ -114,6 +119,15 @@ final _sha256Continued = RegExp(r'^\s+sha256[:\s]+([0-9a-fA-F]+)\s*$');
 final _sha256Inline = RegExp(r'sha256:([0-9a-fA-F]+)');
 final _coral = RegExp(r'coral=(\d+)');
 final _bg = RegExp(r'bg=(\d+)');
+
+/// `recorte` or `recorte=<reason>` on the print line (print-rules edição).
+bool hasDeclaredCropToken(String? rest) {
+  if (rest == null || rest.isEmpty) return false;
+  return rest
+      .split(RegExp(r'\s+'))
+      .any((t) => t == 'recorte' || t.startsWith('recorte='));
+}
+
 final _hex40 = RegExp(r'^[0-9a-fA-F]{40}$');
 final _hex7 = RegExp(r'^[0-9a-fA-F]{7,40}$');
 
@@ -243,6 +257,7 @@ PrintSizesParse parsePrintSizes(String content) {
         sha256Valid: ok,
         coral: pending!.coral,
         bg: pending!.bg,
+        declaredCrop: pending!.declaredCrop,
       );
       if (!ok) {
         skipped.add(
@@ -287,6 +302,7 @@ PrintSizesParse parsePrintSizes(String content) {
         sha256Valid: shaOk,
         coral: coral == null ? null : int.parse(coral.group(1)!),
         bg: bg == null ? null : int.parse(bg.group(1)!),
+        declaredCrop: hasDeclaredCropToken(rest),
       );
       continue;
     }

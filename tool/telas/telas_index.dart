@@ -249,8 +249,15 @@ String _titleCase(String stem) {
 }
 
 /// Android 390×844 or integer DPR multiple; desktop/macOS 1280×800.
-/// iOS resolution is pending in print-rules — never flagged.
-bool violatesPrintRules(TelasPlatform platform, int width, int height) {
+/// iOS: iPhone 17 simulator, any resolution — never flagged.
+/// Declared crop (`recorte` in print_sizes.txt) may be off-size.
+bool violatesPrintRules(
+  TelasPlatform platform,
+  int width,
+  int height, {
+  bool declaredCrop = false,
+}) {
+  if (declaredCrop) return false;
   switch (platform) {
     case TelasPlatform.android:
       return !androidDimensionsOk(width, height);
@@ -363,6 +370,7 @@ TelasIndex buildTelasIndex(
             platform,
             entry.width,
             entry.height,
+            declaredCrop: entry.declaredCrop,
           ),
           sha256: entry.sha256,
           sha256Valid: entry.sha256Valid,
@@ -399,6 +407,21 @@ int _comparePrints(IndexedPrint a, IndexedPrint b) {
   final file = a.relativePath.compareTo(b.relativePath);
   if (file != 0) return file;
   return a.blobPath.compareTo(b.blobPath);
+}
+
+/// Git stderr when [ref] is not in the local clone (no `origin/pr-assets`).
+bool isMissingGitRefError(String stderr) {
+  final s = stderr.toLowerCase();
+  return s.contains('not a valid object name') ||
+      s.contains('unknown revision') ||
+      s.contains('bad revision') ||
+      s.contains('needed a single revision');
+}
+
+/// Hint for a missing `--ref` (default `origin/pr-assets`).
+String missingGitRefMessage(String ref) {
+  final branch = ref.startsWith('origin/') ? ref.substring(7) : ref;
+  return 'ref $ref não encontrada; rode git fetch origin $branch';
 }
 
 /// Exit 1 if no print_sizes.txt candidates, or `--strict` with a skipped file.
@@ -497,8 +520,11 @@ String buildTelasMarkdown({
   buf.writeln(
     'Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). '
     'Android 390×844 ou múltiplo inteiro de DPR; desktop/macOS 1280×800. '
+    'iOS: simulador iPhone 17, qualquer resolução — não marcado. '
+    'Obrigatórios: Android 390×844 e Linux 1280×800. '
     'Prints fora da regra são marcados com **fora da regra**. '
-    'iOS: retrato, resolução pendente — não marcado.',
+    'Recorte declarado (`recorte` no print_sizes.txt, dado sensível) '
+    'pode sair do tamanho e não é marcado.',
   );
   buf.writeln();
   buf.writeln(

@@ -174,6 +174,68 @@ void main() {
     expect(violatesPrintRules(TelasPlatform.macos, 1280, 800), isFalse);
     expect(violatesPrintRules(TelasPlatform.macos, 2560, 1600), isTrue);
     expect(violatesPrintRules(TelasPlatform.ios, 1206, 2622), isFalse);
+    expect(
+      violatesPrintRules(TelasPlatform.macos, 900, 800, declaredCrop: true),
+      isFalse,
+    );
+  });
+
+  test('declared crop off-size is not a print-rules violation', () {
+    const content = '''
+head: dddddddddddddddddddddddddddddddddddddddd
+macos/nsopenpanel.png 900x800 recorte sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+''';
+    final parsed = parsePrintSizes(content);
+    expect(parsed.entries.single.declaredCrop, isTrue);
+    final index = buildTelasIndex([
+      (path: 'docs/pr-assets/pr-50/ddddddd/print_sizes.txt', content: content),
+    ]);
+    expect(index.prints.single.violatesPrintRules, isFalse);
+    final md = buildTelasMarkdown(
+      index: index,
+      repoUrl: 'https://github.com/murilinhoPs/MangaJP',
+    );
+    expect(md, contains('| `macos/nsopenpanel.png` | 900×800 |'));
+    expect(md, isNot(contains('900×800 **fora da regra**')));
+  });
+
+  test('cropped print without declaration violates print-rules', () {
+    const content = '''
+head: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+macos/nsopenpanel.png 900x800 sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+''';
+    final parsed = parsePrintSizes(content);
+    expect(parsed.entries.single.declaredCrop, isFalse);
+    final index = buildTelasIndex([
+      (path: 'docs/pr-assets/pr-50/eeeeeee/print_sizes.txt', content: content),
+    ]);
+    expect(index.prints.single.violatesPrintRules, isTrue);
+    final md = buildTelasMarkdown(
+      index: index,
+      repoUrl: 'https://github.com/murilinhoPs/MangaJP',
+    );
+    expect(md, contains('900×800 **fora da regra**'));
+  });
+
+  test('blurred print at required size is not a print-rules violation', () {
+    const content = '''
+head: ffffffffffffffffffffffffffffffffffffffff
+macos/nsopenpanel.png 1280x800 sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+android/home.png 390x844 sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+''';
+    final parsed = parsePrintSizes(content);
+    expect(parsed.entries.every((e) => !e.declaredCrop), isTrue);
+    final index = buildTelasIndex([
+      (path: 'docs/pr-assets/pr-50/fffffff/print_sizes.txt', content: content),
+    ]);
+    expect(index.prints.every((p) => !p.violatesPrintRules), isTrue);
+    final md = buildTelasMarkdown(
+      index: index,
+      repoUrl: 'https://github.com/murilinhoPs/MangaJP',
+    );
+    expect(md, contains('| `macos/nsopenpanel.png` | 1280×800 |'));
+    expect(md, contains('| `android/home.png` | 390×844 |'));
+    expect(md, isNot(contains('**fora da regra** |')));
   });
 
   test('index + markdown is deterministic and marks violations', () {
@@ -240,6 +302,8 @@ void main() {
     );
     expect(md1, contains('### Linux desktop'));
     expect(md1, contains('### macOS'));
+    expect(md1, contains('simulador iPhone 17, qualquer resolução'));
+    expect(md1, isNot(contains('resolução pendente')));
     expect(md1, contains('v0-filename-wxh-bytes'));
     expect(md1, contains('v2-head-colon-inline-sha256'));
 
@@ -453,6 +517,25 @@ desktop/home.png 1024x768 sha256:ddddddddddddddddddddddddddddddddddddddddddddddd
     expect(
       stripGitRemote('https://github.com/murilinhoPs/MangaJP'),
       'https://github.com/murilinhoPs/MangaJP',
+    );
+  });
+
+  test('missing origin/pr-assets git error is a fetch hint', () {
+    expect(
+      isMissingGitRefError('fatal: Not a valid object name origin/pr-assets\n'),
+      isTrue,
+    );
+    expect(
+      isMissingGitRefError(
+        "fatal: ambiguous argument 'origin/pr-assets': "
+        'unknown revision or path not in the working tree.\n',
+      ),
+      isTrue,
+    );
+    expect(isMissingGitRefError('git falhou: permission denied'), isFalse);
+    expect(
+      missingGitRefMessage('origin/pr-assets'),
+      'ref origin/pr-assets não encontrada; rode git fetch origin pr-assets',
     );
   });
 

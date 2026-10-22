@@ -144,6 +144,10 @@ int runGenTelas(List<String> args) {
     outFile.writeAsStringSync(markdown, encoding: utf8);
     return 0;
   } on ProcessException catch (e) {
+    if (isMissingGitRefError(e.message)) {
+      stderr.writeln(missingGitRefMessage(ref));
+      return 1;
+    }
     stderr.writeln('git falhou: $e');
     return 1;
   } on FormatException catch (e) {
