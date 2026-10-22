@@ -27,11 +27,11 @@ Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac off
 | **Android** | **obrigatório 390×844**, retrato, **sem hover** | tela do emulador |
 | **Desktop Linux** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
-| **iOS** | retrato; resolução **Pendente** | ver nota abaixo |
+| **iOS** | simulador **iPhone 17**, qualquer resolução | retrato |
 
 Android 390×844 e desktop Linux 1280×800 **não** são opcionais (nuvem). Formato macOS (1x 1280×800 sRGB sem P3) vale **quando** o print macOS é capturado; se o worker do Mac estiver desligado, ver [Mac offline](#mac-offline-2026-10-21).
 
-> Pendente (confirmação do Murilo): «iPhone 17 ou qualquer simulador em retrato, sem exigência de resolução». Há divergência entre iPhone 17 (iOS 27) **exclusivo** e **qualquer** simulador. [ADR-0003](../adr/0003-ios-plataforma-secundaria.md) registra a decisão 2026-10-13; este D1 não escolhe um dos lados.
+**iOS (Murilo, 13/10):** prints de iOS podem vir do simulador do **iPhone 17**, em **qualquer resolução**. Os prints **obrigatórios** continuam sendo o **Android 390×844 em retrato** e o **Linux desktop 1280×800**, sem moldura nem barra de título. Continuam valendo: SHA-1 completo (40 caracteres) no `print_sizes.txt`; nada de arquivo pessoal; com Mac offline, `n/a: Mac offline — #54 item: <link>` ([Mac offline](#mac-offline-2026-10-21)).
 
 Telas que **só existem no layout largo** (sidebar, paleta Ctrl+K, rail) **não** vão no bloco Android. Ver a seção no fim.
 
@@ -44,12 +44,12 @@ A checagem vale para os **elementos que aparecem no print**, iguais a [`lib/core
 
 ## `print_sizes.txt`
 
-No mesmo diretório do PR/head. Uma linha `head:` com o **SHA-1 completo do commit** (40 caracteres hex). Em cada print, o **sha256 do arquivo** (64 caracteres hex) — não o hash do commit.
+No mesmo diretório do PR/head. Uma linha `head:` com o **SHA-1 completo do commit** (40 caracteres hex). Em cada print, o **sha256 do arquivo final** (64 caracteres hex) — o PNG já editado, se houve borrão ou recorte. Não é o hash do commit.
 
 ```text
 head: <SHA-1 completo do commit, 40 caracteres>
 
-<plataforma>/<arquivo>.png <largura>x<altura> sha256:<64 caracteres do arquivo>
+<plataforma>/<arquivo>.png <largura>x<altura> sha256:<64 caracteres do arquivo final>
 ```
 
 O `head:` tem que ser o SHA-1 do **head final**. Se o PR ganhar commit novo, apagar os prints do head antigo e refazer.
@@ -60,9 +60,22 @@ O `head:` tem que ser o SHA-1 do **head final**. Se o PR ganhar commit novo, apa
 
 Prints do picker usam a pasta neutra **`~/MangaJP-QA/`** com a fixture `test/fixtures/manga_test_page.png`. Nunca arquivo pessoal (repo público).
 
-## Captura original
+## Edição (2026-10-22)
 
-> Proposta, pendente de confirmação do Murilo: o print é a captura original, sem edição (crop externo, blur, tarja). Para esconder algo, ajuste a cena **antes** de capturar.
+O print vai **sem edição**. A única exceção é esconder dado sensível (nomes de arquivo pessoais, chaves, pastas do Finder etc.). Essa exceção **sempre** vai avisada no PR, com o motivo.
+
+Permitido nessa exceção: **borrar** (ou cobrir a área) e **recortar**. Proibido: redimensionar, retocar, mudar a cor da área do app.
+
+- **Padrão:** borrar ou cobrir a área — mantém **390×844** (Android) e **1280×800** (desktop). O borrão cobre **só** o dado sensível (blocos sólidos ou blur forte, ilegível).
+- **Recortar** é exceção. O print recortado pode sair do tamanho padrão **só** se o PR declarar o recorte e o motivo. O gate de tamanho aceita esse print **somente** com esse aviso.
+- Em qualquer caso, o que o critério de aceite pede continua **legível**.
+- O `sha256` no `print_sizes.txt` é o do arquivo **final**, já editado.
+
+O ideal continua sendo capturar já sem conteúdo sensível, com a pasta neutra `~/MangaJP-QA/` e a fixture.
+
+Print sensível já publicado em `pr-assets`: substituir pela versão editada. Force-push na `pr-assets` precisa da **aprovação do Murilo**. Antes de qualquer push novo, todo clone faz `git fetch && git reset --hard origin/pr-assets`.
+
+O recorte da sidebar de Favorites no `nsopenpanel.png` do #50 foi resolvido com **borrão** em 22/10.
 
 ## `integration_test` no corpo do PR
 

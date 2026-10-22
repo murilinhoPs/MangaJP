@@ -65,5 +65,4 @@ Outras decisões já fechadas no PRD (Q-B2, Q-N2, Q-N5, Q-N6, Q-N7) ficam nas sp
 - UI em pt-BR. Study-day: `04:00 America/Sao_Paulo`.
 - IDs de feature (F1…) e AC (AC-share…) são os do PRD. Não renomear.
 - Onde o PRD for ambíguo: `> Pendente:` na spec. Não inventar.
-
-> Proposta, pendente de confirmação do Murilo: bundle ID / `applicationId` é `dev.murilinhops.mangajp` em **todas** as plataformas (já é o valor no Android e no macOS).
+- Bundle ID / `applicationId`: **`dev.murilinhops.mangajp`** em todas as plataformas (Murilo, 22/10).

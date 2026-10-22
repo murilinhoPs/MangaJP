@@ -9,9 +9,10 @@ Conforme [`docs/qa/print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/
 - [ ] Android **390×844**, retrato, **sem hover** — obrigatório na nuvem
 - [ ] Desktop Linux **1280×800**, **só a área do app** (sem moldura / title bar; cantos opacos) — obrigatório na nuvem
 - [ ] macOS **1x 1280×800** sRGB, **sem** Display P3, só a área do app — ou `n/a: Mac offline — #54 item: <link>`
-- [ ] iOS retrato — resolução ver print-rules (`> Pendente:`) — ou `n/a: Mac offline — #54 item: <link>`
+- [ ] iOS — simulador iPhone 17, qualquer resolução — ou `n/a: Mac offline — #54 item: <link>`
 - [ ] Cores: fundo `#0E0D12` **sempre**; coral `#FF5C7A` **só** se a tela tiver elemento coral
-- [ ] `print_sizes.txt` — `head:` SHA-1 completo (40) + sha256 (64) de cada arquivo
+- [ ] `print_sizes.txt` — `head:` SHA-1 completo (40) + sha256 (64) de cada arquivo **final** (já editado, se houver)
+- [ ] Dado sensível escondido: aviso no PR com motivo (borrar é o padrão; recortar só com declaração — o gate de tamanho só aceita fora de 390×844 / 1280×800 com esse aviso)
 - [ ] Prints no **head final** (head antigo não vale)
 - [ ] File picker: pasta neutra `~/MangaJP-QA/` + fixture `test/fixtures/manga_test_page.png` (nunca arquivo pessoal)
 - [ ] Layout largo (sidebar, Ctrl+K) em 1280×800, **não** no bloco Android — se couber
