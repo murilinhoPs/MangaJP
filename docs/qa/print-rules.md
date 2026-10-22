@@ -67,7 +67,11 @@ O print vai **sem edição**. A única exceção é esconder dado sensível (nom
 Permitido nessa exceção: **borrar** (ou cobrir a área) e **recortar**. Proibido: redimensionar, retocar, mudar a cor da área do app.
 
 - **Padrão:** borrar ou cobrir a área — mantém **390×844** (Android) e **1280×800** (desktop). O borrão cobre **só** o dado sensível (blocos sólidos ou blur forte, ilegível).
-- **Recortar** é exceção. O print recortado pode sair do tamanho padrão **só** se o PR declarar o recorte e o motivo. O gate de tamanho aceita esse print **somente** com esse aviso.
+- **Recortar** é exceção. O print recortado pode sair do tamanho padrão **só** se o PR declarar o recorte e o motivo **e** a linha do `print_sizes.txt` tiver o token `recorte` ou `recorte=<motivo>` (`<motivo>` opcional). Sem o token, `gen_telas` marca o print **fora da regra** em [`telas.md`](telas.md). O parser só aceita o token exato `recorte` ou um token que começa com `recorte=`; variações (`recortex`) não contam. O token entra na linha do print, depois de `<largura>x<altura>`, separado por espaço — o mesmo resto da linha que aceita `coral=` / `sha256:`.
+
+  ```text
+  macos/nsopenpanel.png 900x800 recorte=sidebar-Finder sha256:3251d918bc0e257eb5a7ff85207547052a05a1d55c034ed1aeb50ce3ded39a17
+  ```
 - Em qualquer caso, o que o critério de aceite pede continua **legível**.
 - O `sha256` no `print_sizes.txt` é o do arquivo **final**, já editado.
 
