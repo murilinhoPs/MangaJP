@@ -275,7 +275,7 @@ _SqliteProbe _probeMangaJpDatabase(File file) {
   } on Object {
     return _SqliteProbe.unknown;
   } finally {
-    db?.dispose();
+    db?.close();
   }
 }
 

@@ -366,7 +366,7 @@ void _writeEmptySqlite(Directory dir) {
     ..execute(
       "INSERT INTO app_meta (key, value) VALUES ('schema_version', '8')",
     );
-  db.dispose();
+  db.close();
 }
 
 void _writeSqliteWithWord(Directory dir, {required String id}) {
@@ -377,7 +377,7 @@ void _writeSqliteWithWord(Directory dir, {required String id}) {
     'VALUES (?, ?, ?, ?, ?, ?)',
     [id, 1, '食べる', 'たべる', '食べる', 0],
   );
-  db.dispose();
+  db.close();
 }
 
 List<String> _wordIds(File file) {
@@ -388,7 +388,7 @@ List<String> _wordIds(File file) {
         row['id'] as String,
     ];
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
