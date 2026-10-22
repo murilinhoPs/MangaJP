@@ -32,8 +32,16 @@ Future<Directory> _jmdictDiskDirectory() async {
   if (Platform.isLinux) {
     try {
       return resolveLinuxAppSupportDirectory();
-    } catch (_) {
-      // Fall through to path_provider.
+    } on Object catch (error) {
+      try {
+        final support = await getApplicationSupportDirectory();
+        return resolveLinuxAppSupportDirectoryFromPathProvider(
+          support,
+          resolveError: error,
+        );
+      } on Object {
+        // Fall through to path_provider.
+      }
     }
   }
   try {
