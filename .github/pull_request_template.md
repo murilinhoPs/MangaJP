@@ -34,5 +34,3 @@ $ git rev-parse --short HEAD
 $ flutter test integration_test …
 
 ```
-
-`n/a: Mac offline — #54 item: <link>`
