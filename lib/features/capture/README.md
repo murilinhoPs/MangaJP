@@ -116,6 +116,25 @@ The app POSTs crop PNG bytes to `http://127.0.0.1:8765/ocr` (`MANGA_OCR_URL` to
 override). Android emulator share-intent device smoke is a follow-up (`--host
 0.0.0.0` + `MANGA_OCR_URL=http://10.0.2.2:8765`).
 
+## Verify on macOS desktop
+
+Home **Galeria** uses `image_picker` → `image_picker_macos` → `file_selector_macos`
+(`NSOpenPanel`, `public.image`). The App Sandbox needs this entitlement in
+`macos/Runner/DebugProfile.entitlements` and `Release.entitlements` or the
+panel never opens:
+
+```xml
+<key>com.apple.security.files.user-selected.read-only</key>
+<true/>
+```
+
+```bash
+flutter run -d macos
+```
+
+Home → **Galeria** → pick an image → **Confirmar crop**. Canceling the picker
+stays on Home (no snackbar). `/capture` is not a bottom tab.
+
 ## Verify on Linux desktop
 
 Linux has no share target. The crop UI is Flutter-only, so `flutter run -d linux`

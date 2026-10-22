@@ -177,6 +177,7 @@ void main() {
     expect(source.galleryCalls, 1);
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(CapturePage), findsNothing);
+    expect(find.byType(SnackBar), findsNothing);
     expect(
       GoRouter.of(tester.element(find.byType(HomePage))).state.uri.path,
       '/home',

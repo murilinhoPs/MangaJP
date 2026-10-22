@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: macOS gallery file entitlement
+        run: |
+          for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
+            grep -A1 'com.apple.security.files.user-selected.read-only' "$f" | grep -q '<true/>'
+          done
       - run: python3 tools/build_jmdict_sqlite/test_smoke.py
       - run: python3 tools/cer_bakeoff/test_cer.py
       - uses: subosito/flutter-action@v2
