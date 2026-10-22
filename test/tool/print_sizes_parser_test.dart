@@ -520,6 +520,25 @@ desktop/home.png 1024x768 sha256:ddddddddddddddddddddddddddddddddddddddddddddddd
     );
   });
 
+  test('missing origin/pr-assets git error is a fetch hint', () {
+    expect(
+      isMissingGitRefError('fatal: Not a valid object name origin/pr-assets\n'),
+      isTrue,
+    );
+    expect(
+      isMissingGitRefError(
+        "fatal: ambiguous argument 'origin/pr-assets': "
+        'unknown revision or path not in the working tree.\n',
+      ),
+      isTrue,
+    );
+    expect(isMissingGitRefError('git falhou: permission denied'), isFalse);
+    expect(
+      missingGitRefMessage('origin/pr-assets'),
+      'ref origin/pr-assets não encontrada; rode git fetch origin pr-assets',
+    );
+  });
+
   test('ignores print_sizes paths outside pr-N/sha7', () {
     expect(
       isPrintSizesPath('docs/pr-assets/m2.1-smoke/3a69ab8/print_sizes.txt'),

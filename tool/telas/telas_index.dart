@@ -409,6 +409,21 @@ int _comparePrints(IndexedPrint a, IndexedPrint b) {
   return a.blobPath.compareTo(b.blobPath);
 }
 
+/// Git stderr when [ref] is not in the local clone (no `origin/pr-assets`).
+bool isMissingGitRefError(String stderr) {
+  final s = stderr.toLowerCase();
+  return s.contains('not a valid object name') ||
+      s.contains('unknown revision') ||
+      s.contains('bad revision') ||
+      s.contains('needed a single revision');
+}
+
+/// Hint for a missing `--ref` (default `origin/pr-assets`).
+String missingGitRefMessage(String ref) {
+  final branch = ref.startsWith('origin/') ? ref.substring(7) : ref;
+  return 'ref $ref não encontrada; rode git fetch origin $branch';
+}
+
 /// Exit 1 if no print_sizes.txt candidates, or `--strict` with a skipped file.
 /// Skipped files never fail the default (CI) path.
 int telasGeneratorExitCode({
