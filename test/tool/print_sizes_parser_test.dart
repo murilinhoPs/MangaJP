@@ -248,23 +248,177 @@ void main() {
     expect(macosNs, greaterThan(0));
   });
 
-  test('latest print per screen is listed first (higher PR, then sha7)', () {
-    const older = '''
+  test(
+    'latest print per screen is listed first (higher PR, then add date)',
+    () {
+      const older = '''
 head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 android/home.png 390x844 sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ''';
-    const newer = '''
+      const newer = '''
 head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 android/home.png 390x844 sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 ''';
-    final index = buildTelasIndex([
-      (path: 'docs/pr-assets/pr-10/aaaaaaa/print_sizes.txt', content: older),
-      (path: 'docs/pr-assets/pr-40/bbbbbbb/print_sizes.txt', content: newer),
-    ]);
+      final index = buildTelasIndex(
+        [
+          (
+            path: 'docs/pr-assets/pr-10/aaaaaaa/print_sizes.txt',
+            content: older,
+          ),
+          (
+            path: 'docs/pr-assets/pr-40/bbbbbbb/print_sizes.txt',
+            content: newer,
+          ),
+        ],
+        sha7AddedAt: {'pr-10/aaaaaaa': 999, 'pr-40/bbbbbbb': 1},
+      );
+      final homes = index.prints.where((p) => p.screen == 'home').toList();
+      expect(homes, hasLength(2));
+      expect(homes.first.prNumber, 40);
+      expect(homes.last.prNumber, 10);
+    },
+  );
+
+  test('same PR: newer pr-assets folder first, not sha7 alphabetical', () {
+    const row = '''
+head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+android/home.png 390x844 sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+''';
+    final index = buildTelasIndex(
+      [
+        (path: 'docs/pr-assets/pr-49/bbbbbbb/print_sizes.txt', content: row),
+        (path: 'docs/pr-assets/pr-49/aaaaaaa/print_sizes.txt', content: row),
+      ],
+      sha7AddedAt: {'pr-49/bbbbbbb': 100, 'pr-49/aaaaaaa': 200},
+    );
     final homes = index.prints.where((p) => p.screen == 'home').toList();
-    expect(homes, hasLength(2));
-    expect(homes.first.prNumber, 40);
-    expect(homes.last.prNumber, 10);
+    expect(homes.first.sha7, 'aaaaaaa');
+    expect(homes.last.sha7, 'bbbbbbb');
+    expect(homes.first.addedAt, 200);
+  });
+
+  test('parseSha7AddedAt keeps first add under --reverse git log', () {
+    const log = '''
+COMMIT 100
+docs/pr-assets/pr-49/bbbbbbb/android/home.png
+COMMIT 200
+docs/pr-assets/pr-49/aaaaaaa/print_sizes.txt
+COMMIT 300
+docs/pr-assets/pr-49/bbbbbbb/android/review.png
+''';
+    final map = parseSha7AddedAt(log);
+    expect(map['pr-49/bbbbbbb'], 100);
+    expect(map['pr-49/aaaaaaa'], 200);
+  });
+
+  test('skip stderr example: arquivo sem prints reconhecidos', () {
+    final index = buildTelasIndex([
+      (
+        path: 'docs/pr-assets/pr-99/deadbee/print_sizes.txt',
+        content: 'isto nao e um print\n',
+      ),
+    ]);
+    expect(index.prints, isEmpty);
+    expect(index.skippedFiles, hasLength(1));
+    expect(index.skippedFiles.single.reason, 'nenhum print reconhecido');
+    final buf = StringBuffer();
+    emitSkipWarnings(
+      skippedFiles: index.skippedFiles,
+      skippedLines: index.skipped,
+      sink: buf,
+      githubAnnotations: false,
+    );
+    expect(
+      buf.toString(),
+      contains(
+        'skip: docs/pr-assets/pr-99/deadbee/print_sizes.txt: nenhum print reconhecido',
+      ),
+    );
+    expect(
+      telasGeneratorExitCode(
+        candidateCount: index.candidateCount,
+        skippedFileCount: index.skippedFiles.length,
+        strict: false,
+      ),
+      0,
+    );
+    expect(
+      telasGeneratorExitCode(
+        candidateCount: index.candidateCount,
+        skippedFileCount: index.skippedFiles.length,
+        strict: true,
+      ),
+      1,
+    );
+  });
+
+  test('CI skip is warning with ::warning:: and exit 0', () {
+    final index = buildTelasIndex([
+      (
+        path: 'docs/pr-assets/pr-99/deadbee/print_sizes.txt',
+        content: 'isto nao e um print\n',
+      ),
+    ]);
+    final buf = StringBuffer();
+    emitSkipWarnings(
+      skippedFiles: index.skippedFiles,
+      skippedLines: const [],
+      sink: buf,
+      githubAnnotations: true,
+    );
+    expect(
+      buf.toString(),
+      contains(
+        '::warning file=docs/pr-assets/pr-99/deadbee/print_sizes.txt::skip: docs/pr-assets/pr-99/deadbee/print_sizes.txt: nenhum print reconhecido',
+      ),
+    );
+    expect(
+      telasGeneratorExitCode(
+        candidateCount: 1,
+        skippedFileCount: 1,
+        strict: false,
+      ),
+      0,
+    );
+    expect(
+      telasGeneratorExitCode(
+        candidateCount: 0,
+        skippedFileCount: 0,
+        strict: false,
+      ),
+      1,
+    );
+  });
+
+  test('pr-48 malformed sha256 is a line warning, not a skipped file', () {
+    final index = buildTelasIndex([
+      (
+        path: 'docs/pr-assets/pr-48/2182efb/print_sizes.txt',
+        content: _fixture('v1b_malformed_sha256.txt'),
+      ),
+    ]);
+    expect(index.skippedFiles, isEmpty);
+    expect(index.prints, hasLength(9));
+    expect(
+      index.skipped.any((s) => s.reason.contains('sha256 tem 62 hex')),
+      isTrue,
+    );
+    final buf = StringBuffer();
+    emitSkipWarnings(
+      skippedFiles: index.skippedFiles,
+      skippedLines: index.skipped,
+      sink: buf,
+      githubAnnotations: false,
+    );
+    expect(buf.toString(), contains('sha256 tem 62 hex'));
+    expect(
+      telasGeneratorExitCode(
+        candidateCount: index.candidateCount,
+        skippedFileCount: index.skippedFiles.length,
+        strict: true,
+      ),
+      0,
+    );
   });
 
   test('markdown marks Android/desktop dimension violations', () {

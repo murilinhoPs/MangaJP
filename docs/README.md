@@ -22,7 +22,7 @@ Medição OCR M0.3 (números, protocolo): [`m0.3-cer-bakeoff.md`](m0.3-cer-bakeo
 | `assets/` | Só prints oficiais e finais. |
 | `m0.3-cer-bakeoff.md` | Bake-off CER (medição). Não reescrever números. |
 
-Índice de telas: [`qa/telas.md`](qa/telas.md), gerado por `dart run tool/gen_telas.dart` (lê a branch `pr-assets` via git, sem checkout).
+Índice de telas: [`qa/telas.md`](qa/telas.md). Regenerar à mão em PR de manutenção: `dart run tool/gen_telas.dart`. Pode ficar atrás do `pr-assets` — isso não é erro.
 
 QA de PR não entra em `docs/assets/`. Prints de QA ficam na branch `pr-assets`.
 

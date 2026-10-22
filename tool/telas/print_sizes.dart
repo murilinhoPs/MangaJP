@@ -47,10 +47,26 @@ class SkippedLine {
     required this.lineNumber,
     required this.line,
     required this.reason,
+    this.sourcePath,
   });
 
   final int lineNumber;
   final String line;
+  final String reason;
+  final String? sourcePath;
+
+  SkippedLine withSource(String path) => SkippedLine(
+    lineNumber: lineNumber,
+    line: line,
+    reason: reason,
+    sourcePath: path,
+  );
+}
+
+class FileSkip {
+  const FileSkip({required this.path, required this.reason});
+
+  final String path;
   final String reason;
 }
 

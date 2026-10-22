@@ -43,6 +43,7 @@ class IndexedPrint {
     this.headSha,
     this.sha256,
     this.sha256Valid = true,
+    this.addedAt = 0,
   });
 
   final int prNumber;
@@ -58,6 +59,9 @@ class IndexedPrint {
   final bool violatesPrintRules;
   final String? sha256;
   final bool sha256Valid;
+
+  /// Unix seconds of the pr-assets commit that first added this `<sha7>` folder.
+  final int addedAt;
 
   String get dimensionsLabel {
     final size = '$width×$height';
@@ -93,6 +97,34 @@ PrintSizesLocation? parsePrintSizesLocation(String path) {
 }
 
 bool isPrintSizesPath(String path) => _printSizesPath.hasMatch(path);
+
+/// Any `*print_sizes.txt` under `docs/pr-assets/`, including mis-nested paths.
+bool isPrintSizesCandidate(String path) {
+  return path.startsWith('docs/pr-assets/') && path.endsWith('print_sizes.txt');
+}
+
+String sha7FolderKey(int prNumber, String sha7) =>
+    'pr-$prNumber/${sha7.toLowerCase()}';
+
+/// Parse `git log --reverse --diff-filter=A --pretty=format:COMMIT %ct --name-only`.
+/// First time a `pr-N/<sha7>` folder appears is when it was added.
+Map<String, int> parseSha7AddedAt(String gitLog) {
+  final folderRe = RegExp(r'^docs/pr-assets/(pr-\d+)/([0-9a-fA-F]{7})(?:/|$)');
+  final result = <String, int>{};
+  int? ts;
+  for (final line in gitLog.split('\n')) {
+    if (line.startsWith('COMMIT ')) {
+      ts = int.tryParse(line.split(' ').elementAt(1));
+      continue;
+    }
+    if (ts == null || line.isEmpty) continue;
+    final m = folderRe.firstMatch(line);
+    if (m == null) continue;
+    final key = '${m.group(1)}/${m.group(2)!.toLowerCase()}';
+    result.putIfAbsent(key, () => ts!);
+  }
+  return result;
+}
 
 TelasPlatform platformFrom(PrintSizesEntry entry, PrintSizesLocation loc) {
   final dir = entry.platformDir?.toLowerCase();
@@ -266,27 +298,52 @@ class TelasIndex {
     required this.variants,
     required this.filesParsed,
     required this.skipped,
+    required this.skippedFiles,
+    required this.candidateCount,
   });
 
   final List<IndexedPrint> prints;
   final Set<PrintSizesVariant> variants;
   final int filesParsed;
   final List<SkippedLine> skipped;
+  final List<FileSkip> skippedFiles;
+  final int candidateCount;
 }
 
-TelasIndex buildTelasIndex(List<({String path, String content})> files) {
+TelasIndex buildTelasIndex(
+  List<({String path, String content})> files, {
+  Map<String, int> sha7AddedAt = const {},
+}) {
   final prints = <IndexedPrint>[];
   final variants = <PrintSizesVariant>{};
   final skipped = <SkippedLine>[];
+  final skippedFiles = <FileSkip>[];
   var filesParsed = 0;
+  var candidateCount = 0;
 
   for (final file in files) {
+    if (!isPrintSizesCandidate(file.path) && !isPrintSizesPath(file.path)) {
+      continue;
+    }
+    candidateCount++;
     final loc = parsePrintSizesLocation(file.path);
-    if (loc == null) continue;
+    if (loc == null) {
+      skippedFiles.add(
+        FileSkip(path: file.path, reason: 'caminho fora de pr-N/<sha7>/'),
+      );
+      continue;
+    }
     filesParsed++;
     final parsed = parsePrintSizes(file.content);
     variants.addAll(parsed.variants);
-    skipped.addAll(parsed.skipped);
+    skipped.addAll(parsed.skipped.map((s) => s.withSource(file.path)));
+    if (parsed.entries.isEmpty) {
+      skippedFiles.add(
+        FileSkip(path: file.path, reason: 'nenhum print reconhecido'),
+      );
+      continue;
+    }
+    final addedAt = sha7AddedAt[sha7FolderKey(loc.prNumber, loc.sha7)] ?? 0;
     for (final entry in parsed.entries) {
       final platform = platformFrom(entry, loc);
       final stem = screenStem(entry.fileName);
@@ -309,6 +366,7 @@ TelasIndex buildTelasIndex(List<({String path, String content})> files) {
           ),
           sha256: entry.sha256,
           sha256Valid: entry.sha256Valid,
+          addedAt: addedAt,
         ),
       );
     }
@@ -320,6 +378,8 @@ TelasIndex buildTelasIndex(List<({String path, String content})> files) {
     variants: variants,
     filesParsed: filesParsed,
     skipped: List.unmodifiable(skipped),
+    skippedFiles: List.unmodifiable(skippedFiles),
+    candidateCount: candidateCount,
   );
 }
 
@@ -334,9 +394,67 @@ int _comparePrints(IndexedPrint a, IndexedPrint b) {
   if (screen != 0) return screen;
   final pr = b.prNumber.compareTo(a.prNumber);
   if (pr != 0) return pr;
-  final sha = b.sha7.compareTo(a.sha7);
-  if (sha != 0) return sha;
-  return a.relativePath.compareTo(b.relativePath);
+  final added = b.addedAt.compareTo(a.addedAt);
+  if (added != 0) return added;
+  final file = a.relativePath.compareTo(b.relativePath);
+  if (file != 0) return file;
+  return a.blobPath.compareTo(b.blobPath);
+}
+
+/// Exit 1 if no print_sizes.txt candidates, or `--strict` with a skipped file.
+/// Skipped files never fail the default (CI) path.
+int telasGeneratorExitCode({
+  required int candidateCount,
+  required int skippedFileCount,
+  required bool strict,
+}) {
+  if (candidateCount == 0) return 1;
+  if (strict && skippedFileCount > 0) return 1;
+  return 0;
+}
+
+String formatFileSkip(String path, String reason) => 'skip: $path: $reason';
+
+String formatLineSkip(SkippedLine line) {
+  final src = line.sourcePath ?? '?';
+  return 'skip: $src:${line.lineNumber}: ${line.reason}';
+}
+
+String formatGithubWarning({required String message, String? file, int? line}) {
+  final params = <String>[
+    if (file != null) 'file=$file',
+    if (line != null) 'line=$line',
+  ];
+  if (params.isEmpty) return '::warning::$message';
+  return '::warning ${params.join(',')}::$message';
+}
+
+void emitSkipWarnings({
+  required List<FileSkip> skippedFiles,
+  required List<SkippedLine> skippedLines,
+  required StringSink sink,
+  required bool githubAnnotations,
+}) {
+  for (final f in skippedFiles) {
+    final msg = formatFileSkip(f.path, f.reason);
+    sink.writeln(msg);
+    if (githubAnnotations) {
+      sink.writeln(formatGithubWarning(message: msg, file: f.path));
+    }
+  }
+  for (final s in skippedLines) {
+    final msg = formatLineSkip(s);
+    sink.writeln(msg);
+    if (githubAnnotations) {
+      sink.writeln(
+        formatGithubWarning(
+          message: msg,
+          file: s.sourcePath,
+          line: s.lineNumber,
+        ),
+      );
+    }
+  }
 }
 
 int _featureRank(String feature) {
@@ -366,7 +484,8 @@ String buildTelasMarkdown({
   buf.writeln(
     'Este arquivo é **gerado** a partir dos `print_sizes.txt` na branch '
     '[`$assetsBranch`]($repo/tree/$assetsBranch/docs/pr-assets). '
-    'Não edite à mão.',
+    'Não edite à mão. Pode ficar atrás do `pr-assets`; isso não é erro. '
+    'Regenerar em PR de manutenção.',
   );
   buf.writeln();
   buf.writeln('Para regenerar (lê `pr-assets` via git, sem fazer checkout):');
@@ -383,7 +502,8 @@ String buildTelasMarkdown({
   );
   buf.writeln();
   buf.writeln(
-    'Último print de cada tela primeiro (PR mais alto, depois sha7). '
+    'Último print de cada tela primeiro: PR mais alto, depois a pasta '
+    '`<sha7>` mais recente no `pr-assets` (commit que a adicionou). '
     '${index.prints.length} print(s) em ${index.filesParsed} arquivo(s).',
   );
   buf.writeln();

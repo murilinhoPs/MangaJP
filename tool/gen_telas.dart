@@ -17,6 +17,7 @@ int runGenTelas(List<String> args) {
   var branch = _defaultBranch;
   String? repoUrl;
   var check = false;
+  var strict = false;
 
   for (var i = 0; i < args.length; i++) {
     final arg = args[i];
@@ -38,6 +39,7 @@ int runGenTelas(List<String> args) {
         ref = next();
       case '--output':
       case '-o':
+      case '--out':
         output = next();
       case '--branch':
         branch = next();
@@ -45,6 +47,8 @@ int runGenTelas(List<String> args) {
         repoUrl = next();
       case '--check':
         check = true;
+      case '--strict':
+        strict = true;
       default:
         stderr.writeln('argumento desconhecido: $arg');
         stderr.writeln(_usage);
@@ -60,20 +64,28 @@ int runGenTelas(List<String> args) {
     final names =
         _git(['ls-tree', '-r', '--name-only', ref], cwd: root)
             .split('\n')
-            .where((p) => p.isNotEmpty && isPrintSizesPath(p))
+            .where((p) => p.isNotEmpty && isPrintSizesCandidate(p))
             .toList()
           ..sort();
+
+    if (names.isEmpty) {
+      stderr.writeln('nenhum print_sizes.txt em $ref sob docs/pr-assets/');
+      return 1;
+    }
 
     final files = <({String path, String content})>[];
     for (final path in names) {
       files.add((path: path, content: _git(['show', '$ref:$path'], cwd: root)));
     }
 
-    final index = buildTelasIndex(files);
-    final markdown = buildTelasMarkdown(
-      index: index,
-      repoUrl: repoUrl,
-      assetsBranch: branch,
+    final addedAt = _loadSha7AddedAt(ref, root);
+    final index = buildTelasIndex(files, sha7AddedAt: addedAt);
+    final github = Platform.environment['GITHUB_ACTIONS'] == 'true';
+    emitSkipWarnings(
+      skippedFiles: index.skippedFiles,
+      skippedLines: index.skipped,
+      sink: stderr,
+      githubAnnotations: github,
     );
 
     final variantIds = (index.variants.map((v) => v.id).toList()..sort()).join(
@@ -81,11 +93,35 @@ int runGenTelas(List<String> args) {
     );
     stderr.writeln(
       'telas: ${index.prints.length} print(s), ${index.filesParsed} arquivo(s), '
+      '${index.skippedFiles.length} arquivo(s) pulado(s), '
       'formatos: ${variantIds.isEmpty ? '(nenhum)' : variantIds}',
     );
 
+    final status = telasGeneratorExitCode(
+      candidateCount: index.candidateCount,
+      skippedFileCount: index.skippedFiles.length,
+      strict: strict,
+    );
+    if (status != 0) {
+      if (index.candidateCount == 0) {
+        stderr.writeln('nenhum print_sizes.txt encontrado no ref');
+      }
+      if (strict && index.skippedFiles.isNotEmpty) {
+        stderr.writeln(
+          '--strict: ${index.skippedFiles.length} print_sizes.txt pulado(s)',
+        );
+      }
+      return status;
+    }
+
+    final markdown = buildTelasMarkdown(
+      index: index,
+      repoUrl: repoUrl,
+      assetsBranch: branch,
+    );
+
     if (check) {
-      final file = File('$root/$output');
+      final file = File(output.startsWith('/') ? output : '$root/$output');
       if (!file.existsSync()) {
         stderr.writeln(
           '$output não existe. Rode: dart run tool/gen_telas.dart',
@@ -121,16 +157,38 @@ const _usage = '''
 Gera docs/qa/telas.md a partir dos print_sizes.txt na branch pr-assets.
 
   dart run tool/gen_telas.dart
-  dart run tool/gen_telas.dart --ref origin/pr-assets --check
+  dart run tool/gen_telas.dart --ref origin/pr-assets --out /tmp/telas.md
+  dart run tool/gen_telas.dart --check
+  dart run tool/gen_telas.dart --strict
 
 Opções:
   --ref <git-ref>     Ref git (default: origin/pr-assets)
-  --output, -o <path> Arquivo de saída (default: docs/qa/telas.md)
+  --output, -o, --out Arquivo de saída (default: docs/qa/telas.md)
   --branch <name>     Nome da branch nas URLs (default: pr-assets)
   --repo-url <url>    URL https do GitHub (default: origin)
-  --check             Falha se o arquivo gerado divergir
+  --check             Falha se o arquivo gerado divergir (uso local)
+  --strict            Falha se algum print_sizes.txt for pulado inteiro
   --help              Esta ajuda
 ''';
+
+Map<String, int> _loadSha7AddedAt(String ref, String cwd) {
+  try {
+    final log = _git([
+      'log',
+      '--reverse',
+      '--diff-filter=A',
+      '--pretty=format:COMMIT %ct',
+      '--name-only',
+      ref,
+      '--',
+      'docs/pr-assets',
+    ], cwd: cwd);
+    return parseSha7AddedAt(log);
+  } on ProcessException catch (e) {
+    stderr.writeln('aviso: git log de datas do pr-assets falhou: $e');
+    return {};
+  }
+}
 
 String _git(List<String> args, {String? cwd}) {
   final result = Process.runSync(

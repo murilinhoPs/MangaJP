@@ -2,7 +2,7 @@
 <!-- formatos: v0-filename-wxh-bytes, v1-head_sha-sha256-continued, v1-head_sha-wxh-bytes, v2-head-colon-inline-sha256 -->
 # Índice de telas (QA)
 
-Este arquivo é **gerado** a partir dos `print_sizes.txt` na branch [`pr-assets`](https://github.com/murilinhoPs/MangaJP/tree/pr-assets/docs/pr-assets). Não edite à mão.
+Este arquivo é **gerado** a partir dos `print_sizes.txt` na branch [`pr-assets`](https://github.com/murilinhoPs/MangaJP/tree/pr-assets/docs/pr-assets). Não edite à mão. Pode ficar atrás do `pr-assets`; isso não é erro. Regenerar em PR de manutenção.
 
 Para regenerar (lê `pr-assets` via git, sem fazer checkout):
 
@@ -12,7 +12,7 @@ dart run tool/gen_telas.dart
 
 Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×844 ou múltiplo inteiro de DPR; desktop/macOS 1280×800. Prints fora da regra são marcados com **fora da regra**. iOS: retrato, resolução pendente — não marcado.
 
-Último print de cada tela primeiro (PR mais alto, depois sha7). 85 print(s) em 11 arquivo(s).
+Último print de cada tela primeiro: PR mais alto, depois a pasta `<sha7>` mais recente no `pr-assets` (commit que a adicionou). 85 print(s) em 11 arquivo(s).
 
 ## Home
 
@@ -20,22 +20,22 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `android/home.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/android/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/android/home.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `79cb04e` | `android/home.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/79cb04e/android/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/79cb04e/android/home.png) |
+| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `android/home.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/android/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/android/home.png) |
 
 ### Linux desktop
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `79cb04e` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/79cb04e/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/79cb04e/desktop/home.png) |
+| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `desktop/home.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/desktop/home.png) |
 
 ### iOS
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `ios/home.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/ios/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/ios/home.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `79cb04e` | `ios/home.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/79cb04e/ios/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/79cb04e/ios/home.png) |
+| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `ios/home.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/ios/home.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/ios/home.png) |
 
 ## Galeria
 
@@ -52,15 +52,15 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_captura.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_captura.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_captura.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_captura.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_captura.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_captura.png) |
 
 ### Linux desktop
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_captura.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_captura.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_captura.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_captura.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_captura.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_captura.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_captura.png) |
 
 ## Recorte
 
@@ -70,8 +70,8 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | --- | --- | --- | --- | --- |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `ff1f688` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/ff1f688/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/ff1f688/android/crop.png) |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `2182efb` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/2182efb/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/2182efb/android/crop.png) |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/android/crop.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `android/crop.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/android/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/android/crop.png) |
 
 ### Linux desktop
@@ -80,8 +80,8 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | --- | --- | --- | --- | --- |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `ff1f688` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/ff1f688/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/ff1f688/desktop/crop.png) |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `2182efb` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/2182efb/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/2182efb/desktop/crop.png) |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/crop.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `desktop/crop.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/desktop/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/desktop/crop.png) |
 
 ### macOS
@@ -96,8 +96,8 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | --- | --- | --- | --- | --- |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `ff1f688` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/ff1f688/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/ff1f688/ios/crop.png) |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `2182efb` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/2182efb/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/2182efb/ios/crop.png) |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/ios/crop.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/crop.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `ios/crop.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/ios/crop.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/ios/crop.png) |
 
 ## Leitor
@@ -106,24 +106,24 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/page.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `android/page.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/android/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/android/page.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/page.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `android/page.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/android/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/android/page.png) |
 
 ### Linux desktop
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/page.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `desktop/page.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/page.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/page.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `desktop/page.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/desktop/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/desktop/page.png) |
 
 ### iOS
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/page.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `ios/page.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/ios/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/ios/page.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/page.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `ios/page.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/ios/page.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/ios/page.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `ios/swipe.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/ios/swipe.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/ios/swipe.png) |
 
@@ -134,20 +134,20 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
 | [#42](https://github.com/murilinhoPs/MangaJP/pull/42) | `bb18ff5` | `m125_phone_caderno_chip_ignorado.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-42/bb18ff5/m125_phone_caderno_chip_ignorado.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-42/bb18ff5/m125_phone_caderno_chip_ignorado.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_chip_ignorado.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_chip_ignorado.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_chip_ignorado.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_chip_ignorado.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_chip_ignorado.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_chip_ignorado.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_detail_learning.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_learning.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_chip_ignorado.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_chip_ignorado.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_chip_ignorado.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_detail_learning.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_detail_learning.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_detail_saved.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_saved.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_detail_learning.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_learning.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_detail_saved.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_detail_saved.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_dialog.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_dialog.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_detail_saved.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_detail_saved.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_dialog.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_dialog.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_list.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_list.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_dialog.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_dialog.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_list.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_list.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_no_results.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_no_results.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_list.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_list.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_phone_caderno_no_results.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_phone_caderno_no_results.png) |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/word.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/word.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_phone_caderno_no_results.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_phone_caderno_no_results.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `android/word.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/android/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/android/word.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `android/word.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/android/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/android/word.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `android/word.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/android/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/android/word.png) |
 
 ### Linux desktop
@@ -155,26 +155,26 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
 | [#42](https://github.com/murilinhoPs/MangaJP/pull/42) | `bb18ff5` | `m125_desktop_caderno_chip_ignorado.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-42/bb18ff5/m125_desktop_caderno_chip_ignorado.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-42/bb18ff5/m125_desktop_caderno_chip_ignorado.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_detail_learning.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_learning.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_caderno_detail_learning.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_detail_learning.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_detail_saved.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_saved.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_detail_learning.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_learning.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_learning.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_caderno_detail_saved.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_detail_saved.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_dialog.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_dialog.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_detail_saved.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_saved.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_detail_saved.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_caderno_dialog.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_dialog.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_list.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_list.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_dialog.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_dialog.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_caderno_list.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_list.png) |
-| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_no_results.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_no_results.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_list.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_list.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_list.png) |
 | [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `9029318` | `m125_desktop_caderno_no_results.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/9029318/m125_desktop_caderno_no_results.png) |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/word.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/word.png) |
+| [#41](https://github.com/murilinhoPs/MangaJP/pull/41) | `b3eab55` | `m125_desktop_caderno_no_results.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_no_results.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-41/b3eab55/m125_desktop_caderno_no_results.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `desktop/word.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/desktop/word.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `desktop/word.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/desktop/word.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `desktop/word.png` | 1280×800 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/desktop/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/desktop/word.png) |
 
 ### iOS
 
 | PR | sha7 | arquivo | dimensões | imagem |
 | --- | --- | --- | --- | --- |
-| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/word.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/word.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `b32d250` | `ios/word.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/b32d250/ios/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/b32d250/ios/word.png) |
+| [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `bd489f7` | `ios/word.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/bd489f7/ios/word.png) |
 | [#46](https://github.com/murilinhoPs/MangaJP/pull/46) | `038d401` | `ios/word.png` | 1206×2622 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-46/038d401/ios/word.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-46/038d401/ios/word.png) |
 
 ## Revisão
@@ -187,8 +187,8 @@ Dimensões obrigatórias: ver [`print-rules.md`](print-rules.md). Android 390×8
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `2182efb` | `android/review_dialog.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/2182efb/android/review_dialog.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/2182efb/android/review_dialog.png) |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `ff1f688` | `android/review_swipe.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/ff1f688/android/review_swipe.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/ff1f688/android/review_swipe.png) |
 | [#48](https://github.com/murilinhoPs/MangaJP/pull/48) | `2182efb` | `android/review_swipe.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-48/2182efb/android/review_swipe.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-48/2182efb/android/review_swipe.png) |
-| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `android/review_zero.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/android/review_zero.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/android/review_zero.png) |
 | [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `79cb04e` | `android/review_zero.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/79cb04e/android/review_zero.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/79cb04e/android/review_zero.png) |
+| [#49](https://github.com/murilinhoPs/MangaJP/pull/49) | `b75aa16` | `android/review_zero.png` | 390×844 | [blob](https://github.com/murilinhoPs/MangaJP/blob/pr-assets/docs/pr-assets/pr-49/b75aa16/android/review_zero.png) · [raw](https://github.com/murilinhoPs/MangaJP/raw/pr-assets/docs/pr-assets/pr-49/b75aa16/android/review_zero.png) |
 
 ### Linux desktop
 
