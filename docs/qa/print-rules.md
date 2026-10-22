@@ -25,15 +25,20 @@ Teste de widget ou golden **sozinho não conta**. Sem esses prints o PR **não**
 | **Android** | **obrigatório 390×844**, retrato, **sem hover** | tela do emulador |
 | **Desktop** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
-| **iOS** | **sem exigência de resolução** | iPhone 17 **ou** qualquer simulador, **retrato** (Murilo, 2026-10-13; [ADR-0003](../adr/0003-ios-plataforma-secundaria.md)) |
+| **iOS** | retrato; resolução **Pendente** | ver nota abaixo |
 
-Android 390×844 e desktop 1280×800 **não** são opcionais. macOS 1x 1280×800 sRGB sem P3 **não** é opcional. iOS continua sem resolução mínima/máxima.
+Android 390×844 e desktop 1280×800 **não** são opcionais. macOS 1x 1280×800 sRGB sem P3 **não** é opcional.
+
+> Pendente (confirmação do Murilo): «iPhone 17 ou qualquer simulador em retrato, sem exigência de resolução». Há divergência entre iPhone 17 (iOS 27) **exclusivo** e **qualquer** simulador. [ADR-0003](../adr/0003-ios-plataforma-secundaria.md) registra a decisão 2026-10-13; este D1 não escolhe um dos lados.
 
 Telas que **só existem no layout largo** (sidebar, paleta Ctrl+K, rail) **não** vão no bloco Android. Ver a seção no fim.
 
 ## Cores
 
-Todo print precisa ter fundo **`#0E0D12`** e coral **`#FF5C7A`**, iguais a `color.bg` e `color.coral` em [`lib/core/theme/tokens.json`](../../lib/core/theme/tokens.json).
+A checagem vale para os **elementos que aparecem no print**, iguais a [`lib/core/theme/tokens.json`](../../lib/core/theme/tokens.json):
+
+- Fundo **`#0E0D12`** (`color.bg`) — **sempre**.
+- Coral **`#FF5C7A`** (`color.coral`) — **só** quando houver elemento coral na tela. Não exigir coral em print sem CTA / tile / kbd coral.
 
 ## `print_sizes.txt`
 

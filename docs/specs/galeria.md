@@ -10,6 +10,7 @@ Escolher uma imagem e cair em `/capture` no fluxo de crop, sem hop extra.
 
 - Home → gallery pick (`image_picker`) → `/capture` com a imagem.
 - Cancelar o picker **fica na Home**.
+- **macOS** (M1.32, [#50](https://github.com/murilinhoPs/MangaJP/pull/50), merge `6180f05`): `image_picker` → `image_picker_macos` → `file_selector_macos` abre `NSOpenPanel` (`public.image`). Exige `com.apple.security.files.user-selected.read-only` nos `.entitlements` (sandbox ligado). Cancelar o painel volta pra Home. CI falha se a key sair — [print-rules](../qa/print-rules.md).
 - **1º tile** do carrossel/grid de Capturas: «+ Nova da galeria», mesmo tamanho dos thumbs; borda dashed coral **1,5 px** `#FF5C7A`; ícone image+; label Inter 13 semibold coral; fundo coral 6%; **sem** fill sólido.
 - Header da seção: link coral **Galeria +** (no lugar de «3 de 3»). Desktop: atalho `G` como kbd JetBrains Mono coral.
 - Card antigo «Galeria / Escolher da galeria» **removido**.
@@ -20,5 +21,6 @@ Escolher uma imagem e cair em `/capture` no fluxo de crop, sem hop extra.
 - Tile «+ Nova da galeria», link **Galeria +** e atalho `G` (desktop) abrem o picker e, com imagem, `/capture`.
 - Cancelar o picker permanece em `/home`.
 - Visual do tile conforme tokens acima (coral dashed, sem fill sólido).
+- macOS: Galeria abre `NSOpenPanel`; escolher `~/MangaJP-QA/manga_test_page.png` cai em `/capture`; cancelar fica na Home.
 
-> Pendente: seletor nativo fora do Android (macOS `NSOpenPanel`, Linux, web). O PRD não fecha plataforma de desktop como produto.
+> Pendente: seletor nativo em Linux e web. O PRD não fecha essas plataformas como produto.

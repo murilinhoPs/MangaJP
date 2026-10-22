@@ -1,0 +1,45 @@
+name: Feature
+description: Funcionalidade nova ou mudança de comportamento
+title: "[feat] "
+labels: ["type:feature"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      description: Corresponde à label `area:*`.
+      options:
+        - capture
+        - ocr
+        - dictionary
+        - review
+        - shell
+        - platform
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Spec
+      description: Caminho em `docs/specs/` (ex. `docs/specs/captura.md`).
+      placeholder: docs/specs/captura.md
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: O que muda e por quê. Sem inventar AC que a spec não tem.
+      placeholder: Hoje… Quero…
+    validations:
+      required: true
+  - type: textarea
+    id: ac
+    attributes:
+      label: Critérios de aceite
+      description: Checklist. Um AC por item. Preferir IDs da spec (AC-share, F3…).
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true

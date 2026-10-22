@@ -25,6 +25,8 @@ Não há `qa/telas.md` neste D1 — índice de telas entra depois, por script.
 
 QA de PR não entra em `docs/assets/`. Prints de QA ficam na branch `pr-assets`.
 
+Templates GitHub (fora de `/docs`): [`.github/pull_request_template.md`](../.github/pull_request_template.md), [`.github/ISSUE_TEMPLATE/feature.yml`](../.github/ISSUE_TEMPLATE/feature.yml), [`.github/ISSUE_TEMPLATE/bug.yml`](../.github/ISSUE_TEMPLATE/bug.yml). Labels `type:feature` / `type:bug` e área `area:*` (capture, ocr, dictionary, review, shell, platform).
+
 ## Regras
 
 1. **PR que muda comportamento** atualiza a spec ou o ADR correspondente **no mesmo PR**. O review cobra.
