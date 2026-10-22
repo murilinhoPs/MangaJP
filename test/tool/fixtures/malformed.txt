@@ -1,0 +1,12 @@
+head: deadbeef
+head_sha abc
+head_sha7 ab
+this is garbage
+foo.png
+ios/page.png           no-size-here
+  sha256 deadbeef
+android/ok.png           390x844  12 bytes
+  sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+Pixel checks
+- not a print
+iOS iPhone 17 / iOS 27  simctl io  1206x2622

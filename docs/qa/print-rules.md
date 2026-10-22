@@ -52,6 +52,8 @@ head: <SHA-1 completo do commit, 40 caracteres>
 
 O `head:` tem que ser o SHA-1 do **head final**. Se o PR ganhar commit novo, apagar os prints do head antigo e refazer.
 
+Índice gerado dessas linhas: [`telas.md`](telas.md). Regenerar em PR de manutenção com `dart run tool/gen_telas.dart`. Pode ficar atrás do `pr-assets` — isso não é erro.
+
 ## Seletor de arquivos
 
 Prints do picker usam a pasta neutra **`~/MangaJP-QA/`** com a fixture `test/fixtures/manga_test_page.png`. Nunca arquivo pessoal (repo público).

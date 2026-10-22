@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch pr-assets (blobless)
+        run: git fetch --filter=blob:none origin pr-assets:refs/remotes/origin/pr-assets
       - run: python3 tools/build_jmdict_sqlite/test_smoke.py
       - run: python3 tools/cer_bakeoff/test_cer.py
       - uses: subosito/flutter-action@v2
@@ -19,6 +21,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Parse pr-assets print_sizes.txt
+        run: dart run tool/gen_telas.dart --ref origin/pr-assets --out "$RUNNER_TEMP/telas.md"
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
       - run: flutter test
