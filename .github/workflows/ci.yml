@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch pr-assets (blobless)
+        run: git fetch --depth=1 --filter=blob:none origin pr-assets:refs/remotes/origin/pr-assets
       - name: macOS gallery file entitlement
         run: |
           for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
@@ -24,6 +26,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Check docs/qa/telas.md
+        run: dart run tool/gen_telas.dart --check --ref origin/pr-assets
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
       - run: flutter test

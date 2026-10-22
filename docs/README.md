@@ -18,10 +18,11 @@ Medição OCR M0.3 (números, protocolo): [`m0.3-cer-bakeoff.md`](m0.3-cer-bakeo
 | [`specs/`](specs/captura.md) | Uma spec por feature. Comportamento atual. |
 | [`adr/`](adr/README.md) | Decisões. Índice e template. |
 | [`qa/print-rules.md`](qa/print-rules.md) | Como tirar e anexar print. |
+| [`qa/telas.md`](qa/telas.md) | Índice gerado das telas (`print_sizes.txt` em `pr-assets`). |
 | `assets/` | Só prints oficiais e finais. |
 | `m0.3-cer-bakeoff.md` | Bake-off CER (medição). Não reescrever números. |
 
-Não há `qa/telas.md` neste D1 — índice de telas entra depois, por script.
+Índice de telas: [`qa/telas.md`](qa/telas.md), gerado por `dart run tool/gen_telas.dart` (lê a branch `pr-assets` via git, sem checkout).
 
 QA de PR não entra em `docs/assets/`. Prints de QA ficam na branch `pr-assets`.
 

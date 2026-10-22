@@ -1,0 +1,26 @@
+head_sha 2182efbc68b37a25d3e2b1d109c6ce3366a9b1dd
+head_sha7 2182efb
+
+ios/review_dialog.png    1206x2622  133458 bytes
+  sha256 6f2898b7a33687e419f3ed289bc0c4807633a01a51cb670df545cd93e91f4070
+ios/review_swipe.png     1206x2622  197673 bytes
+  sha256 73cf1051361c1053bd35e4ae0413c5b202070ac88cc71ea8ab0ec3b46489e2ff
+ios/crop.png             1206x2622  102558 bytes
+  sha256 7ee7c0ebdd06dd3afa8948cc4f8d0d2054e0fe6182bcd5bd0631c31972b05d93
+android/review_dialog.png    390x844  21554 bytes
+  sha256 ed85e327482ccb2b6d45171039539fb0ea1ce27f91a5bbe5dc400271a25f0650
+android/review_swipe.png     390x844  38001 bytes
+  sha256 71519f8014f32b14f372f90e8d38d58056e2aba1b424d1052fbb8d8808c144b4
+android/crop.png             390x844  13501 bytes
+  sha256 2e713c9668e00baad2abd047d874fcdc4a851b1aeb9cbf2e689787edfe8d8a
+desktop/review_dialog.png    1280x800  76561 bytes
+  sha256 cff18a246c4bb607a83b2d2b77d47d1abde6a7a31c02af1176cdd812fb249113
+desktop/review_swipe.png     1280x800  89311 bytes
+  sha256 f5f27bfabf7c4d0cab92a4d77c9ddb6b78aaf902327956294269fdf14ee0e54c
+desktop/crop.png             1280x800  71229 bytes
+  sha256 96888bffc45b0ef1c4c0b5081ce42153c0a26e7ba4b1b67b5f52d7947f35b3d6
+
+iOS iPhone 17 / iOS 27  simctl io  1206x2622
+Android pixel_390      adb screencap  390x844
+Desktop macOS          app area only  1280x800  (Flutter view, opaque corners)
+ios/crop.png           crop touches canvas top; badge 1 below status bar
