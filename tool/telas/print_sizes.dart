@@ -6,6 +6,7 @@
 /// - v1b: v1 plus a following `  sha256 <hex>` line
 /// - v2: `head: <SHA-1>` + `platform/file.png WxH sha256:<hex>`
 ///   (optional `coral=` / `bg=` tokens before sha256)
+library;
 
 /// Format families that actually appear on `pr-assets`.
 enum PrintSizesVariant {
