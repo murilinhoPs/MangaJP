@@ -539,6 +539,90 @@ desktop/home.png 1024x768 sha256:ddddddddddddddddddddddddddddddddddddddddddddddd
     );
   });
 
+  group('gen_telas --check lag vs drift', () {
+    const repo = 'https://github.com/murilinhoPs/MangaJP';
+    const indexed = '''
+head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+android/home.png 390x844 sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+''';
+    const extra = '''
+head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+android/home.png 390x844 sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+''';
+
+    List<({String path, String content})> files({bool extraPr = false}) {
+      return [
+        (
+          path: 'docs/pr-assets/pr-10/aaaaaaa/print_sizes.txt',
+          content: indexed,
+        ),
+        if (extraPr)
+          (
+            path: 'docs/pr-assets/pr-99/bbbbbbb/print_sizes.txt',
+            content: extra,
+          ),
+      ];
+    }
+
+    test('extra print_sizes from another PR in pr-assets does not fail', () {
+      final committed = files();
+      final existing = buildTelasMarkdown(
+        index: buildTelasIndex(committed),
+        repoUrl: repo,
+      );
+      expect(indexedPrAssetFolders(existing), {'pr-10/aaaaaaa'});
+      final withExtra = files(extraPr: true);
+      expect(
+        printSizesForTelasCheck(
+          existingMarkdown: existing,
+          files: withExtra,
+        ).map((f) => f.path),
+        ['docs/pr-assets/pr-10/aaaaaaa/print_sizes.txt'],
+      );
+      expect(
+        telasCheckExitCode(
+          existingMarkdown: existing,
+          files: withExtra,
+          repoUrl: repo,
+        ),
+        0,
+      );
+      final full = buildTelasMarkdown(
+        index: buildTelasIndex(withExtra),
+        repoUrl: repo,
+      );
+      expect(existing, isNot(full));
+    });
+
+    test('real telas.md drift still fails', () {
+      final committed = files();
+      final existing = buildTelasMarkdown(
+        index: buildTelasIndex(committed),
+        repoUrl: repo,
+      );
+      final drifted = existing.replaceFirst(
+        'android/home.png',
+        'android/hacked.png',
+      );
+      expect(
+        telasCheckExitCode(
+          existingMarkdown: drifted,
+          files: committed,
+          repoUrl: repo,
+        ),
+        1,
+      );
+      expect(
+        telasCheckExitCode(
+          existingMarkdown: drifted,
+          files: files(extraPr: true),
+          repoUrl: repo,
+        ),
+        1,
+      );
+    });
+  });
+
   test('ignores print_sizes paths outside pr-N/sha7', () {
     expect(
       isPrintSizesPath('docs/pr-assets/m2.1-smoke/3a69ab8/print_sizes.txt'),
