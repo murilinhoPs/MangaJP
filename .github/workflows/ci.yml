@@ -35,10 +35,12 @@ jobs:
           check() {
             local file="$1"
             local key="$2"
+            # Dots are key-path separators; entitlement ids must be escaped.
+            local escaped="${key//./\\.}"
             local value
             local err
             err=$(mktemp)
-            if ! value=$(plutil -extract "$key" raw -o - "$file" 2>"$err"); then
+            if ! value=$(plutil -extract "$escaped" raw -o - "$file" 2>"$err"); then
               echo "error: missing entitlement '$key' in $file" >&2
               cat "$err" >&2
               rm -f "$err"
