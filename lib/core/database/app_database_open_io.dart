@@ -16,26 +16,31 @@ QueryExecutor openMangaJpDatabase() {
   }
   return driftDatabase(
     name: 'mangajp',
-    native: const DriftNativeOptions(
-      databaseDirectory: linuxDatabaseDirectory,
-    ),
+    native: const DriftNativeOptions(databaseDirectory: linuxDatabaseDirectory),
   );
 }
 
 /// Linux-only directory for `mangajp.sqlite`.
 ///
-/// Android and iOS use Drift’s default (`getApplicationDocumentsDirectory()`).
-/// On Linux that call can fail when XDG Documents is missing, so we try
-/// app-support, then documents, then system temp.
+/// Migrates the legacy APPLICATION_ID folder when needed. On copy failure
+/// this returns the legacy folder so Drift does not create an empty database
+/// under the new id. Android and iOS use Drift’s default documents directory.
 Future<Directory> linuxDatabaseDirectory() async {
-  maybeMigrateLinuxAppSupport();
   try {
-    return await getApplicationSupportDirectory();
+    final dir = resolveLinuxAppSupportDirectory();
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    return dir;
   } catch (_) {
     try {
-      return await getApplicationDocumentsDirectory();
+      return await getApplicationSupportDirectory();
     } catch (_) {
-      return Directory.systemTemp;
+      try {
+        return await getApplicationDocumentsDirectory();
+      } catch (_) {
+        return Directory.systemTemp;
+      }
     }
   }
 }
