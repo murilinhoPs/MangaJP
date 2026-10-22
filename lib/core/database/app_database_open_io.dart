@@ -24,23 +24,35 @@ QueryExecutor openMangaJpDatabase() {
 ///
 /// Migrates the legacy APPLICATION_ID folder when needed. On copy failure
 /// this returns the legacy folder so Drift does not create an empty database
-/// under the new id. Android and iOS use Drift’s default documents directory.
+/// under the new id. If XDG cannot be resolved, recovers from
+/// `getApplicationSupportDirectory()` as the new-id folder (sibling legacy
+/// id is still migrated) instead of opening that folder blindly.
+/// Android and iOS use Drift’s default documents directory.
 Future<Directory> linuxDatabaseDirectory() async {
   try {
-    final dir = resolveLinuxAppSupportDirectory();
-    if (!dir.existsSync()) {
-      dir.createSync(recursive: true);
-    }
-    return dir;
-  } catch (_) {
+    return _ensureDirectory(resolveLinuxAppSupportDirectory());
+  } on Object catch (error) {
     try {
-      return await getApplicationSupportDirectory();
-    } catch (_) {
+      final support = await getApplicationSupportDirectory();
+      return _ensureDirectory(
+        resolveLinuxAppSupportDirectoryFromPathProvider(
+          support,
+          resolveError: error,
+        ),
+      );
+    } on Object {
       try {
         return await getApplicationDocumentsDirectory();
-      } catch (_) {
+      } on Object {
         return Directory.systemTemp;
       }
     }
   }
+}
+
+Directory _ensureDirectory(Directory dir) {
+  if (!dir.existsSync()) {
+    dir.createSync(recursive: true);
+  }
+  return dir;
 }
