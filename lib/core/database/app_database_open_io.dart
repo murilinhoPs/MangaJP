@@ -4,6 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'linux_app_support_migration.dart';
+
 /// Opens the persisted Drift DB on native platforms.
 ///
 /// Android and iOS keep Drift’s default documents directory. Linux uses
@@ -26,6 +28,7 @@ QueryExecutor openMangaJpDatabase() {
 /// On Linux that call can fail when XDG Documents is missing, so we try
 /// app-support, then documents, then system temp.
 Future<Directory> linuxDatabaseDirectory() async {
+  maybeMigrateLinuxAppSupport();
   try {
     return await getApplicationSupportDirectory();
   } catch (_) {
