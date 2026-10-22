@@ -8,7 +8,7 @@
 PRODUCT_NAME = manga_jp
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = dev.murilinhops.mangaJp
+PRODUCT_BUNDLE_IDENTIFIER = dev.murilinhops.mangajp
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 dev.murilinhops. All rights reserved.
