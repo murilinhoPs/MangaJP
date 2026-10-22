@@ -205,10 +205,24 @@ Future<_ItestFixture> _openIsolatedApp(WidgetTester tester) async {
     );
   }
 
-  final wordId = await WordsRepository(
-    db,
-  ).saveFromLookup(cropId: crop.id, seq: 1358280, lemma: '食べる', reading: 'たべる');
-  await FlashcardsRepository(db).learn(wordId);
+  final words = WordsRepository(db);
+  final cards = FlashcardsRepository(db);
+  final wordId = await words.saveFromLookup(
+    cropId: crop.id,
+    seq: 1358280,
+    lemma: '食べる',
+    reading: 'たべる',
+  );
+  await cards.learn(wordId);
+  // Leave-review dialog only shows when ≥1 card was rated and the
+  // session is not done. One due card + Good → isDone, no dialog.
+  final extraId = await words.saveFromLookup(
+    cropId: crop.id,
+    seq: 9990201,
+    lemma: '残る',
+    reading: 'のこる',
+  );
+  await cards.learn(extraId);
 
   await tester.pumpWidget(
     MangaJpApp(overrides: [appDatabaseProvider.overrideWith((ref) => db)]),
