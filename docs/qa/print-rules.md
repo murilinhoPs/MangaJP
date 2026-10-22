@@ -12,9 +12,11 @@ Branch `pr-assets`. `N` = número do PR. `<head>` = SHA-1 **curto** do **head fi
 
 ## Quando é obrigatório
 
-Todo PR que mexe em **design, telas ou tema** precisa de print de **emulador/simulador** no corpo do PR.
+Todo PR que mexe em **design, telas ou tema** precisa de print de emulador no corpo do PR.
 
-Teste de widget ou golden **sozinho não conta**. Sem esses prints o PR **não** é squash-mergeado.
+Obrigatórios na **nuvem** (todo PR que mexe em tela): **Android 390×844** e **desktop Linux 1280×800**. Widget/golden sozinho **não conta**. Sem esses dois o PR **não** é squash-mergeado.
+
+Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac offline](#mac-offline-2026-10-21).
 
 `<head>` no caminho e no `print_sizes.txt` é sempre o **head final** do PR. Print de head antigo não vale: se o head mudar, refazer.
 
@@ -23,11 +25,11 @@ Teste de widget ou golden **sozinho não conta**. Sem esses prints o PR **não**
 | Plataforma | Tamanho | Recorte |
 | --- | --- | --- |
 | **Android** | **obrigatório 390×844**, retrato, **sem hover** | tela do emulador |
-| **Desktop** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
+| **Desktop Linux** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **iOS** | retrato; resolução **Pendente** | ver nota abaixo |
 
-Android 390×844 e desktop 1280×800 **não** são opcionais. macOS 1x 1280×800 sRGB sem P3 **não** é opcional.
+Android 390×844 e desktop Linux 1280×800 **não** são opcionais (nuvem). Formato macOS (1x 1280×800 sRGB sem P3) vale **quando** o print macOS é capturado; se o worker do Mac estiver desligado, ver [Mac offline](#mac-offline-2026-10-21).
 
 > Pendente (confirmação do Murilo): «iPhone 17 ou qualquer simulador em retrato, sem exigência de resolução». Há divergência entre iPhone 17 (iOS 27) **exclusivo** e **qualquer** simulador. [ADR-0003](../adr/0003-ios-plataforma-secundaria.md) registra a decisão 2026-10-13; este D1 não escolhe um dos lados.
 
@@ -67,6 +69,26 @@ Bloco = **saída real** de um run no **head final**. Nunca escrito à mão.
 Incluir a saída de `git rev-parse --short HEAD` **junto** da saída do teste, para provar que rodou nesse head.
 
 Se o PR **não** toca `integration_test/` **nem** o fluxo que a suíte cobre, o bloco é `n/a` + **uma linha** de motivo.
+
+Se a suíte **só roda no Mac** e o worker está desligado: `n/a: Mac offline — #54 item: <link>` — ver [Mac offline](#mac-offline-2026-10-21).
+
+## Mac offline (2026-10-21)
+
+Decisão do Murilo: todo trabalho roda na **nuvem** por padrão.
+
+`integration_test` e prints de **macOS** ou **iOS** que só rodam no Mac **não bloqueiam** o PR enquanto o worker do Mac estiver desligado.
+
+Nesse caso o bloco do PR fica:
+
+```text
+n/a: Mac offline — #54 item: <link>
+```
+
+O `<link>` aponta para um **item** na issue fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54). Cada item lista PR de origem, o que rodar e o head. **Sem esse link o review bloqueia.**
+
+Quando o worker do Mac for ligado, a fila da #54 é rodada **inteira** e o review revalida esses itens.
+
+Prints de **Android 390×844** e **desktop Linux 1280×800** continuam obrigatórios — rodam na nuvem.
 
 ## macOS — entitlement do picker
 

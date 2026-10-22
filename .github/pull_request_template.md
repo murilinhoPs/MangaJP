@@ -4,12 +4,12 @@ Head final (SHA-1, 40 caracteres):
 
 ## Prints
 
-Conforme [`docs/qa/print-rules.md`](../docs/qa/print-rules.md). Obrigatório se o PR mexe em design, telas ou tema (widget/golden sozinho não conta).
+Conforme [`docs/qa/print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/main/docs/qa/print-rules.md). Obrigatório se o PR mexe em design, telas ou tema (widget/golden sozinho não conta).
 
-- [ ] Android **390×844**, retrato, **sem hover**
-- [ ] Desktop **1280×800**, **só a área do app** (sem moldura / title bar; cantos opacos)
-- [ ] macOS **1x 1280×800** sRGB, **sem** Display P3, só a área do app
-- [ ] iOS retrato — resolução ver print-rules (`> Pendente:`)
+- [ ] Android **390×844**, retrato, **sem hover** — obrigatório na nuvem
+- [ ] Desktop Linux **1280×800**, **só a área do app** (sem moldura / title bar; cantos opacos) — obrigatório na nuvem
+- [ ] macOS **1x 1280×800** sRGB, **sem** Display P3, só a área do app — ou `n/a: Mac offline — #54 item: <link>`
+- [ ] iOS retrato — resolução ver print-rules (`> Pendente:`) — ou `n/a: Mac offline — #54 item: <link>`
 - [ ] Cores: fundo `#0E0D12` **sempre**; coral `#FF5C7A` **só** se a tela tiver elemento coral
 - [ ] `print_sizes.txt` — `head:` SHA-1 completo (40) + sha256 (64) de cada arquivo
 - [ ] Prints no **head final** (head antigo não vale)
@@ -18,9 +18,14 @@ Conforme [`docs/qa/print-rules.md`](../docs/qa/print-rules.md). Obrigatório se 
 
 Branch `pr-assets`: `docs/pr-assets/pr-N/<head>/<plataforma>/`.
 
+Mac-only (macOS / iOS) com worker desligado: o item na fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54) tem que existir **antes** do review. Sem o link o review bloqueia.
+
 ## `integration_test`
 
-Saída **real** do run no head final (nunca escrita à mão), **junto** de `git rev-parse --short HEAD`. Se o PR não toca `integration_test/` nem o fluxo coberto: `n/a` + uma linha de motivo.
+Saída **real** do run no head final (nunca escrita à mão), **junto** de `git rev-parse --short HEAD`.
+
+- PR não toca `integration_test/` nem o fluxo coberto: `n/a` + uma linha de motivo.
+- Suíte só no Mac e worker desligado: `n/a: Mac offline — #54 item: <link>` (sem o link o review bloqueia).
 
 ```
 $ git rev-parse --short HEAD
@@ -29,3 +34,5 @@ $ git rev-parse --short HEAD
 $ flutter test integration_test …
 
 ```
+
+`n/a: Mac offline — #54 item: <link>`
