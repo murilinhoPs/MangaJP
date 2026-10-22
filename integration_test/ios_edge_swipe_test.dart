@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/shell/shell_layout.dart';
+import 'package:manga_jp/core/theme/app_breakpoints.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_word_page.dart';
@@ -16,6 +17,22 @@ void main() {
   testWidgets(
     'real iOS edge swipe pops Leitor, word detail, and Review (confirm)',
     (tester) async {
+      // Nav cards (ShellKeys.navCard) exist only in the narrow chrome.
+      // AppChrome swaps them for the desktop rail when
+      // MediaQuery width >= AppBreakpoints.wide (900) — the same cut
+      // ShellLayout.isWide uses. macOS defaults to 1280, so this file
+      // would fail there even though iPhone stays on nav cards.
+      final logicalWidth =
+          tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      if (logicalWidth >= AppBreakpoints.wide) {
+        markTestSkipped(
+          'needs mobile nav cards; logical width '
+          '${logicalWidth.toStringAsFixed(0)} >= ${AppBreakpoints.wide} '
+          'uses the desktop rail',
+        );
+        return;
+      }
+
       await tester.pumpWidget(const MangaJpApp());
       await tester.pumpAndSettle(const Duration(seconds: 5));
 

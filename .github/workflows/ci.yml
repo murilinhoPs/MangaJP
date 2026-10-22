@@ -12,11 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: macOS gallery file entitlement
-        run: |
-          for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
-            grep -A1 'com.apple.security.files.user-selected.read-only' "$f" | grep -q '<true/>'
-          done
       - run: python3 tools/build_jmdict_sqlite/test_smoke.py
       - run: python3 tools/cer_bakeoff/test_cer.py
       - uses: subosito/flutter-action@v2
@@ -27,3 +22,38 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
       - run: flutter test
+
+  macos-entitlements:
+    name: macOS entitlements
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check sandbox and user-selected file entitlements
+        shell: bash
+        run: |
+          set -euo pipefail
+          check() {
+            local file="$1"
+            local key="$2"
+            # Dots are key-path separators; entitlement ids must be escaped.
+            local escaped="${key//./\\.}"
+            local value
+            local err
+            err=$(mktemp)
+            if ! value=$(plutil -extract "$escaped" raw -o - "$file" 2>"$err"); then
+              echo "error: missing entitlement '$key' in $file" >&2
+              cat "$err" >&2
+              rm -f "$err"
+              exit 1
+            fi
+            rm -f "$err"
+            if [ "$value" != "true" ]; then
+              echo "error: entitlement '$key' in $file is '$value', expected true" >&2
+              exit 1
+            fi
+            echo "ok $key=true $file"
+          }
+          for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
+            check "$f" com.apple.security.app-sandbox
+            check "$f" com.apple.security.files.user-selected.read-only
+          done
