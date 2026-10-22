@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -187,6 +188,13 @@ Future<_ItestFixture> _openIsolatedApp(WidgetTester tester) async {
     height: 0.6,
     ocrText: 'あいうえおかきくけこさしすせ高い猫を食べた。',
     engineId: 'itest',
+  );
+  // Drift stores DateTime as whole seconds. Demo seed uses DateTime.now()
+  // in beforeOpen, so bump so this page is strictly the most recent.
+  await (db.update(db.capturedPages)..where((t) => t.id.equals(pageId))).write(
+    CapturedPagesCompanion(
+      createdAt: Value(DateTime.now().toUtc().add(const Duration(seconds: 2))),
+    ),
   );
 
   final recent = await pages.listRecentPages(limit: 1);
