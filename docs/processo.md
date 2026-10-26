@@ -21,7 +21,7 @@ docs/
   adr/NNNN-titulo.md      uma decisão por arquivo
   qa/print-rules.md       como tirar e anexar print
   qa/telas.md             índice GERADO das telas (não editar à mão)
-  assets/                 só prints oficiais e finais
+  assets/                 só prints oficiais e finais (criada quando entrar o primeiro print oficial)
   <medições>.md           ex. m0.3-cer-bakeoff.md (números não se reescrevem)
 .github/
   pull_request_template.md
@@ -64,7 +64,7 @@ docs/
 Toda task é uma issue, criada pelos templates:
 
 - **Feature** (`[feat] `, label `type:feature`): Área, caminho da Spec, Contexto, Critérios de aceite em checklist (um AC por item, usando os IDs da spec).
-- **Bug** (`type:bug`): mesmo esquema, com repro.
+- **Bug** (`[bug] `, label `type:bug`): Área, Plataforma, Head, Repro, Esperado, Obtido, Critérios de aceite.
 
 Issue "fila" pra trabalho que depende de hardware ausente. No MangaJP, a [#54](https://github.com/murilinhoPs/MangaJP/issues/54) é a fila Mac/iOS: cada item tem PR de origem, o que rodar e o head. O PR referencia o item com `n/a: Mac offline — #54 item: <link>`.
 
@@ -88,7 +88,7 @@ As áreas espelham as pastas de feature do código e as specs. Em projeto novo, 
 | Ordem | número | Ordem de execução dentro da prioridade |
 | Dono | dash, draft, tester, critique, radar, helm, motif, Murilo | Quem é responsável agora (bot ou pessoa) |
 
-Os campos nativos (Milestone, Labels, Linked PRs, Parent issue, Sub-issues) vêm de graça.
+Status, Ordem e Dono vêm da configuração do Project (não verificáveis pelo repo). Os campos nativos (Milestone, Labels, Linked PRs, Parent issue, Sub-issues) vêm de graça.
 
 ### Milestones
 
@@ -105,7 +105,7 @@ O [PR template](../.github/pull_request_template.md) obriga:
 - Checklist de prints (Android 390×844 e Linux 1280×800 obrigatórios em mudança de tela; macOS/iOS ou item na fila).
 - Saída **real** do `integration_test` junto do `git rev-parse --short HEAD`, ou `n/a` com motivo.
 
-O [CI](../.github/workflows/ci.yml) roda análise, testes, testes das tools, valida o `print_sizes.txt` da `pr-assets` com o gerador de telas e checa os entitlements do macOS. Regra de processo que dá pra virar check vira check.
+O [CI](../.github/workflows/ci.yml) roda análise, testes, testes das tools, `dart run tool/gen_telas.dart --ref origin/pr-assets` (parseia os `print_sizes.txt` da `pr-assets` e gera o índice de telas) e checa os entitlements do macOS. Regra de processo que dá pra virar check vira check.
 
 ## 4. Como o desenvolvimento flui
 
