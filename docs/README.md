@@ -15,6 +15,7 @@ Medição OCR M0.3 (números, protocolo): [`m0.3-cer-bakeoff.md`](m0.3-cer-bakeo
 | Pasta | Conteúdo |
 | --- | --- |
 | [`prd.md`](prd.md) | Visão, escopo, jornadas, stack. Linka as specs. |
+| [`processo.md`](processo.md) | Processo de desenvolvimento reutilizável (issues, labels, Project, fluxo, gates). |
 | [`specs/`](specs/captura.md) | Uma spec por feature. Comportamento atual. |
 | [`adr/`](adr/README.md) | Decisões. Índice e template. |
 | [`qa/print-rules.md`](qa/print-rules.md) | Como tirar e anexar print. |
