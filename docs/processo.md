@@ -15,6 +15,7 @@ README.md                 o que o app faz e como rodar (sem copiar comportamento
 docs/
   README.md               índice de /docs + regras + convenções
   prd.md                  visão, escopo, jornadas, stack; linka as specs
+  roadmap.md              visão das milestones (sem tasks)
   processo.md             processo de desenvolvimento (este arquivo)
   specs/<feature>.md      uma spec por feature, comportamento ATUAL
   adr/README.md           índice + template de ADR
@@ -186,3 +187,34 @@ Sem bots, os papéis continuam valendo: uma pessoa (ou uma IA) só troca de chap
 6. Criar a branch `pr-assets` órfã pra prints de QA.
 7. Criar a página de vitrine no Notion, só com resumo e links.
 8. Passar pra IA: "GitHub é a fonte da verdade; siga `docs/README.md` e os templates; toda task é issue no Project; PR fecha issue e atualiza spec."
+
+## 7. Planejamento em duas etapas
+
+### Etapa 1 — Preparação do projeto (visão geral)
+
+Depois da PRD, gere [`roadmap.md`](roadmap.md) com todas as milestones (M0, M1, M2…), sem quebrar em tasks. A PRD só aponta pro roadmap.
+
+Para cada milestone, só:
+
+- Objetivo em 1 frase (o que fica provado ou entregue no fim).
+- Escopo: lista das features da PRD (ids F#) que entram.
+- Critério de saída testável (ex.: "o fluxo X roda de ponta a ponta no Android").
+- Dependências ou decisões abertas que travam o começo dela.
+- Tamanho aproximado (P/M/G).
+
+M0 é sempre um spike de risco com go/no-go antes da M1.
+
+Não crie issues nem milestones no GitHub nesta etapa. Abra um PR só de docs e pare.
+
+### Etapa 2 — Planejamento de uma milestone (só quando ela for a próxima)
+
+Quando eu pedir "planejar a M<n>":
+
+1. Releia [`roadmap.md`](roadmap.md), a PRD e o que mudou desde a última milestone.
+2. Detalhe a milestone num doc curto (`docs/specs/m<n>.md`): escopo final, fora de escopo, questões em aberto, critérios de aceite por feature, critério de saída testável, riscos e ordem sugerida.
+3. Quebre em issues pequenas (uma por feature ou tela), cada uma com título, área, link pro doc, critérios de aceite, prioridade, ordem e "como verificar" (teste automatizado, fluxo manual, plataformas e se precisa de print).
+4. Me mostre o doc e a lista de issues e espere meu ok. Não crie nada antes.
+5. Depois do ok, crie o milestone `M<n> — <nome>` e as issues com `gh`, com labels, ligadas ao milestone, e adicione no Project com `Etapa` = `todo` e `Ordem`.
+6. Se o escopo mudou, atualize [`roadmap.md`](roadmap.md) num PR só de docs.
+
+Nunca abra issues de milestones futuras.
