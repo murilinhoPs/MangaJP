@@ -61,6 +61,18 @@ int runGenTelas(List<String> args) {
     repoUrl ??= stripGitRemote(
       _git(['remote', 'get-url', 'origin'], cwd: root),
     );
+    String? existingMarkdown;
+    if (check) {
+      final file = File(output.startsWith('/') ? output : '$root/$output');
+      if (!file.existsSync()) {
+        stderr.writeln(
+          '$output não existe. Rode: dart run tool/gen_telas.dart',
+        );
+        return 1;
+      }
+      existingMarkdown = utf8.decode(file.readAsBytesSync());
+    }
+
     final names =
         _git(['ls-tree', '-r', '--name-only', ref], cwd: root)
             .split('\n')
@@ -79,7 +91,20 @@ int runGenTelas(List<String> args) {
     }
 
     final addedAt = _loadSha7AddedAt(ref, root);
-    final index = buildTelasIndex(files, sha7AddedAt: addedAt);
+    final filesForIndex = existingMarkdown == null
+        ? files
+        : printSizesForTelasCheck(
+            existingMarkdown: existingMarkdown,
+            files: files,
+          );
+    if (check && filesForIndex.length != files.length) {
+      stderr.writeln(
+        '--check: ${files.length - filesForIndex.length} print_sizes.txt '
+        'novo(s) em pr-assets ignorado(s) (índice pode ficar atrás)',
+      );
+    }
+
+    final index = buildTelasIndex(filesForIndex, sha7AddedAt: addedAt);
     final github = Platform.environment['GITHUB_ACTIONS'] == 'true';
     emitSkipWarnings(
       skippedFiles: index.skippedFiles,
@@ -97,21 +122,30 @@ int runGenTelas(List<String> args) {
       'formatos: ${variantIds.isEmpty ? '(nenhum)' : variantIds}',
     );
 
-    final status = telasGeneratorExitCode(
-      candidateCount: index.candidateCount,
-      skippedFileCount: index.skippedFiles.length,
-      strict: strict,
-    );
-    if (status != 0) {
-      if (index.candidateCount == 0) {
-        stderr.writeln('nenhum print_sizes.txt encontrado no ref');
+    // `--check` still compares when the indexed subset is empty (telas.md
+    // behind). candidateCount==0 only fails the generate path.
+    if (!check) {
+      final status = telasGeneratorExitCode(
+        candidateCount: index.candidateCount,
+        skippedFileCount: index.skippedFiles.length,
+        strict: strict,
+      );
+      if (status != 0) {
+        if (index.candidateCount == 0) {
+          stderr.writeln('nenhum print_sizes.txt encontrado no ref');
+        }
+        if (strict && index.skippedFiles.isNotEmpty) {
+          stderr.writeln(
+            '--strict: ${index.skippedFiles.length} print_sizes.txt pulado(s)',
+          );
+        }
+        return status;
       }
-      if (strict && index.skippedFiles.isNotEmpty) {
-        stderr.writeln(
-          '--strict: ${index.skippedFiles.length} print_sizes.txt pulado(s)',
-        );
-      }
-      return status;
+    } else if (strict && index.skippedFiles.isNotEmpty) {
+      stderr.writeln(
+        '--strict: ${index.skippedFiles.length} print_sizes.txt pulado(s)',
+      );
+      return 1;
     }
 
     final markdown = buildTelasMarkdown(
@@ -121,16 +155,7 @@ int runGenTelas(List<String> args) {
     );
 
     if (check) {
-      final file = File(output.startsWith('/') ? output : '$root/$output');
-      if (!file.existsSync()) {
-        stderr.writeln(
-          '$output não existe. Rode: dart run tool/gen_telas.dart',
-        );
-        return 1;
-      }
-      final existing = file.readAsBytesSync();
-      final generated = utf8.encode(markdown);
-      if (!_bytesEqual(existing, generated)) {
+      if (existingMarkdown != markdown) {
         stderr.writeln(
           '$output está desatualizado. Rode: dart run tool/gen_telas.dart',
         );
@@ -170,7 +195,8 @@ Opções:
   --output, -o, --out Arquivo de saída (default: docs/qa/telas.md)
   --branch <name>     Nome da branch nas URLs (default: pr-assets)
   --repo-url <url>    URL https do GitHub (default: origin)
-  --check             Falha se o arquivo gerado divergir (uso local)
+  --check             Falha se telas.md divergir das pastas que já indexa.
+                      Prints novos em pr-assets não falham (pode ficar atrás).
   --strict            Falha se algum print_sizes.txt for pulado inteiro
   --help              Esta ajuda
 ''';
@@ -211,12 +237,4 @@ String _git(List<String> args, {String? cwd}) {
     );
   }
   return result.stdout as String;
-}
-
-bool _bytesEqual(List<int> a, List<int> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

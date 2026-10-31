@@ -424,6 +424,59 @@ String missingGitRefMessage(String ref) {
   return 'ref $ref não encontrada; rode git fetch origin $branch';
 }
 
+final _prAssetFolderInMarkdown = RegExp(
+  r'docs/pr-assets/(pr-\d+/[0-9a-fA-F]{7})/',
+);
+
+/// `pr-N/<sha7>` folders already listed in a generated `telas.md`.
+Set<String> indexedPrAssetFolders(String markdown) {
+  return {
+    for (final m in _prAssetFolderInMarkdown.allMatches(markdown))
+      m.group(1)!.toLowerCase(),
+  };
+}
+
+bool printSizesPathInIndexedFolders(String path, Set<String> folders) {
+  final loc = parsePrintSizesLocation(path);
+  if (loc == null) return false;
+  return folders.contains(sha7FolderKey(loc.prNumber, loc.sha7));
+}
+
+/// `--check` only regenerates folders already in [existingMarkdown].
+/// Extra `print_sizes.txt` in pr-assets (other PRs) are ignored so the
+/// index may lag; that is not an error.
+List<({String path, String content})> printSizesForTelasCheck({
+  required String existingMarkdown,
+  required List<({String path, String content})> files,
+}) {
+  final folders = indexedPrAssetFolders(existingMarkdown);
+  return [
+    for (final f in files)
+      if (printSizesPathInIndexedFolders(f.path, folders)) f,
+  ];
+}
+
+/// 0 if [existingMarkdown] matches a regen of the folders it already indexes.
+int telasCheckExitCode({
+  required String existingMarkdown,
+  required List<({String path, String content})> files,
+  Map<String, int> sha7AddedAt = const {},
+  required String repoUrl,
+  String assetsBranch = 'pr-assets',
+}) {
+  final subset = printSizesForTelasCheck(
+    existingMarkdown: existingMarkdown,
+    files: files,
+  );
+  final index = buildTelasIndex(subset, sha7AddedAt: sha7AddedAt);
+  final generated = buildTelasMarkdown(
+    index: index,
+    repoUrl: repoUrl,
+    assetsBranch: assetsBranch,
+  );
+  return existingMarkdown == generated ? 0 : 1;
+}
+
 /// Exit 1 if no print_sizes.txt candidates, or `--strict` with a skipped file.
 /// Skipped files never fail the default (CI) path.
 int telasGeneratorExitCode({
