@@ -7,6 +7,7 @@ abstract final class LinuxDataDirectoryErrorKeys {
   static const screen = Key('linux-data-dir-error');
   static const title = Key('linux-data-dir-error-title');
   static const body = Key('linux-data-dir-error-body');
+  static const command = Key('linux-data-dir-error-command');
 }
 
 /// Copy shown when the Linux data folder cannot be resolved.
@@ -16,8 +17,9 @@ abstract final class LinuxDataDirectoryErrorCopy {
   static const body =
       'O MangaJP não achou a pasta de dados porque a variável HOME '
       'não está definida.\n\n'
-      'Defina HOME e abra o app de novo, por exemplo:\n\n'
-      'HOME=/home/<usuário> manga_jp';
+      'Defina HOME e abra o app de novo, por exemplo:';
+
+  static const command = 'HOME=/home/<usuário> manga_jp';
 }
 
 /// Full-screen error instead of the main app when Linux cannot resolve
@@ -80,6 +82,15 @@ class LinuxDataDirectoryErrorPage extends StatelessWidget {
                     key: LinuxDataDirectoryErrorKeys.body,
                     style: AppTypeScale.definicao.copyWith(
                       color: tokens.text2,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SelectableText(
+                    LinuxDataDirectoryErrorCopy.command,
+                    key: LinuxDataDirectoryErrorKeys.command,
+                    style: AppTypeScale.mono11.copyWith(
+                      color: tokens.text,
                       height: 1.5,
                     ),
                   ),

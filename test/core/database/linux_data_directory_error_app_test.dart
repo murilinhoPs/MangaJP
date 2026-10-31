@@ -6,6 +6,8 @@ import 'package:manga_jp/app_bootstrap.dart';
 import 'package:manga_jp/core/database/linux_app_support_migration.dart';
 import 'package:manga_jp/core/database/linux_data_directory_error_app.dart';
 import 'package:manga_jp/core/theme/app_colors.dart';
+import 'package:manga_jp/core/theme/app_fonts.dart';
+import 'package:manga_jp/core/theme/app_type_scale.dart';
 
 void main() {
   Future<void> pumpError(
@@ -27,12 +29,15 @@ void main() {
     expect(find.text(LinuxDataDirectoryErrorCopy.title), findsOneWidget);
     expect(find.textContaining('HOME'), findsWidgets);
     expect(find.textContaining('pasta de dados'), findsWidgets);
-    expect(
-      find.textContaining('HOME=/home/<usuário> manga_jp'),
-      findsOneWidget,
-    );
+    expect(find.text(LinuxDataDirectoryErrorCopy.command), findsOneWidget);
     expect(find.textContaining('getpwuid'), findsNothing);
-    expect(find.byType(SelectableText), findsOneWidget);
+    expect(find.byType(SelectableText), findsNWidgets(2));
+    final command = tester.widget<SelectableText>(
+      find.byKey(LinuxDataDirectoryErrorKeys.command),
+    );
+    expect(command.style?.fontFamily, AppFonts.mono);
+    expect(command.style?.fontFamily, 'JetBrains Mono');
+    expect(command.style?.fontSize, AppTypeScale.mono11.fontSize);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(LinuxDataDirectoryErrorKeys.screen),
     );
