@@ -187,6 +187,9 @@ void main() {
       addTearDown(() {
         _chmod(poison.path, '644');
       });
+      if (_skipIfChmod000Ineffective(poison, what: 'poison.bin.openSync()')) {
+        return;
+      }
 
       final result = migrateLinuxAppSupportDirectory(
         oldDir: oldDir,
@@ -216,6 +219,14 @@ void main() {
     marker(oldDir).writeAsStringSync('legacy-db');
     final poison = File('${oldDir.path}/poison.bin')..writeAsStringSync('x');
     _chmod(poison.path, '000');
+    addTearDown(() {
+      if (poison.existsSync()) {
+        _chmod(poison.path, '644');
+      }
+    });
+    if (_skipIfChmod000Ineffective(poison, what: 'poison.bin.openSync()')) {
+      return;
+    }
 
     expect(
       migrateLinuxAppSupportDirectory(oldDir: oldDir, newDir: newDir),
@@ -345,6 +356,9 @@ void main() {
           _chmod(trap.path, '755');
         }
       });
+      if (_skipIfChmod000Ineffective(trap, what: 'pages.listSync()')) {
+        return;
+      }
 
       expect(
         migrateLinuxAppSupportDirectory(oldDir: oldDir, newDir: newDir),
@@ -534,17 +548,12 @@ void main() {
         _chmod(shm.path, '644');
       }
     });
-    try {
-      final handle = shm.openSync();
-      handle.closeSync();
-      markTestSkipped(
-        'chmod 000 did not block shm.openSync() (e.g. running as root); '
-        'WAL-copy fallback was not exercised',
-      );
+    if (_skipIfChmod000Ineffective(
+      shm,
+      what: 'shm.openSync()',
+      reason: 'WAL-copy fallback was not exercised',
+    )) {
       return;
-    } on FileSystemException {
-      // Precondition: unreadable -shm forces the probe through
-      // _probeViaWalCopy instead of succeeding as mode=ro.
     }
 
     final result = migrateLinuxAppSupportDirectory(
@@ -682,4 +691,35 @@ List<String> _wordIds(File file) {
 void _chmod(String path, String mode) {
   final result = Process.runSync('chmod', [mode, path]);
   expect(result.exitCode, 0, reason: result.stderr.toString());
+}
+
+/// True when chmod 000 did not block reads (typical as root).
+bool _chmod000StillReadable(FileSystemEntity entity) {
+  try {
+    if (entity is Directory) {
+      entity.listSync();
+    } else {
+      final handle = File(entity.path).openSync();
+      handle.closeSync();
+    }
+    return true;
+  } on FileSystemException {
+    return false;
+  }
+}
+
+/// Skip when chmod 000 is a no-op, so the test does not pass without
+/// exercising the unreadable-path fallback.
+bool _skipIfChmod000Ineffective(
+  FileSystemEntity entity, {
+  required String what,
+  String reason = 'unreadable-path fallback was not exercised',
+}) {
+  if (!_chmod000StillReadable(entity)) {
+    return false;
+  }
+  markTestSkipped(
+    'chmod 000 did not block $what (e.g. running as root); $reason',
+  );
+  return true;
 }
