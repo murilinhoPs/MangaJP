@@ -30,11 +30,7 @@ Future<String> ensureJmdictFile() async {
 
 Future<Directory> _jmdictDiskDirectory() async {
   if (Platform.isLinux) {
-    try {
-      return resolveLinuxAppSupportDirectory();
-    } catch (_) {
-      // Fall through to path_provider.
-    }
+    return resolveLinuxAppSupportDirectory();
   }
   try {
     return await getApplicationSupportDirectory();
