@@ -232,6 +232,21 @@ void main() {
     expect(File('${newDir.path}/poison.bin').readAsStringSync(), 'x');
   });
 
+  test('release ignores MANGAJP_FORCE_GETPWUID_FAILURE', () {
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: true, release: true),
+      isFalse,
+    );
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: true, release: false),
+      isTrue,
+    );
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: false, release: false),
+      isFalse,
+    );
+  });
+
   test(
     'getpwuid returns an absolute home on Linux',
     skip: !Platform.isLinux,
@@ -502,6 +517,65 @@ void main() {
     expect(_wordIds(marker(newDir)), ['demo-taberu']);
     expect(_wordIds(marker(oldDir)), ['demo-taberu']);
   });
+
+  test('newDir WAL-only data with unreadable shm is not overwritten', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    _writeSqliteWithWord(oldDir, id: 'legacy-word');
+    _snapshotWalSqlite(newDir, id: 'new-wal-word');
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+    final shm = File('${newDir.path}/$kMangaJpDatabaseFileName-shm');
+    expect(shm.existsSync(), isTrue);
+    _chmod(shm.path, '000');
+    addTearDown(() {
+      if (shm.existsSync()) {
+        _chmod(shm.path, '644');
+      }
+    });
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.skippedNewHasData);
+    _chmod(shm.path, '644');
+    expect(_wordIds(marker(newDir)), ['new-wal-word']);
+    expect(_wordIds(marker(oldDir)), ['legacy-word']);
+    expect(
+      File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+      'keep-dict',
+    );
+  });
+}
+
+/// Freeze sqlite + WAL + SHM while a writer is still open (no checkpoint).
+void _snapshotWalSqlite(Directory dest, {required String id}) {
+  final tmp = Directory.systemTemp.createTempSync('wal-snap-');
+  final path = '${tmp.path}/$kMangaJpDatabaseFileName';
+  final live = sqlite3.open(path);
+  try {
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        [id, 1, '食べる', 'たべる', '食べる', 0],
+      );
+    dest.createSync(recursive: true);
+    File(path).copySync('${dest.path}/$kMangaJpDatabaseFileName');
+    for (final suffix in ['-wal', '-shm']) {
+      final src = File('$path$suffix');
+      if (src.existsSync()) {
+        src.copySync('${dest.path}/$kMangaJpDatabaseFileName$suffix');
+      }
+    }
+  } finally {
+    live.close();
+    tmp.deleteSync(recursive: true);
+  }
 }
 
 void _createMangaJpSchema(Database db) {

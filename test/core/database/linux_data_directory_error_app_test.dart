@@ -27,7 +27,12 @@ void main() {
     expect(find.text(LinuxDataDirectoryErrorCopy.title), findsOneWidget);
     expect(find.textContaining('HOME'), findsWidgets);
     expect(find.textContaining('pasta de dados'), findsWidgets);
-    expect(find.textContaining('getpwuid'), findsOneWidget);
+    expect(
+      find.textContaining('HOME=/home/<usuário> manga_jp'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('getpwuid'), findsNothing);
+    expect(find.byType(SelectableText), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(LinuxDataDirectoryErrorKeys.screen),
     );
@@ -47,6 +52,13 @@ void main() {
   ) async {
     await pumpError(tester, size: const Size(1280, 800));
     expectErrorScreenVisible(tester);
+    final scroll = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView),
+    );
+    expect(
+      scroll.padding,
+      const EdgeInsets.symmetric(horizontal: 48, vertical: 48),
+    );
     expect(tester.takeException(), isNull);
   });
 

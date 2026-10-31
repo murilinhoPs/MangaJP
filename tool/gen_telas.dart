@@ -150,8 +150,15 @@ int runGenTelas(List<String> args) {
         return status;
       }
     } else {
+      final markdown = existingMarkdown;
+      if (markdown == null) {
+        stderr.writeln(
+          '$output não existe. Rode: dart run tool/gen_telas.dart',
+        );
+        return 1;
+      }
       final status = telasCheckExitCode(
-        existingMarkdown: existingMarkdown!,
+        existingMarkdown: markdown,
         files: files,
         sha7AddedAt: addedAt,
         repoUrl: repoUrl,
@@ -164,7 +171,15 @@ int runGenTelas(List<String> args) {
             '--strict: ${warnIndex.skippedFiles.length} print_sizes.txt '
             'pulado(s)',
           );
-        } else {
+        }
+        if (telasCheckExitCode(
+              existingMarkdown: markdown,
+              files: files,
+              sha7AddedAt: addedAt,
+              repoUrl: repoUrl,
+              assetsBranch: branch,
+            ) !=
+            0) {
           stderr.writeln(
             '$output está desatualizado. Rode: dart run tool/gen_telas.dart',
           );

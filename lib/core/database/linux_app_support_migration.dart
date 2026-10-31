@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Current Linux GApplication / `APPLICATION_ID`.
@@ -21,9 +22,19 @@ typedef LinuxPasswdHomeLookup = String? Function();
 
 /// QA/test: pretend `getpwuid` failed. Use with `env -u HOME -u XDG_DATA_HOME`
 /// and `--dart-define=MANGAJP_FORCE_GETPWUID_FAILURE=true`.
+/// Ignored in release ([kReleaseMode]); QA uses `--profile`.
 const kForceLinuxGetpwuidFailure = bool.fromEnvironment(
   'MANGAJP_FORCE_GETPWUID_FAILURE',
 );
+
+/// Whether [kForceLinuxGetpwuidFailure] is honored. Release always false.
+@visibleForTesting
+bool resolveLinuxForceGetpwuidFailure({
+  required bool defined,
+  required bool release,
+}) {
+  return !release && defined;
+}
 
 /// Outcome of [migrateLinuxAppSupportDirectory].
 enum LinuxAppSupportMigrationResult {
@@ -184,11 +195,6 @@ Object? linuxAppSupportStartupError({
   }
 }
 
-/// Linux-only wrapper used from `main`.
-void maybeMigrateLinuxAppSupport() {
-  linuxAppSupportStartupError();
-}
-
 /// Drops the per-process cache so tests can run more than one attempt.
 void resetLinuxAppSupportDirectoryCache() {
   _resolvedThisProcess = null;
@@ -232,7 +238,11 @@ Directory linuxXdgDataHome({
 
 /// `getpwuid(getuid())->pw_dir` via libc. Null when not Linux or on error.
 String? linuxHomeFromGetpwuid() {
-  if (kForceLinuxGetpwuidFailure || !Platform.isLinux) {
+  if (resolveLinuxForceGetpwuidFailure(
+        defined: kForceLinuxGetpwuidFailure,
+        release: kReleaseMode,
+      ) ||
+      !Platform.isLinux) {
     return null;
   }
   try {
@@ -318,20 +328,54 @@ _SqliteProbe _probeMangaJpDatabase(File file) {
   } on Object {
     return _SqliteProbe.unknown;
   }
-  // readOnly can fail when a -wal exists without a writable -shm (the
-  // probe then looks like [unknown] and blocks migration). immutable=1
-  // reads the WAL without creating shm.
-  final direct = _probeOpen(file.path, uri: false);
+  // readOnly can fail when a -wal exists without a writable -shm.
+  // immutable=1 ignores the WAL (SQLite 3.46), so an empty-looking main
+  // file would look like [empty] and overwrite user data. Copy sqlite +
+  // -wal to a temp dir and open that instead (SQLite recreates -shm).
+  final direct = _probeOpen(file.path);
   if (direct != _SqliteProbe.unknown) {
     return direct;
   }
-  return _probeOpen('file:${file.path}?immutable=1', uri: true);
+  return _probeViaWalCopy(file);
 }
 
-_SqliteProbe _probeOpen(String path, {required bool uri}) {
+_SqliteProbe _probeViaWalCopy(File file) {
+  Directory? tmp;
+  try {
+    tmp = Directory.systemTemp.createTempSync('mangajp-probe-');
+    final dest = File(
+      '${tmp.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName',
+    );
+    file.copySync(dest.path);
+    for (final suffix in const ['-wal', '-journal']) {
+      final side = File('${file.path}$suffix');
+      if (!side.existsSync()) {
+        continue;
+      }
+      try {
+        side.copySync('${dest.path}$suffix');
+      } on Object {
+        // Sidecar exists but cannot be copied — do not treat the
+        // main file as empty (WAL-only data would be lost).
+        return _SqliteProbe.unknown;
+      }
+    }
+    return _probeOpen(dest.path, mode: OpenMode.readWrite);
+  } on Object {
+    return _SqliteProbe.unknown;
+  } finally {
+    try {
+      tmp?.deleteSync(recursive: true);
+    } on Object {
+      // Leave the temp dir; next boot's /tmp cleanup will get it.
+    }
+  }
+}
+
+_SqliteProbe _probeOpen(String path, {OpenMode mode = OpenMode.readOnly}) {
   Database? db;
   try {
-    db = sqlite3.open(path, mode: OpenMode.readOnly, uri: uri);
+    db = sqlite3.open(path, mode: mode);
     for (final table in _kUserDataTables) {
       final found = db.select(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -408,6 +452,12 @@ void _installSqliteAtomically(Directory staging, Directory newDir) {
     incoming.deleteSync();
   }
   if (!_vacuumSqliteInto(staged, incoming)) {
+    if (_hasMangaJpSidecars(staging)) {
+      throw Exception(
+        'MangaJP: could not fold WAL/SHM into $kMangaJpDatabaseFileName; '
+        'keeping the legacy directory.',
+      );
+    }
     staged.copySync(incoming.path);
   }
   _removeSqliteWalSidecars(newDir);
@@ -444,14 +494,30 @@ void _foldWalIntoStagedSqlite(Directory staging) {
     staged.deleteSync();
     vacuumed.renameSync(staged.path);
     _removeSqliteWalSidecars(staging);
-    return;
+  } else {
+    if (vacuumed.existsSync()) {
+      vacuumed.deleteSync();
+    }
+    if (_checkpointWal(staged)) {
+      _removeSqliteWalSidecars(staging);
+    }
   }
-  if (vacuumed.existsSync()) {
-    vacuumed.deleteSync();
+  if (_hasMangaJpSidecars(staging)) {
+    throw Exception(
+      'MangaJP: could not fold WAL/SHM into $kMangaJpDatabaseFileName; '
+      'keeping the legacy directory.',
+    );
   }
-  if (_checkpointWal(staged)) {
-    _removeSqliteWalSidecars(staging);
+}
+
+bool _hasMangaJpSidecars(Directory dir) {
+  final sqlite = _databaseFile(dir);
+  for (final suffix in _kSqliteSidecarSuffixes) {
+    if (File('${sqlite.path}$suffix').existsSync()) {
+      return true;
+    }
   }
+  return false;
 }
 
 bool _vacuumSqliteInto(File source, File dest) {
@@ -460,7 +526,7 @@ bool _vacuumSqliteInto(File source, File dest) {
   }
   Database? db;
   try {
-    db = sqlite3.open(source.path);
+    db = sqlite3.open(source.path, mode: OpenMode.readWrite);
     db.execute('VACUUM INTO ${_sqlStringLiteral(dest.path)}');
     return dest.existsSync() && dest.lengthSync() > 0;
   } on Object {
@@ -476,7 +542,7 @@ bool _vacuumSqliteInto(File source, File dest) {
 bool _checkpointWal(File sqliteFile) {
   Database? db;
   try {
-    db = sqlite3.open(sqliteFile.path);
+    db = sqlite3.open(sqliteFile.path, mode: OpenMode.readWrite);
     db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
     return true;
   } on Object {

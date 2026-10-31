@@ -14,11 +14,10 @@ abstract final class LinuxDataDirectoryErrorCopy {
   static const title = 'Não foi possível abrir a pasta de dados';
 
   static const body =
-      'O MangaJP precisa da variável de ambiente HOME (ou XDG_DATA_HOME) '
-      'para achar a pasta de dados. Sem HOME, e sem a pasta home no sistema '
-      '(getpwuid falhou), o app não abre o banco — assim não cria um sqlite '
-      'vazio em /tmp.\n\n'
-      'Defina HOME apontando para a sua pasta de usuário e abra o app de novo.';
+      'O MangaJP não achou a pasta de dados porque a variável HOME '
+      'não está definida.\n\n'
+      'Defina HOME e abra o app de novo, por exemplo:\n\n'
+      'HOME=/home/<usuário> manga_jp';
 }
 
 /// Full-screen error instead of the main app when Linux cannot resolve
@@ -76,7 +75,7 @@ class LinuxDataDirectoryErrorPage extends StatelessWidget {
                     style: AppTypeScale.tituloTela.copyWith(color: tokens.text),
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  SelectableText(
                     LinuxDataDirectoryErrorCopy.body,
                     key: LinuxDataDirectoryErrorKeys.body,
                     style: AppTypeScale.definicao.copyWith(
