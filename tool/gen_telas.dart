@@ -104,15 +104,23 @@ int runGenTelas(List<String> args) {
       );
     }
 
-    final index = buildTelasIndex(filesForIndex, sha7AddedAt: addedAt);
+    // `--check --strict` looks at every candidate, including folders that
+    // never entered telas.md because the file was skipped entirely.
+    final warnIndex = buildTelasIndex(
+      check ? files : filesForIndex,
+      sha7AddedAt: addedAt,
+    );
     final github = Platform.environment['GITHUB_ACTIONS'] == 'true';
     emitSkipWarnings(
-      skippedFiles: index.skippedFiles,
-      skippedLines: index.skipped,
+      skippedFiles: warnIndex.skippedFiles,
+      skippedLines: warnIndex.skipped,
       sink: stderr,
       githubAnnotations: github,
     );
 
+    final index = check
+        ? buildTelasIndex(filesForIndex, sha7AddedAt: addedAt)
+        : warnIndex;
     final variantIds = (index.variants.map((v) => v.id).toList()..sort()).join(
       ', ',
     );
@@ -141,11 +149,29 @@ int runGenTelas(List<String> args) {
         }
         return status;
       }
-    } else if (strict && index.skippedFiles.isNotEmpty) {
-      stderr.writeln(
-        '--strict: ${index.skippedFiles.length} print_sizes.txt pulado(s)',
+    } else {
+      final status = telasCheckExitCode(
+        existingMarkdown: existingMarkdown!,
+        files: files,
+        sha7AddedAt: addedAt,
+        repoUrl: repoUrl,
+        assetsBranch: branch,
+        strict: strict,
       );
-      return 1;
+      if (status != 0) {
+        if (strict && warnIndex.skippedFiles.isNotEmpty) {
+          stderr.writeln(
+            '--strict: ${warnIndex.skippedFiles.length} print_sizes.txt '
+            'pulado(s)',
+          );
+        } else {
+          stderr.writeln(
+            '$output está desatualizado. Rode: dart run tool/gen_telas.dart',
+          );
+        }
+        return status;
+      }
+      return 0;
     }
 
     final markdown = buildTelasMarkdown(
@@ -153,16 +179,6 @@ int runGenTelas(List<String> args) {
       repoUrl: repoUrl,
       assetsBranch: branch,
     );
-
-    if (check) {
-      if (existingMarkdown != markdown) {
-        stderr.writeln(
-          '$output está desatualizado. Rode: dart run tool/gen_telas.dart',
-        );
-        return 1;
-      }
-      return 0;
-    }
 
     final outFile = File(output.startsWith('/') ? output : '$root/$output');
     outFile.parent.createSync(recursive: true);
@@ -196,8 +212,12 @@ Opções:
   --branch <name>     Nome da branch nas URLs (default: pr-assets)
   --repo-url <url>    URL https do GitHub (default: origin)
   --check             Falha se telas.md divergir das pastas que já indexa.
-                      Prints novos em pr-assets não falham (pode ficar atrás).
+                      Prints novos válidos em pr-assets não falham (pode
+                      ficar atrás). Com --strict, um print_sizes.txt pulado
+                      inteiro falha mesmo que a pasta nunca tenha entrado
+                      no índice.
   --strict            Falha se algum print_sizes.txt for pulado inteiro
+                      (gerar e --check)
   --help              Esta ajuda
 ''';
 
