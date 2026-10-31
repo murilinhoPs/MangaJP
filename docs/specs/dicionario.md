@@ -14,7 +14,7 @@ Do tap na forma da página até lemma + gloss, offline, com deinflexão e homóg
 - **F8 / AC-homógrafo:** se `entries.length > 1`, lista. Default = maior `priority` JMdict (ichi1/news1). Sem escolha explícita → índice 0. `word_id` do card = entrada confirmada (`jm:<seq>`). Se OCR/heurística tiver kana, preferir match de reading.
 - **F9:** sem entrada → «Criar entrada custom» → `custom:<uuid>`, `dict_form = surface`, gloss vazio. `user_note` **obrigatório** para criar card.
 - Gloss: **EN** (JMdict) + `user_note` PT manual. Sem LLM (Q-N2).
-- **F24 Should:** KANJIDIC2 no lookup (on/kun, significados, traços). Sem flashcard kanji. Kanji tocado pode ser salvo (F45 / M2) — [caderno](caderno.md).
+- **F24 Should:** KANJIDIC2 no lookup (on/kun, significados, traços). Sem flashcard kanji. Kanji tocado pode ser salvo (F45 / M2) — [kanji](kanji.md).
 - NF3 / AC-lookup: p95 < 100 ms com dict em disco.
 - Sheet de ação: **Salvar / Aprendendo / Conhecido / Ignorar** — [caderno](caderno.md).
 

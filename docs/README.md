@@ -45,6 +45,7 @@ Templates GitHub (fora de `/docs`): [`.github/pull_request_template.md`](../.git
 - [Recorte](specs/recorte.md)
 - [Dicionário](specs/dicionario.md)
 - [Palavras / Caderno](specs/caderno.md)
+- [Kanji / Caderno](specs/kanji.md)
 - [Flashcards](specs/flashcards.md)
 - [Revisão / SM-2](specs/revisao.md)
 - [Home](specs/home.md)

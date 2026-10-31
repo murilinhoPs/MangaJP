@@ -1,6 +1,6 @@
 # Palavras / Caderno
 
-Rotas: `/notebook`, `/notebook/word/:id`, `/notebook/kanji/:char` (M2). Nav: Caderno. Deck é outra tela — [flashcards](flashcards.md) (Q-N6).
+Rotas: `/notebook`, `/notebook/word/:id`. Kanji (`/notebook/kanji/:char`, aba Kanji) — [kanji](kanji.md). Nav: Caderno. Deck é outra tela — [flashcards](flashcards.md) (Q-N6).
 
 ## Objetivo
 
@@ -32,7 +32,7 @@ Qualquer ação na sheet faz upsert em `words` + ocorrência em `crop_words`. Fr
 
 **F44:** detalhe — entrada completa, frase do balão, miniatura do recorte + link da página, nota, estado. Ações: mudar estado, **Aprender** (cria card), remover do Caderno.
 
-**F45 Should / M2:** Salvar kanji (`saved_kanji`); aba Kanji (leituras, significados, traços). Sem nota. Sem card.
+**F45 Should / M2:** spec em [kanji](kanji.md). Salvar kanji (`saved_kanji`); aba Kanji (leituras, significados, traços). Sem nota. Sem card.
 
 **F46 Could:** export Markdown ou CSV.
 
@@ -47,4 +47,3 @@ Qualquer ação na sheet faz upsert em `words` + ocorrência em `crop_words`. Fr
 - **AC-delete:** deletar card remove card, SRS e logs; a palavra volta a `saved` e continua no Caderno. Confirmação na UI.
 
 > Pendente: copy dos diálogos de Remover card / Remover do Caderno.
-> Pendente: aba Kanji (F45) — layout além de leituras, significados e traços.
