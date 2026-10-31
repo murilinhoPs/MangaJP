@@ -18,6 +18,7 @@ docs/
   roadmap.md              visão das milestones (sem tasks)
   processo.md             processo de desenvolvimento (este arquivo)
   specs/<feature>.md      uma spec por feature, comportamento ATUAL
+  milestones/             plano da milestone em execução (criada na etapa 2; não é spec)
   adr/README.md           índice + template de ADR
   adr/NNNN-titulo.md      uma decisão por arquivo
   qa/print-rules.md       como tirar e anexar print
@@ -36,6 +37,7 @@ docs/
 | --- | --- | --- |
 | [`prd.md`](prd.md) | Visão e escopo | Versão = git tag `prd-vX.Y`, nunca sha escrito no texto |
 | [`specs/*.md`](specs/captura.md) | Como a feature se comporta hoje (rotas, estados, ações, ACs) | Atualiza no mesmo PR que muda o comportamento. Ambiguidade vira `> Pendente:`, sem inventar |
+| `milestones/m<n>.md` | Plano da milestone em execução | Não mistura com `specs/`. A pasta nasce na etapa 2; não criar arquivo agora |
 | [`adr/*.md`](adr/README.md) | Por que uma decisão foi tomada | ADR aceito é imutável. Pra mudar: ADR novo + status `Superada` no antigo |
 | [`qa/print-rules.md`](qa/print-rules.md) | Contrato de evidência visual | Review e CI cobram |
 | [`qa/telas.md`](qa/telas.md) | Catálogo das telas a partir dos prints | Gerado por script (`dart run tool/gen_telas.dart`) |
@@ -208,12 +210,12 @@ Não crie issues nem milestones no GitHub nesta etapa. Abra um PR só de docs e 
 
 ### Etapa 2 — Planejamento de uma milestone (só quando ela for a próxima)
 
-Quando eu pedir "planejar a M<n>":
+Quando o dono do projeto pedir para planejar a M<n>:
 
 1. Releia [`roadmap.md`](roadmap.md), a PRD e o que mudou desde a última milestone.
-2. Detalhe a milestone num doc curto (`docs/specs/m<n>.md`): escopo final, fora de escopo, questões em aberto, critérios de aceite por feature, critério de saída testável, riscos e ordem sugerida.
+2. Detalhe a milestone num doc curto (`docs/milestones/m<n>.md`): escopo final, fora de escopo, questões em aberto, critérios de aceite por feature, critério de saída testável, riscos e ordem sugerida.
 3. Quebre em issues pequenas (uma por feature ou tela), cada uma com título, área, link pro doc, critérios de aceite, prioridade, ordem e "como verificar" (teste automatizado, fluxo manual, plataformas e se precisa de print).
-4. Me mostre o doc e a lista de issues e espere meu ok. Não crie nada antes.
+4. Mostre o doc e a lista de issues ao dono do projeto e espere o ok. Não crie nada antes.
 5. Depois do ok, crie o milestone `M<n> — <nome>` e as issues com `gh`, com labels, ligadas ao milestone, e adicione no Project com `Etapa` = `todo` e `Ordem`.
 6. Se o escopo mudou, atualize [`roadmap.md`](roadmap.md) num PR só de docs.
 

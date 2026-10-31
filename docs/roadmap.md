@@ -1,6 +1,6 @@
 # Roadmap
 
-Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3 §18 (fora do repo) e o estado do GitHub em 31/10/2026. Detalhe de produto: [`prd.md`](prd.md). Como planejar a próxima fase: [`processo.md`](processo.md#7-planejamento-em-duas-etapas).
+Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3 §18 (fora do repo) e o estado do GitHub em 31/10/2026. Detalhe de produto: [`prd.md`](prd.md). Como planejar a próxima fase: [`processo.md`](processo.md#7-planejamento-em-duas-etapas). O plano detalhado de uma milestone, quando existir, mora em `docs/milestones/m<n>.md`, não em `specs/`.
 
 ## M0 — Spike
 
