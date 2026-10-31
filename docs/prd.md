@@ -2,7 +2,7 @@
 
 Ferramenta pessoal para estudar japonês via manga. Flutter only. Single-user (Murilo).
 
-Versão viva deste recorte: **v1.3**. Atualizado **2026-10-22** (print/QA). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo.
+Versão viva deste recorte: **v1.3**. Atualizado **2026-10-22** (print/QA). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
 
 ## Visão
 
