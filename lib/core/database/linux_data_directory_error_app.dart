@@ -89,7 +89,7 @@ class LinuxDataDirectoryErrorPage extends StatelessWidget {
                   SelectableText(
                     LinuxDataDirectoryErrorCopy.command,
                     key: LinuxDataDirectoryErrorKeys.command,
-                    style: AppTypeScale.mono11.copyWith(
+                    style: AppTypeScale.mono13.copyWith(
                       color: tokens.text,
                       height: 1.5,
                     ),

@@ -37,7 +37,7 @@ void main() {
     );
     expect(command.style?.fontFamily, AppFonts.mono);
     expect(command.style?.fontFamily, 'JetBrains Mono');
-    expect(command.style?.fontSize, AppTypeScale.mono11.fontSize);
+    expect(command.style?.fontSize, AppTypeScale.mono13.fontSize);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(LinuxDataDirectoryErrorKeys.screen),
     );
