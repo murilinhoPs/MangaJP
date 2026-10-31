@@ -232,13 +232,31 @@ void main() {
     expect(File('${newDir.path}/poison.bin').readAsStringSync(), 'x');
   });
 
-  test('getpwuid returns an absolute home on Linux', () {
-    expect(Platform.isLinux, isTrue);
-    final home = linuxHomeFromGetpwuid();
-    expect(home, isNotNull);
-    expect(home, startsWith('/'));
-    expect(home!.length, greaterThan(1));
+  test('release ignores MANGAJP_FORCE_GETPWUID_FAILURE', () {
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: true, release: true),
+      isFalse,
+    );
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: true, release: false),
+      isTrue,
+    );
+    expect(
+      resolveLinuxForceGetpwuidFailure(defined: false, release: false),
+      isFalse,
+    );
   });
+
+  test(
+    'getpwuid returns an absolute home on Linux',
+    skip: !Platform.isLinux,
+    () {
+      final home = linuxHomeFromGetpwuid();
+      expect(home, isNotNull);
+      expect(home, startsWith('/'));
+      expect(home!.length, greaterThan(1));
+    },
+  );
 
   test(
     'linuxDatabaseDirectory without HOME uses passwd home, never temp',
@@ -263,6 +281,23 @@ void main() {
       expect(dir.absolute.path, isNot(Directory.systemTemp.absolute.path));
       expect(marker(dir).path.contains('/tmp/mangajp.sqlite'), isFalse);
       expect(logs.any((line) => line.contains('using passwd home')), isTrue);
+    },
+  );
+
+  test(
+    'linuxAppSupportStartupError returns StateError without HOME',
+    skip: !Platform.isLinux,
+    () {
+      resetLinuxAppSupportDirectoryCache();
+      final error = linuxAppSupportStartupError(
+        environment: const <String, String>{},
+        passwdHome: () => null,
+      );
+      expect(error, isA<StateError>());
+      expect(
+        (error! as StateError).message,
+        contains('Not opening a database in temp'),
+      );
     },
   );
 
@@ -387,6 +422,82 @@ void main() {
     expect(_wordIds(marker(oldDir)), ['legacy-word']);
   });
 
+  test('WAL-only transactions land in dest sqlite, without copying -wal after rename', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    File('${newDir.path}/leftover.txt').writeAsStringSync('keep');
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+
+    final sourcePath = '${oldDir.path}/$kMangaJpDatabaseFileName';
+    final live = sqlite3.open(sourcePath);
+    addTearDown(live.close);
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        ['wal-only-word', 1, '食べる', 'たべる', '食べる', 0],
+      );
+    final wal = File('$sourcePath-wal');
+    expect(wal.existsSync(), isTrue);
+    expect(wal.lengthSync(), greaterThan(0));
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.migrated);
+    expect(_wordIds(marker(newDir)), ['wal-only-word']);
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-wal').existsSync(),
+      isFalse,
+    );
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-shm').existsSync(),
+      isFalse,
+    );
+    expect(
+      File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+      'keep-dict',
+    );
+  });
+
+  test('empty new sqlite is replaced when old user data lives only in WAL', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    _writeEmptySqlite(newDir);
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+
+    final sourcePath = '${oldDir.path}/$kMangaJpDatabaseFileName';
+    final live = sqlite3.open(sourcePath);
+    addTearDown(live.close);
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        ['wal-probe-word', 1, '食べる', 'たべる', '食べる', 0],
+      );
+    expect(File('$sourcePath-wal').lengthSync(), greaterThan(0));
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.migrated);
+    expect(_wordIds(marker(newDir)), ['wal-probe-word']);
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-wal').existsSync(),
+      isFalse,
+    );
+  });
+
   test('replacing empty sqlite is idempotent on the next run', () {
     final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
     final newDir = dir(kLinuxApplicationId)..createSync();
@@ -406,10 +517,68 @@ void main() {
     expect(_wordIds(marker(newDir)), ['demo-taberu']);
     expect(_wordIds(marker(oldDir)), ['demo-taberu']);
   });
+
+  test('newDir WAL-only data with unreadable shm is not overwritten', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    _writeSqliteWithWord(oldDir, id: 'legacy-word');
+    _snapshotWalSqlite(newDir, id: 'new-wal-word');
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+    final shm = File('${newDir.path}/$kMangaJpDatabaseFileName-shm');
+    expect(shm.existsSync(), isTrue);
+    _chmod(shm.path, '000');
+    addTearDown(() {
+      if (shm.existsSync()) {
+        _chmod(shm.path, '644');
+      }
+    });
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.skippedNewHasData);
+    _chmod(shm.path, '644');
+    expect(_wordIds(marker(newDir)), ['new-wal-word']);
+    expect(_wordIds(marker(oldDir)), ['legacy-word']);
+    expect(
+      File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+      'keep-dict',
+    );
+  });
 }
 
-void _writeEmptySqlite(Directory dir) {
-  final db = sqlite3.open('${dir.path}/$kMangaJpDatabaseFileName');
+/// Freeze sqlite + WAL + SHM while a writer is still open (no checkpoint).
+void _snapshotWalSqlite(Directory dest, {required String id}) {
+  final tmp = Directory.systemTemp.createTempSync('wal-snap-');
+  final path = '${tmp.path}/$kMangaJpDatabaseFileName';
+  final live = sqlite3.open(path);
+  try {
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        [id, 1, '食べる', 'たべる', '食べる', 0],
+      );
+    dest.createSync(recursive: true);
+    File(path).copySync('${dest.path}/$kMangaJpDatabaseFileName');
+    for (final suffix in ['-wal', '-shm']) {
+      final src = File('$path$suffix');
+      if (src.existsSync()) {
+        src.copySync('${dest.path}/$kMangaJpDatabaseFileName$suffix');
+      }
+    }
+  } finally {
+    live.close();
+    tmp.deleteSync(recursive: true);
+  }
+}
+
+void _createMangaJpSchema(Database db) {
   db
     ..execute(
       'CREATE TABLE app_meta (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL)',
@@ -430,6 +599,11 @@ void _writeEmptySqlite(Directory dir) {
     ..execute(
       "INSERT INTO app_meta (key, value) VALUES ('schema_version', '8')",
     );
+}
+
+void _writeEmptySqlite(Directory dir) {
+  final db = sqlite3.open('${dir.path}/$kMangaJpDatabaseFileName');
+  _createMangaJpSchema(db);
   db.close();
 }
 
