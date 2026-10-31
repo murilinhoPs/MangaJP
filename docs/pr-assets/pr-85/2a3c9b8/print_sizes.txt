@@ -1,0 +1,4 @@
+head: 2a3c9b8f74ebaeb02b61a60642b8cdfbb3d6c96d
+
+android/data_dir_error.png 390x844 sha256:a9643283c8958e7cbfcca4cec557287e4719c23b04775f9fa91577dd2824339f
+desktop/data_dir_error.png 1280x800 sha256:722f3251ad80e4823adbf02591b144119cbafff1983c1dd7ce87371b3b57939e
