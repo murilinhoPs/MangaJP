@@ -173,4 +173,12 @@ abstract final class AppTypeScale {
     fontWeight: FontWeight.w400,
     color: AppColors.text2,
   );
+
+  /// Upper end of `mono` 10–13; used for copyable shell commands.
+  static const TextStyle mono13 = TextStyle(
+    fontFamily: AppFonts.mono,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: AppColors.text2,
+  );
 }
