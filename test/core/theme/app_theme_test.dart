@@ -171,6 +171,7 @@ void main() {
     expect(AppTypeScale.metadados12.fontSize, 12);
     expect(AppTypeScale.mono10.fontSize, 10);
     expect(AppTypeScale.mono11.fontSize, 11);
+    expect(AppTypeScale.mono13.fontSize, 13);
   });
 
   test('radius and target constants match tokens.json', () {
