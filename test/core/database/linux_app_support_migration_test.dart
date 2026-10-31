@@ -232,13 +232,16 @@ void main() {
     expect(File('${newDir.path}/poison.bin').readAsStringSync(), 'x');
   });
 
-  test('getpwuid returns an absolute home on Linux', () {
-    expect(Platform.isLinux, isTrue);
-    final home = linuxHomeFromGetpwuid();
-    expect(home, isNotNull);
-    expect(home, startsWith('/'));
-    expect(home!.length, greaterThan(1));
-  });
+  test(
+    'getpwuid returns an absolute home on Linux',
+    skip: !Platform.isLinux,
+    () {
+      final home = linuxHomeFromGetpwuid();
+      expect(home, isNotNull);
+      expect(home, startsWith('/'));
+      expect(home!.length, greaterThan(1));
+    },
+  );
 
   test(
     'linuxDatabaseDirectory without HOME uses passwd home, never temp',
@@ -263,6 +266,23 @@ void main() {
       expect(dir.absolute.path, isNot(Directory.systemTemp.absolute.path));
       expect(marker(dir).path.contains('/tmp/mangajp.sqlite'), isFalse);
       expect(logs.any((line) => line.contains('using passwd home')), isTrue);
+    },
+  );
+
+  test(
+    'linuxAppSupportStartupError returns StateError without HOME',
+    skip: !Platform.isLinux,
+    () {
+      resetLinuxAppSupportDirectoryCache();
+      final error = linuxAppSupportStartupError(
+        environment: const <String, String>{},
+        passwdHome: () => null,
+      );
+      expect(error, isA<StateError>());
+      expect(
+        (error! as StateError).message,
+        contains('Not opening a database in temp'),
+      );
     },
   );
 
@@ -387,6 +407,82 @@ void main() {
     expect(_wordIds(marker(oldDir)), ['legacy-word']);
   });
 
+  test('WAL-only transactions land in dest sqlite, without copying -wal after rename', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    File('${newDir.path}/leftover.txt').writeAsStringSync('keep');
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+
+    final sourcePath = '${oldDir.path}/$kMangaJpDatabaseFileName';
+    final live = sqlite3.open(sourcePath);
+    addTearDown(live.close);
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        ['wal-only-word', 1, '食べる', 'たべる', '食べる', 0],
+      );
+    final wal = File('$sourcePath-wal');
+    expect(wal.existsSync(), isTrue);
+    expect(wal.lengthSync(), greaterThan(0));
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.migrated);
+    expect(_wordIds(marker(newDir)), ['wal-only-word']);
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-wal').existsSync(),
+      isFalse,
+    );
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-shm').existsSync(),
+      isFalse,
+    );
+    expect(
+      File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+      'keep-dict',
+    );
+  });
+
+  test('empty new sqlite is replaced when old user data lives only in WAL', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId)..createSync();
+    _writeEmptySqlite(newDir);
+    File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+
+    final sourcePath = '${oldDir.path}/$kMangaJpDatabaseFileName';
+    final live = sqlite3.open(sourcePath);
+    addTearDown(live.close);
+    _createMangaJpSchema(live);
+    live
+      ..execute('PRAGMA journal_mode=WAL')
+      ..execute('PRAGMA wal_autocheckpoint=0')
+      ..execute(
+        'INSERT INTO words (id, seq, lemma, reading, lemma_key, created_at) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        ['wal-probe-word', 1, '食べる', 'たべる', '食べる', 0],
+      );
+    expect(File('$sourcePath-wal').lengthSync(), greaterThan(0));
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.migrated);
+    expect(_wordIds(marker(newDir)), ['wal-probe-word']);
+    expect(
+      File('${newDir.path}/$kMangaJpDatabaseFileName-wal').existsSync(),
+      isFalse,
+    );
+  });
+
   test('replacing empty sqlite is idempotent on the next run', () {
     final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
     final newDir = dir(kLinuxApplicationId)..createSync();
@@ -408,8 +504,7 @@ void main() {
   });
 }
 
-void _writeEmptySqlite(Directory dir) {
-  final db = sqlite3.open('${dir.path}/$kMangaJpDatabaseFileName');
+void _createMangaJpSchema(Database db) {
   db
     ..execute(
       'CREATE TABLE app_meta (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL)',
@@ -430,6 +525,11 @@ void _writeEmptySqlite(Directory dir) {
     ..execute(
       "INSERT INTO app_meta (key, value) VALUES ('schema_version', '8')",
     );
+}
+
+void _writeEmptySqlite(Directory dir) {
+  final db = sqlite3.open('${dir.path}/$kMangaJpDatabaseFileName');
+  _createMangaJpSchema(db);
   db.close();
 }
 

@@ -19,6 +19,12 @@ void Function(String message)? linuxAppSupportLog;
 /// Lookup for `getpwuid(getuid())->pw_dir`. Tests inject a fake.
 typedef LinuxPasswdHomeLookup = String? Function();
 
+/// QA/test: pretend `getpwuid` failed. Use with `env -u HOME -u XDG_DATA_HOME`
+/// and `--dart-define=MANGAJP_FORCE_GETPWUID_FAILURE=true`.
+const kForceLinuxGetpwuidFailure = bool.fromEnvironment(
+  'MANGAJP_FORCE_GETPWUID_FAILURE',
+);
+
 /// Outcome of [migrateLinuxAppSupportDirectory].
 enum LinuxAppSupportMigrationResult {
   /// [oldDir] is missing — nothing to move. First launch or already moved.
@@ -53,9 +59,9 @@ enum LinuxAppSupportMigrationResult {
 /// staging directory; a leftover staging tree is deleted at the start of
 /// each attempt. [newDir] is never wiped — leftover files such as JMdict
 /// stay. When [newDir] already has files, non-sqlite contents are merged
-/// first; `mangajp.sqlite` is copied to a sibling `.incoming` and renamed
-/// into place last so a mid-merge I/O error cannot leave a partial
-/// database that would block the next launch.
+/// first; WAL is folded (`VACUUM INTO` / `wal_checkpoint(TRUNCATE)`) so
+/// one sqlite file is written to a sibling `.incoming` and renamed into
+/// place last. `-wal`/`-shm` are never copied after that rename.
 LinuxAppSupportMigrationResult migrateLinuxAppSupportDirectory({
   required Directory oldDir,
   required Directory newDir,
@@ -120,6 +126,10 @@ Directory resolveLinuxAppSupportDirectoryFrom({
 /// When HOME/XDG are unset, [linuxXdgDataHome] uses
 /// `getpwuid(getuid())->pw_dir`. If that also fails this throws — callers
 /// must not fall back to temp or documents (that would open an empty DB).
+///
+/// [environment] and [passwdHome] only apply on the first call in this
+/// process; later calls return the cached directory and ignore them.
+/// Tests must [resetLinuxAppSupportDirectoryCache] between attempts.
 Directory resolveLinuxAppSupportDirectory({
   Map<String, String>? environment,
   LinuxPasswdHomeLookup? passwdHome,
@@ -148,16 +158,35 @@ Directory resolveLinuxAppSupportDirectory({
   }
 }
 
-/// Linux-only wrapper used from `main`.
-void maybeMigrateLinuxAppSupport() {
+/// Linux-only resolve used from `main`.
+///
+/// Returns the [StateError] when HOME/XDG and getpwuid all fail so the
+/// caller can show an error screen instead of a crash. Other errors are
+/// logged and swallowed (next launch retries).
+Object? linuxAppSupportStartupError({
+  Map<String, String>? environment,
+  LinuxPasswdHomeLookup? passwdHome,
+}) {
   if (!Platform.isLinux) {
-    return;
+    return null;
   }
   try {
-    resolveLinuxAppSupportDirectory();
+    resolveLinuxAppSupportDirectory(
+      environment: environment,
+      passwdHome: passwdHome,
+    );
+    return null;
+  } on StateError catch (error) {
+    return error;
   } on Object catch (error) {
     _log('MangaJP: Linux app-support resolve failed: $error');
+    return null;
   }
+}
+
+/// Linux-only wrapper used from `main`.
+void maybeMigrateLinuxAppSupport() {
+  linuxAppSupportStartupError();
 }
 
 /// Drops the per-process cache so tests can run more than one attempt.
@@ -203,7 +232,7 @@ Directory linuxXdgDataHome({
 
 /// `getpwuid(getuid())->pw_dir` via libc. Null when not Linux or on error.
 String? linuxHomeFromGetpwuid() {
-  if (!Platform.isLinux) {
+  if (kForceLinuxGetpwuidFailure || !Platform.isLinux) {
     return null;
   }
   try {
@@ -289,9 +318,20 @@ _SqliteProbe _probeMangaJpDatabase(File file) {
   } on Object {
     return _SqliteProbe.unknown;
   }
+  // readOnly can fail when a -wal exists without a writable -shm (the
+  // probe then looks like [unknown] and blocks migration). immutable=1
+  // reads the WAL without creating shm.
+  final direct = _probeOpen(file.path, uri: false);
+  if (direct != _SqliteProbe.unknown) {
+    return direct;
+  }
+  return _probeOpen('file:${file.path}?immutable=1', uri: true);
+}
+
+_SqliteProbe _probeOpen(String path, {required bool uri}) {
   Database? db;
   try {
-    db = sqlite3.open(file.path, mode: OpenMode.readOnly);
+    db = sqlite3.open(path, mode: OpenMode.readOnly, uri: uri);
     for (final table in _kUserDataTables) {
       final found = db.select(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -319,6 +359,7 @@ const _kSqliteSidecarSuffixes = <String>['-wal', '-shm', '-journal'];
 
 void _installStaging({required Directory staging, required Directory newDir}) {
   _deleteIncoming(newDir);
+  _foldWalIntoStagedSqlite(staging);
   if (!newDir.existsSync()) {
     staging.renameSync(newDir.path);
     return;
@@ -366,7 +407,9 @@ void _installSqliteAtomically(Directory staging, Directory newDir) {
   if (incoming.existsSync()) {
     incoming.deleteSync();
   }
-  staged.copySync(incoming.path);
+  if (!_vacuumSqliteInto(staged, incoming)) {
+    staged.copySync(incoming.path);
+  }
   _removeSqliteWalSidecars(newDir);
   final destSqlite = _databaseFile(newDir);
   if (destSqlite.existsSync() &&
@@ -374,17 +417,77 @@ void _installSqliteAtomically(Directory staging, Directory newDir) {
     destSqlite.deleteSync();
   }
   incoming.renameSync(destSqlite.path);
-  for (final suffix in _kSqliteSidecarSuffixes) {
-    final stagedSidecar = File(
-      '${staging.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName$suffix',
-    );
-    if (!stagedSidecar.existsSync()) {
-      continue;
-    }
-    stagedSidecar.copySync(
-      '${newDir.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName$suffix',
-    );
+}
+
+/// Checkpoint / `VACUUM INTO` so dest gets one sqlite file, never a
+/// post-rename `-wal`/`-shm` copy (those can be lost mid-crash).
+void _foldWalIntoStagedSqlite(Directory staging) {
+  final staged = _databaseFile(staging);
+  if (!staged.existsSync()) {
+    return;
   }
+  var hasSidecar = false;
+  for (final suffix in _kSqliteSidecarSuffixes) {
+    if (File('${staged.path}$suffix').existsSync()) {
+      hasSidecar = true;
+      break;
+    }
+  }
+  if (!hasSidecar) {
+    return;
+  }
+  final vacuumed = File('${staged.path}.vacuum');
+  if (vacuumed.existsSync()) {
+    vacuumed.deleteSync();
+  }
+  if (_vacuumSqliteInto(staged, vacuumed)) {
+    staged.deleteSync();
+    vacuumed.renameSync(staged.path);
+    _removeSqliteWalSidecars(staging);
+    return;
+  }
+  if (vacuumed.existsSync()) {
+    vacuumed.deleteSync();
+  }
+  if (_checkpointWal(staged)) {
+    _removeSqliteWalSidecars(staging);
+  }
+}
+
+bool _vacuumSqliteInto(File source, File dest) {
+  if (dest.existsSync()) {
+    dest.deleteSync();
+  }
+  Database? db;
+  try {
+    db = sqlite3.open(source.path);
+    db.execute('VACUUM INTO ${_sqlStringLiteral(dest.path)}');
+    return dest.existsSync() && dest.lengthSync() > 0;
+  } on Object {
+    if (dest.existsSync()) {
+      dest.deleteSync();
+    }
+    return false;
+  } finally {
+    db?.close();
+  }
+}
+
+bool _checkpointWal(File sqliteFile) {
+  Database? db;
+  try {
+    db = sqlite3.open(sqliteFile.path);
+    db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+    return true;
+  } on Object {
+    return false;
+  } finally {
+    db?.close();
+  }
+}
+
+String _sqlStringLiteral(String value) {
+  return "'${value.replaceAll("'", "''")}'";
 }
 
 void _deleteIncoming(Directory dir) {
