@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database_open_io.dart';
 import 'package:manga_jp/core/database/linux_app_support_migration.dart';
+import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
@@ -17,6 +18,7 @@ void main() {
   });
 
   tearDown(() {
+    linuxAppSupportForceWalFoldFailure = false;
     linuxAppSupportLog = null;
     resetLinuxAppSupportDirectoryCache();
     if (root.existsSync()) {
@@ -532,6 +534,18 @@ void main() {
         _chmod(shm.path, '644');
       }
     });
+    try {
+      final handle = shm.openSync();
+      handle.closeSync();
+      markTestSkipped(
+        'chmod 000 did not block shm.openSync() (e.g. running as root); '
+        'WAL-copy fallback was not exercised',
+      );
+      return;
+    } on FileSystemException {
+      // Precondition: unreadable -shm forces the probe through
+      // _probeViaWalCopy instead of succeeding as mode=ro.
+    }
 
     final result = migrateLinuxAppSupportDirectory(
       oldDir: oldDir,
@@ -546,6 +560,41 @@ void main() {
       File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
       'keep-dict',
     );
+  });
+
+  test('WAL fold failure returns failed and leaves legacy sqlite intact', () {
+    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+    final newDir = dir(kLinuxApplicationId);
+    _snapshotWalSqlite(oldDir, id: 'fold-fail-word');
+    final sqlite = marker(oldDir);
+    final wal = File('${sqlite.path}-wal');
+    final shm = File('${sqlite.path}-shm');
+    expect(wal.existsSync(), isTrue);
+    final beforeSqlite = sha256Hex(sqlite.readAsBytesSync());
+    final beforeWal = sha256Hex(wal.readAsBytesSync());
+    final beforeShm = shm.existsSync()
+        ? sha256Hex(shm.readAsBytesSync())
+        : null;
+
+    linuxAppSupportForceWalFoldFailure = true;
+
+    final result = migrateLinuxAppSupportDirectory(
+      oldDir: oldDir,
+      newDir: newDir,
+    );
+
+    expect(result, LinuxAppSupportMigrationResult.failed);
+    expect(sha256Hex(sqlite.readAsBytesSync()), beforeSqlite);
+    expect(sha256Hex(wal.readAsBytesSync()), beforeWal);
+    if (beforeShm != null) {
+      expect(sha256Hex(shm.readAsBytesSync()), beforeShm);
+    }
+    expect(marker(newDir).existsSync(), isFalse);
+    expect(
+      resolveLinuxAppSupportDirectoryFrom(oldDir: oldDir, newDir: newDir).path,
+      oldDir.absolute.path,
+    );
+    expect(_wordIds(sqlite), ['fold-fail-word']);
   });
 }
 

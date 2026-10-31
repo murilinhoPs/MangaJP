@@ -36,6 +36,11 @@ bool resolveLinuxForceGetpwuidFailure({
   return !release && defined;
 }
 
+/// Test hook: skip `VACUUM INTO` and `wal_checkpoint` so
+/// [_foldWalIntoStagedSqlite] throws and migrate returns [failed].
+@visibleForTesting
+bool linuxAppSupportForceWalFoldFailure = false;
+
 /// Outcome of [migrateLinuxAppSupportDirectory].
 enum LinuxAppSupportMigrationResult {
   /// [oldDir] is missing — nothing to move. First launch or already moved.
@@ -339,6 +344,12 @@ _SqliteProbe _probeMangaJpDatabase(File file) {
   return _probeViaWalCopy(file);
 }
 
+/// Unlocked copy of sqlite + `-wal`/`-journal` into a temp dir.
+///
+/// The copy does **not** lock against a live writer. It is only a probe
+/// snapshot so `mode=ro` failures (unreadable `-shm`) do not look like
+/// [empty]. SQLite recreates `-shm` in the temp dir. Never use this copy
+/// as a destination for user data.
 _SqliteProbe _probeViaWalCopy(File file) {
   Directory? tmp;
   try {
@@ -521,6 +532,9 @@ bool _hasMangaJpSidecars(Directory dir) {
 }
 
 bool _vacuumSqliteInto(File source, File dest) {
+  if (linuxAppSupportForceWalFoldFailure) {
+    return false;
+  }
   if (dest.existsSync()) {
     dest.deleteSync();
   }
@@ -540,6 +554,9 @@ bool _vacuumSqliteInto(File source, File dest) {
 }
 
 bool _checkpointWal(File sqliteFile) {
+  if (linuxAppSupportForceWalFoldFailure) {
+    return false;
+  }
   Database? db;
   try {
     db = sqlite3.open(sqliteFile.path, mode: OpenMode.readWrite);
