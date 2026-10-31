@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:sqlite3/sqlite3.dart';
@@ -13,6 +15,9 @@ const kMangaJpDatabaseFileName = 'mangajp.sqlite';
 
 /// Optional sink for migration logs (tests). Stderr always gets a copy.
 void Function(String message)? linuxAppSupportLog;
+
+/// Lookup for `getpwuid(getuid())->pw_dir`. Tests inject a fake.
+typedef LinuxPasswdHomeLookup = String? Function();
 
 /// Outcome of [migrateLinuxAppSupportDirectory].
 enum LinuxAppSupportMigrationResult {
@@ -46,8 +51,11 @@ enum LinuxAppSupportMigrationResult {
 /// Idempotent. Never deletes [oldDir]. Never overwrites a sqlite that
 /// already has user data. Copy goes through a sibling `.migrating`
 /// staging directory; a leftover staging tree is deleted at the start of
-/// each attempt. [newDir] is never wiped — only staging and empty Drift
-/// sidecars created by a previous attempt are removed.
+/// each attempt. [newDir] is never wiped — leftover files such as JMdict
+/// stay. When [newDir] already has files, non-sqlite contents are merged
+/// first; `mangajp.sqlite` is copied to a sibling `.incoming` and renamed
+/// into place last so a mid-merge I/O error cannot leave a partial
+/// database that would block the next launch.
 LinuxAppSupportMigrationResult migrateLinuxAppSupportDirectory({
   required Directory oldDir,
   required Directory newDir,
@@ -109,17 +117,22 @@ Directory resolveLinuxAppSupportDirectoryFrom({
 /// folder still has no user `mangajp.sqlite` (leftover `.migrating` is
 /// deleted at the start of that attempt).
 ///
-/// Throws if [linuxXdgDataHome] cannot be resolved. Callers must not fall
-/// back to the new APPLICATION_ID folder in that case — that would open
-/// an empty Drift database. Use
-/// [resolveLinuxAppSupportDirectoryFromPathProvider] instead.
-Directory resolveLinuxAppSupportDirectory({Map<String, String>? environment}) {
+/// When HOME/XDG are unset, [linuxXdgDataHome] uses
+/// `getpwuid(getuid())->pw_dir`. If that also fails this throws — callers
+/// must not fall back to temp or documents (that would open an empty DB).
+Directory resolveLinuxAppSupportDirectory({
+  Map<String, String>? environment,
+  LinuxPasswdHomeLookup? passwdHome,
+}) {
   final cached = _resolvedThisProcess;
   if (cached != null) {
     return cached;
   }
   try {
-    final dataHome = linuxXdgDataHome(environment: environment);
+    final dataHome = linuxXdgDataHome(
+      environment: environment,
+      passwdHome: passwdHome,
+    );
     final resolved = resolveLinuxAppSupportDirectoryFrom(
       oldDir: Directory('${dataHome.path}/$kLegacyLinuxApplicationId'),
       newDir: Directory('${dataHome.path}/$kLinuxApplicationId'),
@@ -128,42 +141,11 @@ Directory resolveLinuxAppSupportDirectory({Map<String, String>? environment}) {
     return resolved;
   } on Object catch (error) {
     _log(
-      'MangaJP: Linux app-support cannot resolve XDG data home (HOME and '
-      'XDG_DATA_HOME unset or empty); not creating an empty database in '
-      'the new folder. Error: $error',
+      'MangaJP: Linux app-support cannot resolve a data directory. '
+      'Not creating an empty database in temp. Error: $error',
     );
     rethrow;
   }
-}
-
-/// Recovers when [resolveLinuxAppSupportDirectory] cannot read XDG.
-///
-/// [pathProviderSupportDir] is `getApplicationSupportDirectory()` — the
-/// new APPLICATION_ID folder. The legacy folder is the sibling named
-/// [kLegacyLinuxApplicationId]. This keeps Drift on the old sqlite
-/// instead of creating an empty one under the new id.
-Directory resolveLinuxAppSupportDirectoryFromPathProvider(
-  Directory pathProviderSupportDir, {
-  Object? resolveError,
-}) {
-  final cached = _resolvedThisProcess;
-  if (cached != null) {
-    return cached;
-  }
-  final newDir = Directory(pathProviderSupportDir.absolute.path);
-  if (resolveError != null) {
-    _log(
-      'MangaJP: Linux app-support resolve failed; recovering via '
-      'application support directory ${newDir.path} so the legacy sibling '
-      'is not skipped. Error: $resolveError',
-    );
-  }
-  final resolved = resolveLinuxAppSupportDirectoryFrom(
-    oldDir: Directory('${newDir.parent.path}/$kLegacyLinuxApplicationId'),
-    newDir: newDir,
-  );
-  _resolvedThisProcess = resolved;
-  return resolved;
 }
 
 /// Linux-only wrapper used from `main`.
@@ -184,17 +166,69 @@ void resetLinuxAppSupportDirectoryCache() {
 }
 
 /// Same base as `xdg_directories` `dataHome` / `path_provider_linux` 2.2.2.
-Directory linuxXdgDataHome({Map<String, String>? environment}) {
+///
+/// When `HOME` / `XDG_DATA_HOME` are empty, uses [passwdHome] or
+/// [linuxHomeFromGetpwuid] (`getpwuid(getuid())->pw_dir`, like glib).
+/// Never reads `USER`. Never falls back to temp.
+Directory linuxXdgDataHome({
+  Map<String, String>? environment,
+  LinuxPasswdHomeLookup? passwdHome,
+}) {
   final env = environment ?? Platform.environment;
   final xdg = env['XDG_DATA_HOME'];
   if (xdg != null && xdg.isNotEmpty) {
     return Directory(xdg);
   }
   final home = env['HOME'];
-  if (home == null || home.isEmpty) {
-    throw StateError('HOME is not set');
+  if (home != null && home.isNotEmpty) {
+    return Directory('$home/.local/share');
   }
-  return Directory('$home/.local/share');
+  final lookup = passwdHome ?? linuxHomeFromGetpwuid;
+  final fromPasswd = lookup();
+  if (fromPasswd != null &&
+      fromPasswd.startsWith('/') &&
+      fromPasswd.length > 1) {
+    _log(
+      'MangaJP: HOME and XDG_DATA_HOME unset; using passwd home '
+      '$fromPasswd for the data directory.',
+    );
+    return Directory('$fromPasswd/.local/share');
+  }
+  throw StateError(
+    'MangaJP: cannot resolve Linux data directory: HOME and '
+    'XDG_DATA_HOME are unset and getpwuid(getuid())->pw_dir failed. '
+    'Not opening a database in temp.',
+  );
+}
+
+/// `getpwuid(getuid())->pw_dir` via libc. Null when not Linux or on error.
+String? linuxHomeFromGetpwuid() {
+  if (!Platform.isLinux) {
+    return null;
+  }
+  try {
+    DynamicLibrary libc;
+    try {
+      libc = DynamicLibrary.open('libc.so.6');
+    } on Object {
+      libc = DynamicLibrary.process();
+    }
+    final getuid = libc.lookupFunction<_GetuidNative, _GetuidDart>('getuid');
+    final getpwuid = libc.lookupFunction<_GetpwuidNative, _GetpwuidDart>(
+      'getpwuid',
+    );
+    final pwd = getpwuid(getuid());
+    if (pwd == nullptr) {
+      return null;
+    }
+    final dir = _cstring(pwd.ref.pwDir);
+    if (dir == null || !dir.startsWith('/') || dir.length <= 1) {
+      return null;
+    }
+    return dir;
+  } on Object {
+    return null;
+  }
 }
 
 Directory? _resolvedThisProcess;
@@ -279,7 +313,12 @@ _SqliteProbe _probeMangaJpDatabase(File file) {
   }
 }
 
+const _kIncomingDatabaseFileName = '$kMangaJpDatabaseFileName.incoming';
+
+const _kSqliteSidecarSuffixes = <String>['-wal', '-shm', '-journal'];
+
 void _installStaging({required Directory staging, required Directory newDir}) {
+  _deleteIncoming(newDir);
   if (!newDir.existsSync()) {
     staging.renameSync(newDir.path);
     return;
@@ -289,14 +328,80 @@ void _installStaging({required Directory staging, required Directory newDir}) {
     staging.renameSync(newDir.path);
     return;
   }
-  _removeMangaJpDatabaseSidecars(newDir);
-  _mergeCopiedFiles(staging, newDir);
+  _mergeNonSqliteFiles(staging, newDir);
+  _installSqliteAtomically(staging, newDir);
   _deleteStaging(staging);
 }
 
-void _removeMangaJpDatabaseSidecars(Directory dir) {
-  const suffixes = <String>['', '-wal', '-shm', '-journal'];
-  for (final suffix in suffixes) {
+void _mergeNonSqliteFiles(Directory source, Directory dest) {
+  dest.createSync(recursive: true);
+  for (final entity in source.listSync(followLinks: false)) {
+    final name = _basename(entity.path);
+    if (_isMangaJpDatabaseSidecar(name)) {
+      continue;
+    }
+    final targetPath = '${dest.path}${Platform.pathSeparator}$name';
+    if (entity is Directory) {
+      _mergeNonSqliteFiles(entity, Directory(targetPath));
+    } else if (entity is File) {
+      final target = File(targetPath);
+      if (target.existsSync()) {
+        continue;
+      }
+      entity.copySync(targetPath);
+    }
+  }
+}
+
+void _installSqliteAtomically(Directory staging, Directory newDir) {
+  final staged = File(
+    '${staging.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName',
+  );
+  if (!staged.existsSync()) {
+    return;
+  }
+  final incoming = File(
+    '${newDir.path}${Platform.pathSeparator}$_kIncomingDatabaseFileName',
+  );
+  if (incoming.existsSync()) {
+    incoming.deleteSync();
+  }
+  staged.copySync(incoming.path);
+  _removeSqliteWalSidecars(newDir);
+  final destSqlite = _databaseFile(newDir);
+  if (destSqlite.existsSync() &&
+      destSqlite.statSync().type == FileSystemEntityType.file) {
+    destSqlite.deleteSync();
+  }
+  incoming.renameSync(destSqlite.path);
+  for (final suffix in _kSqliteSidecarSuffixes) {
+    final stagedSidecar = File(
+      '${staging.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName$suffix',
+    );
+    if (!stagedSidecar.existsSync()) {
+      continue;
+    }
+    stagedSidecar.copySync(
+      '${newDir.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName$suffix',
+    );
+  }
+}
+
+void _deleteIncoming(Directory dir) {
+  if (!dir.existsSync()) {
+    return;
+  }
+  final incoming = File(
+    '${dir.path}${Platform.pathSeparator}$_kIncomingDatabaseFileName',
+  );
+  if (incoming.existsSync() &&
+      incoming.statSync().type == FileSystemEntityType.file) {
+    incoming.deleteSync();
+  }
+}
+
+void _removeSqliteWalSidecars(Directory dir) {
+  for (final suffix in _kSqliteSidecarSuffixes) {
     final file = File(
       '${dir.path}${Platform.pathSeparator}$kMangaJpDatabaseFileName$suffix',
     );
@@ -307,25 +412,9 @@ void _removeMangaJpDatabaseSidecars(Directory dir) {
   }
 }
 
-void _mergeCopiedFiles(Directory source, Directory dest) {
-  dest.createSync(recursive: true);
-  for (final entity in source.listSync(followLinks: false)) {
-    final name = _basename(entity.path);
-    final targetPath = '${dest.path}${Platform.pathSeparator}$name';
-    if (entity is Directory) {
-      _mergeCopiedFiles(entity, Directory(targetPath));
-    } else if (entity is File) {
-      final target = File(targetPath);
-      if (target.existsSync() && !_isMangaJpDatabaseSidecar(name)) {
-        continue;
-      }
-      entity.copySync(targetPath);
-    }
-  }
-}
-
 bool _isMangaJpDatabaseSidecar(String name) {
   return name == kMangaJpDatabaseFileName ||
+      name == _kIncomingDatabaseFileName ||
       name.startsWith('$kMangaJpDatabaseFileName-');
 }
 
@@ -367,4 +456,36 @@ String _basename(String path) {
 void _log(String message) {
   linuxAppSupportLog?.call(message);
   stderr.writeln(message);
+}
+
+final class _Passwd extends Struct {
+  external Pointer<Char> pwName;
+  external Pointer<Char> pwPasswd;
+  @UnsignedInt()
+  external int pwUid;
+  @UnsignedInt()
+  external int pwGid;
+  external Pointer<Char> pwGecos;
+  external Pointer<Char> pwDir;
+  external Pointer<Char> pwShell;
+}
+
+typedef _GetuidNative = UnsignedInt Function();
+typedef _GetuidDart = int Function();
+typedef _GetpwuidNative = Pointer<_Passwd> Function(UnsignedInt);
+typedef _GetpwuidDart = Pointer<_Passwd> Function(int);
+
+String? _cstring(Pointer<Char> ptr) {
+  if (ptr == nullptr) {
+    return null;
+  }
+  final bytes = <int>[];
+  for (var i = 0; ; i++) {
+    final b = ptr[i];
+    if (b == 0) {
+      break;
+    }
+    bytes.add(b);
+  }
+  return utf8.decode(bytes);
 }

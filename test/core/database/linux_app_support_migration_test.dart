@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:manga_jp/core/database/app_database_open_io.dart';
 import 'package:manga_jp/core/database/linux_app_support_migration.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -231,48 +232,111 @@ void main() {
     expect(File('${newDir.path}/poison.bin').readAsStringSync(), 'x');
   });
 
-  test('without HOME and XDG_DATA_HOME does not create an empty database', () {
-    const env = <String, String>{};
-    expect(
-      () => linuxXdgDataHome(environment: env),
-      throwsA(isA<StateError>()),
-    );
-    expect(
-      () => linuxXdgDataHome(
-        environment: const {'HOME': '', 'XDG_DATA_HOME': ''},
-      ),
-      throwsA(isA<StateError>()),
-    );
-
-    final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
-    final newDir = dir(kLinuxApplicationId);
-    _writeSqliteWithWord(oldDir, id: 'demo-taberu');
-
-    expect(
-      () => resolveLinuxAppSupportDirectory(environment: env),
-      throwsA(isA<StateError>()),
-    );
-    expect(
-      logs.any(
-        (line) =>
-            line.contains('HOME') &&
-            line.contains('XDG_DATA_HOME') &&
-            line.contains('not creating an empty database'),
-      ),
-      isTrue,
-    );
-    expect(newDir.existsSync(), isFalse);
-    expect(marker(newDir).existsSync(), isFalse);
-
-    resetLinuxAppSupportDirectoryCache();
-    final resolved = resolveLinuxAppSupportDirectoryFromPathProvider(
-      newDir,
-      resolveError: StateError('HOME is not set'),
-    );
-    expect(resolved.absolute.path, newDir.absolute.path);
-    expect(_wordIds(marker(newDir)), ['demo-taberu']);
-    expect(logs.any((line) => line.contains('recovering via')), isTrue);
+  test('getpwuid returns an absolute home on Linux', () {
+    expect(Platform.isLinux, isTrue);
+    final home = linuxHomeFromGetpwuid();
+    expect(home, isNotNull);
+    expect(home, startsWith('/'));
+    expect(home!.length, greaterThan(1));
   });
+
+  test(
+    'linuxDatabaseDirectory without HOME uses passwd home, never temp',
+    () async {
+      final passwdHome = Directory('${root.path}/passwd-home')..createSync();
+      final dataHome = Directory('${passwdHome.path}/.local/share')
+        ..createSync(recursive: true);
+      final oldDir = Directory('${dataHome.path}/$kLegacyLinuxApplicationId')
+        ..createSync();
+      _writeSqliteWithWord(oldDir, id: 'demo-taberu');
+
+      final dir = await linuxDatabaseDirectory(
+        environment: const <String, String>{},
+        passwdHome: () => passwdHome.path,
+      );
+
+      expect(
+        dir.absolute.path,
+        Directory('${dataHome.path}/$kLinuxApplicationId').absolute.path,
+      );
+      expect(_wordIds(marker(dir)), ['demo-taberu']);
+      expect(dir.absolute.path, isNot(Directory.systemTemp.absolute.path));
+      expect(marker(dir).path.contains('/tmp/mangajp.sqlite'), isFalse);
+      expect(logs.any((line) => line.contains('using passwd home')), isTrue);
+    },
+  );
+
+  test(
+    'linuxDatabaseDirectory without HOME or getpwuid throws, never temp',
+    () async {
+      await expectLater(
+        linuxDatabaseDirectory(
+          environment: const <String, String>{},
+          passwdHome: () => null,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('Not opening a database in temp'),
+          ),
+        ),
+      );
+      expect(
+        logs.any(
+          (line) => line.contains('Not creating an empty database in temp'),
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'merge failure before sqlite leaves no sqlite so the next run retries',
+    () {
+      final oldDir = dir(kLegacyLinuxApplicationId)..createSync();
+      final newDir = dir(kLinuxApplicationId)..createSync();
+      _writeSqliteWithWord(oldDir, id: 'demo-taberu');
+      Directory('${oldDir.path}/pages').createSync();
+      File('${oldDir.path}/pages/photo.bin').writeAsStringSync('img');
+      File('${newDir.path}/leftover.txt').writeAsStringSync('keep');
+      File('${newDir.path}/jmdict.sqlite').writeAsStringSync('keep-dict');
+      final trap = Directory('${newDir.path}/pages')..createSync();
+      _chmod(trap.path, '000');
+      addTearDown(() {
+        if (trap.existsSync()) {
+          _chmod(trap.path, '755');
+        }
+      });
+
+      expect(
+        migrateLinuxAppSupportDirectory(oldDir: oldDir, newDir: newDir),
+        LinuxAppSupportMigrationResult.failed,
+      );
+      expect(marker(newDir).existsSync(), isFalse);
+      expect(
+        File('${newDir.path}/$kMangaJpDatabaseFileName.incoming').existsSync(),
+        isFalse,
+      );
+      expect(
+        File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+        'keep-dict',
+      );
+
+      _chmod(trap.path, '755');
+
+      expect(
+        migrateLinuxAppSupportDirectory(oldDir: oldDir, newDir: newDir),
+        LinuxAppSupportMigrationResult.migrated,
+      );
+      expect(_wordIds(marker(newDir)), ['demo-taberu']);
+      expect(File('${newDir.path}/pages/photo.bin').readAsStringSync(), 'img');
+      expect(
+        File('${newDir.path}/jmdict.sqlite').readAsStringSync(),
+        'keep-dict',
+      );
+    },
+  );
 
   test('empty new sqlite is replaced when old sqlite has user data', () {
     final oldDir = dir(kLegacyLinuxApplicationId)..createSync();

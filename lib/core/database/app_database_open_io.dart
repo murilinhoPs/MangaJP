@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'linux_app_support_migration.dart';
 
@@ -24,33 +23,20 @@ QueryExecutor openMangaJpDatabase() {
 ///
 /// Migrates the legacy APPLICATION_ID folder when needed. On copy failure
 /// this returns the legacy folder so Drift does not create an empty database
-/// under the new id. If XDG cannot be resolved, recovers from
-/// `getApplicationSupportDirectory()` as the new-id folder (sibling legacy
-/// id is still migrated) instead of opening that folder blindly.
+/// under the new id.
+///
+/// When HOME/XDG are unset, resolves home via `getpwuid(getuid())->pw_dir`
+/// and uses `$home/.local/share`. If that also fails, throws — never
+/// [Directory.systemTemp] (that opened an empty `/tmp/mangajp.sqlite`).
 /// Android and iOS use Drift’s default documents directory.
-Future<Directory> linuxDatabaseDirectory() async {
-  try {
-    return _ensureDirectory(resolveLinuxAppSupportDirectory());
-  } on Object catch (error) {
-    try {
-      final support = await getApplicationSupportDirectory();
-      return _ensureDirectory(
-        resolveLinuxAppSupportDirectoryFromPathProvider(
-          support,
-          resolveError: error,
-        ),
-      );
-    } on Object {
-      try {
-        return await getApplicationDocumentsDirectory();
-      } on Object {
-        return Directory.systemTemp;
-      }
-    }
-  }
-}
-
-Directory _ensureDirectory(Directory dir) {
+Future<Directory> linuxDatabaseDirectory({
+  Map<String, String>? environment,
+  LinuxPasswdHomeLookup? passwdHome,
+}) async {
+  final dir = resolveLinuxAppSupportDirectory(
+    environment: environment,
+    passwdHome: passwdHome,
+  );
   if (!dir.existsSync()) {
     dir.createSync(recursive: true);
   }
