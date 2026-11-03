@@ -1,0 +1,87 @@
+# Kanji / Caderno
+
+Rotas: `/notebook` (aba Kanji), `/notebook/kanji/:char` (M2). O `:char` é o `literal` normalizado, URL-encoded (go_router decodifica). Specs ligadas: [caderno](caderno.md) (F41–F44), [dicionario](dicionario.md) (lookup), [flashcards](flashcards.md) (F38 Won't). Issue: [#58](https://github.com/murilinhoPs/MangaJP/issues/58). F24 (KANJIDIC2 no lookup) e F45 (Salvar kanji + aba Kanji) entram juntas nessa issue, num PR só.
+
+## Objetivo
+
+Mostrar o kanji sozinho (leituras, significados, traços) a partir do KANJIDIC2, permitir **Salvar kanji** no Caderno e consultar a lista depois. Fora do SRS.
+
+## Comportamento
+
+### Fonte — KANJIDIC2 (F24)
+
+O lookup de kanji lê a tabela `kanji` do `jmdict.sqlite` local, a mesma base read-only do JMdict (PRD: `entries` / `forms` / `sense_pos` / `kanji`). A linha traz on/kun, significados e traços.
+
+O dado entra no app no bake: `python3 tools/build_jmdict_sqlite/build_jmdict_sqlite.py --output assets/dict/jmdict.sqlite --with-kanji`. `--with-kanji` baixa o [KANJIDIC2](http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz) e preenche `kanji`. Sem a flag a tabela existe vazia, com o mesmo schema. O sqlite completo é gitignored; o app o carrega como asset. NF4: download once.
+
+Colunas da tabela de lookup (não confundir com `saved_kanji`): `character`, `readings_json`, `meanings_json`, `stroke_count`, `freq`. Detalhe em [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md).
+
+Licença: KANJIDIC2 é © EDRDG, CC BY-SA, igual ao JMdict. Atribuição nos [Ajustes](settings.md) (NF8).
+
+Tamanho (medido 2026-11-03 no arquivo do EDRDG, `http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz`): **1 488 578 bytes** gzip (`Content-Length` / arquivo baixado) e **15 641 823 bytes** XML descomprimido (gunzip local). Não é um asset separado: vai para dentro de `assets/dict/jmdict.sqlite`. O sqlite completo (JMdict + kanji) fica na casa das **dezenas de MB** — [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md) e README da raiz; o acréscimo só da tabela `kanji` não foi medido num bake completo. JMdict_e.gz no mesmo host: 10 592 677 bytes.
+
+**F24** no lookup: tocar num kanji **na ficha da palavra** abre a **ficha do kanji**, com on/kun, significados e traços. Sem flashcard de kanji.
+
+Se o caractere não tem linha na tabela `kanji` (bake sem `--with-kanji`, ou kanji fora do KANJIDIC2): a ficha ainda abre; on/kun, significados e traços do KANJIDIC2 ficam omitidos; **Salvar kanji** continua disponível. Teste com o fixture da tool sem linhas de kanji.
+
+### Ação Salvar kanji (F45)
+
+Na ficha do kanji, botão **Salvar kanji**, no mesmo padrão do **Salvar** de palavras. A ação grava em `saved_kanji` e **não** cria flashcard, **não** altera `word_states` e **não** cria `words`.
+
+Salvar o mesmo `literal` de novo é no-op. A identidade é o `literal` normalizado (abaixo). Não rebaixa e não duplica a linha.
+
+### Modelo `saved_kanji`
+
+Tabela Drift própria, com migração, distinta de `word_states` e de `words`. Palavra salva e kanji salvo são listas diferentes no Caderno. Não há card `kind = kanji` (F38 Won't; futuro pós-v1 a partir de `saved_kanji`). Sem `user_note` no kanji (F45; Caderno de palavras também não edita nota).
+
+Colunas:
+
+| Coluna | Regra |
+| --- | --- |
+| `literal` | único. Normalizar **antes de salvar e de comparar**: remover seletores de variação IVS U+E0100–U+E01EF e VS1–VS16 U+FE00–U+FE0F (o mesmo recorte de `stripVariationSelectors` em [`lib/core/utils/graphemes.dart`](../../lib/core/utils/graphemes.dart)). |
+| `saved_at` | data em que foi salvo |
+| `origin_page_id` | página de origem, opcional (nullable) |
+
+`叱` e `𠮟`, ou o mesmo kanji com e sem IVS, colapsam no `literal` sem seletor. A rota `/notebook/kanji/:char` usa esse `literal`.
+
+### Aba Kanji no Caderno (F45)
+
+O Caderno ganha a aba **Kanji** ao lado da lista de palavras. Lista: mais recentes primeiro (`saved_at`). Busca por kanji, leitura ou significado. **Sem filtros** nesta entrega.
+
+Cada linha / o detalhe `/notebook/kanji/:char` mostra: kanji grande, leituras **on** e **kun**, significados, número de traços, e as **palavras do Caderno** cujo lema / `dict_form` contém aquele `literal` (depois da mesma normalização). Somente leitura (Caderno = consulta). Sem nota e sem Aprender.
+
+Estados vazios no mesmo padrão das palavras, copy adaptado:
+
+- Lista sem kanji: «Nenhum kanji.» / «Salve um kanji no lookup para vê-lo aqui.»
+- Busca sem resultado: «Nenhum resultado.» / «Tente outro kanji, leitura ou significado.»
+
+**Remover do Caderno** no mesmo padrão das palavras: confirmação; apaga a row em `saved_kanji`. Sem card, então sem o ramo de confirmação dupla de card. Nada some sem essa ação.
+
+A lista de **palavras** continua F41–F44: busca por palavra/leitura/nota, filtro por estado, NF11.
+
+### Fora de escopo
+
+- Flashcards de kanji e qualquer SRS de kanji (PRD não-objetivo; F38 Won't; F45 «fora do SRS»).
+- Nota no kanji salvo (F45).
+- Edição de texto no detalhe.
+- Filtros na aba Kanji (esta entrega).
+- Export do Caderno (F46 Could).
+- Tokenização (F34 Could) e polish extra de UI do KANJIDIC2 (M3 no recorte antigo da PRD).
+
+## Critérios de aceite
+
+- **AC-kanjidic:** tocar um kanji na ficha da palavra abre a ficha do kanji com on/kun, significados e traços a partir da tabela `kanji` do `jmdict.sqlite` (F24).
+- **AC-kanji-miss:** sem linha na tabela `kanji`, a ficha abre, os campos do KANJIDIC2 ficam omitidos e **Salvar kanji** continua disponível.
+- **AC-kanji-save:** **Salvar kanji** na ficha grava `saved_kanji` (`literal` normalizado, `saved_at`, `origin_page_id` nullable) e não cria card, não mexe em `word_states` / `words`. Salvar o mesmo `literal` (já sem IVS/VS) de novo é no-op.
+- **AC-kanji-tab:** o Caderno tem a aba **Kanji**; lista mais recentes primeiro, busca por kanji/leitura/significado, sem filtros; detalhe `/notebook/kanji/:char` mostra kanji grande, on, kun, significados, traços e as palavras do Caderno que usam aquele literal; somente leitura, sem nota e sem Aprender.
+- **AC-kanji-empty:** lista vazia e busca sem resultado usam o copy acima, no mesmo padrão das palavras.
+- **AC-kanji-remove:** **Remover do Caderno** apaga a row em `saved_kanji` após confirmação.
+- **AC-kanji-no-srs:** kanji salvo não entra na fila de revisão e não cria `kind = kanji`.
+
+## Como verificar
+
+- Teste de domínio / Drift: migração cria `saved_kanji`; insert; segundo save do mesmo `literal` (com e sem IVS/VS) não duplica; nenhum row em `cards` / `card_srs` / `word_states`; strip bate com `stripVariationSelectors`.
+- Teste de widget **phone (390×844) e wide (≥900)**: aba Kanji, detalhe `/notebook/kanji/:char`, ficha com **Salvar kanji**, estados vazios, Remover. Lookup com dados da tabela `kanji` (fixture do `tools/build_jmdict_sqlite/testdata`) e o caso sem linhas de kanji.
+- Prints conforme [`print-rules.md`](../qa/print-rules.md): Android **390×844** retrato sem hover e Linux **1280×800** só a área do app, no `pr-assets`, `print_sizes.txt` no head final. Widget/golden sozinho não conta. macOS / iOS: ou print, ou `n/a: Mac offline — #54 item: <link>`.
+- `integration_test`: saída real no head final, ou `n/a` com motivo.
+- F24 e F45 no mesmo PR da [#58](https://github.com/murilinhoPs/MangaJP/issues/58).
