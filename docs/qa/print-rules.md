@@ -29,9 +29,9 @@ Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac off
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **iOS** | simulador **iPhone 17**, qualquer resolução | retrato |
 
-Android 390×844 e desktop Linux 1280×800 **não** são opcionais (nuvem). Formato macOS (1x 1280×800 sRGB sem P3) vale **quando** o print macOS é capturado; se o worker do Mac estiver desligado, ver [Mac offline](#mac-offline-2026-10-21).
+**390×844** (emulador ou janela Linux, pasta `android/`) e desktop Linux 1280×800 **não** são opcionais (nuvem). Formato macOS (1x 1280×800 sRGB sem P3) vale **quando** o print macOS é capturado; se o worker do Mac estiver desligado, ver [Mac offline](#mac-offline-2026-10-21).
 
-**iOS (Murilo, 13/10):** prints de iOS podem vir do simulador do **iPhone 17**, em **qualquer resolução**. Os prints **obrigatórios** continuam sendo o **Android 390×844 em retrato** e o **Linux desktop 1280×800**, sem moldura nem barra de título. Continuam valendo: SHA-1 completo (40 caracteres) no `print_sizes.txt`; nada de arquivo pessoal; com Mac offline, `n/a: Mac offline — #54 item: <link>` ([Mac offline](#mac-offline-2026-10-21)).
+**iOS (Murilo, 13/10):** prints de iOS podem vir do simulador do **iPhone 17**, em **qualquer resolução**. Os prints **obrigatórios** continuam sendo o **390×844** em retrato (emulador ou janela Linux, pasta `android/`) e o **Linux desktop 1280×800**, sem moldura nem barra de título. Continuam valendo: SHA-1 completo (40 caracteres) no `print_sizes.txt`; nada de arquivo pessoal; com Mac offline, `n/a: Mac offline (#54)` ([Mac offline](#mac-offline-2026-10-21)).
 
 Telas que **só existem no layout largo** (sidebar, paleta Ctrl+K, rail) **não** vão no bloco Android. Ver a seção no fim.
 
@@ -54,17 +54,15 @@ Rodar no emulador Android é **obrigatório** quando o PR:
 
 > Pendente: o que conta como «ajuste maior de UI/UX». Default proposto, aguardando confirmação do dono do projeto: mudança na navegação principal (nav bar/rail, rotas raiz) ou fluxo novo que dependa de comportamento do sistema; tela ou aba nova dentro de uma área existente não conta. O [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (aba Kanji nova no Caderno + ficha de kanji) fica só com a janela Linux.
 
-Se o PR precisa do emulador e a VM não tem, o bloco fica no mesmo formato do Mac offline:
+Se o PR precisa do emulador e a VM não tem, o bloco do PR é:
 
 ```text
-n/a: sem emulador — #<fila> item: <link>
+n/a: sem emulador (#93)
 ```
 
-O `<link>` aponta para um **item** na issue fila de emulador (mesmo papel da [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para o Mac). Cada item lista PR, head e o fluxo a rodar. Quando a issue existir, **sem esse link o review bloqueia.** A print 390×844 da janela Linux **continua obrigatória**. Este `n/a` **bloqueia o merge** em fluxo de plataforma e **não bloqueia** em ajuste maior de UI/UX.
+O item (PR, head, fluxo) vai como comentário na fila [#93](https://github.com/murilinhoPs/MangaJP/issues/93) (mesmo papel da [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para o Mac). **Sem o comentário na #93 o review bloqueia** em fluxo de plataforma. A print 390×844 da janela Linux **continua obrigatória**. Este `n/a` **bloqueia o merge** em fluxo de plataforma e **não bloqueia** em ajuste maior de UI/UX.
 
-> Pendente: issue da fila de emulador (helm abre; até lá o item vai no comentário do PR e no relatório do tester).
-
-macOS / iOS não mudam: `n/a: Mac offline — #54 item: <link>` — [Mac offline (2026-10-21)](#mac-offline-2026-10-21).
+macOS / iOS: `n/a: Mac offline (#54)` — [Mac offline (2026-10-21)](#mac-offline-2026-10-21).
 
 ## Cores
 
@@ -120,7 +118,7 @@ Incluir a saída de `git rev-parse --short HEAD` **junto** da saída do teste, p
 
 Se o PR **não** toca `integration_test/` **nem** o fluxo que a suíte cobre, o bloco é `n/a` + **uma linha** de motivo.
 
-Se a suíte **só roda no Mac** e o worker está desligado: `n/a: Mac offline — #54 item: <link>` — ver [Mac offline](#mac-offline-2026-10-21).
+Se a suíte **só roda no Mac** e o worker está desligado: `n/a: Mac offline (#54)` — ver [Mac offline](#mac-offline-2026-10-21).
 
 ## Mac offline (2026-10-21)
 
@@ -131,14 +129,14 @@ Decisão do Murilo: todo trabalho roda na **nuvem** por padrão.
 Nesse caso o bloco do PR fica:
 
 ```text
-n/a: Mac offline — #54 item: <link>
+n/a: Mac offline (#54)
 ```
 
-O `<link>` aponta para um **item** na issue fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54). Cada item lista PR de origem, o que rodar e o head. **Sem esse link o review bloqueia.**
+O item (PR, o que rodar, head) vai como comentário na fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54). **Sem o comentário na #54 o review bloqueia.**
 
 Quando o worker do Mac for ligado, a fila da #54 é rodada **inteira** e o review revalida esses itens.
 
-Prints de **Android 390×844** e **desktop Linux 1280×800** continuam obrigatórios — rodam na nuvem.
+Prints de **390×844** (emulador ou janela Linux, pasta `android/`) e **desktop Linux 1280×800** continuam obrigatórios — rodam na nuvem.
 
 ## macOS — entitlement do picker
 

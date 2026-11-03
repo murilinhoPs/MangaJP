@@ -14,6 +14,7 @@ Ver a página com crops, texto OCR e termos; lookup no tap; reler sem perder `wo
 - Pode promover termo, marcar known, ou **adicionar novos crops** na mesma página (dedupe) — [recorte](recorte.md).
 - Tela de tarefa: esconde nav cards; dock próprio (voltar · meta). Swipe-back / back **normais** (não é Review; #46 / M1.29).
 - **F22 Should:** overlay de bounding boxes quando o OCR fornecer.
+- **F26 Should:** a página guarda e mostra num chip qual motor fez o OCR — [cloud-vision](cloud-vision.md).
 - Histórico `/pages` com thumbnails = **Should F21**. M1 exige `/pages/:id` pós-OCR. Lista própria saiu; Capturas recentes na Home.
 
 **Continuar lendo** na Home só abre esta tela, não `/review` ([ADR-0005](../adr/0005-saida-revisao.md)).
@@ -32,3 +33,4 @@ Não-objetivo: reader completo tipo Mokuro.
 > Pendente: meta do dock (o que a pílula mostra).
 > Pendente: lista `/pages` (F21 / M2) — ver [`m2.md`](../milestones/m2.md).
 > Pendente: overlay F22 (M2) — quando liga e o que o tap na box faz; ver [`m2.md`](../milestones/m2.md).
+> Pendente: chip do motor OCR (F26) — [cloud-vision](cloud-vision.md).

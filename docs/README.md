@@ -43,6 +43,7 @@ Templates GitHub (fora de `/docs`): [`.github/pull_request_template.md`](../.git
 
 - [Captura](specs/captura.md)
 - [OCR](specs/ocr.md)
+- [Cloud Vision](specs/cloud-vision.md)
 - [Recorte](specs/recorte.md)
 - [Dicionário](specs/dicionario.md)
 - [Palavras / Caderno](specs/caderno.md)

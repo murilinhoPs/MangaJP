@@ -12,7 +12,7 @@ Ler japonês de crops de balão o bastante para lookup, sem ML Kit no app.
 - OCR roda **automaticamente** depois do confirm dos crops ([captura](captura.md)).
 - **F5:** texto OCR **editável por crop** + lista de termos. Persistido em `crops.ocr_text` / `ocr_raw_json`.
 - Contrato: `fullText`, `blocks` (text, confidence, `Rect?`), `engineId`.
-- **F26 Should:** fallback Cloud Vision (`DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]`). Só com toggle «Usar OCR na nuvem». Chave não embutida. Não é o default.
+- **F26 Should:** Cloud Vision opcional — spec em [cloud-vision](cloud-vision.md). `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]`. Só com toggle «Usar OCR na nuvem». Chave não embutida. Não é o default.
 - Filtro de ruby do Vision (CER 21,32%) é **unofficial** e não é default.
 - **F27 Should:** filtrar furigana por altura relativa **se** o engine der boxes. Não usar como reading automática (Q-N5).
 - **F22 Should:** overlay de bounding boxes quando o OCR fornecer.
@@ -25,10 +25,9 @@ Ler japonês de crops de balão o bastante para lookup, sem ML Kit no app.
 
 - Default do app = manga-ocr (ADR-0001). Nenhum caminho de produto chama ML Kit.
 - Confirm crop → OCR auto → `ocr_text` visível e editável em `/pages/:id` ([leitor](leitor.md)).
-- Cloud Vision só existe atrás do toggle (F26), quando implementado.
+- Cloud Vision só existe atrás do toggle (F26), quando implementado — [cloud-vision](cloud-vision.md).
 
 > Pendente: UX do editor de `ocr_text` (inline, sheet, teclado).
-> Pendente: Q-N3 — orçamento Cloud Vision (USD/mês); ver [`m2.md`](../milestones/m2.md).
-> Pendente: F26 (M2) — quando o Cloud Vision entra, chave e sem rede; ver [`m2.md`](../milestones/m2.md).
+> Pendente: Q-N3 — orçamento Cloud Vision (USD/mês); ver [cloud-vision](cloud-vision.md).
 > Pendente: limiar numérico da altura no filtro de furigana (Q-N5).
 > Pendente: overlay F22 (M2) — tap, toggle, sempre visível; ver [`m2.md`](../milestones/m2.md).
