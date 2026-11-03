@@ -594,6 +594,94 @@ android/home.png 390x844 sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
       expect(existing, isNot(full));
     });
 
+    test(
+      'runGenTelas --check uses telasCheckExitCode with sha7AddedAt sort',
+      () {
+        const newer = '''
+head: cccccccccccccccccccccccccccccccccccccccc
+android/home.png 390x844 sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+''';
+        final committed = files();
+        final withOlderSha7 = [
+          ...committed,
+          (
+            path: 'docs/pr-assets/pr-10/ccccccc/print_sizes.txt',
+            content: newer,
+          ),
+        ];
+        final addedAt = <String, int>{
+          'pr-10/aaaaaaa': 200,
+          'pr-10/ccccccc': 100,
+        };
+        final existing = buildTelasMarkdown(
+          index: buildTelasIndex(withOlderSha7, sha7AddedAt: addedAt),
+          repoUrl: repo,
+        );
+        expect(
+          telasCheckExitCode(
+            existingMarkdown: existing,
+            files: withOlderSha7,
+            sha7AddedAt: addedAt,
+            repoUrl: repo,
+          ),
+          0,
+        );
+        expect(
+          telasCheckExitCode(
+            existingMarkdown: existing,
+            files: withOlderSha7,
+            sha7AddedAt: const {'pr-10/aaaaaaa': 100, 'pr-10/ccccccc': 200},
+            repoUrl: repo,
+          ),
+          1,
+        );
+      },
+    );
+
+    test(
+      '--check --strict fails when a print_sizes.txt is skipped entirely',
+      () {
+        final committed = files();
+        final existing = buildTelasMarkdown(
+          index: buildTelasIndex(committed),
+          repoUrl: repo,
+        );
+        final withSkipped = [
+          ...committed,
+          (
+            path: 'docs/pr-assets/pr-99/deadbee/print_sizes.txt',
+            content: 'isto nao e um print\n',
+          ),
+        ];
+        expect(
+          telasCheckExitCode(
+            existingMarkdown: existing,
+            files: withSkipped,
+            repoUrl: repo,
+          ),
+          0,
+        );
+        expect(
+          telasCheckExitCode(
+            existingMarkdown: existing,
+            files: withSkipped,
+            repoUrl: repo,
+            strict: true,
+          ),
+          1,
+        );
+        expect(
+          telasCheckExitCode(
+            existingMarkdown: existing,
+            files: files(extraPr: true),
+            repoUrl: repo,
+            strict: true,
+          ),
+          0,
+        );
+      },
+    );
+
     test('real telas.md drift still fails', () {
       final committed = files();
       final existing = buildTelasMarkdown(

@@ -457,13 +457,25 @@ List<({String path, String content})> printSizesForTelasCheck({
 }
 
 /// 0 if [existingMarkdown] matches a regen of the folders it already indexes.
+///
+/// [sha7AddedAt] is passed through to [buildTelasIndex] so `--check` sort
+/// order matches generate. With [strict], a `print_sizes.txt` skipped
+/// entirely fails even when that folder was never in [existingMarkdown]
+/// (lag of valid extra PRs still does not fail).
 int telasCheckExitCode({
   required String existingMarkdown,
   required List<({String path, String content})> files,
   Map<String, int> sha7AddedAt = const {},
   required String repoUrl,
   String assetsBranch = 'pr-assets',
+  bool strict = false,
 }) {
+  if (strict) {
+    final full = buildTelasIndex(files, sha7AddedAt: sha7AddedAt);
+    if (full.skippedFiles.isNotEmpty) {
+      return 1;
+    }
+  }
   final subset = printSizesForTelasCheck(
     existingMarkdown: existingMarkdown,
     files: files,
