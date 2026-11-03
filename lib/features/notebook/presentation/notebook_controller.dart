@@ -71,10 +71,21 @@ class NotebookKanjiQuery extends _$NotebookKanjiQuery {
   }
 }
 
+/// Unfiltered Caderno words, newest first.
+///
+/// Palavras search/state and Kanji related-words both watch this so a
+/// remove or study refreshes both tabs without leaking the Palavras filter
+/// into the Kanji list.
+@riverpod
+Future<List<NotebookEntry>> notebookListedWords(Ref ref) {
+  return ref.watch(notebookRepositoryProvider).list();
+}
+
 /// Caderno rows for the current search / state filter.
 @riverpod
-Future<List<NotebookEntry>> notebookEntries(Ref ref) {
+Future<List<NotebookEntry>> notebookEntries(Ref ref) async {
   final query = ref.watch(notebookListQueryProvider);
+  await ref.watch(notebookListedWordsProvider.future);
   return ref
       .watch(notebookRepositoryProvider)
       .list(search: query.search, state: query.state);
@@ -89,7 +100,7 @@ Future<List<NotebookKanjiView>> notebookKanjiEntries(Ref ref) async {
   if (saved.isEmpty) {
     return const [];
   }
-  final listedWords = await repo.list();
+  final listedWords = await ref.watch(notebookListedWordsProvider.future);
   final jmdict = await ref.watch(jmdictServiceProvider.future);
   final lookups = jmdict.kanjiByCharacters([
     for (final row in saved) row.literal,
@@ -126,6 +137,7 @@ Future<NotebookKanjiView?> notebookKanji(Ref ref, String char) async {
   if (row == null) {
     return null;
   }
+  await ref.watch(notebookListedWordsProvider.future);
   final jmdict = await ref.watch(jmdictServiceProvider.future);
   return NotebookKanjiView(
     literal: row.literal,

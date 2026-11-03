@@ -224,6 +224,42 @@ void main() {
       );
       expect(await env.db.select(env.db.userWords).get(), isNotEmpty);
     });
+
+    testWidgets('removing a Caderno word drops it from the 食 row at $label', (
+      tester,
+    ) async {
+      await _openNotebook(tester, jmdictPath: jmdictPath, size: size);
+      await tester.tap(find.byKey(NotebookKeys.tabKanji));
+      await tester.pumpAndSettle();
+      expect(find.byKey(NotebookKeys.kanjiRow('食')), findsOneWidget);
+      expect(find.text('食べる'), findsWidgets);
+
+      await tester.tap(find.byKey(NotebookKeys.kanjiRow('食')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(NotebookKanjiKeys.word('eat')));
+      await tester.pumpAndSettle();
+      expect(find.byType(NotebookWordPage), findsOneWidget);
+
+      final remove = find.byKey(NotebookWordKeys.removeFromNotebook);
+      await tester.scrollUntilVisible(
+        remove,
+        80,
+        scrollable: find.descendant(
+          of: find.byType(NotebookWordPage),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(NotebookWordKeys.removeFromNotebookConfirm));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(find.byKey(NotebookKeys.kanjiRow('食')), findsOneWidget);
+      expect(find.text('食べる'), findsNothing);
+      expect(find.byKey(NotebookKanjiKeys.word('eat')), findsNothing);
+    });
   }
 
   testWidgets('related word on the kanji detail opens the word page', (

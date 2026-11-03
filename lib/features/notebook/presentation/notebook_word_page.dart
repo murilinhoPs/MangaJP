@@ -390,7 +390,7 @@ class _NotebookWordBody extends ConsumerWidget {
 
     await words.removeFromNotebook(wordId);
     ref.invalidate(notebookWordProvider(wordId));
-    ref.invalidate(notebookEntriesProvider);
+    ref.invalidate(notebookListedWordsProvider);
     if (!context.mounted) {
       return;
     }
@@ -403,7 +403,7 @@ class _NotebookWordBody extends ConsumerWidget {
   ) async {
     await action(ref.read(flashcardsRepositoryProvider));
     ref.invalidate(notebookWordProvider(wordId));
-    ref.invalidate(notebookEntriesProvider);
+    ref.invalidate(notebookListedWordsProvider);
   }
 }
 

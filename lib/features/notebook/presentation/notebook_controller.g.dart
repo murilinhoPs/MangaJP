@@ -167,6 +167,65 @@ abstract class _$NotebookKanjiQuery extends $Notifier<String> {
   }
 }
 
+/// Unfiltered Caderno words, newest first.
+///
+/// Palavras search/state and Kanji related-words both watch this so a
+/// remove or study refreshes both tabs without leaking the Palavras filter
+/// into the Kanji list.
+
+@ProviderFor(notebookListedWords)
+final notebookListedWordsProvider = NotebookListedWordsProvider._();
+
+/// Unfiltered Caderno words, newest first.
+///
+/// Palavras search/state and Kanji related-words both watch this so a
+/// remove or study refreshes both tabs without leaking the Palavras filter
+/// into the Kanji list.
+
+final class NotebookListedWordsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<NotebookEntry>>,
+          List<NotebookEntry>,
+          FutureOr<List<NotebookEntry>>
+        >
+    with
+        $FutureModifier<List<NotebookEntry>>,
+        $FutureProvider<List<NotebookEntry>> {
+  /// Unfiltered Caderno words, newest first.
+  ///
+  /// Palavras search/state and Kanji related-words both watch this so a
+  /// remove or study refreshes both tabs without leaking the Palavras filter
+  /// into the Kanji list.
+  NotebookListedWordsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notebookListedWordsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookListedWordsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<NotebookEntry>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<NotebookEntry>> create(Ref ref) {
+    return notebookListedWords(ref);
+  }
+}
+
+String _$notebookListedWordsHash() =>
+    r'0dc746eaac2b8fc86d22f7c449c705c400d46e0c';
+
 /// Caderno rows for the current search / state filter.
 
 @ProviderFor(notebookEntries)
@@ -211,7 +270,7 @@ final class NotebookEntriesProvider
   }
 }
 
-String _$notebookEntriesHash() => r'd1e61f2b3eaef104590467bc7b36605d634f497b';
+String _$notebookEntriesHash() => r'8e6c3dafab4e1be51b1e7d6baa9cd6a356dd217f';
 
 /// Saved kanji for the Kanji tab, newest first, filtered by search.
 
@@ -258,7 +317,7 @@ final class NotebookKanjiEntriesProvider
 }
 
 String _$notebookKanjiEntriesHash() =>
-    r'438f29a82765626d2d41d380367d58fcc5d7772a';
+    r'c15985aa8efc3a4455b4a097bc5207d8ba819d94';
 
 /// `/notebook/kanji/:char` payload.
 
@@ -322,7 +381,7 @@ final class NotebookKanjiProvider
   }
 }
 
-String _$notebookKanjiHash() => r'98306067479c2daad5a35e4ce6f19e9d19d94223';
+String _$notebookKanjiHash() => r'849b3a9e94036a846982e9fdaa582fbe23ef7791';
 
 /// `/notebook/kanji/:char` payload.
 
