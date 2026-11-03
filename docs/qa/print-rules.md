@@ -12,9 +12,9 @@ Branch `pr-assets`. `N` = número do PR. `<head>` = SHA-1 **curto** do **head fi
 
 ## Quando é obrigatório
 
-Todo PR que mexe em **design, telas ou tema** precisa de print de emulador no corpo do PR.
+Todo PR que mexe em **design, telas ou tema** precisa de print nos tamanhos da regra no corpo do PR.
 
-Obrigatórios na **nuvem** (todo PR que mexe em tela): **Android 390×844** e **desktop Linux 1280×800**. Widget/golden sozinho **não conta**. Sem esses dois o PR **não** é squash-mergeado.
+Obrigatórios na **nuvem** (todo PR que mexe em tela): **390×844** (retrato, sem hover) e **desktop Linux 1280×800**. Widget/golden sozinho **não conta**. Sem esses dois o PR **não** é squash-mergeado. A print **390×844** pode vir do emulador Android ou de uma janela Linux redimensionada — [emulador Android (2026-11-03)](#emulador-android-2026-11-03).
 
 Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac offline](#mac-offline-2026-10-21).
 
@@ -24,7 +24,7 @@ Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac off
 
 | Plataforma | Tamanho | Recorte |
 | --- | --- | --- |
-| **Android** | **obrigatório 390×844**, retrato, **sem hover** | tela do emulador |
+| **Android** | **obrigatório 390×844**, retrato, **sem hover** | área do app — emulador Android **ou** janela Linux redimensionada |
 | **Desktop Linux** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **iOS** | simulador **iPhone 17**, qualquer resolução | retrato |
@@ -34,6 +34,23 @@ Android 390×844 e desktop Linux 1280×800 **não** são opcionais (nuvem). Form
 **iOS (Murilo, 13/10):** prints de iOS podem vir do simulador do **iPhone 17**, em **qualquer resolução**. Os prints **obrigatórios** continuam sendo o **Android 390×844 em retrato** e o **Linux desktop 1280×800**, sem moldura nem barra de título. Continuam valendo: SHA-1 completo (40 caracteres) no `print_sizes.txt`; nada de arquivo pessoal; com Mac offline, `n/a: Mac offline — #54 item: <link>` ([Mac offline](#mac-offline-2026-10-21)).
 
 Telas que **só existem no layout largo** (sidebar, paleta Ctrl+K, rail) **não** vão no bloco Android. Ver a seção no fim.
+
+## Emulador Android (2026-11-03)
+
+Decisão do dono do projeto.
+
+O layout de celular vs. tela larga depende só da largura: `ShellLayout.isWide` é verdadeiro quando a largura é ≥ 900 (`AppBreakpoints.wide`). A print de layout em formato celular (**390×844**, retrato, **sem hover**) pode vir do emulador Android **ou** de uma janela Linux desktop redimensionada. Não é obrigatório que venha da tela do emulador.
+
+A janela Linux **não** cobre: status bar, safe area, teclado na tela, voltar do sistema, share vindo de outro app, galeria e câmera.
+
+Rodar no emulador Android é **obrigatório** quando o PR:
+
+1. mexe em fluxo de plataforma (share, galeria, voltar, câmera, teclado, status bar/safe area); ou
+2. traz um ajuste maior de UI/UX.
+
+> Pendente: o que conta como «ajuste maior de UI/UX». Default proposto, aguardando confirmação do dono do projeto: mudança na navegação principal (nav bar/rail, rotas raiz) ou fluxo novo que dependa de comportamento do sistema; tela ou aba nova dentro de uma área existente não conta. O [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (aba Kanji nova no Caderno + ficha de kanji) fica só com a janela Linux.
+
+macOS / iOS não mudam: `n/a: Mac offline — #54 item: <link>` — [Mac offline (2026-10-21)](#mac-offline-2026-10-21).
 
 ## Cores
 

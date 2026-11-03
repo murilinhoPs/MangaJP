@@ -133,7 +133,7 @@ Passo a passo:
 1. **Entrada.** O pedido vira issue pelo template, com `type`, `prio`, `area`, milestone, Status Todo, Ordem e Dono no Project.
 2. **Definição.** Se a feature não tem spec, ou envolve escolha nova, o draft escreve ou ajusta `docs/specs/<feature>.md` ou abre ADR antes do código.
 3. **Execução.** O dono move pra In Progress, abre branch e PR com `Closes #N`. Um PR por corte pequeno e verificável (no polish de telas, um PR por tela).
-4. **Prova.** Mudança de tela exige prints de emulador no head final, nunca print web nem só golden. Comportamento muda, spec muda no mesmo PR.
+4. **Prova.** Mudança de tela exige prints nos tamanhos da regra no head final, nunca print web nem só golden. A print 390×844 pode vir do emulador Android ou de uma janela Linux redimensionada; o emulador só é obrigatório nos casos de [`print-rules.md`](qa/print-rules.md#emulador-android-2026-11-03). Comportamento muda, spec muda no mesmo PR.
 5. **Revisão.** O critique revisa; bloqueante volta pro implementador e é re-revisado depois do push. O tester exercita o app e reporta com repro.
 6. **Merge.** O radar garante CI verde e branch atualizada e faz o squash. A issue fecha sozinha pelo `Closes`, e o Status vai pra Done.
 7. **Vitrine.** O Notion recebe só o resumo e os links do que entrou.
