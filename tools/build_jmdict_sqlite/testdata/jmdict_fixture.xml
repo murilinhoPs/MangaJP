@@ -134,6 +134,31 @@
 </sense>
 </entry>
 <entry>
+<ent_seq>1576150</ent_seq>
+<k_ele>
+<keb>生きる</keb>
+<ke_pri>ichi1</ke_pri>
+<ke_pri>news1</ke_pri>
+<ke_pri>nf02</ke_pri>
+</k_ele>
+<r_ele>
+<reb>いきる</reb>
+<re_pri>ichi1</re_pri>
+<re_pri>news1</re_pri>
+<re_pri>nf02</re_pri>
+</r_ele>
+<sense>
+<pos>&v1;</pos>
+<gloss>to live</gloss>
+<gloss>to exist</gloss>
+</sense>
+<sense>
+<pos>&v1;</pos>
+<gloss>to make a living</gloss>
+<gloss>to subsist</gloss>
+</sense>
+</entry>
+<entry>
 <ent_seq>1214560</ent_seq>
 <k_ele>
 <keb>葛</keb>

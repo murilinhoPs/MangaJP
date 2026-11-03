@@ -86,5 +86,12 @@ void main() {
     expect(jmdict.kanjiByCharacter('食\u{E0100}'), isNotNull);
     expect(jmdict.kanjiByCharacter('食\u{E0100}')!.character, '食');
     expect(jmdict.kanjiByCharacter('猫'), isNull);
+
+    final sei = jmdict.kanjiByCharacter('生');
+    expect(sei, isNotNull);
+    expect(sei!.onReadings, ['セイ', 'ショウ']);
+    expect(sei.kunReadings, containsAll(<String>['い.きる', 'なま', 'は.える']));
+    expect(sei.meanings, ['life', 'genuine', 'birth', 'raw', 'fresh']);
+    expect(sei.strokeCount, 5);
   });
 }
