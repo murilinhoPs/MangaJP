@@ -24,9 +24,9 @@ void main() {
     final connection = await verifier.startAt(7);
     final db = AppDatabase(connection);
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 8);
+    await verifier.migrateAndValidate(db, 9);
     await _expectNoFkViolations(db);
-    expect(await db.appMetaDao.getValue('schema_version'), '8');
+    expect(await db.appMetaDao.getValue('schema_version'), '9');
   });
 
   test(
@@ -124,7 +124,7 @@ void main() {
       await env.old.close();
 
       final db = await _migrate(verifier, env.schema);
-      expect(await db.appMetaDao.getValue('schema_version'), '8');
+      expect(await db.appMetaDao.getValue('schema_version'), '9');
 
       final words = await db.select(db.userWords).get();
       expect(words.map((row) => row.id).toSet(), {
@@ -415,7 +415,7 @@ Future<AppDatabase> _migrate(
 ) async {
   final db = AppDatabase(schema.newConnection());
   addTearDown(db.close);
-  await verifier.migrateAndValidate(db, 8);
+  await verifier.migrateAndValidate(db, 9);
   await _expectNoFkViolations(db);
   return db;
 }

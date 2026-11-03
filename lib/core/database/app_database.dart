@@ -8,11 +8,13 @@ import 'demo_seed.dart';
 import 'daos/app_meta_dao.dart';
 import 'daos/cards_dao.dart';
 import 'daos/pages_dao.dart';
+import 'daos/saved_kanji_dao.dart';
 import 'daos/words_dao.dart';
 import 'tables/app_meta.dart';
 import 'tables/captured_crops.dart';
 import 'tables/captured_pages.dart';
 import 'tables/crop_words.dart';
+import 'tables/saved_kanji.dart';
 import 'tables/user_card_srs.dart';
 import 'tables/user_cards.dart';
 import 'tables/user_review_logs.dart';
@@ -33,14 +35,15 @@ part 'migrations/merge_custom_ivs_duplicates.dart';
     UserCards,
     UserCardSrs,
     UserReviewLogs,
+    SavedKanji,
   ],
-  daos: [AppMetaDao, PagesDao, WordsDao, CardsDao],
+  daos: [AppMetaDao, PagesDao, WordsDao, CardsDao, SavedKanjiDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -50,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '8'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '9'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -135,6 +138,16 @@ class AppDatabase extends _$AppDatabase {
             );
             await assertNoForeignKeyViolations(this);
           });
+        }
+        if (from < 9) {
+          await m.createTable(savedKanji);
+          await m.createIndex(idxSavedKanjiSavedAt);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '9'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('9')),
+            ),
+          );
         }
       },
       beforeOpen: (details) async {

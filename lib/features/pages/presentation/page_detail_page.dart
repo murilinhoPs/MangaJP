@@ -13,6 +13,7 @@ import '../../../core/utils/graphemes.dart';
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/domain/dict_entry.dart';
 import '../../dictionary/domain/lookup_result.dart';
+import '../../dictionary/presentation/kanji_sheet.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
@@ -155,6 +156,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
                           loading: _lookupLoading,
                           error: _lookupError,
                           session: _session,
+                          originPageId: widget.pageId,
                           onAction: _applyLookup,
                           onCustomAction: _applyCustomLookup,
                         ),
@@ -253,6 +255,11 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             result: result,
             sentence: crop.ocrText,
             wordState: session.wordState,
+            onKanjiTap: (literal) => showKanjiSheet(
+              context,
+              literal: literal,
+              originPageId: widget.pageId,
+            ),
             onAction: (action, entry) => _applyLookup(session, action, entry),
           );
           if (mounted) {
@@ -299,6 +306,11 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
           highlightStart: miss.start,
           highlightEnd: miss.end,
           wordState: session.wordState,
+          onKanjiTap: (literal) => showKanjiSheet(
+            context,
+            literal: literal,
+            originPageId: widget.pageId,
+          ),
           onAction: (action, note) => _applyCustomLookup(session, action, note),
         );
         if (mounted) {
@@ -662,6 +674,7 @@ class _LookupDrawer extends StatelessWidget {
     required this.loading,
     required this.error,
     required this.session,
+    required this.originPageId,
     required this.onAction,
     required this.onCustomAction,
   });
@@ -669,6 +682,7 @@ class _LookupDrawer extends StatelessWidget {
   final bool loading;
   final String? error;
   final _LookupSession? session;
+  final String originPageId;
   final Future<void> Function(
     _LookupSession session,
     LookupAction action,
@@ -743,6 +757,11 @@ class _LookupDrawer extends StatelessWidget {
         highlightStart: session.start,
         highlightEnd: session.end,
         wordState: session.wordState,
+        onKanjiTap: (literal) => showKanjiSheet(
+          context,
+          literal: literal,
+          originPageId: originPageId,
+        ),
         onCustomAction: (action, note) => onCustomAction(session, action, note),
       );
     }
@@ -752,6 +771,8 @@ class _LookupDrawer extends StatelessWidget {
       highlightStart: session.start,
       highlightEnd: session.end,
       wordState: session.wordState,
+      onKanjiTap: (literal) =>
+          showKanjiSheet(context, literal: literal, originPageId: originPageId),
       onAction: (action, entry) => onAction(session, action, entry),
     );
   }

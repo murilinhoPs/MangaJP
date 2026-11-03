@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../../../core/shell/kbd_chip.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/graphemes.dart';
+import '../../../core/utils/kanji.dart';
 import '../../pages/domain/page_labels.dart';
 import '../../words/domain/word_state.dart';
 import '../domain/dict_entry.dart';
@@ -25,8 +27,12 @@ abstract final class LookupSheetKeys {
   static const empty = Key('lookup-empty');
   static const loading = Key('lookup-loading');
   static const error = Key('lookup-error');
+  static const lemma = Key('lookup-lemma');
 
   static Key option(int seq) => Key('lookup-option-$seq');
+
+  static Key kanji(String literal, [int index = 0]) =>
+      Key('lookup-kanji-$literal-$index');
 }
 
 enum LookupAction { learn, known, ignore, save }
@@ -38,6 +44,7 @@ Future<void> showLookupSheet(
   required WordState wordState,
   required Future<void> Function(LookupAction action, DictEntry selected)
   onAction,
+  ValueChanged<String>? onKanjiTap,
 }) {
   final height =
       MediaQuery.sizeOf(context).height * PageLayout.lookupSheetFraction;
@@ -62,6 +69,7 @@ Future<void> showLookupSheet(
         wordState: wordState,
         popOnAction: true,
         onAction: onAction,
+        onKanjiTap: onKanjiTap,
       ),
     ),
   );
@@ -75,6 +83,7 @@ Future<void> showCustomLookupSheet(
   required int highlightEnd,
   required WordState wordState,
   required Future<void> Function(LookupAction action, String userNote) onAction,
+  ValueChanged<String>? onKanjiTap,
 }) {
   final height =
       MediaQuery.sizeOf(context).height * PageLayout.lookupSheetFraction;
@@ -99,6 +108,7 @@ Future<void> showCustomLookupSheet(
         wordState: wordState,
         popOnAction: true,
         onCustomAction: onAction,
+        onKanjiTap: onKanjiTap,
       ),
     ),
   );
@@ -117,6 +127,7 @@ class LookupSheet extends StatefulWidget {
     required this.wordState,
     required this.onAction,
     this.popOnAction = false,
+    this.onKanjiTap,
   }) : result = result,
        surface = result.surface,
        onCustomAction = null;
@@ -130,6 +141,7 @@ class LookupSheet extends StatefulWidget {
     required this.wordState,
     required this.onCustomAction,
     this.popOnAction = false,
+    this.onKanjiTap,
   }) : result = null,
        onAction = null;
 
@@ -140,6 +152,7 @@ class LookupSheet extends StatefulWidget {
   final int highlightEnd;
   final WordState wordState;
   final bool popOnAction;
+  final ValueChanged<String>? onKanjiTap;
   final Future<void> Function(LookupAction action, DictEntry selected)?
   onAction;
   final Future<void> Function(LookupAction action, String userNote)?
@@ -213,9 +226,8 @@ class _LookupSheetState extends State<LookupSheet> {
         return;
       }
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Falha ao salvar: $error')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Falha ao salvar: $error')));
     }
   }
 
@@ -275,13 +287,17 @@ class _LookupSheetState extends State<LookupSheet> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (result == null)
-                        _LemmaHeader(lemma: widget.surface)
+                        _LemmaHeader(
+                          lemma: widget.surface,
+                          onKanjiTap: widget.onKanjiTap,
+                        )
                       else if (result.entries.length == 1)
                         _LemmaHeader(
                           lemma: _selected.lemma,
                           reading: _selected.reading,
+                          onKanjiTap: widget.onKanjiTap,
                         )
-                      else
+                      else ...[
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxHeight: 180),
                           child: ListView(
@@ -309,6 +325,13 @@ class _LookupSheetState extends State<LookupSheet> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        _LemmaHeader(
+                          lemma: _selected.lemma,
+                          reading: _selected.reading,
+                          onKanjiTap: widget.onKanjiTap,
+                        ),
+                      ],
                       if (result != null) ...[
                         const SizedBox(height: 12),
                         Text(
@@ -412,10 +435,11 @@ class _PhraseHeader extends StatelessWidget {
 }
 
 class _LemmaHeader extends StatelessWidget {
-  const _LemmaHeader({required this.lemma, this.reading});
+  const _LemmaHeader({required this.lemma, this.reading, this.onKanjiTap});
 
   final String lemma;
   final String? reading;
+  final ValueChanged<String>? onKanjiTap;
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +447,11 @@ class _LemmaHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(lemma, style: AppTypeScale.lookupJp),
+        _KanjiTappableLemma(
+          lemma: lemma,
+          style: AppTypeScale.lookupJp,
+          onKanjiTap: onKanjiTap,
+        ),
         if (reading != null && reading != lemma)
           Text(
             reading!,
@@ -433,6 +461,87 @@ class _LemmaHeader extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Lemma text with opaque hit targets on each CJK ideograph.
+class _KanjiTappableLemma extends StatelessWidget {
+  const _KanjiTappableLemma({
+    required this.lemma,
+    required this.style,
+    required this.onKanjiTap,
+  });
+
+  final String lemma;
+  final TextStyle style;
+  final ValueChanged<String>? onKanjiTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tap = onKanjiTap;
+    if (tap == null) {
+      return Text(
+        lemma,
+        key: LookupSheetKeys.lemma,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: lemma, style: style),
+          textDirection: Directionality.of(context),
+          maxLines: 2,
+          ellipsis: '…',
+        )..layout(maxWidth: constraints.maxWidth);
+        final hits = <Widget>[];
+        var offset = 0;
+        var index = 0;
+        for (final grapheme in lemma.characters) {
+          final start = offset;
+          offset += grapheme.length;
+          final stripped = stripVariationSelectors(grapheme);
+          if (!isSingleCjkIdeograph(stripped)) {
+            continue;
+          }
+          final boxes = painter.getBoxesForSelection(
+            TextSelection(baseOffset: start, extentOffset: offset),
+          );
+          for (final box in boxes) {
+            final rect = box.toRect();
+            hits.add(
+              Positioned(
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+                child: GestureDetector(
+                  key: LookupSheetKeys.kanji(stripped, index),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => tap(stripped),
+                ),
+              ),
+            );
+          }
+          index += 1;
+        }
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Text(
+              lemma,
+              key: LookupSheetKeys.lemma,
+              style: style,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            ...hits,
+          ],
+        );
+      },
     );
   }
 }
@@ -451,7 +560,7 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final specs = _actionSpecs(tokens);
+    final specs = _actionSpecs(tokens, wide: ShellLayout.isWide(context));
     return Row(
       children: [
         for (var i = 0; i < specs.length; i++) ...[
@@ -473,7 +582,7 @@ class _ActionRow extends StatelessWidget {
     );
   }
 
-  List<_ActionSpec> _actionSpecs(MangaJpTokens tokens) {
+  List<_ActionSpec> _actionSpecs(MangaJpTokens tokens, {required bool wide}) {
     return [
       _ActionSpec(
         action: LookupAction.learn,
@@ -506,7 +615,7 @@ class _ActionRow extends StatelessWidget {
         action: LookupAction.save,
         key: LookupSheetKeys.save,
         label: PageLabels.salvar,
-        shortcut: 'S',
+        shortcut: wide ? 'S' : null,
         state: WordState.saved,
         foreground: tokens.text,
         fill: tokens.text.withValues(alpha: 0.14),
@@ -529,7 +638,7 @@ class _ActionSpec {
   final LookupAction action;
   final Key key;
   final String label;
-  final String shortcut;
+  final String? shortcut;
   final WordState state;
   final Color foreground;
   final Color fill;
@@ -540,16 +649,16 @@ class LookupActionButton extends StatelessWidget {
   const LookupActionButton({
     super.key,
     required this.label,
-    required this.shortcut,
     required this.foreground,
     required this.active,
     required this.activeFill,
     required this.onPressed,
+    this.shortcut,
     this.enabled = true,
   });
 
   final String label;
-  final String shortcut;
+  final String? shortcut;
   final Color foreground;
   final bool active;
   final Color activeFill;
@@ -592,8 +701,10 @@ class LookupActionButton extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
-                KbdChip(label: shortcut, emphasis: active),
+                if (shortcut != null) ...[
+                  const SizedBox(height: 2),
+                  KbdChip(label: shortcut!, emphasis: active),
+                ],
               ],
             ),
           ),

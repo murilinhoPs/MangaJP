@@ -72,4 +72,19 @@ void main() {
     }
     expect(jmdict.entryBySeq(0), isNull);
   });
+
+  test('kanjiByCharacter copies on/kun/meanings/strokes from the fixture', () {
+    expect(jmdict.tableNames(), contains('kanji'));
+    final entry = jmdict.kanjiByCharacter('食');
+    expect(entry, isNotNull);
+    expect(entry!.character, '食');
+    expect(entry.onReadings, ['ショク', 'ジキ']);
+    expect(entry.kunReadings, contains('た.べる'));
+    expect(entry.meanings, ['eat', 'food']);
+    expect(entry.strokeCount, 9);
+    expect(entry.freq, 328);
+    expect(jmdict.kanjiByCharacter('食\u{E0100}'), isNotNull);
+    expect(jmdict.kanjiByCharacter('食\u{E0100}')!.character, '食');
+    expect(jmdict.kanjiByCharacter('猫'), isNull);
+  });
 }

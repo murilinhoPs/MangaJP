@@ -35,6 +35,11 @@ RouteBase get $appChromeRoute => ShellRouteData.$route(
                   hasOverriddenOnExit: false,
                   factory: $NotebookWordRoute._fromState,
                 ),
+                GoRouteData.$route(
+                  path: 'kanji/:char',
+                  hasOverriddenOnExit: false,
+                  factory: $NotebookKanjiRoute._fromState,
+                ),
               ],
             ),
           ],
@@ -137,6 +142,31 @@ mixin $NotebookWordRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/notebook/word/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $NotebookKanjiRoute on GoRouteData {
+  static NotebookKanjiRoute _fromState(GoRouterState state) =>
+      NotebookKanjiRoute(char: state.pathParameters['char']!);
+
+  NotebookKanjiRoute get _self => this as NotebookKanjiRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/notebook/kanji/${Uri.encodeComponent(_self.char)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

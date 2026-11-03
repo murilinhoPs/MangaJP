@@ -8,6 +8,7 @@ import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../words/domain/word_state.dart';
 import '../domain/notebook_entry.dart';
+import '../domain/notebook_kanji.dart';
 import 'notebook_controller.dart';
 import 'notebook_labels.dart';
 
@@ -33,11 +34,21 @@ abstract final class NotebookKeys {
   static const list = Key('notebook-list');
   static const empty = Key('notebook-empty');
   static const noResults = Key('notebook-no-results');
+  static const tabWords = Key('notebook-tab-words');
+  static const tabKanji = Key('notebook-tab-kanji');
+  static const kanjiList = Key('notebook-kanji-list');
+  static const kanjiEmpty = Key('notebook-kanji-empty');
+  static const kanjiNoResults = Key('notebook-kanji-no-results');
 
   static Key stateFilter(WordState state) =>
       Key('notebook-state-${state.name}');
 
   static Key row(String wordId) => Key('notebook-row-$wordId');
+
+  static Key kanjiRow(String literal) => Key('notebook-kanji-row-$literal');
+
+  static Key kanjiNoDict(String literal) =>
+      Key('notebook-kanji-no-dict-$literal');
 }
 
 /// `/notebook` — every word with a listed state, newest first.
@@ -67,7 +78,22 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
   }
 
   void _setSearch(String value) {
-    ref.read(notebookListQueryProvider.notifier).setSearch(value);
+    if (ref.read(notebookSelectedTabProvider) == NotebookTab.kanji) {
+      ref.read(notebookKanjiQueryProvider.notifier).setSearch(value);
+    } else {
+      ref.read(notebookListQueryProvider.notifier).setSearch(value);
+    }
+  }
+
+  void _onTab(NotebookTab tab) {
+    ref.read(notebookSelectedTabProvider.notifier).setTab(tab);
+    final text = tab == NotebookTab.kanji
+        ? ref.read(notebookKanjiQueryProvider)
+        : ref.read(notebookListQueryProvider).search;
+    _search.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   void _onSearchEscape() {
@@ -81,10 +107,11 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
 
   @override
   Widget build(BuildContext context) {
+    final tab = ref.watch(notebookSelectedTabProvider);
     final query = ref.watch(notebookListQueryProvider);
-    final entries = ref.watch(notebookEntriesProvider);
     final wide = ShellLayout.isWide(context);
     final padH = wide ? 48.0 : 16.0;
+    final onKanji = tab == NotebookTab.kanji;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,13 +141,13 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
                 style: AppTypeScale.ui14,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
-                  hintText: NotebookLabels.searchHint,
+                  hintText: onKanji
+                      ? NotebookLabels.kanjiSearchHint
+                      : NotebookLabels.searchHint,
                   suffixIcon: wide
                       ? const Padding(
                           padding: EdgeInsets.only(right: 10),
-                          child: UnconstrainedBox(
-                            child: KbdChip(label: '/'),
-                          ),
+                          child: UnconstrainedBox(child: KbdChip(label: '/')),
                         )
                       : null,
                 ),
@@ -130,52 +157,105 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(padH, 12, padH, 8),
+          padding: EdgeInsets.fromLTRB(padH, 12, padH, 0),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               _StateChip(
-                chipKey: NotebookKeys.stateAll,
-                label: NotebookLabels.todos,
-                selected: query.state == null,
-                onSelected: () {
-                  ref.read(notebookListQueryProvider.notifier).setState(null);
-                },
+                chipKey: NotebookKeys.tabWords,
+                label: NotebookLabels.tabWords,
+                selected: !onKanji,
+                onSelected: () => _onTab(NotebookTab.words),
               ),
-              for (final state in WordState.listed)
-                _StateChip(
-                  chipKey: NotebookKeys.stateFilter(state),
-                  label: NotebookLabels.state(state),
-                  selected: query.state == state,
-                  onSelected: () {
-                    ref
-                        .read(notebookListQueryProvider.notifier)
-                        .setState(state);
-                  },
-                ),
+              _StateChip(
+                chipKey: NotebookKeys.tabKanji,
+                label: NotebookLabels.tabKanji,
+                selected: onKanji,
+                onSelected: () => _onTab(NotebookTab.kanji),
+              ),
             ],
           ),
         ),
-        Expanded(
-          child: entries.when(
-            data: (items) => _NotebookList(
-              entries: items,
-              query: query,
-              wide: wide,
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  '$error',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+        if (!onKanji)
+          Padding(
+            padding: EdgeInsets.fromLTRB(padH, 12, padH, 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StateChip(
+                  chipKey: NotebookKeys.stateAll,
+                  label: NotebookLabels.todos,
+                  selected: query.state == null,
+                  onSelected: () {
+                    ref.read(notebookListQueryProvider.notifier).setState(null);
+                  },
                 ),
-              ),
+                for (final state in WordState.listed)
+                  _StateChip(
+                    chipKey: NotebookKeys.stateFilter(state),
+                    label: NotebookLabels.state(state),
+                    selected: query.state == state,
+                    onSelected: () {
+                      ref
+                          .read(notebookListQueryProvider.notifier)
+                          .setState(state);
+                    },
+                  ),
+              ],
             ),
-          ),
+          )
+        else
+          const SizedBox(height: 8),
+        Expanded(
+          child: onKanji
+              ? ref
+                    .watch(notebookKanjiEntriesProvider)
+                    .when(
+                      data: (items) => _NotebookKanjiList(
+                        entries: items,
+                        search: ref.watch(notebookKanjiQueryProvider),
+                        wide: wide,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            '$error',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+              : ref
+                    .watch(notebookEntriesProvider)
+                    .when(
+                      data: (items) => _NotebookList(
+                        entries: items,
+                        query: query,
+                        wide: wide,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            '$error',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
         ),
       ],
     );
@@ -284,10 +364,141 @@ class _NotebookList extends StatelessWidget {
                 color: tokens.wordState(entry.state.name),
               ),
             ),
-            onTap: () => NotebookWordRoute(id: entry.wordId).push<void>(context),
+            onTap: () =>
+                NotebookWordRoute(id: entry.wordId).push<void>(context),
           ),
         );
       },
+    );
+  }
+}
+
+class _NotebookKanjiList extends StatelessWidget {
+  const _NotebookKanjiList({
+    required this.entries,
+    required this.search,
+    required this.wide,
+  });
+
+  final List<NotebookKanjiView> entries;
+  final String search;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      final filtered = search.isNotEmpty;
+      return _NotebookEmpty(
+        statusKey: filtered
+            ? NotebookKeys.kanjiNoResults
+            : NotebookKeys.kanjiEmpty,
+        title: filtered ? NotebookLabels.noResults : NotebookLabels.kanjiEmpty,
+        hint: filtered
+            ? NotebookLabels.kanjiNoResultsHint
+            : NotebookLabels.kanjiEmptyHint,
+        watermark: NotebookLabels.kanjiWatermark,
+        wide: wide,
+      );
+    }
+
+    final padH = wide ? 48.0 : 16.0;
+    return ListView.separated(
+      key: NotebookKeys.kanjiList,
+      padding: ShellLayout.withCommandBarPadding(
+        context,
+        EdgeInsets.fromLTRB(padH, 4, padH, wide ? 32 : 16),
+      ),
+      itemCount: entries.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        return _KanjiRow(view: entries[index]);
+      },
+    );
+  }
+}
+
+class _KanjiRow extends StatelessWidget {
+  const _KanjiRow({required this.view});
+
+  final NotebookKanjiView view;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final radius = BorderRadius.circular(AppRadius.linha);
+    final lookup = view.lookup;
+    final on = lookup?.onReadings.join(' · ') ?? '';
+    final kun = lookup?.kunReadings.join(' · ') ?? '';
+    final meanings = lookup?.meanings.join('; ') ?? '';
+    final strokes = lookup?.strokeCount;
+    final words = [for (final word in view.notebookWords) word.lemma]
+        .join(' · ');
+    return Material(
+      color: tokens.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: tokens.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: NotebookKeys.kanjiRow(view.literal),
+        onTap: () => NotebookKanjiRoute(char: view.literal).push<void>(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(view.literal, style: AppTypeScale.lookupJp),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (view.hasKanjidic) ...[
+                      if (on.isNotEmpty)
+                        Text(
+                          '${NotebookLabels.kanjiOn} $on',
+                          style: AppTypeScale.ui14.copyWith(
+                            fontFamily: AppFonts.jp,
+                            color: tokens.text2,
+                          ),
+                        ),
+                      if (kun.isNotEmpty)
+                        Text(
+                          '${NotebookLabels.kanjiKun} $kun',
+                          style: AppTypeScale.ui14.copyWith(
+                            fontFamily: AppFonts.jp,
+                            color: tokens.text2,
+                          ),
+                        ),
+                      if (meanings.isNotEmpty)
+                        Text(meanings, style: AppTypeScale.definicao),
+                      if (strokes != null)
+                        Text(
+                          '${NotebookLabels.kanjiStrokes} $strokes',
+                          style: AppTypeScale.metadados11,
+                        ),
+                    ] else
+                      Text(
+                        NotebookLabels.kanjiNoDict,
+                        key: NotebookKeys.kanjiNoDict(view.literal),
+                        style: AppTypeScale.ui14.copyWith(color: tokens.text3),
+                      ),
+                    if (words.isNotEmpty)
+                      Text(
+                        words,
+                        style: AppTypeScale.ui14.copyWith(
+                          fontFamily: AppFonts.jp,
+                          color: tokens.text2,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -298,12 +509,14 @@ class _NotebookEmpty extends StatelessWidget {
     required this.title,
     required this.hint,
     required this.wide,
+    this.watermark = NotebookLabels.watermark,
   });
 
   final Key statusKey;
   final String title;
   final String hint;
   final bool wide;
+  final String watermark;
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +531,7 @@ class _NotebookEmpty extends StatelessWidget {
             children: [
               IgnorePointer(
                 child: Text(
-                  NotebookLabels.watermark,
+                  watermark,
                   style:
                       (wide
                               ? AppTypeScale.reviewDesktopJp

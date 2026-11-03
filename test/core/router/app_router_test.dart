@@ -21,6 +21,13 @@ void main() {
       ),
       '/pages/demo-page',
     );
+    expect(
+      resolveMangaJpInitialLocation(
+        defined: '/notebook/kanji/${Uri.encodeComponent('食')}',
+        release: false,
+      ),
+      '/notebook/kanji/${Uri.encodeComponent('食')}',
+    );
   });
 
   test('unknown or empty path falls back to /home', () {

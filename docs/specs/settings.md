@@ -14,7 +14,7 @@ O PRD lista o destino e os temas, não o layout:
 - `new_per_day` e virada de study-day 04:00 America/Sao_Paulo (F20; default 15).
 - Download / versão do dict (`jmdict.sqlite`).
 - **F25 Should:** export/import backup JSON. Imagens: backup zip opcional. Limpeza manual de storage.
-- Atribuições: JMdict/EDICT CC BY-SA 3.0; KANJIDIC2; Yomitan/GPL ([ADR-0002](../adr/0002-licenca-gpl-yomitan.md); NF8).
+- Atribuições: JMdict/EDICT CC BY-SA 3.0; KANJIDIC2 [CC BY-SA 4.0](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project); Yomitan/GPL ([ADR-0002](../adr/0002-licenca-gpl-yomitan.md); NF8).
 - NF6: imagens não sobem à cloud salvo o toggle Cloud OCR.
 - **F30 Could:** toggle «mostrar reading na frente» (default off).
 - **F31 Could:** export Anki (.apkg ou TSV).
