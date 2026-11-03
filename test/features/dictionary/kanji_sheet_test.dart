@@ -12,11 +12,14 @@ import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
 import 'package:manga_jp/core/shell/kbd_chip.dart';
+import 'package:manga_jp/core/shell/shell_layout.dart';
+import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/dictionary/presentation/kanji_sheet.dart';
 import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_labels.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
+import 'package:manga_jp/features/pages/domain/page_labels.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 
 import '../capture/fixture_png.dart';
@@ -122,6 +125,127 @@ void main() {
         expect((await db.select(db.savedKanji).get()).single.literal, '食');
       },
     );
+
+    testWidgets('meanings stay reachable above pinned Salvar kanji at $label', (
+      tester,
+    ) async {
+      await _openLookup(tester, jmdictPath: jmdictPath, size: size);
+      await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(KanjiSheetKeys.save), findsOneWidget);
+      final saveBefore = tester.getRect(find.byKey(KanjiSheetKeys.save));
+      expect(saveBefore.height, greaterThan(0));
+      final modalRect = tester.getRect(find.byKey(KanjiSheetKeys.modal));
+      expect(
+        modalRect.bottom - saveBefore.bottom,
+        lessThan(24),
+        reason: 'Salvar kanji must sit at the bottom of the ficha, not above the command bar',
+      );
+
+      final scrollable = find.descendant(
+        of: find.byKey(KanjiSheetKeys.sheet),
+        matching: find.byType(Scrollable),
+      );
+      expect(scrollable, findsOneWidget);
+      final extent = tester
+          .state<ScrollableState>(scrollable)
+          .position
+          .maxScrollExtent;
+      if (extent > 0.5) {
+        expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
+      }
+
+      await tester.ensureVisible(find.byKey(KanjiSheetKeys.meanings));
+      await tester.pumpAndSettle();
+
+      expect(find.text(NotebookLabels.salvarKanji), findsOneWidget);
+      final meaningsRect = tester.getRect(find.byKey(KanjiSheetKeys.meanings));
+      final saveRect = tester.getRect(find.byKey(KanjiSheetKeys.save));
+      expect(
+        meaningsRect.overlaps(saveRect),
+        isFalse,
+        reason: 'meanings must not sit under Salvar kanji',
+      );
+      expect(saveRect, saveBefore);
+
+      expect(
+        _hitIncludes(
+          tester,
+          find.byKey(KanjiSheetKeys.save),
+          at: tester.getCenter(find.byKey(KanjiSheetKeys.meanings)),
+        ),
+        isFalse,
+        reason: 'Salvar kanji must not steal the meanings hit-test',
+      );
+      expect(
+        _hitIncludes(
+          tester,
+          find.byKey(KanjiSheetKeys.meanings),
+          at: tester.getCenter(find.byKey(KanjiSheetKeys.meanings)),
+        ),
+        isTrue,
+      );
+
+      if (extent > 0.5) {
+        await tester.scrollUntilVisible(
+          find.byKey(KanjiSheetKeys.strokes),
+          80,
+          scrollable: scrollable,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .getRect(find.byKey(KanjiSheetKeys.strokes))
+              .overlaps(tester.getRect(find.byKey(KanjiSheetKeys.save))),
+          isFalse,
+        );
+        expect(find.byKey(KanjiSheetKeys.scrollEdge), findsNothing);
+      }
+      expect(find.byKey(KanjiSheetKeys.save), findsOneWidget);
+    });
+
+    testWidgets(
+      'page bar does not receive taps while kanji ficha is open at $label',
+      (tester) async {
+        await _openLookup(tester, jmdictPath: jmdictPath, size: size);
+        await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+
+        final edit = wide
+            ? find.byKey(ShellKeys.command('edit'))
+            : find.byKey(PageDetailKeys.edit);
+        final add = wide
+            ? find.byKey(ShellKeys.command('add'))
+            : find.byKey(PageDetailKeys.add);
+        expect(edit, findsOneWidget);
+        expect(add, findsOneWidget);
+
+        expect(_hitIncludes(tester, edit), isFalse);
+        expect(_hitIncludes(tester, add), isFalse);
+
+        await tester.tapAt(tester.getCenter(edit));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PageDetailKeys.ocrEditor), findsNothing);
+        expect(find.text(PageLabels.editarOcrTitulo), findsNothing);
+        expect(find.byType(CapturePage), findsNothing);
+        expect(find.byType(PageDetailPage), findsOneWidget);
+
+        if (find.byKey(KanjiSheetKeys.sheet).evaluate().isEmpty) {
+          await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
+          await tester.pumpAndSettle();
+          expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+        }
+
+        await tester.tapAt(tester.getCenter(add));
+        await tester.pumpAndSettle();
+        expect(find.byType(CapturePage), findsNothing);
+        expect(find.byKey(PageDetailKeys.ocrEditor), findsNothing);
+        expect(find.byType(PageDetailPage), findsOneWidget);
+      },
+    );
   }
 
   test('wide breakpoint stays 900', () {
@@ -173,6 +297,25 @@ Future<AppDatabase> _openLookup(
   await tester.tap(find.byKey(PageDetailKeys.ocrText));
   await tester.pumpAndSettle();
   return db;
+}
+
+bool _hitIncludes(WidgetTester tester, Finder finder, {Offset? at}) {
+  final root = tester.renderObject(finder);
+  final hit = tester.hitTestOnBinding(at ?? tester.getCenter(finder));
+  return hit.path.any((entry) {
+    final target = entry.target;
+    if (target is! RenderObject) {
+      return false;
+    }
+    RenderObject? node = target;
+    while (node != null) {
+      if (node == root) {
+        return true;
+      }
+      node = node.parent;
+    }
+    return false;
+  });
 }
 
 void _expectSaveShortcut(

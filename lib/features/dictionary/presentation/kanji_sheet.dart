@@ -23,17 +23,25 @@ abstract final class KanjiSheetKeys {
   static const meanings = Key('kanji-sheet-meanings');
   static const strokes = Key('kanji-sheet-strokes');
   static const save = Key('kanji-sheet-save');
+  static const scrollEdge = Key('kanji-sheet-scroll-edge');
 }
 
+/// Opens the kanji ficha above the shell (rail + command bar).
+///
+/// Uses the root navigator so the scrim covers Editar / page title / + on
+/// wide: those actions sit in the chrome stack, above the shell navigator.
 Future<void> showKanjiSheet(
   BuildContext context, {
   required String literal,
   String? originPageId,
 }) {
-  final height =
-      MediaQuery.sizeOf(context).height * PageLayout.lookupSheetFraction;
+  final fraction = ShellLayout.isWide(context)
+      ? PageLayout.kanjiSheetFractionWide
+      : PageLayout.lookupSheetFraction;
+  final height = MediaQuery.sizeOf(context).height * fraction;
   return showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
@@ -139,17 +147,14 @@ class _KanjiSheetState extends ConsumerState<KanjiSheet> {
           autofocus: true,
           child: Padding(
             key: KanjiSheetKeys.sheet,
-            padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              16 + ShellLayout.commandBarPaddingOf(context),
-            ),
+            // Root navigator covers the command bar, so this ficha does not
+            // reserve [ShellLayout.commandBarPaddingOf].
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
+                  child: _ScrollFade(
                     child: _KanjiFields(
                       literal: _literal,
                       entry: entry,
@@ -273,6 +278,114 @@ class _SectionLabel extends StatelessWidget {
       style: AppTypeScale.mono10.copyWith(
         color: tokens.text3,
         letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+/// Scrolls [child] and paints a bottom fade/shadow while more content is below.
+class _ScrollFade extends StatefulWidget {
+  const _ScrollFade({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ScrollFade> createState() => _ScrollFadeState();
+}
+
+class _ScrollFadeState extends State<_ScrollFade> {
+  final _controller = ScrollController();
+  bool _moreBelow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_syncFromController);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncFromController();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_syncFromController);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _syncFromController() {
+    if (!_controller.hasClients) {
+      return;
+    }
+    _sync(_controller.position);
+  }
+
+  void _sync(ScrollMetrics metrics) {
+    final more =
+        metrics.maxScrollExtent > 0.5 &&
+        metrics.pixels < metrics.maxScrollExtent - 0.5;
+    if (more == _moreBelow) {
+      return;
+    }
+    setState(() => _moreBelow = more);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        _sync(notification.metrics);
+        return false;
+      },
+      child: NotificationListener<ScrollMetricsNotification>(
+        onNotification: (notification) {
+          _sync(notification.metrics);
+          return false;
+        },
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            SingleChildScrollView(controller: _controller, child: widget.child),
+            if (_moreBelow)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    key: KanjiSheetKeys.scrollEdge,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: tokens.borderStrong),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          tokens.surface.withValues(alpha: 0),
+                          tokens.bg.withValues(alpha: 0.42),
+                          tokens.bg.withValues(alpha: 0.88),
+                        ],
+                        stops: const [0, 0.4, 1],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: tokens.bg.withValues(alpha: 0.85),
+                          blurRadius: 18,
+                          spreadRadius: 1,
+                          offset: const Offset(0, -8),
+                        ),
+                      ],
+                    ),
+                    child: const SizedBox(height: 36),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

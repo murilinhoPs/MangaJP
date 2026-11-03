@@ -28,6 +28,8 @@ JMdict_e.gz no mesmo host: 10 592 677 bytes. Detalhe do bake em [`tools/build_jm
 
 **F24** no lookup: tocar num kanji **na ficha da palavra** abre a **ficha do kanji**, com on/kun, significados e traços. Sem flashcard de kanji.
 
+A ficha abre no navigator raiz (`useRootNavigator`), para o scrim cobrir a barra da página (Editar / título / +). **Salvar kanji** fica fixo embaixo; on, kun, significados e traços rolam acima. No wide a ficha usa 42% da altura (phone continua em 50%), para os significados caberem e os traços ficarem abaixo da dobra em 1280×800. Quando há mais conteúdo abaixo, uma sombra/fade na borda do scroll indica que dá para rolar.
+
 Se o caractere não tem linha na tabela `kanji` (bake sem `--with-kanji`, ou kanji fora do KANJIDIC2): a ficha ainda abre; on/kun, significados e traços do KANJIDIC2 ficam omitidos (a ficha **não** mostra «sem dados do dicionário»); **Salvar kanji** continua disponível. Na aba Kanji e no detalhe `/notebook/kanji/:char` o mesmo caso mostra «sem dados do dicionário». Teste com o fixture da tool sem linhas de kanji.
 
 ### Ação Salvar kanji (F45)
@@ -67,7 +69,7 @@ Estados vazios no mesmo padrão das palavras, copy adaptado:
 
 A lista de **palavras** continua F41–F44: busca por palavra/leitura/nota, filtro por estado, NF11.
 
-Follow-up: [#91](https://github.com/murilinhoPs/MangaJP/issues/91) — limitação conhecida do [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (head `99aaeee`), **não** é mudança de spec. No layout largo a ficha do kanji corta os significados sem sinal de rolagem, e a barra da página fica clicável acima do scrim.
+Follow-up [#91](https://github.com/murilinhoPs/MangaJP/issues/91): no layout largo a ficha pinna **Salvar kanji**, rola o conteúdo com fade na borda, e abre no navigator raiz para o scrim cobrir Editar / +.
 
 ### Fora de escopo
 
@@ -91,7 +93,7 @@ Follow-up: [#91](https://github.com/murilinhoPs/MangaJP/issues/91) — limitaç�
 ## Como verificar
 
 - Teste de domínio / Drift: migração cria `saved_kanji`; insert; segundo save do mesmo `literal` (com e sem IVS/VS) não duplica; nenhum row em `cards` / `card_srs` / `word_states`; strip bate com `stripVariationSelectors`.
-- Teste de widget **phone (390×844) e wide (≥900)**: aba Kanji, detalhe `/notebook/kanji/:char`, ficha com **Salvar kanji**, estados vazios, Remover. Lookup com dados da tabela `kanji` (fixture do `tools/build_jmdict_sqlite/testdata`) e o caso sem linhas de kanji.
+- Teste de widget **phone (390×844) e wide (≥900)**: aba Kanji, detalhe `/notebook/kanji/:char`, ficha com **Salvar kanji**, estados vazios, Remover. Lookup com dados da tabela `kanji` (fixture do `tools/build_jmdict_sqlite/testdata`) e o caso sem linhas de kanji. Com a ficha aberta: significados alcançáveis (sem overlap com o botão fixo); toque em Editar / + não dispara a barra da página.
 - Prints conforme [`print-rules.md`](../qa/print-rules.md): Android **390×844** retrato sem hover e Linux **1280×800** só a área do app, no `pr-assets`, `print_sizes.txt` no head final. Widget/golden sozinho não conta. macOS / iOS: ou print, ou `n/a: Mac offline — #54 item: <link>`.
 - `integration_test`: saída real no head final, ou `n/a` com motivo.
-- F24 e F45 saíram juntos no [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (fecha [#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Limitação conhecida: [#91](https://github.com/murilinhoPs/MangaJP/issues/91).
+- F24 e F45 saíram juntos no [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (fecha [#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Follow-up [#91](https://github.com/murilinhoPs/MangaJP/issues/91): ficha no wide com rolagem, fade e scrim sobre a barra.

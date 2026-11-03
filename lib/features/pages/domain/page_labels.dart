@@ -22,6 +22,11 @@ abstract final class PageLayout {
 
   /// Mobile lookup is a half-screen sheet (`radius.sheet-review` 24).
   static const double lookupSheetFraction = 0.5;
+
+  /// Wide kanji ficha. 0.5 plus command-bar inset hid "eat; food" behind
+  /// Salvar kanji; 0.5 without the inset fits 食 with no scroll. 0.42 keeps
+  /// meanings on screen and strokes below the fold at 1280×800.
+  static const double kanjiSheetFractionWide = 0.42;
 }
 
 /// Screenshot / print helper only — not a production feature.
