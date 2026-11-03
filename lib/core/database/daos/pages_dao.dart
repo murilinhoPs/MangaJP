@@ -49,6 +49,13 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
         .get();
   }
 
+  /// Every page, newest `created_at` first. `/pages` history (F21).
+  Future<List<CapturedPage>> listPages() {
+    return (select(
+      capturedPages,
+    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+  }
+
   Future<int> countPages() async {
     final count = capturedPages.id.count();
     final row = await (selectOnly(

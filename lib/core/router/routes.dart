@@ -10,6 +10,7 @@ import '../../features/notebook/presentation/notebook_kanji_page.dart';
 import '../../features/notebook/presentation/notebook_page.dart';
 import '../../features/notebook/presentation/notebook_word_page.dart';
 import '../../features/pages/presentation/page_detail_page.dart';
+import '../../features/pages/presentation/pages_list_page.dart';
 import '../../features/review/presentation/review_exit_guard.dart';
 import '../../features/review/presentation/review_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
@@ -87,12 +88,14 @@ class HomeRoute extends GoRouteData with $HomeRoute {
   Widget build(BuildContext context, GoRouterState state) => const HomePage();
 }
 
-/// `/pages` list moved to Home (**Páginas recentes** / **Capturas recentes**).
+/// `/pages` history list (F21). Home **Capturas recentes** stays the cap of 6.
 class PagesRoute extends GoRouteData with $PagesRoute {
   const PagesRoute();
 
   @override
-  String? redirect(BuildContext context, GoRouterState state) => '/home';
+  Widget build(BuildContext context, GoRouterState state) {
+    return const PagesListPage();
+  }
 }
 
 class PageDetailRoute extends GoRouteData with $PageDetailRoute {

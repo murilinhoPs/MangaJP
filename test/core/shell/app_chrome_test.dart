@@ -21,6 +21,7 @@ import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/notebook/presentation/notebook_page.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
+import 'package:manga_jp/features/pages/presentation/pages_list_page.dart';
 import 'package:manga_jp/features/review/presentation/review_page.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
@@ -325,8 +326,8 @@ void main() {
     expect(find.byKey(ShellKeys.palette), findsOneWidget);
     expect(find.byKey(ShellKeys.paletteItem('caderno')), findsOneWidget);
     expect(find.byKey(ShellKeys.paletteItem('more')), findsNothing);
-    expect(find.byKey(ShellKeys.paletteItem('paginas')), findsNothing);
-    expect(find.text('Páginas'), findsNothing);
+    expect(find.byKey(ShellKeys.paletteItem('paginas')), findsOneWidget);
+    expect(find.text('Páginas'), findsOneWidget);
     expect(find.text('Abrir página recente'), findsNothing);
     expect(find.text('Mais'), findsNothing);
 
@@ -338,6 +339,26 @@ void main() {
       GoRouter.of(tester.element(find.byType(NotebookPage))).state.uri.path,
       '/notebook',
     );
+  });
+
+  testWidgets('palette Páginas opens /pages history', (tester) async {
+    await _pumpShell(tester, size: _desktop);
+    await tester.tap(find.byType(HomePage));
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ShellKeys.paletteItem('paginas')));
+    await tester.pumpAndSettle();
+    expect(find.byType(PagesListPage), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(PagesListPage))).state.uri.path,
+      '/pages',
+    );
+    expect(find.byKey(PagesKeys.empty), findsOneWidget);
   });
 
   testWidgets('palette Abrir página recente opens the latest page', (
@@ -365,7 +386,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Abrir página recente'), findsOneWidget);
-    expect(find.text('Páginas'), findsNothing);
+    expect(find.text('Páginas'), findsOneWidget);
     await tester.tap(find.byKey(ShellKeys.paletteItem('pagina-recente')));
     await tester.pumpAndSettle();
     expect(

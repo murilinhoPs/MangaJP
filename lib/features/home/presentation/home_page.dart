@@ -7,6 +7,7 @@ import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/crop_number_badge.dart';
 import '../../capture/presentation/gallery_import.dart';
+import '../../pages/domain/page_labels.dart';
 import '../../review/domain/home_review_counts.dart';
 import '../../review/domain/new_per_day.dart';
 import '../domain/home_dates.dart';
@@ -30,6 +31,8 @@ abstract final class HomeKeys {
   static const continueReading = Key('home-continue-reading');
   static const weekRhythm = Key('home-week-rhythm');
   static const queueBar = Key('home-queue-bar');
+
+  static const pagesLink = Key('home-pages-link');
 
   static Key recentThumb(String pageId) => Key('home-recent-thumb-$pageId');
   static Key recentPage(String pageId) => Key('home-recent-page-$pageId');
@@ -587,6 +590,10 @@ class _RecentCapturesBlock extends StatelessWidget {
                 style: AppTypeScale.ui14.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
+            _PagesHeaderLink(
+              onTap: () => const PagesRoute().push<void>(context),
+            ),
+            const SizedBox(width: 8),
             _GalleryHeaderLink(onTap: onGallery, showShortcut: wide),
           ],
         ),
@@ -637,6 +644,32 @@ class _RecentCapturesBlock extends StatelessWidget {
               tiles[i],
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PagesHeaderLink extends StatelessWidget {
+  const _PagesHeaderLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return InkWell(
+      key: HomeKeys.pagesLink,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.tecla),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Text(
+          PageLabels.verTodas,
+          style: AppTypeScale.ui13.copyWith(
+            color: tokens.coral,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );

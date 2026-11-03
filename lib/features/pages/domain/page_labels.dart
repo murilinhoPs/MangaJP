@@ -1,5 +1,11 @@
-/// Portuguese copy for `/pages/:id` (Design Deck Página / Lookup).
+/// Portuguese copy for `/pages` (history) and `/pages/:id` (Deck Página).
 abstract final class PageLabels {
+  static const pagesTitle = 'Páginas';
+  static const empty = 'Nenhuma página.';
+  static const emptyHint = 'Importe da galeria para ver o histórico aqui.';
+  static const gallery = 'Galeria +';
+  static const verTodas = 'Ver todas';
+  static const watermark = '頁';
   static const voltar = 'Voltar';
   static const editar = 'Editar';
   static const adicionar = 'Captura';
