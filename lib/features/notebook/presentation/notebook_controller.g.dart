@@ -61,6 +61,112 @@ abstract class _$NotebookListQuery extends $Notifier<NotebookQuery> {
   }
 }
 
+@ProviderFor(NotebookSelectedTab)
+final notebookSelectedTabProvider = NotebookSelectedTabProvider._();
+
+final class NotebookSelectedTabProvider
+    extends $NotifierProvider<NotebookSelectedTab, NotebookTab> {
+  NotebookSelectedTabProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notebookSelectedTabProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookSelectedTabHash();
+
+  @$internal
+  @override
+  NotebookSelectedTab create() => NotebookSelectedTab();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NotebookTab value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NotebookTab>(value),
+    );
+  }
+}
+
+String _$notebookSelectedTabHash() =>
+    r'd43f7740102edf420183db61d017e181bd8dde20';
+
+abstract class _$NotebookSelectedTab extends $Notifier<NotebookTab> {
+  NotebookTab build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<NotebookTab, NotebookTab>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<NotebookTab, NotebookTab>,
+              NotebookTab,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(NotebookKanjiQuery)
+final notebookKanjiQueryProvider = NotebookKanjiQueryProvider._();
+
+final class NotebookKanjiQueryProvider
+    extends $NotifierProvider<NotebookKanjiQuery, String> {
+  NotebookKanjiQueryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notebookKanjiQueryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookKanjiQueryHash();
+
+  @$internal
+  @override
+  NotebookKanjiQuery create() => NotebookKanjiQuery();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$notebookKanjiQueryHash() =>
+    r'e14d913599ddffb6c3042649102ead5bd0a68181';
+
+abstract class _$NotebookKanjiQuery extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Caderno rows for the current search / state filter.
 
 @ProviderFor(notebookEntries)
@@ -106,6 +212,208 @@ final class NotebookEntriesProvider
 }
 
 String _$notebookEntriesHash() => r'd1e61f2b3eaef104590467bc7b36605d634f497b';
+
+/// Saved kanji for the Kanji tab, newest first, filtered by search.
+
+@ProviderFor(notebookKanjiEntries)
+final notebookKanjiEntriesProvider = NotebookKanjiEntriesProvider._();
+
+/// Saved kanji for the Kanji tab, newest first, filtered by search.
+
+final class NotebookKanjiEntriesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<NotebookKanjiView>>,
+          List<NotebookKanjiView>,
+          FutureOr<List<NotebookKanjiView>>
+        >
+    with
+        $FutureModifier<List<NotebookKanjiView>>,
+        $FutureProvider<List<NotebookKanjiView>> {
+  /// Saved kanji for the Kanji tab, newest first, filtered by search.
+  NotebookKanjiEntriesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notebookKanjiEntriesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookKanjiEntriesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<NotebookKanjiView>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<NotebookKanjiView>> create(Ref ref) {
+    return notebookKanjiEntries(ref);
+  }
+}
+
+String _$notebookKanjiEntriesHash() =>
+    r'438f29a82765626d2d41d380367d58fcc5d7772a';
+
+/// `/notebook/kanji/:char` payload.
+
+@ProviderFor(notebookKanji)
+final notebookKanjiProvider = NotebookKanjiFamily._();
+
+/// `/notebook/kanji/:char` payload.
+
+final class NotebookKanjiProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<NotebookKanjiView?>,
+          NotebookKanjiView?,
+          FutureOr<NotebookKanjiView?>
+        >
+    with
+        $FutureModifier<NotebookKanjiView?>,
+        $FutureProvider<NotebookKanjiView?> {
+  /// `/notebook/kanji/:char` payload.
+  NotebookKanjiProvider._({
+    required NotebookKanjiFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'notebookKanjiProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$notebookKanjiHash();
+
+  @override
+  String toString() {
+    return r'notebookKanjiProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<NotebookKanjiView?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<NotebookKanjiView?> create(Ref ref) {
+    final argument = this.argument as String;
+    return notebookKanji(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NotebookKanjiProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$notebookKanjiHash() => r'98306067479c2daad5a35e4ce6f19e9d19d94223';
+
+/// `/notebook/kanji/:char` payload.
+
+final class NotebookKanjiFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<NotebookKanjiView?>, String> {
+  NotebookKanjiFamily._()
+    : super(
+        retry: null,
+        name: r'notebookKanjiProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// `/notebook/kanji/:char` payload.
+
+  NotebookKanjiProvider call(String char) =>
+      NotebookKanjiProvider._(argument: char, from: this);
+
+  @override
+  String toString() => r'notebookKanjiProvider';
+}
+
+@ProviderFor(kanjiIsSaved)
+final kanjiIsSavedProvider = KanjiIsSavedFamily._();
+
+final class KanjiIsSavedProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  KanjiIsSavedProvider._({
+    required KanjiIsSavedFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'kanjiIsSavedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$kanjiIsSavedHash();
+
+  @override
+  String toString() {
+    return r'kanjiIsSavedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return kanjiIsSaved(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is KanjiIsSavedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$kanjiIsSavedHash() => r'2b6f82755560c5e5c567ea96c4227271dca5ddb7';
+
+final class KanjiIsSavedFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  KanjiIsSavedFamily._()
+    : super(
+        retry: null,
+        name: r'kanjiIsSavedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  KanjiIsSavedProvider call(String literal) =>
+      KanjiIsSavedProvider._(argument: literal, from: this);
+
+  @override
+  String toString() => r'kanjiIsSavedProvider';
+}
 
 /// `/notebook/word/:id` payload. Gloss comes from JMdict by seq.
 

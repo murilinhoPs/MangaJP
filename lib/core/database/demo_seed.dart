@@ -301,5 +301,32 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
         ),
       );
     }
+
+    await db
+        .into(db.savedKanji)
+        .insert(
+          SavedKanjiCompanion.insert(
+            literal: '食',
+            savedAt: now,
+            originPageId: const Value('demo-page'),
+          ),
+        );
+    await db
+        .into(db.savedKanji)
+        .insert(
+          SavedKanjiCompanion.insert(
+            literal: '高',
+            savedAt: now.subtract(const Duration(hours: 1)),
+            originPageId: const Value('demo-page'),
+          ),
+        );
+    await db
+        .into(db.savedKanji)
+        .insert(
+          SavedKanjiCompanion.insert(
+            literal: '猫',
+            savedAt: now.subtract(const Duration(hours: 2)),
+          ),
+        );
   });
 }

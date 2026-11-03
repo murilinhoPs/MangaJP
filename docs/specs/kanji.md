@@ -18,7 +18,13 @@ Colunas da tabela de lookup (não confundir com `saved_kanji`): `character`, `re
 
 Licença: KANJIDIC2 é © EDRDG, CC BY-SA, igual ao JMdict. Atribuição nos [Ajustes](settings.md) (NF8).
 
-Tamanho (medido 2026-11-03 no arquivo do EDRDG, `http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz`): **1 488 578 bytes** gzip (`Content-Length` / arquivo baixado) e **15 641 823 bytes** XML descomprimido (gunzip local). Não é um asset separado: vai para dentro de `assets/dict/jmdict.sqlite`. O sqlite completo (JMdict + kanji) fica na casa das **dezenas de MB** — [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md) e README da raiz; o acréscimo só da tabela `kanji` não foi medido num bake completo. JMdict_e.gz no mesmo host: 10 592 677 bytes.
+Tamanho (medido 2026-11-03 no arquivo do EDRDG, `http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz`): **1 488 578 bytes** gzip (`Content-Length` / arquivo baixado) e **15 641 823 bytes** XML descomprimido (gunzip local). Não é um asset separado: vai para dentro de `assets/dict/jmdict.sqlite`. Bake completo no mesmo dia (`tools/build_jmdict_sqlite/build_jmdict_sqlite.py`, JMdict_e 219 012 entradas):
+
+- sem `--with-kanji`: **108 797 952 bytes** (103,76 MiB), tabela `kanji` vazia
+- com `--with-kanji` (13 108 linhas KANJIDIC2): **110 080 000 bytes** (104,98 MiB)
+- acréscimo só da tabela `kanji`: **1 282 048 bytes** (1,22 MiB)
+
+JMdict_e.gz no mesmo host: 10 592 677 bytes. Detalhe do bake em [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md).
 
 **F24** no lookup: tocar num kanji **na ficha da palavra** abre a **ficha do kanji**, com on/kun, significados e traços. Sem flashcard de kanji.
 
@@ -38,15 +44,17 @@ Colunas:
 
 | Coluna | Regra |
 | --- | --- |
-| `literal` | único. Normalizar **antes de salvar e de comparar**: remover seletores de variação IVS U+E0100–U+E01EF e VS1–VS16 U+FE00–U+FE0F (o mesmo recorte de `stripVariationSelectors` em [`lib/core/utils/graphemes.dart`](../../lib/core/utils/graphemes.dart)). |
-| `saved_at` | data em que foi salvo |
-| `origin_page_id` | página de origem, opcional (nullable) |
+| `literal` | `TEXT` PK, já normalizado (único). Normalizar **antes de salvar e de comparar**: remover seletores de variação IVS U+E0100–U+E01EF e VS1–VS16 U+FE00–U+FE0F (o mesmo recorte de `stripVariationSelectors` em [`lib/core/utils/graphemes.dart`](../../lib/core/utils/graphemes.dart)). |
+| `saved_at` | `DATETIME NOT NULL`. Data em que foi salvo. Um segundo save do mesmo `literal` **não** altera `saved_at` nem `origin_page_id`. |
+| `origin_page_id` | `TEXT NULL REFERENCES pages(id) ON DELETE SET NULL`. Página de origem, opcional. |
 
-`叱` e `𠮟`, ou o mesmo kanji com e sem IVS, colapsam no `literal` sem seletor. A rota `/notebook/kanji/:char` usa esse `literal`.
+Índice em `saved_at`. `schemaVersion` Drift 8 → 9, com migração.
+
+O mesmo kanji com e sem IVS/VS colapsa no `literal` sem seletor. `叱` (U+53F1) e `𠮟` (U+20B9F) **continuam sendo duas linhas** — são ideogramas unificados distintos, e o strip não os junta. A rota `/notebook/kanji/:char` usa esse `literal`. O `literal` é rejeitado se não sobrar exatamente 1 code point depois do strip. A consulta em `kanji.character` e o parâmetro da rota também passam pelo strip.
 
 ### Aba Kanji no Caderno (F45)
 
-O Caderno ganha a aba **Kanji** ao lado da lista de palavras. Lista: mais recentes primeiro (`saved_at`). Busca por kanji, leitura ou significado. **Sem filtros** nesta entrega.
+O Caderno ganha a aba **Kanji** ao lado da lista de palavras. Lista: mais recentes primeiro (`saved_at`). Busca por kanji, leitura ou significado. **Sem filtros** nesta entrega. Leitura e significado vêm da tabela `kanji` em `jmdict.sqlite`; com a tabela vazia, a busca só acha pelo literal.
 
 Cada linha / o detalhe `/notebook/kanji/:char` mostra: kanji grande, leituras **on** e **kun**, significados, número de traços, e as **palavras do Caderno** cujo lema / `dict_form` contém aquele `literal` (depois da mesma normalização). Somente leitura (Caderno = consulta). Sem nota e sem Aprender.
 

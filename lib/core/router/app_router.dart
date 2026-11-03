@@ -52,6 +52,10 @@ bool isAllowedMangaJpInitialLocation(String path) {
       path.length > '/notebook/word/'.length) {
     return true;
   }
+  if (path.startsWith('/notebook/kanji/') &&
+      path.length > '/notebook/kanji/'.length) {
+    return true;
+  }
   return false;
 }
 

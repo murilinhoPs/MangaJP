@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:sqlite3/common.dart';
 
+import '../../../core/utils/graphemes.dart';
 import '../domain/dict_entry.dart';
+import '../domain/kanji_entry.dart';
 import 'jmdict_open.dart';
 
 /// One `forms` row joined to `entries.data_json`.
@@ -110,6 +112,58 @@ class JmdictService {
           dataJson: row['data_json'] as String,
         ),
     ];
+  }
+
+  /// One KANJIDIC2 row by `kanji.character`. Null when the table has no line.
+  ///
+  /// The lookup key is stripped of IVS/VS, same as `saved_kanji.literal`.
+  KanjiEntry? kanjiByCharacter(String character) {
+    final key = stripVariationSelectors(character);
+    if (key.isEmpty) {
+      return null;
+    }
+    final rows = database.select(
+      'SELECT character, readings_json, meanings_json, stroke_count, freq '
+      'FROM kanji WHERE character = ?',
+      [key],
+    );
+    if (rows.isEmpty) {
+      return null;
+    }
+    final row = rows.single;
+    return KanjiEntry.fromRow(
+      character: row['character'] as String,
+      readingsJson: row['readings_json'] as String?,
+      meaningsJson: row['meanings_json'] as String?,
+      strokeCount: row['stroke_count'] as int?,
+      freq: row['freq'] as int?,
+    );
+  }
+
+  /// KANJIDIC2 rows for [characters], keyed by `kanji.character`.
+  Map<String, KanjiEntry> kanjiByCharacters(Iterable<String> characters) {
+    final unique = <String>{
+      for (final character in characters) stripVariationSelectors(character),
+    }.where((key) => key.isNotEmpty).toList();
+    if (unique.isEmpty) {
+      return const {};
+    }
+    final placeholders = List.filled(unique.length, '?').join(', ');
+    final rows = database.select(
+      'SELECT character, readings_json, meanings_json, stroke_count, freq '
+      'FROM kanji WHERE character IN ($placeholders)',
+      unique,
+    );
+    return {
+      for (final row in rows)
+        row['character'] as String: KanjiEntry.fromRow(
+          character: row['character'] as String,
+          readingsJson: row['readings_json'] as String?,
+          meaningsJson: row['meanings_json'] as String?,
+          strokeCount: row['stroke_count'] as int?,
+          freq: row['freq'] as int?,
+        ),
+    };
   }
 
   /// One `entries` row by JMdict seq. Gloss comes from `data_json`, never invented.

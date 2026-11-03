@@ -3314,6 +3314,284 @@ class UserReviewLogsCompanion extends UpdateCompanion<ReviewLogRow> {
   }
 }
 
+class $SavedKanjiTable extends SavedKanji
+    with TableInfo<$SavedKanjiTable, SavedKanjiData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SavedKanjiTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _literalMeta = const VerificationMeta(
+    'literal',
+  );
+  @override
+  late final GeneratedColumn<String> literal = GeneratedColumn<String>(
+    'literal',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _savedAtMeta = const VerificationMeta(
+    'savedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> savedAt = GeneratedColumn<DateTime>(
+    'saved_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originPageIdMeta = const VerificationMeta(
+    'originPageId',
+  );
+  @override
+  late final GeneratedColumn<String> originPageId = GeneratedColumn<String>(
+    'origin_page_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES pages (id) ON DELETE SET NULL',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [literal, savedAt, originPageId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'saved_kanji';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SavedKanjiData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('literal')) {
+      context.handle(
+        _literalMeta,
+        literal.isAcceptableOrUnknown(data['literal']!, _literalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_literalMeta);
+    }
+    if (data.containsKey('saved_at')) {
+      context.handle(
+        _savedAtMeta,
+        savedAt.isAcceptableOrUnknown(data['saved_at']!, _savedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_savedAtMeta);
+    }
+    if (data.containsKey('origin_page_id')) {
+      context.handle(
+        _originPageIdMeta,
+        originPageId.isAcceptableOrUnknown(
+          data['origin_page_id']!,
+          _originPageIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {literal};
+  @override
+  SavedKanjiData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SavedKanjiData(
+      literal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}literal'],
+      )!,
+      savedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}saved_at'],
+      )!,
+      originPageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}origin_page_id'],
+      ),
+    );
+  }
+
+  @override
+  $SavedKanjiTable createAlias(String alias) {
+    return $SavedKanjiTable(attachedDatabase, alias);
+  }
+}
+
+class SavedKanjiData extends DataClass implements Insertable<SavedKanjiData> {
+  final String literal;
+  final DateTime savedAt;
+  final String? originPageId;
+  const SavedKanjiData({
+    required this.literal,
+    required this.savedAt,
+    this.originPageId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['literal'] = Variable<String>(literal);
+    map['saved_at'] = Variable<DateTime>(savedAt);
+    if (!nullToAbsent || originPageId != null) {
+      map['origin_page_id'] = Variable<String>(originPageId);
+    }
+    return map;
+  }
+
+  SavedKanjiCompanion toCompanion(bool nullToAbsent) {
+    return SavedKanjiCompanion(
+      literal: Value(literal),
+      savedAt: Value(savedAt),
+      originPageId: originPageId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originPageId),
+    );
+  }
+
+  factory SavedKanjiData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SavedKanjiData(
+      literal: serializer.fromJson<String>(json['literal']),
+      savedAt: serializer.fromJson<DateTime>(json['savedAt']),
+      originPageId: serializer.fromJson<String?>(json['originPageId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'literal': serializer.toJson<String>(literal),
+      'savedAt': serializer.toJson<DateTime>(savedAt),
+      'originPageId': serializer.toJson<String?>(originPageId),
+    };
+  }
+
+  SavedKanjiData copyWith({
+    String? literal,
+    DateTime? savedAt,
+    Value<String?> originPageId = const Value.absent(),
+  }) => SavedKanjiData(
+    literal: literal ?? this.literal,
+    savedAt: savedAt ?? this.savedAt,
+    originPageId: originPageId.present ? originPageId.value : this.originPageId,
+  );
+  SavedKanjiData copyWithCompanion(SavedKanjiCompanion data) {
+    return SavedKanjiData(
+      literal: data.literal.present ? data.literal.value : this.literal,
+      savedAt: data.savedAt.present ? data.savedAt.value : this.savedAt,
+      originPageId: data.originPageId.present
+          ? data.originPageId.value
+          : this.originPageId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedKanjiData(')
+          ..write('literal: $literal, ')
+          ..write('savedAt: $savedAt, ')
+          ..write('originPageId: $originPageId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(literal, savedAt, originPageId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SavedKanjiData &&
+          other.literal == this.literal &&
+          other.savedAt == this.savedAt &&
+          other.originPageId == this.originPageId);
+}
+
+class SavedKanjiCompanion extends UpdateCompanion<SavedKanjiData> {
+  final Value<String> literal;
+  final Value<DateTime> savedAt;
+  final Value<String?> originPageId;
+  final Value<int> rowid;
+  const SavedKanjiCompanion({
+    this.literal = const Value.absent(),
+    this.savedAt = const Value.absent(),
+    this.originPageId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SavedKanjiCompanion.insert({
+    required String literal,
+    required DateTime savedAt,
+    this.originPageId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : literal = Value(literal),
+       savedAt = Value(savedAt);
+  static Insertable<SavedKanjiData> custom({
+    Expression<String>? literal,
+    Expression<DateTime>? savedAt,
+    Expression<String>? originPageId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (literal != null) 'literal': literal,
+      if (savedAt != null) 'saved_at': savedAt,
+      if (originPageId != null) 'origin_page_id': originPageId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SavedKanjiCompanion copyWith({
+    Value<String>? literal,
+    Value<DateTime>? savedAt,
+    Value<String?>? originPageId,
+    Value<int>? rowid,
+  }) {
+    return SavedKanjiCompanion(
+      literal: literal ?? this.literal,
+      savedAt: savedAt ?? this.savedAt,
+      originPageId: originPageId ?? this.originPageId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (literal.present) {
+      map['literal'] = Variable<String>(literal.value);
+    }
+    if (savedAt.present) {
+      map['saved_at'] = Variable<DateTime>(savedAt.value);
+    }
+    if (originPageId.present) {
+      map['origin_page_id'] = Variable<String>(originPageId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedKanjiCompanion(')
+          ..write('literal: $literal, ')
+          ..write('savedAt: $savedAt, ')
+          ..write('originPageId: $originPageId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3326,6 +3604,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UserCardsTable userCards = $UserCardsTable(this);
   late final $UserCardSrsTable userCardSrs = $UserCardSrsTable(this);
   late final $UserReviewLogsTable userReviewLogs = $UserReviewLogsTable(this);
+  late final $SavedKanjiTable savedKanji = $SavedKanjiTable(this);
   late final Index idxWordsLemmaKey = Index(
     'idx_words_lemma_key',
     'CREATE INDEX idx_words_lemma_key ON words (lemma_key)',
@@ -3334,10 +3613,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_words_custom_lemma_key',
     'CREATE UNIQUE INDEX idx_words_custom_lemma_key ON words (lemma_key) WHERE id LIKE \'custom:%\'',
   );
+  late final Index idxSavedKanjiSavedAt = Index(
+    'idx_saved_kanji_saved_at',
+    'CREATE INDEX idx_saved_kanji_saved_at ON saved_kanji (saved_at)',
+  );
   late final AppMetaDao appMetaDao = AppMetaDao(this as AppDatabase);
   late final PagesDao pagesDao = PagesDao(this as AppDatabase);
   late final WordsDao wordsDao = WordsDao(this as AppDatabase);
   late final CardsDao cardsDao = CardsDao(this as AppDatabase);
+  late final SavedKanjiDao savedKanjiDao = SavedKanjiDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3352,9 +3636,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     userCards,
     userCardSrs,
     userReviewLogs,
+    savedKanji,
     idxWordsLemmaKey,
     idxWordsCustomLemmaKey,
+    idxSavedKanjiSavedAt,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'pages',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('saved_kanji', kind: UpdateKind.update)],
+    ),
+  ]);
 }
 
 typedef $$AppMetaTableCreateCompanionBuilder = AppMetaCompanion Function({
@@ -3534,6 +3830,24 @@ final class $$CapturedPagesTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$SavedKanjiTable, List<SavedKanjiData>>
+  _savedKanjiRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.savedKanji,
+    aliasName: 'pages__id__saved_kanji__origin_page_id',
+  );
+
+  $$SavedKanjiTableProcessedTableManager get savedKanjiRefs {
+    final manager = $$SavedKanjiTableTableManager(
+      $_db,
+      $_db.savedKanji,
+    ).filter((f) => f.originPageId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_savedKanjiRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$CapturedPagesTableFilterComposer
@@ -3576,6 +3890,31 @@ class $$CapturedPagesTableFilterComposer
           }) => $$CapturedCropsTableFilterComposer(
             $db: $db,
             $table: $db.capturedCrops,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> savedKanjiRefs(
+    Expression<bool> Function($$SavedKanjiTableFilterComposer f) f,
+  ) {
+    final $$SavedKanjiTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.savedKanji,
+      getReferencedColumn: (t) => t.originPageId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SavedKanjiTableFilterComposer(
+            $db: $db,
+            $table: $db.savedKanji,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3653,6 +3992,31 @@ class $$CapturedPagesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> savedKanjiRefs<T extends Object>(
+    Expression<T> Function($$SavedKanjiTableAnnotationComposer a) f,
+  ) {
+    final $$SavedKanjiTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.savedKanji,
+      getReferencedColumn: (t) => t.originPageId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SavedKanjiTableAnnotationComposer(
+            $db: $db,
+            $table: $db.savedKanji,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$CapturedPagesTableTableManager
@@ -3668,7 +4032,7 @@ class $$CapturedPagesTableTableManager
           $$CapturedPagesTableUpdateCompanionBuilder,
           (CapturedPage, $$CapturedPagesTableReferences),
           CapturedPage,
-          PrefetchHooks Function({bool capturedCropsRefs})
+          PrefetchHooks Function({bool capturedCropsRefs, bool savedKanjiRefs})
         > {
   $$CapturedPagesTableTableManager(_$AppDatabase db, $CapturedPagesTable table)
     : super(
@@ -3713,38 +4077,63 @@ class $$CapturedPagesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({capturedCropsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (capturedCropsRefs) db.capturedCrops,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (capturedCropsRefs)
-                    await $_getPrefetchedData<
-                      CapturedPage,
-                      $CapturedPagesTable,
-                      CapturedCrop
-                    >(
-                      currentTable: table,
-                      referencedTable: $$CapturedPagesTableReferences
-                          ._capturedCropsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$CapturedPagesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).capturedCropsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.pageId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({capturedCropsRefs = false, savedKanjiRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (capturedCropsRefs) db.capturedCrops,
+                    if (savedKanjiRefs) db.savedKanji,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (capturedCropsRefs)
+                        await $_getPrefetchedData<
+                          CapturedPage,
+                          $CapturedPagesTable,
+                          CapturedCrop
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CapturedPagesTableReferences
+                              ._capturedCropsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CapturedPagesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).capturedCropsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.pageId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (savedKanjiRefs)
+                        await $_getPrefetchedData<
+                          CapturedPage,
+                          $CapturedPagesTable,
+                          SavedKanjiData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CapturedPagesTableReferences
+                              ._savedKanjiRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CapturedPagesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).savedKanjiRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.originPageId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -3761,7 +4150,7 @@ typedef $$CapturedPagesTableProcessedTableManager =
       $$CapturedPagesTableUpdateCompanionBuilder,
       (CapturedPage, $$CapturedPagesTableReferences),
       CapturedPage,
-      PrefetchHooks Function({bool capturedCropsRefs})
+      PrefetchHooks Function({bool capturedCropsRefs, bool savedKanjiRefs})
     >;
 typedef $$CapturedCropsTableCreateCompanionBuilder =
     CapturedCropsCompanion Function({
@@ -6650,6 +7039,281 @@ typedef $$UserReviewLogsTableProcessedTableManager =
       ReviewLogRow,
       PrefetchHooks Function({bool cardId})
     >;
+typedef $$SavedKanjiTableCreateCompanionBuilder = SavedKanjiCompanion Function({
+  required String literal,
+  required DateTime savedAt,
+  Value<String?> originPageId,
+  Value<int> rowid,
+});
+typedef $$SavedKanjiTableUpdateCompanionBuilder = SavedKanjiCompanion Function({
+  Value<String> literal,
+  Value<DateTime> savedAt,
+  Value<String?> originPageId,
+  Value<int> rowid,
+});
+
+final class $$SavedKanjiTableReferences
+    extends BaseReferences<_$AppDatabase, $SavedKanjiTable, SavedKanjiData> {
+  $$SavedKanjiTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CapturedPagesTable _originPageIdTable(_$AppDatabase db) =>
+      db.capturedPages.createAlias('saved_kanji__origin_page_id__pages__id');
+
+  $$CapturedPagesTableProcessedTableManager? get originPageId {
+    final $_column = $_itemColumn<String>('origin_page_id');
+    if ($_column == null) return null;
+    final manager = $$CapturedPagesTableTableManager(
+      $_db,
+      $_db.capturedPages,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_originPageIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SavedKanjiTableFilterComposer
+    extends Composer<_$AppDatabase, $SavedKanjiTable> {
+  $$SavedKanjiTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get literal => $composableBuilder(
+    column: $table.literal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get savedAt => $composableBuilder(
+    column: $table.savedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CapturedPagesTableFilterComposer get originPageId {
+    final $$CapturedPagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.originPageId,
+      referencedTable: $db.capturedPages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CapturedPagesTableFilterComposer(
+            $db: $db,
+            $table: $db.capturedPages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SavedKanjiTableOrderingComposer
+    extends Composer<_$AppDatabase, $SavedKanjiTable> {
+  $$SavedKanjiTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get literal => $composableBuilder(
+    column: $table.literal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get savedAt => $composableBuilder(
+    column: $table.savedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CapturedPagesTableOrderingComposer get originPageId {
+    final $$CapturedPagesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.originPageId,
+      referencedTable: $db.capturedPages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CapturedPagesTableOrderingComposer(
+            $db: $db,
+            $table: $db.capturedPages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SavedKanjiTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SavedKanjiTable> {
+  $$SavedKanjiTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get literal =>
+      $composableBuilder(column: $table.literal, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get savedAt =>
+      $composableBuilder(column: $table.savedAt, builder: (column) => column);
+
+  $$CapturedPagesTableAnnotationComposer get originPageId {
+    final $$CapturedPagesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.originPageId,
+      referencedTable: $db.capturedPages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CapturedPagesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.capturedPages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SavedKanjiTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SavedKanjiTable,
+          SavedKanjiData,
+          $$SavedKanjiTableFilterComposer,
+          $$SavedKanjiTableOrderingComposer,
+          $$SavedKanjiTableAnnotationComposer,
+          $$SavedKanjiTableCreateCompanionBuilder,
+          $$SavedKanjiTableUpdateCompanionBuilder,
+          (SavedKanjiData, $$SavedKanjiTableReferences),
+          SavedKanjiData,
+          PrefetchHooks Function({bool originPageId})
+        > {
+  $$SavedKanjiTableTableManager(_$AppDatabase db, $SavedKanjiTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SavedKanjiTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SavedKanjiTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SavedKanjiTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> literal = const Value.absent(),
+                Value<DateTime> savedAt = const Value.absent(),
+                Value<String?> originPageId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SavedKanjiCompanion(
+                literal: literal,
+                savedAt: savedAt,
+                originPageId: originPageId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String literal,
+                required DateTime savedAt,
+                Value<String?> originPageId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SavedKanjiCompanion.insert(
+                literal: literal,
+                savedAt: savedAt,
+                originPageId: originPageId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SavedKanjiTable, SavedKanjiData>(table),
+                  $$SavedKanjiTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({originPageId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (originPageId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.originPageId,
+                        referencedTable: $$SavedKanjiTableReferences
+                            ._originPageIdTable(db),
+                        referencedColumn: $$SavedKanjiTableReferences
+                            ._originPageIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SavedKanjiTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SavedKanjiTable,
+      SavedKanjiData,
+      $$SavedKanjiTableFilterComposer,
+      $$SavedKanjiTableOrderingComposer,
+      $$SavedKanjiTableAnnotationComposer,
+      $$SavedKanjiTableCreateCompanionBuilder,
+      $$SavedKanjiTableUpdateCompanionBuilder,
+      (SavedKanjiData, $$SavedKanjiTableReferences),
+      SavedKanjiData,
+      PrefetchHooks Function({bool originPageId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6672,4 +7336,6 @@ class $AppDatabaseManager {
       $$UserCardSrsTableTableManager(_db, _db.userCardSrs);
   $$UserReviewLogsTableTableManager get userReviewLogs =>
       $$UserReviewLogsTableTableManager(_db, _db.userReviewLogs);
+  $$SavedKanjiTableTableManager get savedKanji =>
+      $$SavedKanjiTableTableManager(_db, _db.savedKanji);
 }

@@ -1,6 +1,6 @@
 import '../../words/domain/word_state.dart';
 
-/// Portuguese Caderno copy (list, search, empty, word detail).
+/// Portuguese Caderno copy (list, search, empty, word detail, kanji tab).
 abstract final class NotebookLabels {
   static const todos = 'Todos';
   static const searchHint = 'Lema ou leitura';
@@ -16,6 +16,21 @@ abstract final class NotebookLabels {
   static const ignorar = 'Ignorar';
   static const removerCard = 'Remover card';
   static const removerDoCaderno = 'Remover do Caderno';
+  static const tabWords = 'Palavras';
+  static const tabKanji = 'Kanji';
+  static const kanjiSearchHint = 'Kanji, leitura ou significado';
+  static const kanjiEmpty = 'Nenhum kanji.';
+  static const kanjiEmptyHint = 'Salve um kanji no lookup para vê-lo aqui.';
+  static const kanjiNoResultsHint =
+      'Tente outro kanji, leitura ou significado.';
+  static const kanjiWatermark = '漢字';
+  static const kanjiOn = 'ON';
+  static const kanjiKun = 'KUN';
+  static const kanjiMeanings = 'SIGNIFICADOS';
+  static const kanjiStrokes = 'TRAÇOS';
+  static const kanjiWords = 'PALAVRAS DO CADERNO';
+  static const salvarKanji = 'Salvar kanji';
+  static const kanjiRemoveBody = 'O kanji será apagado do Caderno.';
 
   /// Portuguese Caderno label for a listed [WordState].
   static String state(WordState state) {

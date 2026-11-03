@@ -6,6 +6,7 @@ import '../../features/capture/domain/incoming_image.dart';
 import '../../features/capture/presentation/capture_page.dart';
 import '../../features/flashcards/presentation/deck_page.dart';
 import '../../features/home/presentation/home_page.dart';
+import '../../features/notebook/presentation/notebook_kanji_page.dart';
 import '../../features/notebook/presentation/notebook_page.dart';
 import '../../features/notebook/presentation/notebook_word_page.dart';
 import '../../features/pages/presentation/page_detail_page.dart';
@@ -33,6 +34,7 @@ part 'routes.g.dart';
               path: '/notebook',
               routes: <TypedRoute<RouteData>>[
                 TypedGoRoute<NotebookWordRoute>(path: 'word/:id'),
+                TypedGoRoute<NotebookKanjiRoute>(path: 'kanji/:char'),
               ],
             ),
           ],
@@ -150,6 +152,22 @@ class NotebookWordRoute extends GoRouteData with $NotebookWordRoute {
       context,
       key: state.pageKey,
       child: NotebookWordPage(wordId: id),
+    );
+  }
+}
+
+class NotebookKanjiRoute extends GoRouteData with $NotebookKanjiRoute {
+  const NotebookKanjiRoute({required this.char});
+
+  /// Normalized `saved_kanji.literal`, URL-encoded in the path.
+  final String char;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return opaqueCupertinoPage(
+      context,
+      key: state.pageKey,
+      child: NotebookKanjiPage(char: char),
     );
   }
 }
