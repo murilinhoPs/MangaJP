@@ -72,7 +72,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2). [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada; [#59](https://github.com/murilinhoPs/MangaJP/issues/59) aberta. Plano: [`milestones/m2.md`](milestones/m2.md). Spec F26: [`specs/cloud-vision.md`](specs/cloud-vision.md).
 
-## M2.5 — Kanji no SRS
+## M2b — Kanji no SRS
 
 **Objetivo.** Kanji salvo no Caderno (F45) pode virar card SRS (`kind = kanji`), sem misturar com o Deck de vocab.
 
@@ -84,7 +84,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Tamanho.** M.
 
-**Status.** Proposta em revisão (Murilo, 2026-11-03). **Não abrir issues** antes do ok do dono do projeto. Sem milestone no GitHub. Não confundir com o corte interno «M2.5 F22 overlay» de [`milestones/m2.md`](milestones/m2.md).
+**Status.** Proposta em revisão (Murilo, 2026-11-03). **Não abrir issues** antes do ok do dono do projeto. Sem milestone no GitHub. **M2.5** continua sendo só o id da [#97](https://github.com/murilinhoPs/MangaJP/issues/97) (F22 overlay).
 
 ## M3 — v1
 
@@ -94,7 +94,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Saída.** Export do Caderno gera Markdown ou CSV. Web experimental sobe sem substituir o app. Tokenização e Anki só entram se a decisão Could virar Should.
 
-**Dependências.** M2. Q-N3 e Q-N4 continuam abertas. F38 mora no milestone [M2.5](#m25--kanji-no-srs), não neste.
+**Dependências.** M2. Q-N3 e Q-N4 continuam abertas. F38 mora no milestone [M2b](#m2b--kanji-no-srs), não neste.
 
 **Tamanho.** G.
 

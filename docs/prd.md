@@ -23,7 +23,7 @@ Murilo. Estuda com manga (ex.: 《サイレントヒルf》 no Comic Walker). Qu
 - Sync em nuvem obrigatório (API de review é opcional / Q-N4).
 - FSRS como algoritmo primário.
 - Learning steps Anki-like (1 min / 10 min).
-- Flashcards de kanji fora do recorte v1 imediato: salvar kanji no Caderno = Should F45/M2, fora do SRS. F38 (cards `kind = kanji`) sai do Won't e ganha milestone próprio entre M2 e M3 — [`roadmap.md`](roadmap.md); proposta em revisão.
+- Flashcards de kanji fora do recorte v1 imediato: salvar kanji no Caderno = Should F45/M2, fora do SRS. F38 (cards `kind = kanji`) sai do Won't e ganha o milestone [M2b](roadmap.md#m2b--kanji-no-srs) entre M2 e M3; proposta em revisão.
 - Edição de texto ou notas no Caderno (somente consulta).
 - iOS App Store / Play Store públicos (sideload / debug OK). iOS entra na M2.1 — [ADR-0003](adr/0003-ios-plataforma-secundaria.md).
 - LLM para gloss PT (gloss EN + `user_note` PT — Q-N2).
@@ -39,7 +39,7 @@ Must, Should, Could, Won't do PRD. Spec por feature:
 | OCR | [ocr](specs/ocr.md), [cloud-vision](specs/cloud-vision.md) | F4 manga-ocr, F5 texto editável | F22 boxes, F26 Cloud, F27 furigana Should; F29 outros motores Could |
 | Dicionário | [dicionario](specs/dicionario.md) | F6–F9 lookup | F24 KANJIDIC2 Should; F34 tokenização Could |
 | Palavras / Caderno | [caderno](specs/caderno.md) | F10, F12, F41–F44 | F45 kanji Should/M2; F46 export Could |
-| Flashcards | [flashcards](specs/flashcards.md) | F11 CRUD vocab | F23 suspender Should; F38 kanji cards (milestone próprio entre M2 e M3, proposta) |
+| Flashcards | [flashcards](specs/flashcards.md) | F11 CRUD vocab | F23 suspender Should; F38 kanji cards ([M2b](roadmap.md#m2b--kanji-no-srs), proposta) |
 | Revisão | [revisao](specs/revisao.md) | F13–F15, F18, F20 | F30 reading na frente Could; F39 steps Won't |
 | Home / nav | [home](specs/home.md) | F17 shell | — |
 | Galeria | [galeria](specs/galeria.md) | F1 + entrada F21 | — |

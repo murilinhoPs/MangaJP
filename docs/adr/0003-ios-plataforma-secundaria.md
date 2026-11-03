@@ -12,7 +12,7 @@ MVP é Android-first. iOS no M1 atrasaria o loop de estudo. Murilo fecha Q-N1 em
 
 iOS entra como **plataforma secundária na M2.1**, logo após a M1 (F40, NF7). Android first.
 
-Prints de iOS: fonte [`docs/qa/print-rules.md`](../qa/print-rules.md) (simulador **iPhone 17**, qualquer resolução). Os obrigatórios continuam Android 390×844 retrato e Linux desktop 1280×800.
+Prints de iOS: fonte [`docs/qa/print-rules.md`](../qa/print-rules.md) (simulador **iPhone 17**, qualquer resolução). Os obrigatórios na nuvem continuam **390×844** (emulador ou janela Linux, pasta `android/`) retrato e Linux desktop **1280×800**. macOS / iOS: print ou `n/a: Mac offline (#54)`.
 
 M2.1: Mac do Murilo como worker Cursor; teste de widget do gesto de voltar (PopScope) em Captura e Review; PRs com código de plataforma declaram o comportamento no iOS. Até a M1 fechar, telas e prints continuam no Linux/Android.
 

@@ -6,10 +6,10 @@ Head final (SHA-1, 40 caracteres):
 
 Conforme [`docs/qa/print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/main/docs/qa/print-rules.md). Obrigatório se o PR mexe em design, telas ou tema (widget/golden sozinho não conta).
 
-- [ ] Android **390×844**, retrato, **sem hover** — obrigatório na nuvem
+- [ ] **390×844** (emulador ou janela Linux, pasta `android/`), retrato, **sem hover** — obrigatório na nuvem
 - [ ] Desktop Linux **1280×800**, **só a área do app** (sem moldura / title bar; cantos opacos) — obrigatório na nuvem
-- [ ] macOS **1x 1280×800** sRGB, **sem** Display P3, só a área do app — ou `n/a: Mac offline — #54 item: <link>`
-- [ ] iOS — simulador iPhone 17, qualquer resolução — ou `n/a: Mac offline — #54 item: <link>`
+- [ ] macOS **1x 1280×800** sRGB, **sem** Display P3, só a área do app — ou `n/a: Mac offline (#54)`
+- [ ] iOS — simulador iPhone 17, qualquer resolução — ou `n/a: Mac offline (#54)`
 - [ ] Cores: fundo `#0E0D12` **sempre**; coral `#FF5C7A` **só** se a tela tiver elemento coral
 - [ ] `print_sizes.txt` — `head:` SHA-1 completo (40) + sha256 (64) de cada arquivo **final** (já editado, se houver)
 - [ ] Dado sensível escondido: aviso no PR com motivo (borrar é o padrão; recortar só com declaração — o gate de tamanho só aceita fora de 390×844 / 1280×800 com esse aviso)
@@ -20,14 +20,16 @@ Conforme [`docs/qa/print-rules.md`](https://github.com/murilinhoPs/MangaJP/blob/
 
 Branch `pr-assets`: `docs/pr-assets/pr-N/<head>/<plataforma>/`.
 
-Mac-only (macOS / iOS) com worker desligado: o item na fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54) tem que existir **antes** do review. Sem o link o review bloqueia.
+Mac-only (macOS / iOS) com worker desligado: o item na fila [#54](https://github.com/murilinhoPs/MangaJP/issues/54) tem que existir **antes** do review. Sem o comentário na #54 o review bloqueia. No corpo do PR: `n/a: Mac offline (#54)` (o link do comentário é opcional).
+
+Fluxo de plataforma sem emulador: `n/a: sem emulador (#93)`, item na [#93](https://github.com/murilinhoPs/MangaJP/issues/93). Sem o comentário na #93 o review bloqueia em fluxo de plataforma. O link do comentário no corpo do PR é opcional. A print 390×844 da janela Linux continua.
 
 ## `integration_test`
 
 Saída **real** do run no head final (nunca escrita à mão), **junto** de `git rev-parse --short HEAD`.
 
 - PR não toca `integration_test/` nem o fluxo coberto: `n/a` + uma linha de motivo.
-- Suíte só no Mac e worker desligado: `n/a: Mac offline — #54 item: <link>` (sem o link o review bloqueia).
+- Suíte só no Mac e worker desligado: `n/a: Mac offline (#54)` (sem o comentário na #54 o review bloqueia).
 
 ```
 $ git rev-parse --short HEAD

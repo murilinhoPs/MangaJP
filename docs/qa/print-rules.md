@@ -60,7 +60,7 @@ Se o PR precisa do emulador e a VM não tem, o bloco do PR é:
 n/a: sem emulador (#93)
 ```
 
-O item (PR, head, fluxo) vai como comentário na fila [#93](https://github.com/murilinhoPs/MangaJP/issues/93) (mesmo papel da [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para o Mac). **Sem o comentário na #93 o review bloqueia** em fluxo de plataforma. A print 390×844 da janela Linux **continua obrigatória**. Este `n/a` **bloqueia o merge** em fluxo de plataforma e **não bloqueia** em ajuste maior de UI/UX.
+O item (PR, head, fluxo) vai como comentário na fila [#93](https://github.com/murilinhoPs/MangaJP/issues/93) (mesmo papel da [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para o Mac). No corpo do PR a linha é `n/a: sem emulador (#93)`; o **link do comentário é opcional**. **Sem o comentário na #93 o review bloqueia** em fluxo de plataforma. A print 390×844 da janela Linux **continua obrigatória**. Este `n/a` **bloqueia o merge** em fluxo de plataforma e **não bloqueia** em ajuste maior de UI/UX.
 
 macOS / iOS: `n/a: Mac offline (#54)` — [Mac offline (2026-10-21)](#mac-offline-2026-10-21).
 

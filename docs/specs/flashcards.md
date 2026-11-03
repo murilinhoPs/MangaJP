@@ -14,7 +14,7 @@ No máximo 1 card vocab por `word_id`. Template derivado. Deck ≠ Caderno (Q-N6
 - Criação: ação **Aprendendo** / **Aprender**. Segundo Aprendendo no mesmo `word_id` não duplica; reativa ou no-op **sem** reset SRS (AC-card).
 - **F23 Should:** suspender no Deck → `suspend_reason = 'user'`; reativar → `null` e `word_states = learning`. Não deleta card, SRS nem logs.
 - Deletar card: confirmação; CASCADE `card_srs` + `review_logs`; palavra → `saved` (AC-delete).
-- **F38:** flashcards `kind = kanji` saem do Won't. Milestone próprio entre M2 e M3 ([`roadmap.md`](../roadmap.md)); proposta em revisão, sem implementação nesta spec. Cards a partir de `saved_kanji`.
+- **F38:** flashcards `kind = kanji` saem do Won't. Milestone [M2b](../roadmap.md#m2b--kanji-no-srs) entre M2 e M3; proposta em revisão, sem implementação nesta spec. Cards a partir de `saved_kanji`.
 - IA: lista + filtros + suspender.
 
 ## Critérios de aceite
