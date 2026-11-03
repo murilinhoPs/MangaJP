@@ -28,5 +28,6 @@ O PRD lista o destino e os temas, não o layout:
 
 > Pendente: layout, ordem e copy dos controles.
 > Pendente: se motores Could (F29) aparecem no picker de OCR.
-> Pendente: formato do JSON de backup (F25) e se o import é round-trip.
+> Pendente: formato do JSON de backup (F25 / M2), versão do schema e round-trip — ver [`m2.md`](../milestones/m2.md).
+> Pendente: Cloud Vision em Ajustes (F26 / M2): chave, comportamento offline e Q-N3 — ver [`m2.md`](../milestones/m2.md).
 > Pendente: Q-N4 — backend japanese-reader vivo para sync.
