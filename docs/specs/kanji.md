@@ -28,7 +28,7 @@ JMdict_e.gz no mesmo host: 10 592 677 bytes. Detalhe do bake em [`tools/build_jm
 
 **F24** no lookup: tocar num kanji **na ficha da palavra** abre a **ficha do kanji**, com on/kun, significados e traços. Sem flashcard de kanji.
 
-A ficha abre no navigator raiz (`useRootNavigator`), para o scrim cobrir a barra da página (Editar / título / +). **Salvar kanji** fica fixo embaixo; on, kun, significados e traços rolam acima. No wide a ficha usa 42% da altura (phone continua em 50%), para os significados caberem e os traços ficarem abaixo da dobra em 1280×800. Quando há mais conteúdo abaixo, uma sombra/fade na borda do scroll indica que dá para rolar.
+A ficha abre no navigator raiz (`useRootNavigator`), para o scrim cobrir a barra da página (Editar / título / +). **Salvar kanji** fica fixo embaixo; on, kun, significados e traços rolam acima. No wide a ficha usa 45% da altura (phone continua em 50%), para os significados caberem em contraste cheio acima do fade e os traços ficarem abaixo da dobra em 1280×800. Quando há mais conteúdo abaixo, uma sombra/fade na borda do scroll indica que dá para rolar.
 
 Se o caractere não tem linha na tabela `kanji` (bake sem `--with-kanji`, ou kanji fora do KANJIDIC2): a ficha ainda abre; on/kun, significados e traços do KANJIDIC2 ficam omitidos (a ficha **não** mostra «sem dados do dicionário»); **Salvar kanji** continua disponível. Na aba Kanji e no detalhe `/notebook/kanji/:char` o mesmo caso mostra «sem dados do dicionário». Teste com o fixture da tool sem linhas de kanji.
 

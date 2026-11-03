@@ -24,9 +24,10 @@ abstract final class PageLayout {
   static const double lookupSheetFraction = 0.5;
 
   /// Wide kanji ficha. 0.5 plus command-bar inset hid "eat; food" behind
-  /// Salvar kanji; 0.5 without the inset fits 食 with no scroll. 0.42 keeps
-  /// meanings on screen and strokes below the fold at 1280×800.
-  static const double kanjiSheetFractionWide = 0.42;
+  /// Salvar kanji; 0.5 without the inset fits 食 with no scroll. 0.45 keeps
+  /// meanings at full contrast above the fade; the shorter fade covers the
+  /// TRAÇOS peek so overflow (and the affordance) remains at 1280×800.
+  static const double kanjiSheetFractionWide = 0.45;
 }
 
 /// Screenshot / print helper only — not a production feature.

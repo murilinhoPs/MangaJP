@@ -153,7 +153,22 @@ void main() {
           .state<ScrollableState>(scrollable)
           .position
           .maxScrollExtent;
-      if (extent > 0.5) {
+      final meaningsRect = tester.getRect(find.byKey(KanjiSheetKeys.meanings));
+      if (wide) {
+        expect(
+          extent,
+          greaterThan(0.5),
+          reason: 'wide 食 must overflow so the scroll fade is visible on open',
+        );
+        expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
+        expect(
+          meaningsRect.overlaps(
+            tester.getRect(find.byKey(KanjiSheetKeys.scrollEdge)),
+          ),
+          isFalse,
+          reason: 'meanings must sit above the scroll fade at full contrast on open',
+        );
+      } else if (extent > 0.5) {
         expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
       }
 
@@ -161,10 +176,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(NotebookLabels.salvarKanji), findsOneWidget);
-      final meaningsRect = tester.getRect(find.byKey(KanjiSheetKeys.meanings));
+      final visibleMeanings = tester.getRect(
+        find.byKey(KanjiSheetKeys.meanings),
+      );
       final saveRect = tester.getRect(find.byKey(KanjiSheetKeys.save));
       expect(
-        meaningsRect.overlaps(saveRect),
+        visibleMeanings.overlaps(saveRect),
         isFalse,
         reason: 'meanings must not sit under Salvar kanji',
       );
