@@ -11,6 +11,7 @@ import 'package:manga_jp/core/theme/app_breakpoints.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_provider.dart';
 import 'package:manga_jp/features/dictionary/data/jmdict_service.dart';
+import 'package:manga_jp/core/shell/kbd_chip.dart';
 import 'package:manga_jp/features/dictionary/presentation/kanji_sheet.dart';
 import 'package:manga_jp/features/dictionary/presentation/lookup_sheet.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
@@ -48,6 +49,7 @@ void main() {
 
   for (final size in [_phone, _desktop]) {
     final label = '${size.width.toInt()}x${size.height.toInt()}';
+    final wide = size.width >= AppBreakpoints.wide;
 
     testWidgets('tapping 食 on the word ficha opens KANJIDIC2 sheet at $label', (
       tester,
@@ -55,6 +57,7 @@ void main() {
       final db = await _openLookup(tester, jmdictPath: jmdictPath, size: size);
 
       expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      _expectSaveShortcut(tester, LookupSheetKeys.save, wide: wide);
       await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
       await tester.pumpAndSettle();
 
@@ -75,6 +78,7 @@ void main() {
       expect(tester.widget<Text>(find.byKey(KanjiSheetKeys.strokes)).data, '9');
       expect(find.text(NotebookLabels.salvarKanji), findsOneWidget);
       expect(find.byKey(KanjiSheetKeys.save), findsOneWidget);
+      _expectSaveShortcut(tester, KanjiSheetKeys.save, wide: wide);
 
       await tester.tap(find.byKey(KanjiSheetKeys.save));
       await tester.pumpAndSettle();
@@ -169,4 +173,21 @@ Future<AppDatabase> _openLookup(
   await tester.tap(find.byKey(PageDetailKeys.ocrText));
   await tester.pumpAndSettle();
   return db;
+}
+
+void _expectSaveShortcut(
+  WidgetTester tester,
+  Key button, {
+  required bool wide,
+}) {
+  final chip = find.descendant(
+    of: find.byKey(button),
+    matching: find.byType(KbdChip),
+  );
+  if (wide) {
+    expect(chip, findsOneWidget);
+    expect(tester.widget<KbdChip>(chip).label, 'S');
+  } else {
+    expect(chip, findsNothing);
+  }
 }

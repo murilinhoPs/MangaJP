@@ -161,7 +161,7 @@ class _KanjiSheetState extends ConsumerState<KanjiSheet> {
                 LookupActionButton(
                   key: KanjiSheetKeys.save,
                   label: NotebookLabels.salvarKanji,
-                  shortcut: 'S',
+                  shortcut: ShellLayout.isWide(context) ? 'S' : null,
                   foreground: tokens.text,
                   active: isSaved,
                   activeFill: tokens.text.withValues(alpha: 0.14),

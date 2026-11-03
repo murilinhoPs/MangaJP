@@ -560,7 +560,7 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final specs = _actionSpecs(tokens);
+    final specs = _actionSpecs(tokens, wide: ShellLayout.isWide(context));
     return Row(
       children: [
         for (var i = 0; i < specs.length; i++) ...[
@@ -582,7 +582,7 @@ class _ActionRow extends StatelessWidget {
     );
   }
 
-  List<_ActionSpec> _actionSpecs(MangaJpTokens tokens) {
+  List<_ActionSpec> _actionSpecs(MangaJpTokens tokens, {required bool wide}) {
     return [
       _ActionSpec(
         action: LookupAction.learn,
@@ -615,7 +615,7 @@ class _ActionRow extends StatelessWidget {
         action: LookupAction.save,
         key: LookupSheetKeys.save,
         label: PageLabels.salvar,
-        shortcut: 'S',
+        shortcut: wide ? 'S' : null,
         state: WordState.saved,
         foreground: tokens.text,
         fill: tokens.text.withValues(alpha: 0.14),
@@ -638,7 +638,7 @@ class _ActionSpec {
   final LookupAction action;
   final Key key;
   final String label;
-  final String shortcut;
+  final String? shortcut;
   final WordState state;
   final Color foreground;
   final Color fill;
@@ -649,16 +649,16 @@ class LookupActionButton extends StatelessWidget {
   const LookupActionButton({
     super.key,
     required this.label,
-    required this.shortcut,
     required this.foreground,
     required this.active,
     required this.activeFill,
     required this.onPressed,
+    this.shortcut,
     this.enabled = true,
   });
 
   final String label;
-  final String shortcut;
+  final String? shortcut;
   final Color foreground;
   final bool active;
   final Color activeFill;
@@ -701,8 +701,10 @@ class LookupActionButton extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
-                KbdChip(label: shortcut, emphasis: active),
+                if (shortcut != null) ...[
+                  const SizedBox(height: 2),
+                  KbdChip(label: shortcut!, emphasis: active),
+                ],
               ],
             ),
           ),

@@ -23,6 +23,7 @@ abstract final class NotebookKanjiKeys {
   static const remove = Key('notebook-kanji-remove');
   static const removeCancel = Key('notebook-kanji-remove-cancel');
   static const removeConfirm = Key('notebook-kanji-remove-confirm');
+  static const noDict = Key('notebook-kanji-no-dict');
 
   static Key word(String wordId) => Key('notebook-kanji-word-$wordId');
 }
@@ -174,50 +175,59 @@ class _NotebookKanjiBody extends ConsumerWidget {
                 key: NotebookKanjiKeys.literal,
                 style: lemmaStyle,
               ),
-              if (lookup != null && lookup.onReadings.isNotEmpty) ...[
+              if (view.hasKanjidic) ...[
+                if (lookup != null && lookup.onReadings.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const _Label(NotebookLabels.kanjiOn),
+                  const SizedBox(height: 4),
+                  Text(
+                    lookup.onReadings.join(' · '),
+                    key: NotebookKanjiKeys.on,
+                    style: AppTypeScale.ui14.copyWith(
+                      fontFamily: AppFonts.jp,
+                      color: tokens.text2,
+                    ),
+                  ),
+                ],
+                if (lookup != null && lookup.kunReadings.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const _Label(NotebookLabels.kanjiKun),
+                  const SizedBox(height: 4),
+                  Text(
+                    lookup.kunReadings.join(' · '),
+                    key: NotebookKanjiKeys.kun,
+                    style: AppTypeScale.ui14.copyWith(
+                      fontFamily: AppFonts.jp,
+                      color: tokens.text2,
+                    ),
+                  ),
+                ],
+                if (lookup != null && lookup.meanings.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const _Label(NotebookLabels.kanjiMeanings),
+                  const SizedBox(height: 4),
+                  Text(
+                    lookup.meanings.join('; '),
+                    key: NotebookKanjiKeys.meanings,
+                    style: AppTypeScale.definicao,
+                  ),
+                ],
+                if (lookup != null && lookup.strokeCount != null) ...[
+                  const SizedBox(height: 12),
+                  const _Label(NotebookLabels.kanjiStrokes),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${lookup.strokeCount}',
+                    key: NotebookKanjiKeys.strokes,
+                    style: AppTypeScale.ui14.copyWith(color: tokens.text2),
+                  ),
+                ],
+              ] else ...[
                 const SizedBox(height: 16),
-                const _Label(NotebookLabels.kanjiOn),
-                const SizedBox(height: 4),
                 Text(
-                  lookup.onReadings.join(' · '),
-                  key: NotebookKanjiKeys.on,
-                  style: AppTypeScale.ui14.copyWith(
-                    fontFamily: AppFonts.jp,
-                    color: tokens.text2,
-                  ),
-                ),
-              ],
-              if (lookup != null && lookup.kunReadings.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const _Label(NotebookLabels.kanjiKun),
-                const SizedBox(height: 4),
-                Text(
-                  lookup.kunReadings.join(' · '),
-                  key: NotebookKanjiKeys.kun,
-                  style: AppTypeScale.ui14.copyWith(
-                    fontFamily: AppFonts.jp,
-                    color: tokens.text2,
-                  ),
-                ),
-              ],
-              if (lookup != null && lookup.meanings.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const _Label(NotebookLabels.kanjiMeanings),
-                const SizedBox(height: 4),
-                Text(
-                  lookup.meanings.join('; '),
-                  key: NotebookKanjiKeys.meanings,
-                  style: AppTypeScale.definicao,
-                ),
-              ],
-              if (lookup != null && lookup.strokeCount != null) ...[
-                const SizedBox(height: 12),
-                const _Label(NotebookLabels.kanjiStrokes),
-                const SizedBox(height: 4),
-                Text(
-                  '${lookup.strokeCount}',
-                  key: NotebookKanjiKeys.strokes,
-                  style: AppTypeScale.ui14.copyWith(color: tokens.text2),
+                  NotebookLabels.kanjiNoDict,
+                  key: NotebookKanjiKeys.noDict,
+                  style: AppTypeScale.ui14.copyWith(color: tokens.text3),
                 ),
               ],
               if (view.notebookWords.isNotEmpty) ...[

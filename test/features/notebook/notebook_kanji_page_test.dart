@@ -78,6 +78,14 @@ void main() {
         expect(find.text('eat; food'), findsOneWidget);
         expect(find.text('TRAÇOS 9'), findsOneWidget);
         expect(find.text('食べる'), findsWidgets);
+        expect(find.byKey(NotebookKeys.kanjiNoDict('猫')), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byKey(NotebookKeys.kanjiRow('食')),
+            matching: find.text(NotebookLabels.kanjiNoDict),
+          ),
+          findsNothing,
+        );
 
         if (wide) {
           expect(find.byKey(ShellKeys.rail), findsOneWidget);
@@ -104,9 +112,42 @@ void main() {
       expect(find.byKey(NotebookKeys.kanjiEmpty), findsOneWidget);
       expect(find.text(NotebookLabels.kanjiEmpty), findsOneWidget);
       expect(find.text(NotebookLabels.kanjiEmptyHint), findsOneWidget);
+      expect(find.textContaining('lookup'), findsNothing);
       expect(find.text(NotebookLabels.kanjiWatermark), findsOneWidget);
       expect(find.byKey(NotebookKeys.kanjiNoResults), findsNothing);
     });
+
+    testWidgets(
+      'saved kanji without KANJIDIC2 shows sem dados do dicionário at $label',
+      (tester) async {
+        await _openNotebook(tester, jmdictPath: jmdictPath, size: size);
+        await tester.tap(find.byKey(NotebookKeys.tabKanji));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(NotebookKeys.kanjiRow('猫')), findsOneWidget);
+        expect(find.byKey(NotebookKeys.kanjiNoDict('猫')), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byKey(NotebookKeys.kanjiRow('猫')),
+            matching: find.text(NotebookLabels.kanjiNoDict),
+          ),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(NotebookKeys.kanjiRow('猫')));
+        await tester.pumpAndSettle();
+        expect(find.byType(NotebookKanjiPage), findsOneWidget);
+        expect(find.byKey(NotebookKanjiKeys.noDict), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(NotebookKanjiKeys.noDict)).data,
+          NotebookLabels.kanjiNoDict,
+        );
+        expect(find.byKey(NotebookKanjiKeys.on), findsNothing);
+        expect(find.byKey(NotebookKanjiKeys.kun), findsNothing);
+        expect(find.byKey(NotebookKanjiKeys.meanings), findsNothing);
+        expect(find.byKey(NotebookKanjiKeys.strokes), findsNothing);
+      },
+    );
 
     testWidgets('Kanji search matches reading and meaning at $label', (
       tester,

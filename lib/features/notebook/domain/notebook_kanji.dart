@@ -21,6 +21,9 @@ class NotebookKanjiView {
   /// Caderno words whose `lemma_key` contains [literal].
   final List<NotebookEntry> notebookWords;
 
+  /// False when the `kanji` table has no filled KANJIDIC2 fields.
+  bool get hasKanjidic => lookup?.hasKanjidic ?? false;
+
   /// Search hits the literal always; readings/meanings only with [lookup].
   bool matchesSearch(String query) {
     final trimmed = query.trim();

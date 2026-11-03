@@ -20,7 +20,9 @@ abstract final class NotebookLabels {
   static const tabKanji = 'Kanji';
   static const kanjiSearchHint = 'Kanji, leitura ou significado';
   static const kanjiEmpty = 'Nenhum kanji.';
-  static const kanjiEmptyHint = 'Salve um kanji no lookup para vê-lo aqui.';
+  static const kanjiEmptyHint =
+      'Salve um kanji na ficha da palavra para vê-lo aqui.';
+  static const kanjiNoDict = 'sem dados do dicionário';
   static const kanjiNoResultsHint =
       'Tente outro kanji, leitura ou significado.';
   static const kanjiWatermark = '漢字';

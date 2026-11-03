@@ -46,6 +46,9 @@ abstract final class NotebookKeys {
   static Key row(String wordId) => Key('notebook-row-$wordId');
 
   static Key kanjiRow(String literal) => Key('notebook-kanji-row-$literal');
+
+  static Key kanjiNoDict(String literal) =>
+      Key('notebook-kanji-no-dict-$literal');
 }
 
 /// `/notebook` — every word with a listed state, newest first.
@@ -451,28 +454,35 @@ class _KanjiRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (on.isNotEmpty)
-                      Text(
-                        '${NotebookLabels.kanjiOn} $on',
-                        style: AppTypeScale.ui14.copyWith(
-                          fontFamily: AppFonts.jp,
-                          color: tokens.text2,
+                    if (view.hasKanjidic) ...[
+                      if (on.isNotEmpty)
+                        Text(
+                          '${NotebookLabels.kanjiOn} $on',
+                          style: AppTypeScale.ui14.copyWith(
+                            fontFamily: AppFonts.jp,
+                            color: tokens.text2,
+                          ),
                         ),
-                      ),
-                    if (kun.isNotEmpty)
-                      Text(
-                        '${NotebookLabels.kanjiKun} $kun',
-                        style: AppTypeScale.ui14.copyWith(
-                          fontFamily: AppFonts.jp,
-                          color: tokens.text2,
+                      if (kun.isNotEmpty)
+                        Text(
+                          '${NotebookLabels.kanjiKun} $kun',
+                          style: AppTypeScale.ui14.copyWith(
+                            fontFamily: AppFonts.jp,
+                            color: tokens.text2,
+                          ),
                         ),
-                      ),
-                    if (meanings.isNotEmpty)
-                      Text(meanings, style: AppTypeScale.definicao),
-                    if (strokes != null)
+                      if (meanings.isNotEmpty)
+                        Text(meanings, style: AppTypeScale.definicao),
+                      if (strokes != null)
+                        Text(
+                          '${NotebookLabels.kanjiStrokes} $strokes',
+                          style: AppTypeScale.metadados11,
+                        ),
+                    ] else
                       Text(
-                        '${NotebookLabels.kanjiStrokes} $strokes',
-                        style: AppTypeScale.metadados11,
+                        NotebookLabels.kanjiNoDict,
+                        key: NotebookKeys.kanjiNoDict(view.literal),
+                        style: AppTypeScale.ui14.copyWith(color: tokens.text3),
                       ),
                     if (words.isNotEmpty)
                       Text(

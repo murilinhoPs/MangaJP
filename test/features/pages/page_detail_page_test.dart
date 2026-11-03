@@ -949,7 +949,7 @@ void main() {
       PageLabels.ignorar,
       PageLabels.salvar,
     ]);
-    expect(buttons.map((button) => button.shortcut), ['A', 'K', 'I', 'S']);
+    expect(buttons.map((button) => button.shortcut), ['A', 'K', 'I', null]);
     expect(
       tester.getSize(find.byKey(LookupSheetKeys.save)).height,
       AppTargets.acaoEstado,
@@ -1182,86 +1182,83 @@ void main() {
   );
 
   for (final size in [_phone, _desktop]) {
-    testWidgets(
-      'custom IVS and plain miss share one Caderno row at '
-      '${size.width.toInt()}x${size.height.toInt()}',
-      (tester) async {
-        _setSize(tester, size);
-        const ivs = '\u{E0100}';
-        const withIvs = 'ぴよ$ivs';
-        final db = await _openPage(
-          tester,
-          jmdictPath: jmdictPath,
-          pageId: 'page-ivs-${size.width.toInt()}',
-          ocrText: 'ぴよ',
-          seed: (db, cropId) async {
-            final words = WordsRepository(db);
-            final cards = FlashcardsRepository(db);
-            await cards.markIgnored(
-              await words.saveCustomFromLookup(
-                cropId: cropId,
-                surface: withIvs,
-                userNote: 'nome ivs',
-              ),
-            );
-          },
-        );
+    testWidgets('custom IVS and plain miss share one Caderno row at '
+        '${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+      _setSize(tester, size);
+      const ivs = '\u{E0100}';
+      const withIvs = 'ぴよ$ivs';
+      final db = await _openPage(
+        tester,
+        jmdictPath: jmdictPath,
+        pageId: 'page-ivs-${size.width.toInt()}',
+        ocrText: 'ぴよ',
+        seed: (db, cropId) async {
+          final words = WordsRepository(db);
+          final cards = FlashcardsRepository(db);
+          await cards.markIgnored(
+            await words.saveCustomFromLookup(
+              cropId: cropId,
+              surface: withIvs,
+              userNote: 'nome ivs',
+            ),
+          );
+        },
+      );
 
-        expect(_spanColor(tester, 'ぴよ'), AppColors.text3);
-        await tester.tap(find.byKey(PageDetailKeys.ocrText));
-        await tester.pumpAndSettle();
+      expect(_spanColor(tester, 'ぴよ'), AppColors.text3);
+      await tester.tap(find.byKey(PageDetailKeys.ocrText));
+      await tester.pumpAndSettle();
 
-        expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
-        expect(
-          tester
-              .widget<LookupActionButton>(find.byKey(LookupSheetKeys.ignore))
-              .active,
-          isTrue,
-        );
-        expect(
-          find.descendant(
-            of: find.byKey(LookupSheetKeys.sheet),
-            matching: find.text('ぴよ'),
-          ),
-          findsWidgets,
-          reason: 'lookup header keeps the tapped OCR form',
-        );
+      expect(find.byKey(LookupSheetKeys.miss), findsOneWidget);
+      expect(
+        tester
+            .widget<LookupActionButton>(find.byKey(LookupSheetKeys.ignore))
+            .active,
+        isTrue,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(LookupSheetKeys.sheet),
+          matching: find.text('ぴよ'),
+        ),
+        findsWidgets,
+        reason: 'lookup header keeps the tapped OCR form',
+      );
 
-        await tester.enterText(find.byKey(LookupSheetKeys.note), 'outra nota');
-        await tester.pumpAndSettle();
-        await _tapSave(tester);
+      await tester.enterText(find.byKey(LookupSheetKeys.note), 'outra nota');
+      await tester.pumpAndSettle();
+      await _tapSave(tester);
 
-        final words = await db.select(db.userWords).get();
-        expect(words, hasLength(1));
-        expect(words.single.lemma, withIvs);
-        expect(words.single.reading, withIvs);
-        expect(words.single.userNote, 'nome ivs\noutra nota');
-        expect(
-          (await db.select(db.userWordStates).get()).single.state,
-          WordState.ignored.name,
-        );
-        expect(await db.select(db.userCards).get(), isEmpty);
+      final words = await db.select(db.userWords).get();
+      expect(words, hasLength(1));
+      expect(words.single.lemma, withIvs);
+      expect(words.single.reading, withIvs);
+      expect(words.single.userNote, 'nome ivs\noutra nota');
+      expect(
+        (await db.select(db.userWordStates).get()).single.state,
+        WordState.ignored.name,
+      );
+      expect(await db.select(db.userCards).get(), isEmpty);
 
-        const NotebookRoute().go(
-          tester.element(find.byKey(PageDetailKeys.ocrText)),
-        );
-        await tester.pumpAndSettle();
-        expect(find.byType(NotebookPage), findsOneWidget);
-        expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
-        final tile = tester.widget<ListTile>(
-          find.byKey(NotebookKeys.row(words.single.id)),
-        );
-        expect((tile.title as Text).data, withIvs);
-        expect((tile.subtitle as Text).data, withIvs);
-        expect(
-          find.descendant(
-            of: find.byKey(NotebookKeys.list),
-            matching: find.byType(ListTile),
-          ),
-          findsOneWidget,
-        );
-      },
-    );
+      const NotebookRoute().go(
+        tester.element(find.byKey(PageDetailKeys.ocrText)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(NotebookPage), findsOneWidget);
+      expect(find.byKey(NotebookKeys.row(words.single.id)), findsOneWidget);
+      final tile = tester.widget<ListTile>(
+        find.byKey(NotebookKeys.row(words.single.id)),
+      );
+      expect((tile.title as Text).data, withIvs);
+      expect((tile.subtitle as Text).data, withIvs);
+      expect(
+        find.descendant(
+          of: find.byKey(NotebookKeys.list),
+          matching: find.byType(ListTile),
+        ),
+        findsOneWidget,
+      );
+    });
   }
 
   for (final size in [_phone, _desktop]) {
