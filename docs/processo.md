@@ -69,7 +69,7 @@ Toda task é uma issue, criada pelos templates:
 - **Feature** (`[feat] `, label `type:feature`): Área, caminho da Spec, Contexto, Critérios de aceite em checklist (um AC por item, usando os IDs da spec).
 - **Bug** (`[bug] `, label `type:bug`): Área, Plataforma, Head, Repro, Esperado, Obtido, Critérios de aceite.
 
-Issue "fila" pra trabalho que depende de hardware ausente. No MangaJP, a [#54](https://github.com/murilinhoPs/MangaJP/issues/54) é a fila Mac/iOS: cada item tem PR de origem, o que rodar e o head. O PR referencia o item com `n/a: Mac offline — #54 item: <link>`.
+Issue "fila" pra trabalho que depende de hardware ausente. No MangaJP, a [#54](https://github.com/murilinhoPs/MangaJP/issues/54) é a fila Mac/iOS: cada item tem PR de origem, o que rodar e o head. O PR referencia o item com `n/a: Mac offline — #54 item: <link>`. Emulador Android ausente: `n/a: sem emulador — #<fila> item: <link>`, no mesmo padrão — [`print-rules.md`](qa/print-rules.md#emulador-android-2026-11-03). A issue da fila de emulador ainda não existe (helm abre); até lá o item vai no comentário do PR e no relatório do tester.
 
 ### Labels (três eixos)
 
@@ -161,7 +161,7 @@ Formato do squash: travado no sha do head, título `<título> (#N)`, corpo com `
 
 Exceções combinadas:
 
-- Trabalho roda na nuvem por padrão. O que só roda em macOS/iOS vira item na fila (#54) e não bloqueia o PR; quando o Mac liga, a fila roda inteira.
+- Trabalho roda na nuvem por padrão. O que só roda em macOS/iOS vira item na fila (#54) e não bloqueia o PR; quando o Mac liga, a fila roda inteira. Emulador Android ausente: `n/a: sem emulador` conforme [`print-rules.md`](qa/print-rules.md#emulador-android-2026-11-03) (bloqueia em fluxo de plataforma; não bloqueia em ajuste maior; a print 390×844 da janela Linux continua).
 - Print vai sem edição. Só pode borrar ou recortar dado sensível, avisando no PR. Recorte fora do tamanho padrão precisa do token `recorte` ou `recorte=<motivo>` no `print_sizes.txt`.
 - Force-push na `pr-assets` só com aprovação do dono do projeto.
 
