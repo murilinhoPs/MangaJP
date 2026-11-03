@@ -28,22 +28,35 @@ abstract final class NotebookKanjiKeys {
 }
 
 /// `/notebook/kanji/:char` — large kanji, on/kun, meanings, strokes, words.
-class NotebookKanjiPage extends ConsumerWidget {
+class NotebookKanjiPage extends ConsumerStatefulWidget {
   const NotebookKanjiPage({super.key, required this.char});
 
   final String char;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final view = ref.watch(notebookKanjiProvider(char));
-    final wide = ShellLayout.isWide(context);
-    if (ref.read(notebookSelectedTabProvider) != NotebookTab.kanji) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+  ConsumerState<NotebookKanjiPage> createState() => _NotebookKanjiPageState();
+}
+
+class _NotebookKanjiPageState extends ConsumerState<NotebookKanjiPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      if (ref.read(notebookSelectedTabProvider) != NotebookTab.kanji) {
         ref
             .read(notebookSelectedTabProvider.notifier)
             .setTab(NotebookTab.kanji);
-      });
-    }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final view = ref.watch(notebookKanjiProvider(widget.char));
+    final wide = ShellLayout.isWide(context);
 
     return Scaffold(
       backgroundColor: context.tokens.bg,

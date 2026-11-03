@@ -106,8 +106,6 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
   Widget build(BuildContext context) {
     final tab = ref.watch(notebookSelectedTabProvider);
     final query = ref.watch(notebookListQueryProvider);
-    final entries = ref.watch(notebookEntriesProvider);
-    final kanji = ref.watch(notebookKanjiEntriesProvider);
     final wide = ShellLayout.isWide(context);
     final padH = wide ? 48.0 : 16.0;
     final onKanji = tab == NotebookTab.kanji;
@@ -209,45 +207,52 @@ class _NotebookPageState extends ConsumerState<NotebookPage> {
           const SizedBox(height: 8),
         Expanded(
           child: onKanji
-              ? kanji.when(
-                  data: (items) => _NotebookKanjiList(
-                    entries: items,
-                    search: ref.watch(notebookKanjiQueryProvider),
-                    wide: wide,
-                  ),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        '$error',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+              ? ref
+                    .watch(notebookKanjiEntriesProvider)
+                    .when(
+                      data: (items) => _NotebookKanjiList(
+                        entries: items,
+                        search: ref.watch(notebookKanjiQueryProvider),
+                        wide: wide,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            '$error',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+              : ref
+                    .watch(notebookEntriesProvider)
+                    .when(
+                      data: (items) => _NotebookList(
+                        entries: items,
+                        query: query,
+                        wide: wide,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            '$error',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                )
-              : entries.when(
-                  data: (items) =>
-                      _NotebookList(entries: items, query: query, wide: wide),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        '$error',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
         ),
       ],
     );

@@ -16,7 +16,7 @@ O dado entra no app no bake: `python3 tools/build_jmdict_sqlite/build_jmdict_sql
 
 Colunas da tabela de lookup (não confundir com `saved_kanji`): `character`, `readings_json`, `meanings_json`, `stroke_count`, `freq`. Detalhe em [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md).
 
-Licença: KANJIDIC2 é © EDRDG, CC BY-SA, igual ao JMdict. Atribuição nos [Ajustes](settings.md) (NF8).
+Licença: KANJIDIC2 é © EDRDG, [CC BY-SA 4.0](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). Atribuição nos [Ajustes](settings.md) (NF8).
 
 Tamanho (medido 2026-11-03 no arquivo do EDRDG, `http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz`): **1 488 578 bytes** gzip (`Content-Length` / arquivo baixado) e **15 641 823 bytes** XML descomprimido (gunzip local). Não é um asset separado: vai para dentro de `assets/dict/jmdict.sqlite`. Bake completo no mesmo dia (`tools/build_jmdict_sqlite/build_jmdict_sqlite.py`, JMdict_e 219 012 entradas):
 

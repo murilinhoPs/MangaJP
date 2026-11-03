@@ -32,7 +32,8 @@ void main() {
       final firstSavedAt = listed.first.savedAt;
       final firstOrigin = listed.first.originPageId;
 
-      await env.notebook.saveKanji(literal: '食', originPageId: 'page-a');
+      await _page(env.db, 'page-b');
+      await env.notebook.saveKanji(literal: '食', originPageId: 'page-b');
       listed = await env.notebook.listKanji();
       expect(listed, hasLength(2));
       expect(listed.first.literal, '食');
