@@ -41,4 +41,33 @@
 </rmgroup>
 </reading_meaning>
 </character>
+<character>
+<literal>生</literal>
+<misc>
+<grade>1</grade>
+<stroke_count>5</stroke_count>
+<freq>29</freq>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">セイ</reading>
+<reading r_type="ja_on">ショウ</reading>
+<reading r_type="ja_kun">い.きる</reading>
+<reading r_type="ja_kun">い.かす</reading>
+<reading r_type="ja_kun">い.ける</reading>
+<reading r_type="ja_kun">う.まれる</reading>
+<reading r_type="ja_kun">う.む</reading>
+<reading r_type="ja_kun">お.う</reading>
+<reading r_type="ja_kun">は.える</reading>
+<reading r_type="ja_kun">は.やす</reading>
+<reading r_type="ja_kun">き</reading>
+<reading r_type="ja_kun">なま</reading>
+<meaning>life</meaning>
+<meaning>genuine</meaning>
+<meaning>birth</meaning>
+<meaning>raw</meaning>
+<meaning>fresh</meaning>
+</rmgroup>
+</reading_meaning>
+</character>
 </kanjidic2>

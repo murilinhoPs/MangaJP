@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
@@ -168,6 +169,18 @@ void main() {
           isFalse,
           reason: 'meanings must sit above the scroll fade at full contrast on open',
         );
+        expect(
+          tester.getSize(find.byKey(KanjiSheetKeys.scrollEdge)).height,
+          PageLayout.kanjiSheetScrollFadeHeight,
+        );
+        final strokesLabel = find.text(NotebookLabels.kanjiStrokes);
+        expect(strokesLabel, findsOneWidget);
+        expect(
+          tester.getRect(strokesLabel).overlaps(
+            tester.getRect(find.byKey(KanjiSheetKeys.save)),
+          ),
+          isFalse,
+        );
       } else if (extent > 0.5) {
         expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
       }
@@ -263,6 +276,124 @@ void main() {
         expect(find.byType(PageDetailPage), findsOneWidget);
       },
     );
+
+    testWidgets('S saves the kanji and Esc closes the ficha at $label', (
+      tester,
+    ) async {
+      final db = await _openLookup(tester, jmdictPath: jmdictPath, size: size);
+      await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyS), isTrue);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(KanjiSheetKeys.sheet), findsNothing);
+      final saved = await db.select(db.savedKanji).get();
+      expect(saved, hasLength(1));
+      expect(saved.single.literal, '食');
+      expect(await db.select(db.userWords).get(), isEmpty);
+      expect(find.byType(PageDetailPage), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+      await tester.tap(find.byKey(LookupSheetKeys.kanji('食')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+
+      expect(await tester.sendKeyEvent(LogicalKeyboardKey.escape), isTrue);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(KanjiSheetKeys.sheet), findsNothing);
+      expect(find.byType(PageDetailPage), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(FocusManager.instance.primaryFocus, isNotNull);
+      expect((await db.select(db.savedKanji).get()).single.literal, '食');
+    });
+
+    testWidgets(
+      '生 with many readings stays reachable above pinned Salvar kanji at $label',
+      (tester) async {
+        await _openLookup(
+          tester,
+          jmdictPath: jmdictPath,
+          size: size,
+          pageId: 'page-ikiru',
+          ocrText: '生きる',
+        );
+        await tester.tap(find.byKey(LookupSheetKeys.kanji('生')));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(KanjiSheetKeys.sheet), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(KanjiSheetKeys.literal)).data,
+          '生',
+        );
+        expect(
+          tester.widget<Text>(find.byKey(KanjiSheetKeys.meanings)).data,
+          'life; genuine; birth; raw; fresh',
+        );
+        expect(tester.widget<Text>(find.byKey(KanjiSheetKeys.strokes)).data, '5');
+
+        final modalRect = tester.getRect(find.byKey(KanjiSheetKeys.modal));
+        expect(
+          modalRect.height,
+          moreOrLessEquals(
+            size.height *
+                (wide
+                    ? PageLayout.kanjiSheetFractionWide
+                    : PageLayout.lookupSheetFraction),
+            epsilon: 0.5,
+          ),
+        );
+
+        final scrollable = find.descendant(
+          of: find.byKey(KanjiSheetKeys.sheet),
+          matching: find.byType(Scrollable),
+        );
+        expect(scrollable, findsOneWidget);
+        final extent = tester
+            .state<ScrollableState>(scrollable)
+            .position
+            .maxScrollExtent;
+        if (wide) {
+          expect(
+            extent,
+            greaterThan(0.5),
+            reason: 'wide 生 must overflow inside 45% so the fade signals more content',
+          );
+          expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
+        } else if (extent > 0.5) {
+          expect(find.byKey(KanjiSheetKeys.scrollEdge), findsOneWidget);
+        } else {
+          expect(find.byKey(KanjiSheetKeys.scrollEdge), findsNothing);
+        }
+
+        final saveBefore = tester.getRect(find.byKey(KanjiSheetKeys.save));
+        await tester.ensureVisible(find.byKey(KanjiSheetKeys.meanings));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .getRect(find.byKey(KanjiSheetKeys.meanings))
+              .overlaps(tester.getRect(find.byKey(KanjiSheetKeys.save))),
+          isFalse,
+        );
+
+        await tester.scrollUntilVisible(
+          find.byKey(KanjiSheetKeys.strokes),
+          80,
+          scrollable: scrollable,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .getRect(find.byKey(KanjiSheetKeys.strokes))
+              .overlaps(tester.getRect(find.byKey(KanjiSheetKeys.save))),
+          isFalse,
+        );
+        expect(find.byKey(KanjiSheetKeys.scrollEdge), findsNothing);
+        expect(tester.getRect(find.byKey(KanjiSheetKeys.save)), saveBefore);
+      },
+    );
   }
 
   test('wide breakpoint stays 900', () {
@@ -274,6 +405,8 @@ Future<AppDatabase> _openLookup(
   WidgetTester tester, {
   required String jmdictPath,
   required Size size,
+  String pageId = 'page-tabeta',
+  String ocrText = '食べた',
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -284,13 +417,13 @@ Future<AppDatabase> _openLookup(
   addTearDown(db.close);
 
   await PagesRepository(db).saveRecognizedCrop(
-    pageId: 'page-tabeta',
+    pageId: pageId,
     sourceSha256: sha256Hex(fixturePng()),
     left: 0.2,
     top: 0.2,
     width: 0.6,
     height: 0.6,
-    ocrText: '食べた',
+    ocrText: ocrText,
     engineId: 'fake',
   );
 
@@ -308,8 +441,7 @@ Future<AppDatabase> _openLookup(
   );
   await tester.pumpAndSettle();
 
-  const PageDetailRoute(id: 'page-tabeta')
-      .go(tester.element(find.byType(HomePage)));
+  PageDetailRoute(id: pageId).go(tester.element(find.byType(HomePage)));
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(PageDetailKeys.ocrText));
   await tester.pumpAndSettle();

@@ -25,9 +25,16 @@ abstract final class PageLayout {
 
   /// Wide kanji ficha. 0.5 plus command-bar inset hid "eat; food" behind
   /// Salvar kanji; 0.5 without the inset fits 食 with no scroll. 0.45 keeps
-  /// meanings at full contrast above the fade; the shorter fade covers the
-  /// TRAÇOS peek so overflow (and the affordance) remains at 1280×800.
+  /// 食 meanings at full contrast above the fade; TRAÇOS peeks through the
+  /// fade so overflow stays visible at 1280×800. Kanji with longer
+  /// on/kun/meanings (生, 上, 行) scroll inside the same fraction — the fade
+  /// is the overflow signal; do not grow the sheet or 食 loses the peek.
   static const double kanjiSheetFractionWide = 0.45;
+
+  /// Bottom fade while the kanji ficha has more content below. Short and
+  /// below full opacity so the TRAÇOS (or other) label on the edge stays
+  /// readable, without covering 食 meanings on open.
+  static const double kanjiSheetScrollFadeHeight = 12;
 }
 
 /// Screenshot / print helper only — not a production feature.
