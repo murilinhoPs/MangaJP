@@ -27,6 +27,10 @@ abstract final class PageListDate {
     if (diff == 1) {
       return 'ontem';
     }
-    return '${localWhen.day} ${_months[localWhen.month - 1]}';
+    final month = _months[localWhen.month - 1];
+    if (localWhen.year != localNow.year) {
+      return '${localWhen.day} $month ${localWhen.year}';
+    }
+    return '${localWhen.day} $month';
   }
 }

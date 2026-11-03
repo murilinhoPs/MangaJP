@@ -14,4 +14,13 @@ void main() {
     expect(long.length, greaterThan(36));
     expect(PageTitle.fromOcr(long), '${long.substring(0, 36)}…');
   });
+
+  test('truncates by grapheme so a non-BMP kanji is not split', () {
+    const rare = '𠮟';
+    expect(rare.length, 2);
+    final long = '${'あ' * 35}$rare$rare';
+    final title = PageTitle.fromOcr(long);
+    expect(title, '${'あ' * 35}$rare…');
+    expect(title.endsWith('…'), isTrue);
+  });
 }

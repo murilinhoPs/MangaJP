@@ -174,4 +174,80 @@ void main() {
     expect(entries.last.title, 'Página');
     expect(entries.last.ocrPreview, isNull);
   });
+
+  test('listPageEntries uses the earliest crop when a page has two', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = PagesRepository(db);
+
+    await db.pagesDao.insertPage(
+      CapturedPagesCompanion.insert(
+        id: 'two-crops',
+        sha256: 'sha',
+        createdAt: DateTime.utc(2026, 3, 1),
+      ),
+    );
+    await db.pagesDao.insertCrop(
+      CapturedCropsCompanion.insert(
+        id: 'crop-second',
+        pageId: 'two-crops',
+        ocrText: 'segundo',
+        engineId: 'test',
+        left: 0.5,
+        top: 0.1,
+        width: 0.4,
+        height: 0.4,
+        createdAt: DateTime.utc(2026, 3, 1, 1),
+      ),
+    );
+    await db.pagesDao.insertCrop(
+      CapturedCropsCompanion.insert(
+        id: 'crop-first',
+        pageId: 'two-crops',
+        ocrText: 'primeiro',
+        engineId: 'test',
+        left: 0.1,
+        top: 0.1,
+        width: 0.4,
+        height: 0.4,
+        createdAt: DateTime.utc(2026, 3, 1, 0),
+      ),
+    );
+
+    final entries = await repo.listPageEntries();
+    expect(entries, hasLength(1));
+    expect(entries.single.ocrPreview, 'primeiro');
+    expect(entries.single.title, 'primeiro');
+  });
+
+  test('watchPageEntries emits after a page and crop are written', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = PagesRepository(db);
+    final events = <List<String>>[];
+    final sub = repo.watchPageEntries().listen((rows) {
+      events.add([for (final row in rows) row.id]);
+    });
+    addTearDown(sub.cancel);
+
+    await pumpEventQueue();
+    expect(events, [
+      <String>[],
+    ]);
+
+    await repo.saveRecognizedCrop(
+      pageId: 'live-1',
+      sourceSha256: 'sha',
+      left: 0.1,
+      top: 0.1,
+      width: 0.4,
+      height: 0.4,
+      ocrText: '見せる',
+      engineId: 'test',
+    );
+    await pumpEventQueue();
+
+    expect(events.last, ['live-1']);
+    expect((await repo.watchPageEntries().first).single.title, '見せる');
+  });
 }

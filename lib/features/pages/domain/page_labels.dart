@@ -4,6 +4,7 @@ abstract final class PageLabels {
   static const empty = 'Nenhuma página.';
   static const emptyHint = 'Importe da galeria para ver o histórico aqui.';
   static const gallery = 'Galeria +';
+  static const loadError = 'Não foi possível carregar as páginas.';
   static const verTodas = 'Ver todas';
   static const watermark = '頁';
   static const voltar = 'Voltar';

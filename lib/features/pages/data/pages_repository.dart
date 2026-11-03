@@ -122,19 +122,24 @@ class PagesRepository {
 
   /// Full `/pages` history with the first crop's OCR as title/thumb source.
   Future<List<PageListEntry>> listPageEntries() async {
-    final pages = await listPages();
-    final out = <PageListEntry>[];
-    for (final page in pages) {
-      final crops = await cropsForPage(page.id);
-      out.add(
-        PageListEntry(
-          id: page.id,
-          createdAt: page.createdAt,
-          ocrPreview: crops.isEmpty ? null : crops.first.ocrText,
-        ),
-      );
-    }
-    return out;
+    final rows = await _db.pagesDao.listPagesWithFirstOcr();
+    return [for (final row in rows) _toListEntry(row)];
+  }
+
+  /// Live `/pages` history. Emits again when a page or crop is written.
+  Stream<List<PageListEntry>> watchPageEntries() {
+    return _db.pagesDao.watchPagesWithFirstOcr().map((rows) {
+      return [for (final row in rows) _toListEntry(row)];
+    });
+  }
+
+  static PageListEntry _toListEntry((CapturedPage, String?) row) {
+    final (page, ocrPreview) = row;
+    return PageListEntry(
+      id: page.id,
+      createdAt: page.createdAt,
+      ocrPreview: ocrPreview,
+    );
   }
 
   Future<int> countPages() => _db.pagesDao.countPages();

@@ -359,6 +359,9 @@ void main() {
       '/pages',
     );
     expect(find.byKey(PagesKeys.empty), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
   });
 
   testWidgets('palette Abrir página recente opens the latest page', (

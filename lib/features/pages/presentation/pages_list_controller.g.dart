@@ -9,23 +9,32 @@ part of 'pages_list_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Every persisted page for `/pages`, newest first.
+///
+/// A stream so Galeria + → capture can insert while `/pages` stays mounted
+/// underneath (push `/capture`, then `pushReplacement` `/pages/:id`).
 
 @ProviderFor(pagesList)
 final pagesListProvider = PagesListProvider._();
 
 /// Every persisted page for `/pages`, newest first.
+///
+/// A stream so Galeria + → capture can insert while `/pages` stays mounted
+/// underneath (push `/capture`, then `pushReplacement` `/pages/:id`).
 
 final class PagesListProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<PageListEntry>>,
           List<PageListEntry>,
-          FutureOr<List<PageListEntry>>
+          Stream<List<PageListEntry>>
         >
     with
         $FutureModifier<List<PageListEntry>>,
-        $FutureProvider<List<PageListEntry>> {
+        $StreamProvider<List<PageListEntry>> {
   /// Every persisted page for `/pages`, newest first.
+  ///
+  /// A stream so Galeria + → capture can insert while `/pages` stays mounted
+  /// underneath (push `/capture`, then `pushReplacement` `/pages/:id`).
   PagesListProvider._()
     : super(
         from: null,
@@ -42,14 +51,14 @@ final class PagesListProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<PageListEntry>> $createElement(
+  $StreamProviderElement<List<PageListEntry>> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $StreamProviderElement(pointer);
 
   @override
-  FutureOr<List<PageListEntry>> create(Ref ref) {
+  Stream<List<PageListEntry>> create(Ref ref) {
     return pagesList(ref);
   }
 }
 
-String _$pagesListHash() => r'6a953c60958eb4d222920f66a0a94c5fa598de6d';
+String _$pagesListHash() => r'2d63aeb46c69e89a5deed1968f978c1ff6cf6c9d';

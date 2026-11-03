@@ -1,3 +1,5 @@
+import 'package:characters/characters.dart';
+
 /// Title for a captured page when Drift has no `pages.title`.
 ///
 /// First OCR line, truncated; **Página** when the page has no text.
@@ -11,9 +13,10 @@ abstract final class PageTitle {
       return fallback;
     }
     final line = text.split('\n').first.trim();
-    if (line.length <= maxChars) {
+    final chars = line.characters;
+    if (chars.length <= maxChars) {
       return line;
     }
-    return '${line.substring(0, maxChars)}…';
+    return '${chars.take(maxChars)}…';
   }
 }

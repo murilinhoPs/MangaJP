@@ -13,4 +13,9 @@ void main() {
     expect(PageListDate.format(DateTime(2026, 10, 5), now), '5 out');
     expect(PageListDate.format(DateTime(2026, 1, 15), now), '15 jan');
   });
+
+  test('other years include yyyy', () {
+    final now = DateTime(2026, 11, 3);
+    expect(PageListDate.format(DateTime(2025, 12, 31), now), '31 dez 2025');
+  });
 }

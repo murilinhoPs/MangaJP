@@ -576,6 +576,9 @@ void main() {
     expect(find.byKey(PagesKeys.row('page-a')), findsOneWidget);
     expect(find.text('見せる'), findsWidgets);
     expect(find.text('/pages — stub (M0.1)'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
   });
 
   testWidgets('desktop 1 opens recent page; focused field swallows 1-3/R/', (

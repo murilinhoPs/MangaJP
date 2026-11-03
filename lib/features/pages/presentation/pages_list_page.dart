@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/shell/shell_layout.dart';
+import '../../../core/shell/shell_nav.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../capture/presentation/gallery_import.dart';
 import '../domain/page_labels.dart';
@@ -16,6 +17,7 @@ abstract final class PagesKeys {
   static const empty = Key('pages-empty');
   static const gallery = Key('pages-gallery');
   static const title = Key('pages-title');
+  static const back = Key('pages-back');
 
   static Key row(String pageId) => Key('pages-row-$pageId');
 
@@ -37,15 +39,26 @@ class PagesListPage extends ConsumerWidget {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(
-            padH + MediaQuery.paddingOf(context).left,
-            (wide ? 24.0 : 12.0) + MediaQuery.paddingOf(context).top,
+            wide ? padH + MediaQuery.paddingOf(context).left : 4,
+            (wide ? 24.0 : 4.0) + MediaQuery.paddingOf(context).top,
             padH + MediaQuery.paddingOf(context).right,
             0,
           ),
-          child: const Text(
-            PageLabels.pagesTitle,
-            key: PagesKeys.title,
-            style: AppTypeScale.tituloTela,
+          child: Row(
+            children: [
+              if (!wide)
+                BackButton(
+                  key: PagesKeys.back,
+                  onPressed: () => popTaskOrHome(context),
+                ),
+              const Expanded(
+                child: Text(
+                  PageLabels.pagesTitle,
+                  key: PagesKeys.title,
+                  style: AppTypeScale.tituloTela,
+                ),
+              ),
+            ],
           ),
         ),
         Expanded(
@@ -54,11 +67,11 @@ class PagesListPage extends ConsumerWidget {
                 ? _PagesEmpty(wide: wide)
                 : _PagesList(entries: items, wide: wide),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
+            error: (_, _) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  '$error',
+                  PageLabels.loadError,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
