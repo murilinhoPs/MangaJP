@@ -6,7 +6,7 @@ Prints de QA **não** entram em `docs/assets/`. Vão para a branch `pr-assets`:
 docs/pr-assets/pr-N/<head>/<plataforma>/
 ```
 
-Branch `pr-assets`. `N` = número do PR. `<head>` = SHA-1 **curto** do **head final** do PR. `<plataforma>` = `android` | `ios` | `desktop` | `macos`.
+Branch `pr-assets`. `N` = número do PR. `<head>` = SHA-1 **curto** do **head final** do PR. `<plataforma>` = `android` | `ios` | `desktop` | `macos`. A print de celular vai **sempre** em `android/`, venha do emulador ou da janela Linux. `linux/` e `desktop/` o `gen_telas` trata como desktop (`tool/telas/telas_index.dart`): uma 390×844 nessas pastas sai **fora da regra**.
 
 `docs/assets/` no `main` só recebe prints **oficiais e finais**.
 
@@ -24,7 +24,7 @@ Prints e `integration_test` que **só rodam no Mac** (macOS / iOS): ver [Mac off
 
 | Plataforma | Tamanho | Recorte |
 | --- | --- | --- |
-| **Android** | **obrigatório 390×844**, retrato, **sem hover** | área do app — emulador Android **ou** janela Linux redimensionada |
+| **Android** | **obrigatório 390×844** lógico, retrato, **sem hover** | 390×844 lógico; o PNG pode ser 390×844 ou múltiplo inteiro exato (ex.: 780×1688 em DPR 2), só a área do app, sem moldura nem title bar — emulador Android **ou** janela Linux redimensionada, pasta `android/` |
 | **Desktop Linux** | **obrigatório 1280×800** | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **macOS** | **obrigatório 1x 1280×800**, sRGB, **sem** perfil Display P3 | **só a área do app** — sem moldura de janela, sem title bar; cantos opacos |
 | **iOS** | simulador **iPhone 17**, qualquer resolução | retrato |
@@ -39,7 +39,11 @@ Telas que **só existem no layout largo** (sidebar, paleta Ctrl+K, rail) **não*
 
 Decisão do dono do projeto.
 
-O layout de celular vs. tela larga depende só da largura: `ShellLayout.isWide` é verdadeiro quando a largura é ≥ 900 (`AppBreakpoints.wide`). A print de layout em formato celular (**390×844**, retrato, **sem hover**) pode vir do emulador Android **ou** de uma janela Linux desktop redimensionada. Não é obrigatório que venha da tela do emulador.
+O layout de celular vs. tela larga depende só da largura: `ShellLayout.isWide` é verdadeiro quando a largura é ≥ 900 (`AppBreakpoints.wide`). A print de layout em formato celular (**390×844** lógico, retrato, **sem hover**) pode vir do emulador Android **ou** de uma janela Linux desktop redimensionada. Não é obrigatório que venha da tela do emulador.
+
+**390×844 lógico;** o PNG pode ser 390×844 ou múltiplo inteiro exato (ex.: 780×1688 em DPR 2), só a área do app, sem moldura nem title bar. O `gen_telas` aceita `largura = 390×n` e `altura = 844×n` com o mesmo inteiro `n ≥ 1` (`androidDimensionsOk`). Na janela Linux: redimensionar até a área do app ter 390×844 lógicos e capturar só essa área; se a captura for DPR 2, o PNG sai 780×1688 — o `print_sizes.txt` registra os pixels do arquivo.
+
+A print de celular vai sempre em `android/`, venha do emulador ou da janela Linux. `linux/` conta como desktop. Quando a origem for a janela Linux, o corpo do PR registra `fonte: janela Linux` — não é aparelho Android.
 
 A janela Linux **não** cobre: status bar, safe area, teclado na tela, voltar do sistema, share vindo de outro app, galeria e câmera.
 
@@ -49,6 +53,16 @@ Rodar no emulador Android é **obrigatório** quando o PR:
 2. traz um ajuste maior de UI/UX.
 
 > Pendente: o que conta como «ajuste maior de UI/UX». Default proposto, aguardando confirmação do dono do projeto: mudança na navegação principal (nav bar/rail, rotas raiz) ou fluxo novo que dependa de comportamento do sistema; tela ou aba nova dentro de uma área existente não conta. O [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (aba Kanji nova no Caderno + ficha de kanji) fica só com a janela Linux.
+
+Se o PR precisa do emulador e a VM não tem, o bloco fica no mesmo formato do Mac offline:
+
+```text
+n/a: sem emulador — #<fila> item: <link>
+```
+
+O `<link>` aponta para um **item** na issue fila de emulador (mesmo papel da [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para o Mac). Cada item lista PR, head e o fluxo a rodar. Quando a issue existir, **sem esse link o review bloqueia.** A print 390×844 da janela Linux **continua obrigatória**. Este `n/a` **bloqueia o merge** em fluxo de plataforma e **não bloqueia** em ajuste maior de UI/UX.
+
+> Pendente: issue da fila de emulador (helm abre; até lá o item vai no comentário do PR e no relatório do tester).
 
 macOS / iOS não mudam: `n/a: Mac offline — #54 item: <link>` — [Mac offline (2026-10-21)](#mac-offline-2026-10-21).
 
