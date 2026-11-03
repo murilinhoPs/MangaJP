@@ -30,4 +30,5 @@ Não-objetivo: reader completo tipo Mokuro.
 - Back/swipe pop sem o diálogo da Review.
 
 > Pendente: meta do dock (o que a pílula mostra).
-> Pendente: overlay F22 — quando liga e o que o tap na box faz.
+> Pendente: lista `/pages` (F21 / M2) — ver [`m2.md`](../milestones/m2.md).
+> Pendente: overlay F22 (M2) — quando liga e o que o tap na box faz; ver [`m2.md`](../milestones/m2.md).

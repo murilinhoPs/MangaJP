@@ -28,6 +28,7 @@ Ler japonês de crops de balão o bastante para lookup, sem ML Kit no app.
 - Cloud Vision só existe atrás do toggle (F26), quando implementado.
 
 > Pendente: UX do editor de `ocr_text` (inline, sheet, teclado).
-> Pendente: Q-N3 — orçamento Cloud Vision (USD/mês).
+> Pendente: Q-N3 — orçamento Cloud Vision (USD/mês); ver [`m2.md`](../milestones/m2.md).
+> Pendente: F26 (M2) — quando o Cloud Vision entra, chave e sem rede; ver [`m2.md`](../milestones/m2.md).
 > Pendente: limiar numérico da altura no filtro de furigana (Q-N5).
-> Pendente: interação do overlay F22 (tap, toggle, sempre visível).
+> Pendente: overlay F22 (M2) — tap, toggle, sempre visível; ver [`m2.md`](../milestones/m2.md).

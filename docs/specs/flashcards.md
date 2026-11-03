@@ -26,3 +26,4 @@ No máximo 1 card vocab por `word_id`. Template derivado. Deck ≠ Caderno (Q-N6
 
 > Pendente: filtros da lista do Deck (quais; persistência).
 > Pendente: empty state e copy da confirmação de delete.
+> Pendente: ação de suspender/reativar no Deck (F23 / M2) — ver [`m2.md`](../milestones/m2.md).

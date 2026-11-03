@@ -1,6 +1,6 @@
 # Roadmap
 
-Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3 §18 (fora do repo) e o estado do GitHub em 31/10/2026. Detalhe de produto: [`prd.md`](prd.md). Como planejar a próxima fase: [`processo.md`](processo.md#7-planejamento-em-duas-etapas). O plano detalhado de uma milestone, quando existir, mora em `docs/milestones/m<n>.md`, não em `specs/`.
+Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3 §18 (fora do repo) e o estado do GitHub em 31/10/2026. Detalhe de produto: [`prd.md`](prd.md). Como planejar a próxima fase: [`processo.md`](processo.md#7-planejamento-em-duas-etapas). O plano detalhado de uma milestone, quando existir, mora em `docs/milestones/m<n>.md`, não em `specs/`. M2: [`milestones/m2.md`](milestones/m2.md).
 
 ## M0 — Spike
 
@@ -70,7 +70,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Tamanho.** G.
 
-**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2), issues [#58](https://github.com/murilinhoPs/MangaJP/issues/58) e [#59](https://github.com/murilinhoPs/MangaJP/issues/59).
+**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2), issues [#58](https://github.com/murilinhoPs/MangaJP/issues/58) e [#59](https://github.com/murilinhoPs/MangaJP/issues/59). Plano: [`milestones/m2.md`](milestones/m2.md).
 
 ## M3 — v1
 
