@@ -10,7 +10,7 @@ Controles do motor OCR, ritmo de estudo, dicionário, backup e atribuições de 
 
 O PRD lista o destino e os temas, não o layout:
 
-- OCR engine (default manga-ocr; Cloud Vision só com toggle «Usar OCR na nuvem» — F26 / [cloud-vision](cloud-vision.md)). Campo da chave em Ajustes › OCR, mascarada, **Testar chave** / **Remover chave**; toggle só liga com chave. ML Kit não aparece.
+- OCR engine (default manga-ocr; Cloud Vision só com toggle «Usar OCR na nuvem» — F26 / [cloud-vision](cloud-vision.md)). Campo da chave em Ajustes › OCR, mascarada, **Testar chave** / **Remover chave**; toggle só liga com chave. ML Kit não aparece. Defaults aprovados em 2026-11-04; implementação na [#59](https://github.com/murilinhoPs/MangaJP/issues/59).
 - `new_per_day` e virada de study-day 04:00 America/Sao_Paulo (F20; default 15).
 - Download / versão do dict (`jmdict.sqlite`).
 - **F25 Should:** export/import backup JSON. Imagens: backup zip opcional. Limpeza manual de storage.
@@ -32,5 +32,4 @@ O PRD lista o destino e os temas, não o layout:
 > Pendente: layout, ordem e copy dos controles.
 > Pendente: se motores Could (F29) aparecem no picker de OCR.
 > Pendente: formato do JSON de backup (F25 / M2) e versão do schema — ver [`m2.md`](../milestones/m2.md). Restore atômico e `normalizeKanjiLiteral` já são AC.
-> Pendente: Cloud Vision em Ajustes (F26 / M2) — [cloud-vision](cloud-vision.md).
 > Pendente: Q-N4 — backend japanese-reader vivo para sync.

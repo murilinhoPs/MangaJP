@@ -14,7 +14,7 @@ Ver a página com crops, texto OCR e termos; lookup no tap; reler sem perder `wo
 - Pode promover termo, marcar known, ou **adicionar novos crops** na mesma página (dedupe) — [recorte](recorte.md).
 - Tela de tarefa: esconde nav cards; dock próprio (voltar · meta). Swipe-back / back **normais** (não é Review; #46 / M1.29).
 - **F22 Should:** overlay de bounding boxes quando o OCR fornecer.
-- **F26 Should:** cada crop guarda `engineId`; a página mostra um chip do motor, **misto** se os crops diferirem — [cloud-vision](cloud-vision.md).
+- **F26 Should:** cada crop guarda `engineId`; a página mostra um chip do motor, **misto** se os crops diferirem. Defaults aprovados em 2026-11-04; implementação na [#59](https://github.com/murilinhoPs/MangaJP/issues/59) — [cloud-vision](cloud-vision.md).
 - **F21 Should:** lista `/pages` (histórico). Título da página, data (`hoje` / `ontem` / `d MMM`; ano se for outro). Sem badges de `word_state`. Newest first. Sem página: «Nenhuma página.» + **Galeria +**. Capturas recentes na Home não substituem esta lista. Header **Ver todas** e paleta **Páginas** abrem `/pages`.
 - **Linha da lista (decisão do dono do projeto, 2026-11-04):** por enquanto a linha mostra um **placeholder com o título** (o título/OCR da página; sem OCR, «Página» com ícone — o que o [#101](https://github.com/murilinhoPs/MangaJP/pull/101) já faz). Nenhuma imagem de thumb é gerada nem salva agora.
 - Thumb de imagem: depende de `thumb_path` (migração de schema); issue a abrir.
@@ -36,4 +36,3 @@ Não-objetivo: reader completo tipo Mokuro.
 
 > Pendente: meta do dock (o que a pílula mostra).
 > Pendente: overlay F22 (M2) — quando liga e o que o tap na box faz; ver [`m2.md`](../milestones/m2.md).
-> Pendente: chip do motor OCR (F26) — [cloud-vision](cloud-vision.md).
