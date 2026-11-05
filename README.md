@@ -36,7 +36,8 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 | Notebook | `/notebook` | Lists every word you have touched, newest first, with lemma/reading search and a state filter. |
 | Word detail | `/notebook/word/:id` | Lemma, reading, state, gloss, first source sentence and a link to its page. Actions: **Aprender**, **Conhecido**, **Ignorar**, **Remover card**, **Remover do Caderno**. |
 | Review | `/review` | One due card at a time: front is the lemma, **Revelar** shows reading + gloss, then rate **Again / Hard / Good / Easy**. |
-| Home | `/home` | **Revisar** shows due and **Novos hoje** (`N de 15`). **Galeria** (below **Capturas recentes**) picks an image into `/capture`. |
+| Home | `/home` | **Revisar** shows due and **Novos hoje** (`N de 15`). **Galeria** (below **Capturas recentes**) picks an image into `/capture`. **Ver todas** opens `/pages`. |
+| Pages | `/pages` | Full capture history with title and date. Each row is a **placeholder with the title** (page OCR, or **Página** plus icon if empty). Tap opens `/pages/:id`. Empty: **Nenhuma página.** and **Galeria +**. |
 
 ### Word states
 
@@ -59,7 +60,7 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 
 ## Project status
 
-The core study loop (M1) is implemented end to end. Still stubs: the pages list (`/pages`, Home → **Capturas recentes**), the deck screen (`/deck`), and settings (`/settings`). OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are learned through the words that contain them: the lookup sheet, the Caderno, the word detail, and the review card all show the word in its kanji form (when it has one) together with its kana reading and meaning. What is still missing is per-character information (the meaning and on/kun readings of each kanji on its own): the KANJIDIC2 `kanji` table is baked into `jmdict.sqlite`, but no screen uses it yet.
+The core study loop (M1) is implemented end to end. Still stubs: the deck screen (`/deck`) and settings (`/settings`). `/pages` lists the full capture history (title, date; row is a title placeholder, not an image thumb); Home **Capturas recentes** still shows up to 6. OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are learned through the words that contain them: the lookup sheet, the Caderno, the word detail, and the review card all show the word in its kanji form (when it has one) together with its kana reading and meaning. Per-character KANJIDIC2 data is on the kanji sheet and the Caderno **Kanji** tab.
 
 See [Milestone history](#milestone-history) for the detailed behavior of each step.
 

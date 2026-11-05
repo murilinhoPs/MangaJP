@@ -2,7 +2,7 @@
 
 Rota: `/settings` (Ajustes › OCR). Sem rota nova. Issue: [#59](https://github.com/murilinhoPs/MangaJP/issues/59). Specs ligadas: [ocr](ocr.md), [settings](settings.md), [leitor](leitor.md), [ADR-0001](../adr/0001-ocr-default-manga-ocr.md). Plano: [`m2.md`](../milestones/m2.md).
 
-Os defaults abaixo são **propostos**, para o dono do projeto confirmar neste PR. Não são decisão até o ok:
+Os 7 defaults abaixo foram **aprovados** pelo dono do projeto em 2026-11-04:
 
 1. Chave colada em Ajustes › OCR; toggle só liga com chave; armazenamento seguro do sistema; nunca Drift / backup F25 / log / print / repo; mascarada; **Testar chave** e **Remover chave**; nenhuma chave embutida.
 2. Sem chave o toggle não liga. 401/403, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout (15 s): aquele **crop** roda no manga-ocr com aviso não bloqueante; a chave permanece.
@@ -11,7 +11,8 @@ Os defaults abaixo são **propostos**, para o dono do projeto confirmar neste PR
 5. O Vision roda no **mesmo crop** que o manga-ocr (não na página inteira). Cota = 1 chamada por crop.
 6. Sem keyring / secure storage: o campo da chave fica desabilitado com aviso; nada é salvo em texto puro. Web fora da F26.
 7. A chave vai no header `X-Goog-Api-Key`, nunca em query string. AC: a chave nunca aparece em log.
-8. A [#59](https://github.com/murilinhoPs/MangaJP/issues/59) adiciona `com.apple.security.network.client` no macOS (hoje ausente). Verificação: `n/a: Mac offline (#54)`.
+
+Requisito da [#59](https://github.com/murilinhoPs/MangaJP/issues/59): adicionar `com.apple.security.network.client` no macOS (hoje ausente). Verificação: `n/a: Mac offline (#54)`.
 
 ## Objetivo
 
@@ -21,13 +22,13 @@ O Vision **não** substitui o default: no GT o CER é o dobro do manga-ocr. Vale
 
 ## Comportamento
 
-### Motor / crop (default proposto)
+### Motor / crop (aprovado, 2026-11-04)
 
 Cloud Vision entra como `OcrEngine`: `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]`. Contrato igual aos outros: `fullText`, `blocks` (text, confidence, `Rect?`), `engineId`. Não é o default.
 
 Roda no **mesmo crop** que o manga-ocr, depois do confirm dos recortes. **Não** envia a página inteira. Cota = **1 chamada por crop** (não por página, não em lote). O `engineId` fica em `crops.engineId` (`lib/core/database/tables/captured_crops.dart`). Schema **não** muda.
 
-### Chave (default proposto)
+### Chave (aprovado, 2026-11-04)
 
 O usuário cola a chave num campo em **Ajustes › OCR**. O toggle «Usar OCR na nuvem» **só liga depois que houver chave**. A chave fica no armazenamento seguro do sistema (Keychain, Keystore, libsecret no Linux). **Nunca** no Drift, no backup da F25, em log, em print ou no repo. Na UI aparece mascarada, com botão **Testar chave** e **Remover chave**. Nenhuma chave embutida no app.
 
@@ -44,16 +45,16 @@ A chave vai no header `X-Goog-Api-Key`. **Nunca** em query string (`?key=`).
 
 Prints do campo usam valor fake mascarado; se algum trecho vazar, borrão declarado.
 
-### Erros (default proposto)
+### Erros (aprovado, 2026-11-04)
 
 - Sem chave, o toggle não liga.
 - Chave inválida (401/403), cota estourada (429 / `RESOURCE_EXHAUSTED`), rede fora ou timeout **15 s**: aquele **crop** roda no manga-ocr e aparece um aviso **não bloqueante** com o motivo. A chave **não** é apagada. Outros crops da mesma página podem ter usado Vision — o chip pode ficar **misto**.
 
-### Fallback (default proposto)
+### Fallback (aprovado, 2026-11-04)
 
 Fallback **automático por crop**, **visível**. Cada crop guarda o próprio `engineId`. A página mostra um chip: um motor só, ou **misto** se os crops da mesma página diferirem. O default do app continua manga-ocr; o toggle escolhe se o Cloud Vision é tentado primeiro em cada crop.
 
-### Privacidade (default proposto)
+### Privacidade (aprovado, 2026-11-04)
 
 Na **primeira vez** que o toggle liga, um diálogo explica que a **imagem de cada recorte** vai para o Google Cloud Vision, com a chave e a cobrança do próprio usuário, e **só ativa se ele aceitar**. Se recusar: o toggle volta a desligado e a chave continua guardada. Desligar volta a ser tudo local. Só a imagem do recorte sai do aparelho; nada do Caderno nem do SRS. A página inteira (fora dos crops) **não** sobe. NF6: com o toggle desligado, nenhuma imagem sai.
 
@@ -67,15 +68,15 @@ Hoje `macos/Runner/Release.entitlements` (e DebugProfile) só têm `app-sandbox`
 
 - **AC-cv-engine:** Cloud Vision implementado como `OcrEngine` (`fullText` / `blocks` / `engineId`), `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]`.
 - **AC-cv-default:** default do app = manga-ocr (ADR-0001). Nenhum caminho de produto chama ML Kit. Filtro de ruby do Vision não é default.
-- **AC-cv-crop:** Vision no mesmo crop que o manga-ocr; 1 chamada por crop; `engineId` em `crops`; schema inalterado; chip **misto** se os crops da página diferirem. (Default proposto.)
-- **AC-cv-key:** chave colada em Ajustes › OCR; toggle só liga com chave; armazenamento seguro do sistema; nunca Drift / backup F25 / log / print / repo; mascarada; **Testar chave** e **Remover chave**; nenhuma chave embutida. (Default proposto.)
-- **AC-cv-keyring:** sem secure storage o campo fica desabilitado com aviso; nada em texto puro; web fora da F26. (Default proposto.)
-- **AC-cv-header:** chave no header `X-Goog-Api-Key`; nunca em query string. (Default proposto.)
-- **AC-cv-nolog:** testes interceptam logger e texto de erro; a chave **nunca** aparece. (Default proposto.)
-- **AC-cv-errors:** sem chave o toggle não liga; 401/403, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout 15 s → aquele crop no manga-ocr + aviso não bloqueante, chave permanece. (Default proposto.)
-- **AC-cv-fallback:** fallback automático visível por crop; chip do motor, inclusive **misto**. (Default proposto.)
-- **AC-cv-privacy:** diálogo na primeira ligação fala em recortes; só ativa com aceite; recusar = toggle desligado, chave continua; desligar = tudo local; só a imagem do recorte sai. (Default proposto.)
-- **AC-cv-test-key:** **Testar chave** cobre ok, 401/403, 429, rede fora e timeout 15 s. (Default proposto.)
+- **AC-cv-crop:** Vision no mesmo crop que o manga-ocr; 1 chamada por crop; `engineId` em `crops`; schema inalterado; chip **misto** se os crops da página diferirem. (Aprovado, 2026-11-04.)
+- **AC-cv-key:** chave colada em Ajustes › OCR; toggle só liga com chave; armazenamento seguro do sistema; nunca Drift / backup F25 / log / print / repo; mascarada; **Testar chave** e **Remover chave**; nenhuma chave embutida. (Aprovado, 2026-11-04.)
+- **AC-cv-keyring:** sem secure storage o campo fica desabilitado com aviso; nada em texto puro; web fora da F26. (Aprovado, 2026-11-04.)
+- **AC-cv-header:** chave no header `X-Goog-Api-Key`; nunca em query string. (Aprovado, 2026-11-04.)
+- **AC-cv-nolog:** testes interceptam logger e texto de erro; a chave **nunca** aparece. (Aprovado, 2026-11-04.)
+- **AC-cv-errors:** sem chave o toggle não liga; 401/403, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout 15 s → aquele crop no manga-ocr + aviso não bloqueante, chave permanece. (Aprovado, 2026-11-04.)
+- **AC-cv-fallback:** fallback automático visível por crop; chip do motor, inclusive **misto**. (Aprovado, 2026-11-04.)
+- **AC-cv-privacy:** diálogo na primeira ligação fala em recortes; só ativa com aceite; recusar = toggle desligado, chave continua; desligar = tudo local; só a imagem do recorte sai. (Aprovado, 2026-11-04.)
+- **AC-cv-test-key:** **Testar chave** cobre ok, 401/403, 429, rede fora e timeout 15 s. (Aprovado, 2026-11-04.)
 - **AC-cv-macos-network:** a #59 adiciona `com.apple.security.network.client` (DebugProfile + Release) e o CI passa a checar essa key. Verificação no Mac: print ou `n/a: Mac offline (#54)`.
 - **AC-cv-offline:** toggle Cloud não quebra review + dict offline (F18).
 - **AC-cv-mock:** testes mockam o HTTP; **sem chave real** (nem de exemplo que pareça real).
@@ -87,4 +88,4 @@ Hoje `macos/Runner/Release.entitlements` (e DebugProfile) só têm `app-sandbox`
 - Entitlement `com.apple.security.network.client`: o PR da #59 acrescenta a key e o check do CI. Com Mac offline: `n/a: Mac offline (#54)`.
 - `integration_test`: saída real no head, ou `n/a` com motivo.
 
-> Pendente: limite diário de chamadas no app. Default proposto: nenhum; a cota é do Google. Q-N3 (USD/mês) permanece aberta no PRD.
+Limite diário de chamadas no app: **nenhum** (decisão do dono do projeto, 2026-11-04). A cota é do Google Cloud do usuário. Q-N3 (USD/mês) permanece aberta no PRD.

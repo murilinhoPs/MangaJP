@@ -97,6 +97,59 @@ Future<void> seedDemoIfRequested(AppDatabase db) async {
       ),
     );
 
+    Future<void> extraPage({
+      required String id,
+      required Duration ago,
+      String? ocrText,
+    }) async {
+      final at = now.subtract(ago);
+      await db.pagesDao.insertPage(
+        CapturedPagesCompanion.insert(
+          id: id,
+          sha256: 'demo-sha-$id',
+          createdAt: at,
+        ),
+      );
+      if (ocrText == null) {
+        return;
+      }
+      await db.pagesDao.insertCrop(
+        CapturedCropsCompanion.insert(
+          id: '$id-crop',
+          pageId: id,
+          ocrText: ocrText,
+          engineId: 'demo',
+          left: 0.2,
+          top: 0.2,
+          width: 0.6,
+          height: 0.5,
+          createdAt: at,
+        ),
+      );
+    }
+
+    await extraPage(
+      id: 'demo-page-4',
+      ago: const Duration(days: 4),
+      ocrText: '誰もいない教室。',
+    );
+    await extraPage(
+      id: 'demo-page-5',
+      ago: const Duration(days: 5),
+      ocrText: '残るのは記憶だけ。',
+    );
+    await extraPage(
+      id: 'demo-page-6',
+      ago: const Duration(days: 6),
+      ocrText: '早く、こっちだ！',
+    );
+    await extraPage(
+      id: 'demo-page-7',
+      ago: const Duration(days: 7),
+      ocrText: '町の明かりが消えていく。',
+    );
+    await extraPage(id: 'demo-page-8', ago: const Duration(days: 8));
+
     Future<void> word({
       required String id,
       required int seq,
