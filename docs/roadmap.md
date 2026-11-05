@@ -50,7 +50,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Features.** F40 (iOS). Prints e PopScope conforme [ADR-0003](adr/0003-ios-plataforma-secundaria.md) e [`qa/print-rules.md`](qa/print-rules.md).
 
-**Saída.** PRs com código de plataforma declaram o comportamento no iOS. Widget do gesto de voltar cobre Captura e Review. Prints iOS: simulador iPhone 17, qualquer resolução. Android 390×844 e Linux 1280×800 continuam obrigatórios na nuvem.
+**Saída.** PRs com código de plataforma declaram o comportamento no iOS. Widget do gesto de voltar cobre Captura e Review. Prints iOS: simulador iPhone 17, qualquer resolução. **390×844** (emulador ou janela Linux, pasta `android/`) e Linux 1280×800 continuam obrigatórios na nuvem.
 
 **Dependências.** M1 fechada. Worker Mac do Murilo; enquanto estiver desligado, a fila é a [#54](https://github.com/murilinhoPs/MangaJP/issues/54) e não bloqueia o PR.
 
@@ -70,7 +70,21 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Tamanho.** G.
 
-**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2), issues [#58](https://github.com/murilinhoPs/MangaJP/issues/58) e [#59](https://github.com/murilinhoPs/MangaJP/issues/59). Plano: [`milestones/m2.md`](milestones/m2.md).
+**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2). [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada; [#59](https://github.com/murilinhoPs/MangaJP/issues/59) aberta. Plano: [`milestones/m2.md`](milestones/m2.md). Spec F26: [`specs/cloud-vision.md`](specs/cloud-vision.md).
+
+## M2b — Kanji no SRS
+
+**Objetivo.** Kanji salvo no Caderno (F45) pode virar card SRS (`kind = kanji`), sem misturar com o Deck de vocab.
+
+**Features.** F38 (flashcards de kanji a partir de `saved_kanji`).
+
+**Saída.** Um kanji salvo gera no máximo um card `kind = kanji` e entra na fila SM-2. Vocab e kanji continuam listas distintas.
+
+**Dependências.** M2: schema 9 / `saved_kanji`, F23 (suspender no Deck), F25 (backup JSON inclui `saved_kanji`).
+
+**Tamanho.** M.
+
+**Status.** Proposta em revisão (Murilo, 2026-11-03). **Não abrir issues** antes do ok do dono do projeto. Sem milestone no GitHub. **M2.5** continua sendo só o id da [#97](https://github.com/murilinhoPs/MangaJP/issues/97) (F22 overlay).
 
 ## M3 — v1
 
@@ -80,7 +94,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Saída.** Export do Caderno gera Markdown ou CSV. Web experimental sobe sem substituir o app. Tokenização e Anki só entram se a decisão Could virar Should.
 
-**Dependências.** M2. Q-N3 e Q-N4 continuam abertas. F38 (kanji cards) permanece Won't.
+**Dependências.** M2. Q-N3 e Q-N4 continuam abertas. F38 mora no milestone [M2b](#m2b--kanji-no-srs), não neste.
 
 **Tamanho.** G.
 

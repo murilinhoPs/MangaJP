@@ -1,6 +1,6 @@
 # Kanji / Caderno
 
-Rotas: `/notebook` (aba Kanji), `/notebook/kanji/:char` (M2). O `:char` é o `literal` normalizado, URL-encoded (go_router decodifica). Specs ligadas: [caderno](caderno.md) (F41–F44), [dicionario](dicionario.md) (lookup), [flashcards](flashcards.md) (F38 Won't). F24 e F45 saíram no [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (head `99aaeee`, squash `70d150d`), que fechou a [#58](https://github.com/murilinhoPs/MangaJP/issues/58).
+Rotas: `/notebook` (aba Kanji), `/notebook/kanji/:char` (M2). O `:char` é o `literal` normalizado, URL-encoded (go_router decodifica). Specs ligadas: [caderno](caderno.md) (F41–F44), [dicionario](dicionario.md) (lookup), [flashcards](flashcards.md) (F38: [M2b](../roadmap.md#m2b--kanji-no-srs)). F24 e F45 saíram no [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (head `99aaeee`, squash `70d150d`), que fechou a [#58](https://github.com/murilinhoPs/MangaJP/issues/58).
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ O dado entra no app no bake: `python3 tools/build_jmdict_sqlite/build_jmdict_sql
 
 Colunas da tabela de lookup (não confundir com `saved_kanji`): `character`, `readings_json`, `meanings_json`, `stroke_count`, `freq`. Detalhe em [`tools/build_jmdict_sqlite/README.md`](../../tools/build_jmdict_sqlite/README.md).
 
-Licença: KANJIDIC2 é © EDRDG, [CC BY-SA 4.0](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). Atribuição nos [Ajustes](settings.md) (NF8).
+Licença: KANJIDIC2 é © EDRDG, [CC BY-SA 4.0](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). Atribuição na seção Sobre / Fontes **dentro de `/settings`** (sem rota nova, NF8) — [settings](settings.md).
 
 Tamanho (medido 2026-11-03 no arquivo do EDRDG, `http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz`): **1 488 578 bytes** gzip (`Content-Length` / arquivo baixado) e **15 641 823 bytes** XML descomprimido (gunzip local). Não é um asset separado: vai para dentro de `assets/dict/jmdict.sqlite`. Bake completo no mesmo dia (`tools/build_jmdict_sqlite/build_jmdict_sqlite.py`, JMdict_e 219 012 entradas):
 
@@ -40,7 +40,7 @@ Salvar o mesmo `literal` de novo é no-op. A identidade é o `literal` normaliza
 
 ### Modelo `saved_kanji`
 
-Tabela Drift própria, com migração, distinta de `word_states` e de `words`. Palavra salva e kanji salvo são listas diferentes no Caderno. Não há card `kind = kanji` (F38 Won't; futuro pós-v1 a partir de `saved_kanji`). Sem `user_note` no kanji (F45; Caderno de palavras também não edita nota).
+Tabela Drift própria, com migração, distinta de `word_states` e de `words`. Palavra salva e kanji salvo são listas diferentes no Caderno. Não há card `kind = kanji` nesta entrega (F38 sai do Won't: [M2b](../roadmap.md#m2b--kanji-no-srs), proposta em revisão). Sem `user_note` no kanji (F45; Caderno de palavras também não edita nota).
 
 Colunas:
 
@@ -58,7 +58,9 @@ O mesmo kanji com e sem IVS/VS colapsa no `literal` sem seletor. `叱` (U+53F1) 
 
 O Caderno ganha a aba **Kanji** ao lado da lista de palavras. Lista: mais recentes primeiro (`saved_at`). Busca por kanji, leitura ou significado. **Sem filtros** nesta entrega. Leitura e significado vêm da tabela `kanji` em `jmdict.sqlite`; com a tabela vazia, a busca só acha pelo literal.
 
-Cada linha / o detalhe `/notebook/kanji/:char` mostra: kanji grande, leituras **on** e **kun**, significados, número de traços, e as **palavras do Caderno** cujo lema / `dict_form` contém aquele `literal` (depois da mesma normalização). Sem linha na tabela `kanji`, a lista e o detalhe mostram «sem dados do dicionário» no lugar de on/kun, significados e traços. Somente leitura (Caderno = consulta). Sem nota e sem Aprender.
+Cada linha / o detalhe `/notebook/kanji/:char` mostra: kanji grande, leituras **on** e **kun**, significados, número de traços, e as **palavras do Caderno** que usam aquele `literal`. A **lista** da aba Kanji filtra por `lemma` (`stripVariationSelectors(word.lemma)`). O **detalhe** filtra por `lemma_key` (`LIKE`). Sem linha na tabela `kanji`, a lista e o detalhe mostram «sem dados do dicionário» no lugar de on/kun, significados e traços. Somente leitura (Caderno = consulta). Sem nota e sem Aprender.
+
+> Pendente: a lista filtra por `lemma` e o detalhe por `lemma_key`. Os dois critérios podem divergir (um kanji aparece na lista e some no detalhe). Sem default de unificação neste PR.
 
 Estados vazios no mesmo padrão das palavras, copy adaptado:
 
@@ -73,7 +75,7 @@ Follow-up [#91](https://github.com/murilinhoPs/MangaJP/issues/91): no layout lar
 
 ### Fora de escopo
 
-- Flashcards de kanji e qualquer SRS de kanji (PRD não-objetivo; F38 Won't; F45 «fora do SRS»).
+- Flashcards de kanji e SRS de kanji nesta entrega (F45 «fora do SRS»). F38 sai do Won't: [M2b](../roadmap.md#m2b--kanji-no-srs).
 - Nota no kanji salvo (F45).
 - Edição de texto no detalhe.
 - Filtros na aba Kanji (esta entrega).
@@ -89,11 +91,12 @@ Follow-up [#91](https://github.com/murilinhoPs/MangaJP/issues/91): no layout lar
 - **AC-kanji-empty:** lista vazia e busca sem resultado usam o copy acima, no mesmo padrão das palavras.
 - **AC-kanji-remove:** **Remover do Caderno** apaga a row em `saved_kanji` após confirmação.
 - **AC-kanji-no-srs:** kanji salvo não entra na fila de revisão e não cria `kind = kanji`.
+- **AC-kanjidic-attr:** a seção Sobre / Fontes **dentro de `/settings`** (sem rota nova) mostra «KANJIDIC2 © EDRDG, CC BY-SA 4.0» com link para https://www.edrdg.org/wiki/index.php/KANJIDIC_Project.
 
 ## Como verificar
 
 - Teste de domínio / Drift: migração cria `saved_kanji`; insert; segundo save do mesmo `literal` (com e sem IVS/VS) não duplica; nenhum row em `cards` / `card_srs` / `word_states`; strip bate com `stripVariationSelectors`.
 - Teste de widget **phone (390×844) e wide (≥900)**: aba Kanji, detalhe `/notebook/kanji/:char`, ficha com **Salvar kanji**, estados vazios, Remover. Lookup com dados da tabela `kanji` (fixture do `tools/build_jmdict_sqlite/testdata`) e o caso sem linhas de kanji. Com a ficha aberta: significados alcançáveis (sem overlap com o botão fixo); toque em Editar / + não dispara a barra da página.
-- Prints conforme [`print-rules.md`](../qa/print-rules.md): Android **390×844** retrato sem hover e Linux **1280×800** só a área do app, no `pr-assets`, `print_sizes.txt` no head final. Widget/golden sozinho não conta. macOS / iOS: ou print, ou `n/a: Mac offline — #54 item: <link>`.
+- Prints conforme [`print-rules.md`](../qa/print-rules.md): **390×844** (emulador ou janela Linux, pasta `android/`) e Linux **1280×800** só a área do app, no `pr-assets`, `print_sizes.txt` no head final. Widget/golden sozinho não conta. macOS / iOS: ou print, ou `n/a: Mac offline (#54)`. Seção Sobre / Fontes em `/settings` (sem rota nova): print com a atribuição KANJIDIC2 (AC-kanjidic-attr).
 - `integration_test`: saída real no head final, ou `n/a` com motivo.
 - F24 e F45 saíram juntos no [#88](https://github.com/murilinhoPs/MangaJP/pull/88) (fecha [#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Follow-up [#91](https://github.com/murilinhoPs/MangaJP/issues/91): ficha no wide com rolagem, fade e scrim sobre a barra.
