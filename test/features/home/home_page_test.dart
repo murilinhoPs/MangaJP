@@ -25,7 +25,9 @@ import 'package:manga_jp/features/capture/domain/incoming_image.dart';
 import 'package:manga_jp/features/capture/presentation/capture_page.dart';
 import 'package:manga_jp/features/home/presentation/home_controller.dart';
 import 'package:manga_jp/features/home/presentation/home_page.dart';
+import 'package:manga_jp/features/pages/domain/page_labels.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
+import 'package:manga_jp/features/pages/presentation/pages_list_page.dart';
 import 'package:manga_jp/features/review/presentation/review_controller.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/review/domain/new_per_day.dart';
@@ -551,15 +553,32 @@ void main() {
     expect(find.text('/more'), findsNothing);
   });
 
-  testWidgets('/pages list redirects to /home', (tester) async {
-    await _openHome(tester, jmdictPath: jmdictPath);
+  testWidgets('/pages list shows history instead of redirecting to /home', (
+    tester,
+  ) async {
+    await _openHome(
+      tester,
+      jmdictPath: jmdictPath,
+      pages: [
+        _SeedPage(
+          id: 'page-a',
+          createdAt: DateTime.now(),
+          ocrText: '見せる',
+        ),
+      ],
+    );
     final router = GoRouter.of(tester.element(find.byType(HomePage)));
     router.go('/pages');
     await tester.pumpAndSettle();
 
-    expect(router.state.uri.path, '/home');
-    expect(find.byType(HomePage), findsOneWidget);
+    expect(router.state.uri.path, '/pages');
+    expect(find.text(PageLabels.pagesTitle), findsOneWidget);
+    expect(find.byKey(PagesKeys.row('page-a')), findsOneWidget);
+    expect(find.text('見せる'), findsWidgets);
     expect(find.text('/pages — stub (M0.1)'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
   });
 
   testWidgets('desktop 1 opens recent page; focused field swallows 1-3/R/', (

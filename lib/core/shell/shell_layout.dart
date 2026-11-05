@@ -325,6 +325,7 @@ abstract final class ShellPaletteNav {
   static List<PaletteAction> items({String? recentPageId}) {
     return [
       const PaletteAction(id: 'inicio', label: 'Início', run: _goHome),
+      const PaletteAction(id: 'paginas', label: 'Páginas', run: _goPages),
       if (recentPageId != null)
         PaletteAction(
           id: 'pagina-recente',
@@ -341,6 +342,7 @@ abstract final class ShellPaletteNav {
 }
 
 void _goHome(BuildContext context) => const HomeRoute().go(context);
+void _goPages(BuildContext context) => const PagesRoute().go(context);
 
 void _goReview(BuildContext context) {
   if (GoRouter.of(context).state.uri.path == '/review') {

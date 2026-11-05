@@ -43,7 +43,7 @@ Must, Should, Could, Won't do PRD. Spec por feature:
 | Revisão | [revisao](specs/revisao.md) | F13–F15, F18, F20 | F30 reading na frente Could; F39 steps Won't |
 | Home / nav | [home](specs/home.md) | F17 shell | — |
 | Galeria | [galeria](specs/galeria.md) | F1 + entrada F21 | — |
-| Leitor | [leitor](specs/leitor.md) | `/pages/:id` pós-OCR | F21 lista `/pages` Should (hoje redireciona) |
+| Leitor | [leitor](specs/leitor.md) | `/pages/:id` pós-OCR; F21 lista `/pages` | — |
 | Ajustes | [settings](specs/settings.md) | destino F17, F18 offline | F25 backup Should; F31 Anki Could |
 
 Won't de produto: F35 contas, F36 scraping, F37 multi-deck sharing, F40 iOS só na M2.1.

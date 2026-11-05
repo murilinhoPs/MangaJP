@@ -5,6 +5,7 @@ import '../../../core/database/app_database_provider.dart';
 import '../../../core/utils/ids.dart';
 import '../domain/page.dart';
 import '../domain/page_crop.dart';
+import '../domain/page_list_entry.dart';
 import '../domain/recent_pages.dart';
 
 part 'pages_repository.g.dart';
@@ -111,6 +112,34 @@ class PagesRepository {
   }) async {
     final rows = await _db.pagesDao.listRecentPages(limit);
     return [for (final row in rows) _toPage(row)];
+  }
+
+  /// Full history, newest first. Does not load crops.
+  Future<List<MangaPage>> listPages() async {
+    final rows = await _db.pagesDao.listPages();
+    return [for (final row in rows) _toPage(row)];
+  }
+
+  /// Full `/pages` history with the first crop's OCR as title/thumb source.
+  Future<List<PageListEntry>> listPageEntries() async {
+    final rows = await _db.pagesDao.listPagesWithFirstOcr();
+    return [for (final row in rows) _toListEntry(row)];
+  }
+
+  /// Live `/pages` history. Emits again when a page or crop is written.
+  Stream<List<PageListEntry>> watchPageEntries() {
+    return _db.pagesDao.watchPagesWithFirstOcr().map((rows) {
+      return [for (final row in rows) _toListEntry(row)];
+    });
+  }
+
+  static PageListEntry _toListEntry((CapturedPage, String?) row) {
+    final (page, ocrPreview) = row;
+    return PageListEntry(
+      id: page.id,
+      createdAt: page.createdAt,
+      ocrPreview: ocrPreview,
+    );
   }
 
   Future<int> countPages() => _db.pagesDao.countPages();
