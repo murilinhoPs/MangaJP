@@ -54,6 +54,100 @@ final class OcrEngineProvider
 
 String _$ocrEngineHash() => r'e71f27b109c77a75fb61850764f73a0a79565d99';
 
+@ProviderFor(cloudVisionStore)
+final cloudVisionStoreProvider = CloudVisionStoreProvider._();
+
+final class CloudVisionStoreProvider
+    extends
+        $FunctionalProvider<
+          CloudVisionStore,
+          CloudVisionStore,
+          CloudVisionStore
+        >
+    with $Provider<CloudVisionStore> {
+  CloudVisionStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cloudVisionStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cloudVisionStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<CloudVisionStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CloudVisionStore create(Ref ref) {
+    return cloudVisionStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CloudVisionStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CloudVisionStore>(value),
+    );
+  }
+}
+
+String _$cloudVisionStoreHash() => r'b7c36f98bb71d97099fdcef29baa72bc04267a56';
+
+@ProviderFor(cloudVisionOcrEngine)
+final cloudVisionOcrEngineProvider = CloudVisionOcrEngineProvider._();
+
+final class CloudVisionOcrEngineProvider
+    extends
+        $FunctionalProvider<
+          CloudVisionOcrEngine,
+          CloudVisionOcrEngine,
+          CloudVisionOcrEngine
+        >
+    with $Provider<CloudVisionOcrEngine> {
+  CloudVisionOcrEngineProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cloudVisionOcrEngineProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cloudVisionOcrEngineHash();
+
+  @$internal
+  @override
+  $ProviderElement<CloudVisionOcrEngine> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CloudVisionOcrEngine create(Ref ref) {
+    return cloudVisionOcrEngine(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CloudVisionOcrEngine value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CloudVisionOcrEngine>(value),
+    );
+  }
+}
+
+String _$cloudVisionOcrEngineHash() =>
+    r'1dfd8ab5cedc1f0c7e2e503f51020c84c838db0c';
+
 @ProviderFor(ocrRepository)
 final ocrRepositoryProvider = OcrRepositoryProvider._();
 
@@ -93,4 +187,4 @@ final class OcrRepositoryProvider
   }
 }
 
-String _$ocrRepositoryHash() => r'2bd0a12971c04212c5e2400dadd2e8894c10aa18';
+String _$ocrRepositoryHash() => r'2790e77a2fada7af5931c6b2d9e989df7949d1d5';
