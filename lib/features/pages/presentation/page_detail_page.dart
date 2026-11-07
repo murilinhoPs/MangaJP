@@ -10,6 +10,8 @@ import '../../../core/shell/shell_registry.dart';
 import '../../../core/shell/task_dock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/graphemes.dart';
+import '../../ocr/domain/ocr_engine_chip.dart';
+import '../../ocr/presentation/ocr_engine_chip.dart';
 import '../../dictionary/data/jmdict_provider.dart';
 import '../../dictionary/domain/dict_entry.dart';
 import '../../dictionary/domain/lookup_result.dart';
@@ -522,12 +524,22 @@ class _PageOcrBody extends ConsumerWidget {
         ? AppTypeScale.fraseLeitorDesktopJp
         : AppTypeScale.balaoPaginaMobileJp;
 
+    final chip = OcrEngineChipData.of(crops.map((crop) => crop.engineId));
+
     return ListView(
       padding: ShellLayout.withSafePadding(
         context,
         const EdgeInsets.fromLTRB(20, 16, 20, 24),
       ),
       children: [
+        if (chip != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OcrEngineChip(data: chip),
+            ),
+          ),
         for (final crop in crops)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),

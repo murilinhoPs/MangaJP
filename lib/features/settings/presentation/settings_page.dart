@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../ocr/presentation/cloud_vision_settings_section.dart';
 import 'settings_controller.dart';
 
 /// `/settings` — **Ajustes**. Debug Drift hello lives here (was on Home).
@@ -43,6 +44,8 @@ class SettingsPage extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          const CloudVisionSettingsSection(),
         ],
       ),
     );
