@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/cloud_vision_shot.dart';
 import '../domain/cloud_vision_exception.dart';
@@ -250,6 +251,20 @@ class _CloudVisionSettingsSectionState
   }
 
   void _snack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          ShellLayout.commandBarPaddingOf(context) + 8,
+        ),
+        duration: kCloudVisionShotErrorBanner
+            ? const Duration(minutes: 5)
+            : const Duration(seconds: 4),
+      ),
+    );
   }
 }
