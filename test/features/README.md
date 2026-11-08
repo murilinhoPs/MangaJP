@@ -22,4 +22,7 @@ Again/Hard requeue, reveal, Again/Hard/Good/Easy → `review_logs` +
 **Revisar** (due + novos hoje, tap → `/review`, 04:00 clock), **Capturas
 recentes**, and **Galeria** (mocked `image_picker` → `/capture` crop; cancel
 stays on Home) are in `test/features/home/`. Default `OcrEngine` wiring (`manga_ocr`
-sidecar) is in `test/features/ocr/`.
+sidecar) is in `test/features/ocr/`. Cloud Vision (F26) uses a fake HTTP
+client in the same folder: parse JP, missing/invalid key, 429, network,
+timeout, header `X-Goog-Api-Key` without `?key=`, no key in logs, fallback
+per crop, and widget tests of Ajustes › OCR at 390×844 and 1280×800.

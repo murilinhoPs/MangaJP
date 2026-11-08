@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../features/words/domain/custom_word_merge.dart';
 import '../utils/graphemes.dart';
 import '../utils/ids.dart';
+import '../../features/ocr/data/cloud_vision_shot.dart';
 import 'app_database_open.dart';
 import 'demo_seed.dart';
 import 'daos/app_meta_dao.dart';
@@ -153,6 +154,7 @@ class AppDatabase extends _$AppDatabase {
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
         await seedDemoIfRequested(this);
+        await seedCloudVisionShotIfRequested(this);
       },
     );
   }

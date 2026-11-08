@@ -1,11 +1,11 @@
+import 'dart:ui' show Rect;
+
 class OcrBlock {
-  const OcrBlock({
-    required this.text,
-    this.confidence,
-  });
+  const OcrBlock({required this.text, this.confidence, this.boundingBox});
 
   final String text;
   final double? confidence;
+  final Rect? boundingBox;
 }
 
 class OcrResult {

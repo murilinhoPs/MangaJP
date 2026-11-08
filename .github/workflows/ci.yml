@@ -32,7 +32,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check sandbox and user-selected file entitlements
+      - name: Check sandbox, file, and network client entitlements
         shell: bash
         run: |
           set -euo pipefail
@@ -60,4 +60,5 @@ jobs:
           for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
             check "$f" com.apple.security.app-sandbox
             check "$f" com.apple.security.files.user-selected.read-only
+            check "$f" com.apple.security.network.client
           done

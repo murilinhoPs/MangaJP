@@ -249,6 +249,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       OcrResult? lastOcr;
       final pageId = _pageId ??= newId();
       final sha = sha256Hex(bytes);
+      final fallbacks = <String>[];
       for (final index in order) {
         final rect = _crops[index];
         final key = _geometryKey(rect);
@@ -258,9 +259,10 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         final cropped = cropToPng(bytes, rect);
         last = cropped;
         widget.onCropped?.call(cropped.bytes);
-        final ocr = await ref
+        final outcome = await ref
             .read(ocrRepositoryProvider)
-            .recognize(cropped.bytes);
+            .recognizeCrop(cropped.bytes);
+        final ocr = outcome.result;
         lastOcr = ocr;
         await ref
             .read(pagesRepositoryProvider)
@@ -276,6 +278,10 @@ class _CapturePageState extends ConsumerState<CapturePage> {
             );
         _savedCropKeys.add(key);
         debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');
+        final fallback = outcome.fallback;
+        if (fallback != null) {
+          fallbacks.add(fallback.fallbackMessage);
+        }
       }
       debugPrint('M0.8 crop PNG bytes.length=${last?.bytes.length}');
       if (!mounted) {
@@ -283,6 +289,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       }
       if (GoRouter.maybeOf(context) != null) {
         PageDetailRoute(id: pageId).pushReplacement(context);
+        _showFallbacks(fallbacks);
         return;
       }
       setState(() {
@@ -290,6 +297,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         _ocr = lastOcr;
         _busy = false;
       });
+      _showFallbacks(fallbacks);
     } catch (error) {
       if (!mounted) {
         return;
@@ -299,6 +307,17 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         _error = '$error';
       });
     }
+  }
+
+  void _showFallbacks(List<String> fallbacks) {
+    if (!mounted || fallbacks.isEmpty) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) {
+      return;
+    }
+    messenger.showSnackBar(SnackBar(content: Text(fallbacks.join('\n'))));
   }
 
   @override

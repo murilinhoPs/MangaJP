@@ -220,6 +220,26 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.linha),
         ),
       ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.coral;
+          }
+          return AppColors.text3;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.overlayPrimaria;
+          }
+          return AppColors.surfaceLow;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.coral;
+          }
+          return AppColors.border;
+        }),
+      ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.coral,
         circularTrackColor: AppColors.border,
