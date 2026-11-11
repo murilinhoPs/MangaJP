@@ -75,7 +75,10 @@ void main() {
     expect(result.blocks, hasLength(1));
     expect(result.blocks.single.text, 'よぉ、相棒');
     expect(result.blocks.single.confidence, closeTo(0.98, 1e-9));
-    expect(result.blocks.single.boundingBox, const Rect.fromLTRB(8, 4, 190, 72));
+    expect(
+      result.blocks.single.boundingBox,
+      const Rect.fromLTRB(8, 4, 190, 72),
+    );
   });
 
   test('missing API key throws a typed error and does not HTTP', () async {
@@ -122,43 +125,185 @@ void main() {
     expect(body, contains('"ja"'));
   });
 
-  test('401 and 403 are invalid key; 429 / RESOURCE_EXHAUSTED is quota', () async {
-    Future<void> expectStatus(int status, Matcher matcher) async {
+  test(
+    '401 and 403 are invalid key; 429 / RESOURCE_EXHAUSTED is quota',
+    () async {
+      Future<void> expectStatus(int status, Matcher matcher) async {
+        final client = ScriptedHttpClient((request) async {
+          return http.Response('{"error":{"message":"no"}}', status);
+        });
+        final engine = CloudVisionOcrEngine(
+          readApiKey: () async => _fakeKey,
+          client: client,
+        );
+        await expectLater(engine.recognize(fixturePng()), throwsA(matcher));
+      }
+
+      await expectStatus(401, isA<CloudVisionInvalidApiKey>());
+      await expectStatus(403, isA<CloudVisionInvalidApiKey>());
+      await expectStatus(429, isA<CloudVisionQuotaExceeded>());
+      await expectStatus(400, isA<CloudVisionUnexpected>());
+
+      final exhausted = ScriptedHttpClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'responses': [
+              {
+                'error': {'status': 'RESOURCE_EXHAUSTED', 'message': 'quota'},
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      await expectLater(
+        CloudVisionOcrEngine(
+          readApiKey: () async => _fakeKey,
+          client: exhausted,
+        ).recognize(fixturePng()),
+        throwsA(isA<CloudVisionQuotaExceeded>()),
+      );
+    },
+  );
+
+  test('HTTP 400 with reason API_KEY_INVALID is invalid key', () async {
+    Future<void> expectInvalid(Object? body) async {
       final client = ScriptedHttpClient((request) async {
-        return http.Response('{"error":{"message":"no"}}', status);
+        return jsonHttpResponse(body, 400);
       });
       final engine = CloudVisionOcrEngine(
         readApiKey: () async => _fakeKey,
         client: client,
       );
-      await expectLater(engine.recognize(fixturePng()), throwsA(matcher));
+      await expectLater(
+        engine.recognize(fixturePng()),
+        throwsA(isA<CloudVisionInvalidApiKey>()),
+      );
+      await expectLater(
+        CloudVisionOcrEngine(
+          readApiKey: () async => _fakeKey,
+          client: ScriptedHttpClient((request) async {
+            return jsonHttpResponse(body, 400);
+          }),
+        ).testKey(),
+        throwsA(isA<CloudVisionInvalidApiKey>()),
+      );
     }
 
-    await expectStatus(401, isA<CloudVisionInvalidApiKey>());
-    await expectStatus(403, isA<CloudVisionInvalidApiKey>());
-    await expectStatus(429, isA<CloudVisionQuotaExceeded>());
-
-    final exhausted = ScriptedHttpClient((request) async {
-      return http.Response(
-        jsonEncode({
-          'responses': [
-            {
-              'error': {
-                'status': 'RESOURCE_EXHAUSTED',
-                'message': 'quota',
-              },
-            },
-          ],
-        }),
-        200,
-      );
+    await expectInvalid(cloudVisionApiKeyInvalidError());
+    await expectInvalid({
+      'responses': [
+        {
+          'error': {
+            'status': 'INVALID_ARGUMENT',
+            'details': [
+              {'reason': 'API_KEY_INVALID'},
+            ],
+          },
+        },
+      ],
     });
-    await expectLater(
-      CloudVisionOcrEngine(
+  });
+
+  test('HTTP 400 without API_KEY_INVALID stays unexpected', () async {
+    Future<void> expectUnexpected(Object? body) async {
+      final engine = CloudVisionOcrEngine(
         readApiKey: () async => _fakeKey,
-        client: exhausted,
-      ).recognize(fixturePng()),
-      throwsA(isA<CloudVisionQuotaExceeded>()),
+        client: ScriptedHttpClient((request) async {
+          return jsonHttpResponse(body, 400);
+        }),
+      );
+      await expectLater(
+        engine.recognize(fixturePng()),
+        throwsA(isA<CloudVisionUnexpected>()),
+      );
+    }
+
+    await expectUnexpected({
+      'error': {
+        'code': 400,
+        'message': 'Request had invalid argument.',
+        'status': 'INVALID_ARGUMENT',
+      },
+    });
+    await expectUnexpected({
+      'error': {
+        'status': 'INVALID_ARGUMENT',
+        'details': [
+          {'reason': 'BAD_IMAGE_DATA'},
+        ],
+      },
+    });
+    await expectUnexpected({
+      'error': {'details': 'API_KEY_INVALID'},
+    });
+  });
+
+  test(
+    'HTTP 400 with malformed body is unexpected and does not crash',
+    () async {
+      Future<void> expectUnexpected(http.Response response) async {
+        final engine = CloudVisionOcrEngine(
+          readApiKey: () async => _fakeKey,
+          client: ScriptedHttpClient((request) async => response),
+        );
+        await expectLater(
+          engine.recognize(fixturePng()),
+          throwsA(isA<CloudVisionUnexpected>()),
+        );
+        await expectLater(
+          CloudVisionOcrEngine(
+            readApiKey: () async => _fakeKey,
+            client: ScriptedHttpClient((request) async => response),
+          ).testKey(),
+          throwsA(isA<CloudVisionUnexpected>()),
+        );
+      }
+
+      await expectUnexpected(http.Response('{', 400));
+      await expectUnexpected(http.Response('not-json', 400));
+      await expectUnexpected(http.Response('', 400));
+      await expectUnexpected(http.Response('[]', 400));
+      await expectUnexpected(
+        http.Response('{"error":{"details":[null,1,{"reason":12}]}}', 400),
+      );
+    },
+  );
+
+  test('cloudVisionHasErrorReason reads details and ignores junk', () {
+    expect(
+      cloudVisionHasErrorReason(
+        cloudVisionApiKeyInvalidError(),
+        'API_KEY_INVALID',
+      ),
+      isTrue,
+    );
+    expect(
+      cloudVisionHasErrorReason({
+        'error': {'status': 'INVALID_ARGUMENT'},
+      }, 'API_KEY_INVALID'),
+      isFalse,
+    );
+    expect(cloudVisionHasErrorReason(null, 'API_KEY_INVALID'), isFalse);
+    expect(cloudVisionHasErrorReason('nope', 'API_KEY_INVALID'), isFalse);
+    expect(cloudVisionHasErrorReason(<Object?>[], 'API_KEY_INVALID'), isFalse);
+    expect(
+      cloudVisionHasErrorReason({
+        'error': {'details': 'API_KEY_INVALID'},
+      }, 'API_KEY_INVALID'),
+      isFalse,
+    );
+    expect(
+      cloudVisionHasErrorReason({
+        'error': {
+          'details': [
+            null,
+            1,
+            {'reason': 12},
+          ],
+        },
+      }, 'API_KEY_INVALID'),
+      isFalse,
     );
   });
 
@@ -241,6 +386,11 @@ void main() {
     );
     await run(
       handler: (request) async => http.Response('{}', 401),
+      matcher: throwsA(isA<CloudVisionInvalidApiKey>()),
+    );
+    await run(
+      handler: (request) async =>
+          jsonHttpResponse(cloudVisionApiKeyInvalidError(), 400),
       matcher: throwsA(isA<CloudVisionInvalidApiKey>()),
     );
     await run(

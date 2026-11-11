@@ -10,6 +10,25 @@ http.Response jsonHttpResponse(Object? body, [int status = 200]) {
   );
 }
 
+/// Google Cloud Vision JSON for a bad API key: HTTP 400, not 401/403.
+/// No real key. Used by engine / widget tests with [ScriptedHttpClient].
+Map<String, Object?> cloudVisionApiKeyInvalidError() {
+  return {
+    'error': {
+      'code': 400,
+      'message': 'API key not valid. Please pass a valid API key.',
+      'status': 'INVALID_ARGUMENT',
+      'details': [
+        {
+          '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+          'reason': 'API_KEY_INVALID',
+          'domain': 'googleapis.com',
+        },
+      ],
+    },
+  };
+}
+
 /// Fake `package:http` client. No network. Records requests for assertions.
 class ScriptedHttpClient extends http.BaseClient {
   ScriptedHttpClient(this.handler);

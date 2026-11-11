@@ -124,7 +124,14 @@ class CloudVisionOcrEngine implements OcrEngine {
       }
     }
     final status = cloudVisionErrorStatus(decoded);
-    final mapped = _mapStatus(response.statusCode, status);
+    final mapped = _mapStatus(
+      response.statusCode,
+      status,
+      invalidApiKeyReason: cloudVisionHasErrorReason(
+        decoded,
+        _apiKeyInvalidReason,
+      ),
+    );
     if (mapped != null) {
       _log(
         'Cloud Vision HTTP ${response.statusCode}'
@@ -144,11 +151,16 @@ class CloudVisionOcrEngine implements OcrEngine {
     }
   }
 
-  CloudVisionException? _mapStatus(int httpStatus, String? grpcStatus) {
+  CloudVisionException? _mapStatus(
+    int httpStatus,
+    String? grpcStatus, {
+    bool invalidApiKeyReason = false,
+  }) {
     if (httpStatus == 401 ||
         httpStatus == 403 ||
         grpcStatus == 'UNAUTHENTICATED' ||
-        grpcStatus == 'PERMISSION_DENIED') {
+        grpcStatus == 'PERMISSION_DENIED' ||
+        (httpStatus == 400 && invalidApiKeyReason)) {
       return const CloudVisionInvalidApiKey();
     }
     if (httpStatus == 429 || grpcStatus == 'RESOURCE_EXHAUSTED') {
@@ -163,6 +175,10 @@ class CloudVisionOcrEngine implements OcrEngine {
 
   static String redact(String text, String apiKey) => _redact(text, apiKey);
 }
+
+/// Google Cloud returns this in `error.details[].reason` with HTTP 400
+/// `INVALID_ARGUMENT` when the API key is not valid (not 401/403).
+const _apiKeyInvalidReason = 'API_KEY_INVALID';
 
 String _redact(String text, String apiKey) {
   if (apiKey.isEmpty) {

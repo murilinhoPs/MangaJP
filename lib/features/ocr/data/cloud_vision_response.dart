@@ -77,6 +77,41 @@ String? cloudVisionErrorStatus(Object? decoded) {
   return null;
 }
 
+/// True when `error.details[].reason` matches [reason] (top-level or first
+/// response). Junk JSON / wrong types return false — never throws.
+bool cloudVisionHasErrorReason(Object? decoded, String reason) {
+  if (decoded is! Map) {
+    return false;
+  }
+  if (_errorDetailsContainReason(decoded['error'], reason)) {
+    return true;
+  }
+  final responses = decoded['responses'];
+  if (responses is List && responses.isNotEmpty) {
+    final first = responses.first;
+    if (first is Map && _errorDetailsContainReason(first['error'], reason)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _errorDetailsContainReason(Object? error, String reason) {
+  if (error is! Map) {
+    return false;
+  }
+  final details = error['details'];
+  if (details is! List) {
+    return false;
+  }
+  for (final item in details) {
+    if (item is Map && item['reason'] == reason) {
+      return true;
+    }
+  }
+  return false;
+}
+
 List<OcrBlock> _blocksFromAnnotation(Map<dynamic, dynamic> annotation) {
   final pages = annotation['pages'];
   if (pages is! List) {

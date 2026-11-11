@@ -60,9 +60,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    CaptureRoute(
-      $extra: IncomingImage(bytes: fixturePng()),
-    ).go(tester.element(find.byType(HomePage)));
+    CaptureRoute($extra: IncomingImage(bytes: fixturePng()))
+        .go(tester.element(find.byType(HomePage)));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(CaptureKeys.confirm));
@@ -72,6 +71,66 @@ void main() {
     expect(
       find.text('Chave inválida. Recorte lido com manga-ocr.'),
       findsOneWidget,
+    );
+    expect(find.text('よぉ、相棒'), findsOneWidget);
+    expect(await store.readApiKey(), _fakeKey);
+    expect(find.text(_fakeKey), findsNothing);
+    final crops = await db.pagesDao.listCrops();
+    expect(crops, hasLength(1));
+    expect(crops.single.engineId, OcrEngineIds.mangaOcr);
+  });
+
+  testWidgets('400 API_KEY_INVALID on a crop falls back like 401', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final store = MemoryCloudVisionStore(
+      storedKey: _fakeKey,
+      enabledFlag: true,
+      privacyAcceptedFlag: true,
+    );
+
+    await tester.pumpWidget(
+      MangaJpApp(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => db),
+          ocrEngineProvider.overrideWithValue(
+            const FakeOcrEngine(text: 'よぉ、相棒', id: OcrEngineIds.mangaOcr),
+          ),
+          cloudVisionStoreProvider.overrideWithValue(store),
+          cloudVisionOcrEngineProvider.overrideWithValue(
+            CloudVisionOcrEngine(
+              readApiKey: store.readApiKey,
+              client: ScriptedHttpClient((request) async {
+                return jsonHttpResponse(cloudVisionApiKeyInvalidError(), 400);
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    CaptureRoute($extra: IncomingImage(bytes: fixturePng()))
+        .go(tester.element(find.byType(HomePage)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(CaptureKeys.confirm));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(
+      find.text('Chave inválida. Recorte lido com manga-ocr.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Cloud Vision falhou. Recorte lido com manga-ocr.'),
+      findsNothing,
     );
     expect(find.text('よぉ、相棒'), findsOneWidget);
     expect(await store.readApiKey(), _fakeKey);

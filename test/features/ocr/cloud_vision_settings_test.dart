@@ -149,6 +149,33 @@ void main() {
       expect(find.text(_fakeKey), findsNothing);
     });
 
+    testWidgets('Testar chave 400 API_KEY_INVALID keeps the key at $label', (
+      tester,
+    ) async {
+      final store = MemoryCloudVisionStore(storedKey: _fakeKey);
+      await _openSettings(
+        tester,
+        store: store,
+        size: size,
+        engine: CloudVisionOcrEngine(
+          readApiKey: store.readApiKey,
+          client: ScriptedHttpClient((request) async {
+            return jsonHttpResponse(cloudVisionApiKeyInvalidError(), 400);
+          }),
+        ),
+      );
+
+      await tester.tap(find.byKey(CloudVisionKeys.testKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Chave inválida.'), findsOneWidget);
+      expect(
+        find.text('Não foi possível falar com o Cloud Vision.'),
+        findsNothing,
+      );
+      expect(await store.readApiKey(), _fakeKey);
+      expect(find.text(_fakeKey), findsNothing);
+    });
+
     testWidgets('keyring unavailable disables the field at $label', (
       tester,
     ) async {
@@ -156,10 +183,7 @@ void main() {
       await _openSettings(tester, store: store, size: size);
 
       expect(find.byKey(CloudVisionKeys.keyringWarning), findsOneWidget);
-      expect(
-        find.text(CloudVisionLabels.keyringUnavailable),
-        findsOneWidget,
-      );
+      expect(find.text(CloudVisionLabels.keyringUnavailable), findsOneWidget);
       expect(
         tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
         isFalse,
