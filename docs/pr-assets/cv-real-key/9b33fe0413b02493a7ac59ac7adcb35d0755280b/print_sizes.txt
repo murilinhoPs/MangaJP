@@ -1,0 +1,13 @@
+head_sha 9b33fe0413b02493a7ac59ac7adcb35d0755280b
+head_sha7 9b33fe0
+
+ajustes_testar_chave_valid.png             390x844  34053 bytes
+  sha256 b7f4e78129d905b322ece99e34a50a65fb3c82bda80ed80d819e941c7d77fe15
+ajustes_testar_chave_invalid.png           390x844  34175 bytes
+  sha256 a9300e5d073c03616b8fe3e2763cd56de87795e2a0557cf61e50a9020957164e
+capture_invalid_key_no_sidecar.png         390x844  52880 bytes
+  sha256 ac6e7ffaac0fb9457f9136f9250b62b106a6be53a14bed59ee9e548d4b7bc58d
+
+Linux desktop window resized; app client area only 390x844 (no GTK title bar).
+Key field masked (blur + solid cover). No API key in files.
+capture_invalid_key_no_sidecar.png: Cloud Vision invalid key fell through to manga-ocr; sidecar not running on this VM.
