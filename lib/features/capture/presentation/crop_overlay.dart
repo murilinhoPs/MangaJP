@@ -96,7 +96,7 @@ class _CropOverlayState extends State<CropOverlay> {
   }
 
   Widget _badge(Rect rect, int number) {
-    const half = CropNumberBadge.size / 2;
+    const half = CropNumberBadge.defaultSize / 2;
     final minTop = MediaQuery.paddingOf(context).top + CropOverlay.badgeMinGap;
     return Positioned(
       left: rect.left - half,

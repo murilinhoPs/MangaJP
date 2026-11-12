@@ -67,7 +67,10 @@ void main() {
     expect(tokens.borderStrong, const Color(0xFF403D4B));
     expect(tokens.rail, const Color(0xFF121117));
     expect(tokens.bg, const Color(0xFF0E0D12));
-    expect(tokens.overlaySelecaoToque, const Color.fromRGBO(255, 92, 122, 0.25));
+    expect(
+      tokens.overlaySelecaoToque,
+      const Color.fromRGBO(255, 92, 122, 0.25),
+    );
     expect(
       tokens.overlayPalavraNaFrase,
       const Color.fromRGBO(124, 99, 245, 0.22),
@@ -75,6 +78,12 @@ void main() {
     expect(tokens.overlayPrimaria, const Color.fromRGBO(255, 92, 122, 0.14));
     expect(tokens.overlayEstadoAtivo, const Color.fromRGBO(124, 99, 245, 0.14));
     expect(tokens.overlayRailAtivo, const Color.fromRGBO(255, 92, 122, 0.16));
+    expect(tokens.overlayOcrBoxFill, const Color.fromRGBO(255, 92, 122, 0.08));
+    expect(
+      tokens.overlayOcrBoxBorder,
+      const Color.fromRGBO(255, 92, 122, 0.70),
+    );
+    expect(tokens.overlayOcrBoxHalo, const Color.fromRGBO(14, 13, 18, 0.85));
     expect(tokens.srsErreiFill, const Color.fromRGBO(255, 92, 122, 0.12));
     expect(tokens.srsBomFill, const Color.fromRGBO(75, 227, 163, 0.14));
     expect(tokens.queueNovos, AppColors.violet);
@@ -95,6 +104,9 @@ void main() {
     final json = File('lib/core/theme/tokens.json').readAsStringSync();
     expect(json, contains('"danger": "#FF6A4D"'));
     expect(json, contains('"danger-bg": "rgba(255,106,77,0.12)"'));
+    expect(json, contains('"ocr-box-fill": "rgba(255,92,122,0.08)"'));
+    expect(json, contains('"ocr-box-border": "rgba(255,92,122,0.70)"'));
+    expect(json, contains('"ocr-box": 6'));
   });
 
   test('no amber, blue, or #FF4D6D in ColorScheme or tokens', () {
@@ -109,7 +121,9 @@ void main() {
       0xFF42A5F5,
       0xFF1B4D3E, // previous seed
     };
-    for (final color in _schemeColors(scheme).followedBy(_tokenColors(tokens))) {
+    for (final color in _schemeColors(
+      scheme,
+    ).followedBy(_tokenColors(tokens))) {
       final argb = color.toARGB32();
       expect(forbidden.contains(argb), isFalse, reason: 'unexpected $color');
       expect(
@@ -177,6 +191,7 @@ void main() {
   test('radius and target constants match tokens.json', () {
     expect(AppRadius.tecla, 5);
     expect(AppRadius.segmentado, 8);
+    expect(AppRadius.ocrBox, 6);
     expect(AppRadius.railBarra, 10);
     expect(AppRadius.linha, 12);
     expect(AppRadius.dockAcaoBusca, 14);
@@ -218,7 +233,10 @@ void main() {
         theme: AppTheme.dark,
         home: Builder(
           builder: (context) {
-            return Text('Caderno', style: Theme.of(context).textTheme.bodyMedium);
+            return Text(
+              'Caderno',
+              style: Theme.of(context).textTheme.bodyMedium,
+            );
           },
         ),
       ),

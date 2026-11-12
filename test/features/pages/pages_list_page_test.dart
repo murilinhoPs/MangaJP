@@ -184,7 +184,8 @@ void main() {
             await tester.tap(_confirmFinder(wide));
             await tester.pumpAndSettle();
             expect(find.byType(PageDetailPage), findsOneWidget);
-            expect(find.text(recognized), findsOneWidget);
+            expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+            expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
 
             await tester.tap(find.byKey(PageDetailKeys.back));
             await tester.pumpAndSettle();
