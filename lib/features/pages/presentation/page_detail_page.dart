@@ -125,6 +125,8 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
   String? _hoveredBoxId;
   String? _sizedImagePath;
   Size? _imageSize;
+  bool _imageResolved = true;
+  int _imageLoadGen = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -135,12 +137,11 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     final items = crops.asData?.value ?? const <PageCrop>[];
     final boxes = overlayBoxesFor(items);
     final imagePath = page?.imagePath;
-    if (imagePath != _sizedImagePath) {
-      _sizedImagePath = imagePath;
-      _imageSize = pageImagePixelSize(imagePath);
-    }
+    _scheduleImageSize(imagePath);
     final imageSize = _imageSize;
     final hasImage = imageSize != null;
+    final waitingImage =
+        imagePath != null && imagePath.isNotEmpty && !_imageResolved;
     _maybeApplyShot(boxes, hasImage);
     final count = items.length;
     final hint = count == 0 ? null : RecortesLabel.count(count);
@@ -178,6 +179,9 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     final body = crops.when(
       data: (list) {
         _maybeAutoLookup(list);
+        if (waitingImage) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (hasImage) {
           return _PageImageBody(
             path: imagePath!,
@@ -330,6 +334,30 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         ),
       ),
     );
+  }
+
+  void _scheduleImageSize(String? imagePath) {
+    if (imagePath == _sizedImagePath) {
+      return;
+    }
+    _sizedImagePath = imagePath;
+    final gen = ++_imageLoadGen;
+    if (imagePath == null || imagePath.isEmpty) {
+      _imageSize = null;
+      _imageResolved = true;
+      return;
+    }
+    _imageSize = null;
+    _imageResolved = false;
+    pageImagePixelSize(imagePath).then((size) {
+      if (!mounted || gen != _imageLoadGen) {
+        return;
+      }
+      setState(() {
+        _imageSize = size;
+        _imageResolved = true;
+      });
+    });
   }
 
   void _maybeApplyShot(List<OcrOverlayBox> boxes, bool hasImage) {
@@ -762,7 +790,15 @@ class _PageImageBody extends ConsumerWidget {
           ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.fromLTRB(
+              12,
+              12,
+              12,
+              12 +
+                  (ShellLayout.isWide(context)
+                      ? ShellLayout.commandBarPaddingOf(context)
+                      : 0),
+            ),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final dest = containedDest(constraints.biggest, imageSize);

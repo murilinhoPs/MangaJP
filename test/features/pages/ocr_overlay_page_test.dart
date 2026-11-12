@@ -281,6 +281,124 @@ void main() {
     expect(painter.border, AppColors.coral);
   });
 
+  testWidgets('box Semantics is a selected button labeled with the text', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    try {
+      await _openPage(
+        tester,
+        size: _phone,
+        jmdictPath: jmdictPath,
+        imagePath: _imagePath,
+        cropId: 'sem',
+      );
+      expect(
+        tester.getSemantics(find.byKey(PageOverlayKeys.box('sem'))),
+        isSemantics(label: '猫を食べた。', isButton: true, isSelected: false),
+      );
+    } finally {
+      handle.dispose();
+    }
+  });
+
+  testWidgets('Tab marks the box selected for Semantics on 1280x800', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    try {
+      await _openPage(
+        tester,
+        size: _desktop,
+        jmdictPath: jmdictPath,
+        imagePath: _imagePath,
+        cropId: 'sem-tab',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.byKey(PageOverlayKeys.box('sem-tab'))),
+        isSemantics(label: '猫を食べた。', isButton: true, isSelected: true),
+      );
+    } finally {
+      handle.dispose();
+    }
+  });
+
+  testWidgets('tap on letterboxed dest opens lookup; gutter does not', (
+    tester,
+  ) async {
+    await _openPage(
+      tester,
+      size: _desktop,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'hit-box',
+    );
+
+    final destGlobal = tester.getRect(find.byKey(PageDetailKeys.image));
+    expect(
+      destGlobal.width / destGlobal.height,
+      closeTo(200 / 300, 0.02),
+    );
+
+    final visual = Rect.fromLTWH(
+      destGlobal.left + 0.1 * destGlobal.width,
+      destGlobal.top + 0.15 * destGlobal.height,
+      0.4 * destGlobal.width,
+      0.3 * destGlobal.height,
+    );
+    await tester.tapAt(visual.center);
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.lemma), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.lemma), findsNothing);
+    expect(find.text(PageLabels.toquePalavra), findsOneWidget);
+
+    final gutter = destGlobal.left > 24
+        ? Offset(destGlobal.left - 12, destGlobal.center.dy)
+        : Offset(destGlobal.center.dx, destGlobal.top - 12);
+    expect(
+      destGlobal.contains(gutter),
+      isFalse,
+      reason: 'gutter $gutter must sit outside dest $destGlobal',
+    );
+    await tester.tapAt(gutter);
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.lemma), findsNothing);
+  });
+
+  testWidgets('wide image sits above the command bar', (tester) async {
+    await _openPage(
+      tester,
+      size: _desktop,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'bar-pad',
+    );
+    final image = tester.getRect(find.byKey(PageDetailKeys.image));
+    final bar = tester.getRect(find.byKey(ShellKeys.commandBar));
+    expect(image.bottom, lessThanOrEqualTo(bar.top + 0.5));
+  });
+
+  testWidgets('orphan image_path falls back to text cards', (tester) async {
+    debugPageImageUsePlaceholder = false;
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: '/no-such-overlay.png',
+      cropId: 'orphan',
+    );
+    expect(find.byKey(PageDetailKeys.image), findsNothing);
+    expect(find.byKey(PageDetailKeys.overlayToggle), findsNothing);
+    expect(find.byKey(PageDetailKeys.ocrText), findsOneWidget);
+    expect(find.text('猫を食べた。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('reader.ocrOverlay persists across rebuilds', (tester) async {
     SharedPreferences.setMockInitialValues({'reader.ocrOverlay': false});
     await _openPage(

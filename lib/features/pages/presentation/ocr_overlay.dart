@@ -96,25 +96,33 @@ class _OcrBoxHit extends StatelessWidget {
       child: MouseRegion(
         onEnter: (_) => onHover?.call(box),
         onExit: (_) => onHover?.call(null),
-        child: GestureDetector(
-          key: PageOverlayKeys.box(box.id),
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onSelect?.call(box),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                left: dx,
-                top: dy,
-                width: visual.width,
-                height: visual.height,
-                child: _OcrBoxVisual(
-                  box: box,
-                  selected: selected,
-                  hovered: hovered,
-                ),
+        child: Semantics(
+          container: true,
+          button: true,
+          selected: selected,
+          label: box.text,
+          child: GestureDetector(
+            key: PageOverlayKeys.box(box.id),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onSelect?.call(box),
+            child: ExcludeSemantics(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: dx,
+                    top: dy,
+                    width: visual.width,
+                    height: visual.height,
+                    child: _OcrBoxVisual(
+                      box: box,
+                      selected: selected,
+                      hovered: hovered,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

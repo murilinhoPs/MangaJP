@@ -7,13 +7,15 @@ import '../domain/ocr_block_geometry.dart';
 ///
 /// A JSON **array of objects**. Coordinates are **normalized to the crop**
 /// (0..1), not the page and not pixels. Pixel `Rect`s from Cloud Vision are
-/// divided by the crop PNG size at persist time.
+/// divided by the crop PNG size at persist time. The object records that
+/// with `"space": "crop"` — never inferred from `abs(value) <= 1`.
 ///
 /// ```json
 /// [
 ///   {
 ///     "text": "食べた",
 ///     "confidence": 0.92,
+///     "space": "crop",
 ///     "left": 0.10,
 ///     "top": 0.20,
 ///     "width": 0.80,
@@ -24,6 +26,8 @@ import '../domain/ocr_block_geometry.dart';
 ///
 /// - `text` (string, required). Empty text is kept (the overlay still draws).
 /// - `confidence` (number, optional). Below 0.5 → dashed box. Omitted → solid.
+/// - `space` (string). Always `"crop"` when a Rect is written. Missing on
+///   rows encoded before this field; those numbers are still crop 0..1.
 /// - `left` / `top` / `width` / `height` (numbers, optional as a set). All
 ///   four must be present and finite to count as a Rect. A block without a
 ///   Rect is ignored at overlay-mapping time; if **no** block on the crop
@@ -60,9 +64,11 @@ abstract final class OcrBlocksJson {
     return out;
   }
 
-  /// Maps an [OcrResult] into crop-normalized geometry. Pixel boxes are
-  /// divided by [cropWidth]/[cropHeight]. Values already in 0..1 (Vision
-  /// `normalizedVertices`) are kept as-is.
+  /// Maps an [OcrResult] into crop-normalized geometry.
+  ///
+  /// Pixel boxes (`OcrBlock.normalized == false`) are divided by
+  /// [cropWidth]/[cropHeight], including 1 px values. Vision
+  /// `normalizedVertices` set [OcrBlock.normalized] and pass through.
   static List<OcrBlockGeometry> fromResult(
     OcrResult result, {
     required int cropWidth,
@@ -75,19 +81,34 @@ abstract final class OcrBlocksJson {
         OcrBlockGeometry(
           text: block.text,
           confidence: block.confidence,
-          left: _norm(block.boundingBox?.left, dw),
-          top: _norm(block.boundingBox?.top, dh),
-          width: _norm(block.boundingBox?.width, dw),
-          height: _norm(block.boundingBox?.height, dh),
+          left: _norm(
+            block.boundingBox?.left,
+            dw,
+            normalized: block.normalized,
+          ),
+          top: _norm(block.boundingBox?.top, dh, normalized: block.normalized),
+          width: _norm(
+            block.boundingBox?.width,
+            dw,
+            normalized: block.normalized,
+          ),
+          height: _norm(
+            block.boundingBox?.height,
+            dh,
+            normalized: block.normalized,
+          ),
         ),
     ];
   }
+
+  static const spaceCrop = 'crop';
 
   static Map<String, Object?> _toJson(OcrBlockGeometry block) {
     return {
       'text': block.text,
       if (block.confidence != null) 'confidence': block.confidence,
       if (block.hasRect) ...{
+        'space': spaceCrop,
         'left': block.left,
         'top': block.top,
         'width': block.width,
@@ -97,13 +118,15 @@ abstract final class OcrBlocksJson {
   }
 
   static OcrBlockGeometry _fromJson(Map<dynamic, dynamic> json) {
+    final space = json['space'];
+    final cropSpace = space == null || space == spaceCrop;
     return OcrBlockGeometry(
       text: '${json['text'] ?? ''}',
       confidence: _num(json['confidence']),
-      left: _num(json['left']),
-      top: _num(json['top']),
-      width: _num(json['width']),
-      height: _num(json['height']),
+      left: cropSpace ? _num(json['left']) : null,
+      top: cropSpace ? _num(json['top']) : null,
+      width: cropSpace ? _num(json['width']) : null,
+      height: cropSpace ? _num(json['height']) : null,
     );
   }
 
@@ -114,13 +137,14 @@ abstract final class OcrBlocksJson {
     return null;
   }
 
-  /// Pixel coordinates (any component > 1) are divided by [span]. Values
-  /// already in 0..1 pass through.
-  static double? _norm(double? value, double span) {
+  /// [normalized] is the explicit space flag from the engine, not a
+  /// magnitude heuristic. Pixel values (including 1 px) are divided by
+  /// [span].
+  static double? _norm(double? value, double span, {required bool normalized}) {
     if (value == null || !value.isFinite) {
       return null;
     }
-    if (value.abs() <= 1) {
+    if (normalized) {
       return value;
     }
     if (span <= 0) {

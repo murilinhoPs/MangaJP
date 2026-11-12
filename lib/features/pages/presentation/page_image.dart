@@ -10,16 +10,22 @@ bool debugPageImageUsePlaceholder = false;
 /// True when [path] points at a readable file (native). Always false on web.
 bool pageImageFileExists(String? path) => impl.pageImageFileExists(path);
 
-/// Pixel size of the file, or null if missing / unreadable / web.
-Size? pageImagePixelSize(String? path) {
+/// Pixel size of a PNG at [path], or null if missing / unreadable / web.
+///
+/// Completes in a later microtask so callers can kick this off from `build`
+/// without reading the file on the current frame. Header-only (no decode).
+Future<Size?> pageImagePixelSize(String? path) {
   if (debugPageImageUsePlaceholder) {
     if (path == null || path.isEmpty) {
-      return null;
+      return Future<Size?>.value(null);
     }
-    return const Size(200, 300);
+    return Future<Size?>.value(const Size(200, 300));
   }
-  return impl.pageImagePixelSize(path);
+  return Future<Size?>.microtask(() => impl.pageImagePixelSize(path));
 }
+
+/// PNG signature + IHDR → size. Exposed for unit tests.
+Size? pngSizeFromHeader(List<int> header) => impl.pngSizeFromHeader(header);
 
 /// Page PNG from [path], contained. Empty on web / missing file.
 class PageImageView extends StatelessWidget {

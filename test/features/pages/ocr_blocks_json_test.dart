@@ -26,6 +26,7 @@ void main() {
     final raw = OcrBlocksJson.encode(blocks);
     expect(raw, isNotNull);
     expect(raw, contains('"text":"高い"'));
+    expect(raw, contains('"space":"crop"'));
     expect(raw, contains('"left":0.1'));
     final decoded = OcrBlocksJson.decode(raw);
     expect(decoded, hasLength(2));
@@ -59,12 +60,16 @@ void main() {
     expect(blocks.single.height, closeTo(0.6, 1e-9));
   });
 
-  test('fromResult keeps already-normalized vertices', () {
+  test('fromResult keeps vertices marked normalized', () {
     const result = OcrResult(
       fullText: '猫',
       engineId: 'cloud_vision',
       blocks: [
-        OcrBlock(text: '猫', boundingBox: Rect.fromLTWH(0.1, 0.2, 0.3, 0.4)),
+        OcrBlock(
+          text: '猫',
+          boundingBox: Rect.fromLTWH(0.1, 0.2, 0.3, 0.4),
+          normalized: true,
+        ),
       ],
     );
     final blocks = OcrBlocksJson.fromResult(
@@ -74,6 +79,38 @@ void main() {
     );
     expect(blocks.single.left, closeTo(0.1, 1e-9));
     expect(blocks.single.width, closeTo(0.3, 1e-9));
+  });
+
+  test('fromResult divides a 1px box instead of treating it as 0..1', () {
+    const result = OcrResult(
+      fullText: '一',
+      engineId: 'cloud_vision',
+      blocks: [OcrBlock(text: '一', boundingBox: Rect.fromLTWH(1, 1, 1, 1))],
+    );
+    final blocks = OcrBlocksJson.fromResult(
+      result,
+      cropWidth: 100,
+      cropHeight: 50,
+    );
+    expect(blocks.single.left, closeTo(0.01, 1e-9));
+    expect(blocks.single.top, closeTo(0.02, 1e-9));
+    expect(blocks.single.width, closeTo(0.01, 1e-9));
+    expect(blocks.single.height, closeTo(0.02, 1e-9));
+  });
+
+  test('decode without space still reads crop 0..1 (old rows)', () {
+    const raw = '[{"text":"猫","left":0.1,"top":0.2,"width":0.3,"height":0.4}]';
+    final decoded = OcrBlocksJson.decode(raw);
+    expect(decoded.single.hasRect, isTrue);
+    expect(decoded.single.left, 0.1);
+  });
+
+  test('decode ignores Rect when space is not crop', () {
+    const raw =
+        '[{"text":"猫","space":"pixel","left":1,"top":1,"width":1,"height":1}]';
+    final decoded = OcrBlocksJson.decode(raw);
+    expect(decoded.single.text, '猫');
+    expect(decoded.single.hasRect, isFalse);
   });
 
   test('decode of null / junk is empty', () {
