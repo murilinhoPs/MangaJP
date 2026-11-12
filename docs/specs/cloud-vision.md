@@ -5,7 +5,7 @@ Rota: `/settings` (Ajustes › OCR). Sem rota nova. Issue: [#59](https://github.
 Os 7 defaults abaixo foram **aprovados** pelo dono do projeto em 2026-11-04:
 
 1. Chave colada em Ajustes › OCR; toggle só liga com chave; armazenamento seguro do sistema; nunca Drift / backup F25 / log / print / repo; mascarada; **Testar chave** e **Remover chave**; nenhuma chave embutida.
-2. Sem chave o toggle não liga. 401/403, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout (15 s): aquele **crop** roda no manga-ocr com aviso não bloqueante; a chave permanece.
+2. Sem chave o toggle não liga. 401/403, 400 com reason `API_KEY_INVALID`, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout (15 s): aquele **crop** roda no manga-ocr com aviso não bloqueante; a chave permanece. 400 sem esse reason (e JSON malformado) vira erro inesperado, sem crash; o crop também cai no manga-ocr; a chave permanece.
 3. Fallback automático visível **por crop**; `crops.engineId`; chip na página, estado **misto** se os crops diferirem. Schema não muda.
 4. Diálogo na primeira ligação fala em **recortes**; só ativa com aceite; recusar = toggle desligado e chave continua guardada; desligar = tudo local; só a imagem do recorte sai.
 5. O Vision roda no **mesmo crop** que o manga-ocr (não na página inteira). Cota = 1 chamada por crop.
@@ -39,7 +39,8 @@ A chave vai no header `X-Goog-Api-Key`. **Nunca** em query string (`?key=`).
 **Testar chave** (HTTP mockado nos testes):
 
 - ok — aviso de sucesso; chave permanece
-- 401/403 — aviso de chave inválida; chave permanece
+- 401/403, ou 400 com reason `API_KEY_INVALID` — aviso «Chave inválida.»; chave permanece
+- 400 sem `API_KEY_INVALID`, ou JSON malformado — aviso «Não foi possível falar com o Cloud Vision.»; chave permanece; não crasha
 - 429 / `RESOURCE_EXHAUSTED` — aviso de cota; chave permanece
 - rede fora ou timeout **15 s** — aviso; chave permanece
 
@@ -48,7 +49,7 @@ Prints do campo usam valor fake mascarado; se algum trecho vazar, borrão declar
 ### Erros (aprovado, 2026-11-04)
 
 - Sem chave, o toggle não liga.
-- Chave inválida (401/403), cota estourada (429 / `RESOURCE_EXHAUSTED`), rede fora ou timeout **15 s**: aquele **crop** roda no manga-ocr e aparece um aviso **não bloqueante** com o motivo. A chave **não** é apagada. Outros crops da mesma página podem ter usado Vision — o chip pode ficar **misto**.
+- Chave inválida (401/403, ou 400 com reason `API_KEY_INVALID`), cota estourada (429 / `RESOURCE_EXHAUSTED`), rede fora ou timeout **15 s**: aquele **crop** roda no manga-ocr e aparece um aviso **não bloqueante** com o motivo. A chave **não** é apagada. Outros crops da mesma página podem ter usado Vision — o chip pode ficar **misto**. 400 sem `API_KEY_INVALID` (e JSON malformado) vira erro inesperado («Cloud Vision falhou. Recorte lido com manga-ocr.»), sem crash; o crop também cai no manga-ocr; a chave permanece.
 
 ### Fallback (aprovado, 2026-11-04)
 
@@ -73,17 +74,17 @@ Hoje `macos/Runner/Release.entitlements` (e DebugProfile) só têm `app-sandbox`
 - **AC-cv-keyring:** sem secure storage o campo fica desabilitado com aviso; nada em texto puro; web fora da F26. (Aprovado, 2026-11-04.)
 - **AC-cv-header:** chave no header `X-Goog-Api-Key`; nunca em query string. (Aprovado, 2026-11-04.)
 - **AC-cv-nolog:** testes interceptam logger e texto de erro; a chave **nunca** aparece. (Aprovado, 2026-11-04.)
-- **AC-cv-errors:** sem chave o toggle não liga; 401/403, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout 15 s → aquele crop no manga-ocr + aviso não bloqueante, chave permanece. (Aprovado, 2026-11-04.)
+- **AC-cv-errors:** sem chave o toggle não liga; 401/403, 400 com reason `API_KEY_INVALID`, 429/`RESOURCE_EXHAUSTED`, rede fora ou timeout 15 s → aquele crop no manga-ocr + aviso não bloqueante, chave permanece. 400 sem esse reason (e JSON malformado) → erro inesperado, sem crash, crop no manga-ocr, chave permanece. (Aprovado, 2026-11-04.) (Atualizado pelo #106, 2026-11-11.)
 - **AC-cv-fallback:** fallback automático visível por crop; chip do motor, inclusive **misto**. (Aprovado, 2026-11-04.)
 - **AC-cv-privacy:** diálogo na primeira ligação fala em recortes; só ativa com aceite; recusar = toggle desligado, chave continua; desligar = tudo local; só a imagem do recorte sai. (Aprovado, 2026-11-04.)
-- **AC-cv-test-key:** **Testar chave** cobre ok, 401/403, 429, rede fora e timeout 15 s. (Aprovado, 2026-11-04.)
+- **AC-cv-test-key:** **Testar chave** cobre ok, 401/403, 400 com reason `API_KEY_INVALID` («Chave inválida.»), 400 sem esse reason / JSON malformado («Não foi possível falar com o Cloud Vision.», sem crash), 429, rede fora e timeout 15 s. (Aprovado, 2026-11-04.) (Atualizado pelo #106, 2026-11-11.)
 - **AC-cv-macos-network:** a #59 adiciona `com.apple.security.network.client` (DebugProfile + Release) e o CI passa a checar essa key. Verificação no Mac: print ou `n/a: Mac offline (#54)`.
 - **AC-cv-offline:** toggle Cloud não quebra review + dict offline (F18).
 - **AC-cv-mock:** testes mockam o HTTP; **sem chave real** (nem de exemplo que pareça real).
 
 ## Como verificar
 
-- Teste de domínio / widget com HTTP mockado: toggle sem chave; toggle com chave fake; **Testar chave** (ok / 401 / 429 / sem rede / timeout 15 s); 401/403 no OCR; 429; timeout 15 s; chip de um motor e chip **misto**; diálogo de privacidade (aceitar e recusar); Remover chave; campo desabilitado sem keyring; request com `X-Goog-Api-Key` e sem `?key=`; logger e texto de erro **sem** a chave. Phone **390×844** e wide ≥900.
+- Teste de domínio / widget com HTTP mockado: toggle sem chave; toggle com chave fake; **Testar chave** (ok / 401 / 400 `API_KEY_INVALID` / 400 sem esse reason / JSON malformado / 429 / sem rede / timeout 15 s); 401/403 no OCR; 400 `API_KEY_INVALID` no OCR; 400 sem esse reason; JSON malformado; 429; timeout 15 s; chip de um motor e chip **misto**; diálogo de privacidade (aceitar e recusar); Remover chave; campo desabilitado sem keyring; request com `X-Goog-Api-Key` e sem `?key=`; logger e texto de erro **sem** a chave. Phone **390×844** e wide ≥900.
 - Prints conforme [`print-rules.md`](../qa/print-rules.md): **390×844** (emulador ou janela Linux, pasta `android/`) e Linux **1280×800** só a área do app. Telas: toggle desligado; diálogo de privacidade; toggle ligado; chave mascarada; aviso de erro; chip do motor (e **misto**); campo desabilitado sem keyring. Campo da chave mascarado / fake — **nunca** chave real nem de exemplo que pareça real. Digitar a chave é fluxo de teclado: emulador Android, ou `n/a: sem emulador (#93)` com item na [#93](https://github.com/murilinhoPs/MangaJP/issues/93). macOS / iOS: print ou `n/a: Mac offline (#54)`.
 - Entitlement `com.apple.security.network.client`: o PR da #59 acrescenta a key e o check do CI. Com Mac offline: `n/a: Mac offline (#54)`.
 - `integration_test`: saída real no head, ou `n/a` com motivo.
