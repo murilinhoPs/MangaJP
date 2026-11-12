@@ -4,8 +4,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Probe of Keychain / Keystore / libsecret.
+///
+/// [slow] is a 400 ms plugin timeout: the key is not treated as missing.
+/// [unavailable] is an error or a missing plugin (nothing is saved in plaintext).
+enum KeyringAvailability { available, slow, unavailable }
+
+/// Plugin read/write did not finish within [FlutterCloudVisionStore.pluginTimeout].
+final class KeyringSlowException implements Exception {
+  const KeyringSlowException();
+
+  @override
+  String toString() => 'keyring slow';
+}
+
+/// Plugin missing, threw, or platform has no secure storage (including web).
+final class KeyringUnavailableException implements Exception {
+  const KeyringUnavailableException();
+
+  @override
+  String toString() => 'keyring unavailable';
+}
+
 /// Key + toggle + privacy. The API key never goes to Drift / prefs / backup.
 abstract class CloudVisionStore {
+  Future<KeyringAvailability> get keyringAvailability;
   Future<bool> get isKeyringAvailable;
   Future<String?> readApiKey();
   Future<void> writeApiKey(String value);
@@ -21,18 +44,32 @@ abstract class CloudVisionStore {
 class MemoryCloudVisionStore implements CloudVisionStore {
   MemoryCloudVisionStore({
     this.keyringAvailable = true,
+    this.keyringSlow = false,
     this.storedKey,
     this.enabledFlag = false,
     this.privacyAcceptedFlag = false,
   });
 
   bool keyringAvailable;
+  bool keyringSlow;
   String? storedKey;
   bool enabledFlag;
   bool privacyAcceptedFlag;
 
   @override
-  Future<bool> get isKeyringAvailable async => keyringAvailable;
+  Future<KeyringAvailability> get keyringAvailability async {
+    if (!keyringAvailable) {
+      return KeyringAvailability.unavailable;
+    }
+    if (keyringSlow) {
+      return KeyringAvailability.slow;
+    }
+    return KeyringAvailability.available;
+  }
+
+  @override
+  Future<bool> get isKeyringAvailable async =>
+      await keyringAvailability != KeyringAvailability.unavailable;
 
   @override
   Future<String?> readApiKey() async => storedKey;
@@ -40,7 +77,10 @@ class MemoryCloudVisionStore implements CloudVisionStore {
   @override
   Future<void> writeApiKey(String value) async {
     if (!keyringAvailable) {
-      throw StateError('keyring unavailable');
+      throw const KeyringUnavailableException();
+    }
+    if (keyringSlow) {
+      throw const KeyringSlowException();
     }
     storedKey = value;
   }
@@ -72,44 +112,71 @@ class FlutterCloudVisionStore implements CloudVisionStore {
   FlutterCloudVisionStore({
     FlutterSecureStorage? storage,
     Future<SharedPreferences> Function()? prefs,
-  }) : _storage = storage ?? const FlutterSecureStorage(),
-       _prefs = prefs ?? SharedPreferences.getInstance;
+    Future<String?> Function()? readPlugin,
+    Future<void> Function(String value)? writePlugin,
+    Future<void> Function()? deletePlugin,
+  }) : _prefs = prefs ?? SharedPreferences.getInstance {
+    final plugin = storage ?? const FlutterSecureStorage();
+    _readPlugin = readPlugin ?? () => plugin.read(key: apiKeyStorageKey);
+    _writePlugin =
+        writePlugin ??
+        (value) => plugin.write(key: apiKeyStorageKey, value: value);
+    _deletePlugin = deletePlugin ?? () => plugin.delete(key: apiKeyStorageKey);
+  }
 
   static const apiKeyStorageKey = 'cloud_vision_api_key';
   static const enabledPref = 'ocr.cloud_vision.enabled';
   static const privacyPref = 'ocr.cloud_vision.privacy_accepted';
+  static const pluginTimeout = Duration(milliseconds: 400);
 
-  final FlutterSecureStorage _storage;
   final Future<SharedPreferences> Function() _prefs;
+  late final Future<String?> Function() _readPlugin;
+  late final Future<void> Function(String value) _writePlugin;
+  late final Future<void> Function() _deletePlugin;
 
-  static const _pluginTimeout = Duration(milliseconds: 400);
-
-  Future<T?> _guard<T>(Future<T> Function() run) async {
+  Future<_GuardOutcome<T>> _guard<T>(Future<T> Function() run) async {
     try {
-      return await run().timeout(_pluginTimeout);
+      return _GuardOutcome.ok(await run().timeout(pluginTimeout));
+    } on TimeoutException {
+      return const _GuardOutcome.timeout();
     } catch (_) {
-      return null;
+      return const _GuardOutcome.failed();
     }
+  }
+
+  Future<_GuardOutcome<String?>> _readRaw() {
+    return _guard(_readPlugin);
   }
 
   @override
-  Future<bool> get isKeyringAvailable async {
+  Future<KeyringAvailability> get keyringAvailability async {
     if (kIsWeb) {
-      return false;
+      return KeyringAvailability.unavailable;
     }
-    final ok = await _guard(() async {
-      await _storage.read(key: apiKeyStorageKey);
-      return true;
-    });
-    return ok ?? false;
+    final result = await _readRaw();
+    if (result.timedOut) {
+      return KeyringAvailability.slow;
+    }
+    if (result.failed) {
+      return KeyringAvailability.unavailable;
+    }
+    return KeyringAvailability.available;
   }
+
+  @override
+  Future<bool> get isKeyringAvailable async =>
+      await keyringAvailability != KeyringAvailability.unavailable;
 
   @override
   Future<String?> readApiKey() async {
-    if (!await isKeyringAvailable) {
+    if (kIsWeb) {
       return null;
     }
-    final value = await _guard(() => _storage.read(key: apiKeyStorageKey));
+    final result = await _readRaw();
+    if (result.timedOut || result.failed) {
+      return null;
+    }
+    final value = result.value;
     if (value == null || value.isEmpty) {
       return null;
     }
@@ -118,22 +185,25 @@ class FlutterCloudVisionStore implements CloudVisionStore {
 
   @override
   Future<void> writeApiKey(String value) async {
-    if (!await isKeyringAvailable) {
-      throw StateError('keyring unavailable');
+    if (kIsWeb) {
+      throw const KeyringUnavailableException();
     }
     final ok = await _guard(() async {
-      await _storage.write(key: apiKeyStorageKey, value: value);
+      await _writePlugin(value);
       return true;
     });
-    if (ok != true) {
-      throw StateError('keyring unavailable');
+    if (ok.timedOut) {
+      throw const KeyringSlowException();
+    }
+    if (ok.failed || ok.value != true) {
+      throw const KeyringUnavailableException();
     }
   }
 
   @override
   Future<void> deleteApiKey() async {
     await _guard(() async {
-      await _storage.delete(key: apiKeyStorageKey);
+      await _deletePlugin();
       return true;
     });
   }
@@ -141,24 +211,34 @@ class FlutterCloudVisionStore implements CloudVisionStore {
   @override
   Future<bool> get isEnabled async {
     final prefs = await _guard(_prefs);
-    return prefs?.getBool(enabledPref) ?? false;
+    return prefs.value?.getBool(enabledPref) ?? false;
   }
 
   @override
   Future<void> setEnabled(bool value) async {
     final prefs = await _guard(_prefs);
-    await prefs?.setBool(enabledPref, value);
+    await prefs.value?.setBool(enabledPref, value);
   }
 
   @override
   Future<bool> get privacyAccepted async {
     final prefs = await _guard(_prefs);
-    return prefs?.getBool(privacyPref) ?? false;
+    return prefs.value?.getBool(privacyPref) ?? false;
   }
 
   @override
   Future<void> setPrivacyAccepted(bool value) async {
     final prefs = await _guard(_prefs);
-    await prefs?.setBool(privacyPref, value);
+    await prefs.value?.setBool(privacyPref, value);
   }
+}
+
+final class _GuardOutcome<T> {
+  const _GuardOutcome.ok(T this.value) : timedOut = false, failed = false;
+  const _GuardOutcome.timeout() : value = null, timedOut = true, failed = false;
+  const _GuardOutcome.failed() : value = null, timedOut = false, failed = true;
+
+  final T? value;
+  final bool timedOut;
+  final bool failed;
 }

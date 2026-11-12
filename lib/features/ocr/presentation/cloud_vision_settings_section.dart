@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/cloud_vision_shot.dart';
+import '../data/cloud_vision_store.dart';
 import '../domain/cloud_vision_exception.dart';
 import '../domain/cloud_vision_labels.dart';
 import 'cloud_vision_keys.dart';
@@ -81,6 +82,14 @@ class _CloudVisionSettingsSectionState
                       ? (value) => _onToggle(state, value)
                       : null,
                 ),
+                if (state.keyringSlow) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    CloudVisionLabels.keyringSlow,
+                    key: CloudVisionKeys.keyringSlowWarning,
+                    style: AppTypeScale.ui13.copyWith(color: tokens.danger),
+                  ),
+                ],
                 if (!state.keyringAvailable) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -126,9 +135,7 @@ class _CloudVisionSettingsSectionState
                     ),
                     TextButton(
                       key: CloudVisionKeys.removeKey,
-                      onPressed: canEditKey && state.hasKey
-                          ? _removeKey
-                          : null,
+                      onPressed: canEditKey && state.hasKey ? _removeKey : null,
                       child: const Text(CloudVisionLabels.removeKey),
                     ),
                   ],
@@ -218,8 +225,18 @@ class _CloudVisionSettingsSectionState
     if (trimmed.isEmpty) {
       return;
     }
-    await ref.read(cloudVisionSettingsProvider.notifier).saveKey(trimmed);
-    _draft.clear();
+    try {
+      await ref.read(cloudVisionSettingsProvider.notifier).saveKey(trimmed);
+      _draft.clear();
+    } on KeyringSlowException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringSlow);
+      }
+    } on KeyringUnavailableException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringUnavailable);
+      }
+    }
   }
 
   Future<void> _testKey(CloudVisionSettingsState state) async {

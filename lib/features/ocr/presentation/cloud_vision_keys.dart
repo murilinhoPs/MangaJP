@@ -8,6 +8,7 @@ abstract final class CloudVisionKeys {
   static const testKey = Key('settings-ocr-test-key');
   static const removeKey = Key('settings-ocr-remove-key');
   static const keyringWarning = Key('settings-ocr-keyring-warning');
+  static const keyringSlowWarning = Key('settings-ocr-keyring-slow');
   static const privacyDialog = Key('settings-ocr-privacy-dialog');
   static const privacyAccept = Key('settings-ocr-privacy-accept');
   static const privacyDecline = Key('settings-ocr-privacy-decline');

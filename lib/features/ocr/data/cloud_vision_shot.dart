@@ -17,15 +17,21 @@ MemoryCloudVisionStore? cloudVisionShotStore({bool release = kReleaseMode}) {
   }
   return switch (kCloudVisionShot) {
     'idle' => MemoryCloudVisionStore(),
-    'masked' || 'privacy' || 'error' => MemoryCloudVisionStore(
-      storedKey: kCloudVisionShotFakeKey,
-    ),
+    'masked' ||
+    'privacy' ||
+    'error' => MemoryCloudVisionStore(storedKey: kCloudVisionShotFakeKey),
     'on' => MemoryCloudVisionStore(
       storedKey: kCloudVisionShotFakeKey,
       enabledFlag: true,
       privacyAcceptedFlag: true,
     ),
     'nokeyring' => MemoryCloudVisionStore(keyringAvailable: false),
+    'slow' => MemoryCloudVisionStore(
+      storedKey: kCloudVisionShotFakeKey,
+      enabledFlag: true,
+      privacyAcceptedFlag: true,
+      keyringSlow: true,
+    ),
     'mixed' => MemoryCloudVisionStore(
       storedKey: kCloudVisionShotFakeKey,
       enabledFlag: true,

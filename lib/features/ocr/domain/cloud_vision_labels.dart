@@ -13,6 +13,9 @@ abstract final class CloudVisionLabels {
   static const keyringUnavailable =
       'Armazenamento seguro indisponível neste aparelho. '
       'A chave não pode ser salva em texto puro.';
+  static const keyringSlow =
+      'Armazenamento seguro demorou para responder. '
+      'A chave não foi apagada — tente de novo.';
   static const needKeyFirst = 'Cole uma chave primeiro.';
   static const testOk = 'Chave válida.';
   static const keyRemoved = 'Chave removida.';

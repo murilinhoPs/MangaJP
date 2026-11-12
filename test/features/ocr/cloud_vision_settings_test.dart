@@ -184,12 +184,39 @@ void main() {
 
       expect(find.byKey(CloudVisionKeys.keyringWarning), findsOneWidget);
       expect(find.text(CloudVisionLabels.keyringUnavailable), findsOneWidget);
+      expect(find.text(CloudVisionLabels.keyringSlow), findsNothing);
       expect(
         tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
         isFalse,
       );
       expect(_switch(tester).onChanged, isNull);
     });
+
+    testWidgets(
+      'keyring slow keeps the toggle and shows its own copy at $label',
+      (tester) async {
+        final store = MemoryCloudVisionStore(
+          storedKey: _fakeKey,
+          enabledFlag: true,
+          privacyAcceptedFlag: true,
+          keyringSlow: true,
+        );
+        await _openSettings(tester, store: store, size: size);
+
+        expect(find.byKey(CloudVisionKeys.keyringSlowWarning), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringSlow), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringUnavailable), findsNothing);
+        expect(
+          tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
+          isTrue,
+        );
+        expect(_switch(tester).value, isTrue);
+        expect(_switch(tester).onChanged, isNotNull);
+        expect(await store.isEnabled, isTrue);
+        expect(await store.readApiKey(), _fakeKey);
+        expect(find.text(_fakeKey), findsNothing);
+      },
+    );
   }
 }
 
