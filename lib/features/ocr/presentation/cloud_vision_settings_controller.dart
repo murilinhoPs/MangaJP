@@ -62,7 +62,18 @@ class CloudVisionSettings extends _$CloudVisionSettings {
       );
     }
 
-    final key = await store.readApiKey();
+    late final String? key;
+    try {
+      key = await store.readApiKey();
+    } on KeyringSlowException {
+      final enabled = await store.isEnabled;
+      return CloudVisionSettingsState(
+        keyringAvailability: KeyringAvailability.slow,
+        hasKey: enabled,
+        enabled: enabled,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    }
     final hasKey = key != null && key.isNotEmpty;
     final enabled = hasKey && await store.isEnabled;
     if (!hasKey && await store.isEnabled) {
@@ -95,7 +106,15 @@ class CloudVisionSettings extends _$CloudVisionSettings {
 
   Future<void> removeKey() async {
     final store = ref.read(cloudVisionStoreProvider);
-    await store.deleteApiKey();
+    try {
+      await store.deleteApiKey();
+    } on KeyringSlowException {
+      state = AsyncData(await _load());
+      rethrow;
+    } on KeyringUnavailableException {
+      state = AsyncData(await _load());
+      rethrow;
+    }
     await store.setEnabled(false);
     state = AsyncData(await _load());
   }

@@ -260,10 +260,20 @@ class _CloudVisionSettingsSectionState
   }
 
   Future<void> _removeKey() async {
-    await ref.read(cloudVisionSettingsProvider.notifier).removeKey();
-    _draft.clear();
-    if (mounted) {
-      _snack(CloudVisionLabels.keyRemoved);
+    try {
+      await ref.read(cloudVisionSettingsProvider.notifier).removeKey();
+      _draft.clear();
+      if (mounted) {
+        _snack(CloudVisionLabels.keyRemoved);
+      }
+    } on KeyringSlowException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringSlow);
+      }
+    } on KeyringUnavailableException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringUnavailable);
+      }
     }
   }
 

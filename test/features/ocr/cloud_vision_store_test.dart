@@ -48,7 +48,7 @@ void main() {
     expect(got, isNot(KeyringAvailability.unavailable));
   });
 
-  testWidgets('slow read does not throw and does not wait wall-clock 400 ms', (
+  testWidgets('slow read throws KeyringSlowException, not missing key', (
     tester,
   ) async {
     final store = FlutterCloudVisionStore(
@@ -57,18 +57,90 @@ void main() {
       deletePlugin: () async {},
     );
 
-    String? key;
-    final pending = store.readApiKey().then((value) {
-      key = value;
-      return value;
+    Object? error;
+    final pending = store.readApiKey().then<void>((_) {}).catchError((
+      Object e,
+    ) {
+      error = e;
     });
 
     final wall = Stopwatch()..start();
     await tester.pump(FlutterCloudVisionStore.pluginTimeout);
     await pending;
     expect(wall.elapsedMilliseconds, lessThan(100));
-    expect(key, isNull);
+    expect(error, isA<KeyringSlowException>());
     expect(await store.isEnabled, isTrue);
+  });
+
+  testWidgets('slow delete throws KeyringSlowException after 400 ms', (
+    tester,
+  ) async {
+    final store = FlutterCloudVisionStore(
+      readPlugin: () async => _fakeKey,
+      writePlugin: (_) async {},
+      deletePlugin: () => Completer<void>().future,
+    );
+
+    Object? error;
+    final pending = store.deleteApiKey().then<void>((_) {}).catchError((
+      Object e,
+    ) {
+      error = e;
+    });
+
+    await tester.pump();
+    expect(error, isNull);
+    final wall = Stopwatch()..start();
+    await tester.pump(FlutterCloudVisionStore.pluginTimeout);
+    await pending;
+    expect(wall.elapsedMilliseconds, lessThan(100));
+    expect(error, isA<KeyringSlowException>());
+  });
+
+  testWidgets('late plugin success after timeout is ignored', (tester) async {
+    final delayed = Completer<String?>();
+    final store = FlutterCloudVisionStore(
+      readPlugin: () => delayed.future,
+      writePlugin: (_) async {},
+      deletePlugin: () async {},
+    );
+
+    Object? error;
+    final pending = store.readApiKey().then<void>((_) {}).catchError((
+      Object e,
+    ) {
+      error = e;
+    });
+
+    await tester.pump(FlutterCloudVisionStore.pluginTimeout);
+    await pending;
+    expect(error, isA<KeyringSlowException>());
+
+    delayed.complete(_fakeKey);
+    await tester.pump();
+  });
+
+  testWidgets('late plugin error after timeout is ignored', (tester) async {
+    final delayed = Completer<String?>();
+    final store = FlutterCloudVisionStore(
+      readPlugin: () => delayed.future,
+      writePlugin: (_) async {},
+      deletePlugin: () async {},
+    );
+
+    Object? error;
+    final pending = store.readApiKey().then<void>((_) {}).catchError((
+      Object e,
+    ) {
+      error = e;
+    });
+
+    await tester.pump(FlutterCloudVisionStore.pluginTimeout);
+    await pending;
+    expect(error, isA<KeyringSlowException>());
+
+    delayed.completeError(StateError('late plugin'));
+    await tester.pump();
   });
 
   testWidgets('slow write throws KeyringSlowException after 400 ms', (
@@ -156,12 +228,18 @@ void main() {
     );
     expect(await slow.keyringAvailability, KeyringAvailability.slow);
     expect(await slow.isKeyringAvailable, isTrue);
-    expect(await slow.readApiKey(), _fakeKey);
+    await expectLater(slow.readApiKey(), throwsA(isA<KeyringSlowException>()));
+    expect(slow.storedKey, _fakeKey);
     expect(await slow.isEnabled, isTrue);
     await expectLater(
       slow.writeApiKey(_fakeKey),
       throwsA(isA<KeyringSlowException>()),
     );
+    await expectLater(
+      slow.deleteApiKey(),
+      throwsA(isA<KeyringSlowException>()),
+    );
+    expect(slow.storedKey, _fakeKey);
 
     final missing = MemoryCloudVisionStore(keyringAvailable: false);
     expect(await missing.keyringAvailability, KeyringAvailability.unavailable);

@@ -15,7 +15,9 @@ import 'package:manga_jp/features/ocr/data/cloud_vision_ocr_engine.dart';
 import 'package:manga_jp/features/ocr/data/cloud_vision_store.dart';
 import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
 import 'package:manga_jp/features/ocr/domain/cloud_vision_exception.dart';
+import 'package:manga_jp/features/ocr/domain/cloud_vision_labels.dart';
 import 'package:manga_jp/features/ocr/domain/ocr_engine_ids.dart';
+import 'package:manga_jp/features/ocr/domain/ocr_exception.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 
 import '../capture/fixture_png.dart';
@@ -60,6 +62,104 @@ void main() {
       final crops = await db.pagesDao.listCrops();
       expect(crops, hasLength(1));
       expect(crops.single.engineId, OcrEngineIds.mangaOcr);
+    });
+
+    testWidgets('401 plus sidecar down shows dual-fail copy at $label', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final store = MemoryCloudVisionStore(
+        storedKey: _fakeKey,
+        enabledFlag: true,
+        privacyAcceptedFlag: true,
+      );
+
+      await _confirmCrop(
+        tester,
+        db: db,
+        store: store,
+        size: size,
+        handler: (request) async => http.Response('{}', 401),
+        local: const FakeOcrEngine(
+          id: OcrEngineIds.mangaOcr,
+          error: MangaOcrUnavailable(),
+        ),
+      );
+
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.byType(PageDetailPage), findsNothing);
+      expect(find.text(const OcrBothUnavailable().userMessage), findsOneWidget);
+      expect(
+        find.text(const OcrBothUnavailable().userMessage).hitTestable(),
+        findsOneWidget,
+      );
+      _expectNoRawOcrException(tester);
+      expect(await store.readApiKey(), _fakeKey);
+      expect(find.text(_fakeKey), findsNothing);
+      expect(await db.pagesDao.listCrops(), isEmpty);
+    });
+
+    testWidgets('sidecar down without Vision shows local copy at $label', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final store = MemoryCloudVisionStore();
+
+      await _confirmCrop(
+        tester,
+        db: db,
+        store: store,
+        size: size,
+        handler: (request) async => http.Response('{}', 200),
+        local: const FakeOcrEngine(
+          id: OcrEngineIds.mangaOcr,
+          error: MangaOcrUnavailable(),
+        ),
+      );
+
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(
+        find.text(const MangaOcrUnavailable().userMessage),
+        findsOneWidget,
+      );
+      expect(find.text(const OcrBothUnavailable().userMessage), findsNothing);
+      _expectNoRawOcrException(tester);
+    });
+
+    testWidgets('slow keyring on a crop is not missing-key copy at $label', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final store = MemoryCloudVisionStore(
+        storedKey: _fakeKey,
+        enabledFlag: true,
+        privacyAcceptedFlag: true,
+        keyringSlow: true,
+      );
+
+      await _confirmCrop(
+        tester,
+        db: db,
+        store: store,
+        size: size,
+        handler: (request) async => http.Response('{}', 200),
+      );
+
+      expect(find.byType(CapturePage), findsOneWidget);
+      expect(find.byType(PageDetailPage), findsNothing);
+      expect(find.text(CloudVisionLabels.keyringSlow), findsOneWidget);
+      expect(
+        find.text(CloudVisionLabels.keyringSlow).hitTestable(),
+        findsOneWidget,
+      );
+      expect(find.text('Sem chave. Recorte lido com manga-ocr.'), findsNothing);
+      expect(find.text(CloudVisionLabels.needKeyFirst), findsNothing);
+      expect(store.storedKey, _fakeKey);
+      expect(await store.isEnabled, isTrue);
+      expect(await db.pagesDao.listCrops(), isEmpty);
     });
   }
 
@@ -127,6 +227,10 @@ Future<void> _confirmCrop(
   required MemoryCloudVisionStore store,
   required Size size,
   required Future<http.Response> Function(http.BaseRequest request) handler,
+  FakeOcrEngine local = const FakeOcrEngine(
+    text: 'よぉ、相棒',
+    id: OcrEngineIds.mangaOcr,
+  ),
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -137,9 +241,7 @@ Future<void> _confirmCrop(
     MangaJpApp(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => db),
-        ocrEngineProvider.overrideWithValue(
-          const FakeOcrEngine(text: 'よぉ、相棒', id: OcrEngineIds.mangaOcr),
-        ),
+        ocrEngineProvider.overrideWithValue(local),
         cloudVisionStoreProvider.overrideWithValue(store),
         cloudVisionOcrEngineProvider.overrideWithValue(
           CloudVisionOcrEngine(
@@ -182,4 +284,13 @@ void _expectVisibleFallback(WidgetTester tester, {required Size size}) {
   expect(rect.bottom, lessThanOrEqualTo(size.height + 0.5));
   expect(rect.left, greaterThanOrEqualTo(-0.5));
   expect(rect.right, lessThanOrEqualTo(size.width + 0.5));
+}
+
+void _expectNoRawOcrException(WidgetTester tester) {
+  expect(find.textContaining('Bad state'), findsNothing);
+  expect(find.textContaining('SocketException'), findsNothing);
+  expect(find.textContaining('ClientException'), findsNothing);
+  expect(find.textContaining('errno'), findsNothing);
+  expect(find.textContaining('8765'), findsNothing);
+  expect(find.textContaining('sidecar is not reachable'), findsNothing);
 }

@@ -72,7 +72,12 @@ class MemoryCloudVisionStore implements CloudVisionStore {
       await keyringAvailability != KeyringAvailability.unavailable;
 
   @override
-  Future<String?> readApiKey() async => storedKey;
+  Future<String?> readApiKey() async {
+    if (keyringSlow) {
+      throw const KeyringSlowException();
+    }
+    return storedKey;
+  }
 
   @override
   Future<void> writeApiKey(String value) async {
@@ -87,6 +92,9 @@ class MemoryCloudVisionStore implements CloudVisionStore {
 
   @override
   Future<void> deleteApiKey() async {
+    if (keyringSlow) {
+      throw const KeyringSlowException();
+    }
     storedKey = null;
   }
 
@@ -135,9 +143,13 @@ class FlutterCloudVisionStore implements CloudVisionStore {
   late final Future<void> Function() _deletePlugin;
 
   Future<_GuardOutcome<T>> _guard<T>(Future<T> Function() run) async {
+    final future = run();
     try {
-      return _GuardOutcome.ok(await run().timeout(pluginTimeout));
+      return _GuardOutcome.ok(await future.timeout(pluginTimeout));
     } on TimeoutException {
+      // The plugin may still complete later. Ignore so a late throw is not
+      // an unhandled async error.
+      future.ignore();
       return const _GuardOutcome.timeout();
     } catch (_) {
       return const _GuardOutcome.failed();
@@ -173,7 +185,10 @@ class FlutterCloudVisionStore implements CloudVisionStore {
       return null;
     }
     final result = await _readRaw();
-    if (result.timedOut || result.failed) {
+    if (result.timedOut) {
+      throw const KeyringSlowException();
+    }
+    if (result.failed) {
       return null;
     }
     final value = result.value;
@@ -202,10 +217,19 @@ class FlutterCloudVisionStore implements CloudVisionStore {
 
   @override
   Future<void> deleteApiKey() async {
-    await _guard(() async {
+    if (kIsWeb) {
+      throw const KeyringUnavailableException();
+    }
+    final ok = await _guard(() async {
       await _deletePlugin();
       return true;
     });
+    if (ok.timedOut) {
+      throw const KeyringSlowException();
+    }
+    if (ok.failed || ok.value != true) {
+      throw const KeyringUnavailableException();
+    }
   }
 
   @override
