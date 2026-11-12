@@ -2,10 +2,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/app_database_provider.dart';
+import '../../../core/srs/card_srs_state.dart';
 import '../../../core/srs/sm2_jr.dart';
 import '../../../core/utils/ids.dart';
 import '../../words/domain/word_state.dart';
+import '../domain/deck_card.dart';
 import '../domain/flashcard.dart';
+import '../domain/suspend_reason.dart';
 
 part 'flashcards_repository.g.dart';
 
@@ -20,6 +23,11 @@ FlashcardsRepository flashcardsRepository(Ref ref) {
 /// [markKnown] / [markIgnored] set `word_states` and, when a card exists,
 /// `cards.suspend_reason`. They never create, delete, or reschedule a card.
 ///
+/// [suspendByUser] / [reactivate] are F23 (Deck). Suspend writes
+/// `suspend_reason=user` and does not change `word_states`. Reactivate
+/// writes `null` and `word_states=learning`. Neither rewrites SRS nor
+/// deletes `cards` / `card_srs` / `review_logs`.
+///
 /// [deleteCard] removes `review_logs` for that card, then `card_srs`, then
 /// `cards` (FK order) and sets `word_states=saved`. The word and
 /// `crop_words` stay. No card → no-op on the word (does not delete it, does
@@ -28,6 +36,31 @@ class FlashcardsRepository {
   const FlashcardsRepository(this._db);
 
   final AppDatabase _db;
+
+  /// Every vocab card, newest first. Suspended cards stay in the list.
+  Future<List<DeckCard>> listDeck() async {
+    final rows = await _db.cardsDao.listDeck();
+    return [
+      for (final row in rows)
+        DeckCard(
+          cardId: row.$1.id,
+          wordId: row.$1.wordId,
+          lemma: row.$3.lemma,
+          reading: row.$3.reading,
+          createdAt: row.$1.createdAt,
+          wordState: WordState.fromDb(row.$4?.state ?? ''),
+          srs: CardSrsState(
+            easeFactor: row.$2.easeFactor,
+            intervalDays: row.$2.intervalDays,
+            repetitions: row.$2.repetitions,
+            dueAt: row.$2.dueAt,
+            phase: CardPhase.values.byName(row.$2.phase),
+            engineId: row.$2.engineId,
+          ),
+          suspendReason: row.$1.suspendReason,
+        ),
+    ];
+  }
 
   /// Mark [wordId] as learning and ensure it has one vocab card.
   ///
@@ -100,6 +133,75 @@ class FlashcardsRepository {
   /// Set `word_states=ignored`. If a card exists, set `suspend_reason=ignored`.
   Future<void> markIgnored(String wordId) =>
       _setSuspended(wordId, WordState.ignored);
+
+  /// F23: set `suspend_reason=user`. Does not change `word_states`, SRS, or logs.
+  ///
+  /// Missing word or missing card → no-op. Already `user` → no-op.
+  Future<void> suspendByUser(String wordId) {
+    return _db.transaction(() async {
+      final word = await _db.wordsDao.wordById(wordId);
+      if (word == null) {
+        return;
+      }
+      final card = await _db.cardsDao.cardForWord(wordId);
+      if (card == null) {
+        return;
+      }
+      if (card.suspendReason == SuspendReason.user.dbValue) {
+        return;
+      }
+      await _db.cardsDao.updateSuspendReason(
+        card.id,
+        SuspendReason.user.dbValue,
+      );
+    });
+  }
+
+  /// F23: clear `suspend_reason` and set `word_states=learning`. SRS stays.
+  ///
+  /// Missing word or missing card → no-op. Already unsuspended and learning
+  /// → no-op. Does not delete `cards`, `card_srs`, or `review_logs`.
+  Future<void> reactivate(String wordId) {
+    return _db.transaction(() async {
+      final word = await _db.wordsDao.wordById(wordId);
+      if (word == null) {
+        return;
+      }
+      final card = await _db.cardsDao.cardForWord(wordId);
+      if (card == null) {
+        return;
+      }
+
+      final stateRow = await _db.wordsDao.stateFor(wordId);
+      final current = WordState.fromDb(stateRow?.state ?? '');
+      final alreadyLearning = stateRow != null && current == WordState.learning;
+      final alreadyClear = card.suspendReason == null;
+      if (alreadyLearning && alreadyClear) {
+        return;
+      }
+
+      final now = DateTime.now().toUtc();
+      if (stateRow == null) {
+        await _db.wordsDao.insertState(
+          UserWordStatesCompanion.insert(
+            wordId: wordId,
+            state: WordState.learning.name,
+            updatedAt: now,
+          ),
+        );
+      } else if (current != WordState.learning) {
+        await _db.wordsDao.updateState(
+          wordId: wordId,
+          state: WordState.learning.name,
+          updatedAt: now,
+        );
+      }
+
+      if (card.suspendReason != null) {
+        await _db.cardsDao.updateSuspendReason(card.id, null);
+      }
+    });
+  }
 
   Future<void> _setSuspended(String wordId, WordState target) {
     assert(

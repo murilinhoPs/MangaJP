@@ -4,11 +4,14 @@ import '../app_database.dart';
 import '../tables/user_card_srs.dart';
 import '../tables/user_cards.dart';
 import '../tables/user_review_logs.dart';
+import '../tables/user_word_states.dart';
 import '../tables/user_words.dart';
 
 part 'cards_dao.g.dart';
 
-@DriftAccessor(tables: [UserCards, UserCardSrs, UserReviewLogs, UserWords])
+@DriftAccessor(
+  tables: [UserCards, UserCardSrs, UserReviewLogs, UserWords, UserWordStates],
+)
 class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   CardsDao(super.db);
 
@@ -106,6 +109,33 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
     return (select(
       userReviewLogs,
     )..where((t) => t.ratedAt.isBiggerOrEqualValue(since))).get();
+  }
+
+  /// Every vocab card with SRS, word, and optional `word_states`.
+  /// Newest [UserCards.createdAt] first (same recency as the Caderno list).
+  Future<List<(UserCard, CardSrsRow, UserWord, UserWordState?)>> listDeck() async {
+    final query = select(userCards).join([
+      innerJoin(userCardSrs, userCardSrs.cardId.equalsExp(userCards.id)),
+      innerJoin(userWords, userWords.id.equalsExp(userCards.wordId)),
+      leftOuterJoin(
+        userWordStates,
+        userWordStates.wordId.equalsExp(userWords.id),
+      ),
+    ]);
+    query.orderBy([
+      OrderingTerm.desc(userCards.createdAt),
+      OrderingTerm.asc(userCards.id),
+    ]);
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        (
+          row.readTable(userCards),
+          row.readTable(userCardSrs),
+          row.readTable(userWords),
+          row.readTableOrNull(userWordStates),
+        ),
+    ];
   }
 
   /// Due, unsuspended cards: learning/relearning, then review, then new

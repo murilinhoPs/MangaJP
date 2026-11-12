@@ -8,6 +8,7 @@ mixin _$CardsDaoMixin on DatabaseAccessor<AppDatabase> {
   $UserCardsTable get userCards => attachedDatabase.userCards;
   $UserCardSrsTable get userCardSrs => attachedDatabase.userCardSrs;
   $UserReviewLogsTable get userReviewLogs => attachedDatabase.userReviewLogs;
+  $UserWordStatesTable get userWordStates => attachedDatabase.userWordStates;
   CardsDaoManager get managers => CardsDaoManager(this);
 }
 
@@ -24,5 +25,10 @@ class CardsDaoManager {
       $$UserReviewLogsTableTableManager(
         _db.attachedDatabase,
         _db.userReviewLogs,
+      );
+  $$UserWordStatesTableTableManager get userWordStates =>
+      $$UserWordStatesTableTableManager(
+        _db.attachedDatabase,
+        _db.userWordStates,
       );
 }

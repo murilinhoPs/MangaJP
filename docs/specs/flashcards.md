@@ -12,7 +12,7 @@ No máximo 1 card vocab por `word_id`. Template derivado. Deck ≠ Caderno (Q-N6
 - Frente = `dict_form` (kanji/lemma; se só kana, kana). Verso = `reading` · até 3 glosses EN · `user_note` · `context_sentence` (tipo menor). Sem colunas `front`/`back`.
 - **F30 Could:** toggle «mostrar reading na frente» (default off) — [settings](settings.md).
 - Criação: ação **Aprendendo** / **Aprender**. Segundo Aprendendo no mesmo `word_id` não duplica; reativa ou no-op **sem** reset SRS (AC-card).
-- **F23 Should:** suspender no Deck → `suspend_reason = 'user'`; reativar → `null` e `word_states = learning`. Não deleta card, SRS nem logs.
+- **F23 Should:** suspender no Deck → `suspend_reason = 'user'`; reativar → `null` e `word_states = learning`. Não deleta card, SRS nem logs. Ação na lista do Deck (botão **Suspender** / **Reativar**); confirmação no padrão do Caderno só para suspender.
 - Deletar card: confirmação; CASCADE `card_srs` + `review_logs`; palavra → `saved` (AC-delete).
 - **F38:** flashcards `kind = kanji` saem do Won't. Milestone [M2b](../roadmap.md#m2b--kanji-no-srs) entre M2 e M3; proposta em revisão, sem implementação nesta spec. Cards a partir de `saved_kanji`.
 - IA: lista + filtros + suspender.
@@ -26,4 +26,5 @@ No máximo 1 card vocab por `word_id`. Template derivado. Deck ≠ Caderno (Q-N6
 
 > Pendente: filtros da lista do Deck (quais; persistência).
 > Pendente: empty state e copy da confirmação de delete.
-> Pendente: ação de suspender/reativar no Deck (F23 / M2) — ver [`m2.md`](../milestones/m2.md).
+>
+> F23 (M2.6): ação na lista do `/deck`. Card ativo → **Suspender** (diálogo «Suspender este card?», padrão Cancelar / confirmação do Caderno). Card com `suspend_reason = 'user'` → badge **Suspenso** e **Reativar** (sem diálogo extra). Known / ignored continuam no Deck com o estado do Caderno, sem os botões F23. Empty: «Nenhum card.» — ver [`m2.md`](../milestones/m2.md) Q5.
