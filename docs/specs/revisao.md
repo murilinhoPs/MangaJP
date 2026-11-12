@@ -12,7 +12,7 @@ Revisar vocab 100% offline com SM-2 clássico `sm2-jr@1`. Sem learning steps em 
 - **F14:** 4 botões Again / Hard / Good / Easy → `ReviewRating` → `rating` 1/2/3/4 e `quality` q 0/3/4/5 **sempre juntos** em `review_logs`. Preview de intervalos na primeira resposta do study-day (não no drill).
 - Frente → **Revelar** verso → rate. Reveal não grava.
 - **F15 / AC-drill:** só a **primeira** resposta do card no study-day atualiza `card_srs`. Again (q=0) ou Hard (q=3) → fim da fila da sessão. Respostas seguintes no mesmo day: `is_drill = 1`, não mutam SRS.
-- Fila: learning/relearning due → review due → new até `new_per_day` (default **15**). Virada **04:00 America/Sao_Paulo** (F20).
+- Fila: learning/relearning due → review due → new até `new_per_day` (default **15**). Virada **04:00 America/Sao_Paulo** (F20). Qualquer `suspend_reason` não nulo (`user`, `known` ou `ignored`) tira o card da fila: `isEligibleForReview` só aceita `null`.
 - EF inicial 2.5; piso 1.3. `sm2.clj` atualiza EF sempre (inclui q<3); `Math/round`; intervalo usa EF' já atualizado.
 - `word_state` permanece `learning` ao responder.
 - Sessão termina com resumo (due restantes, novos, lapses, drills).
