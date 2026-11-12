@@ -71,21 +71,23 @@ class DockIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.enabled = true,
+    this.toggled = false,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final String? tooltip;
   final bool enabled;
+  final bool toggled;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final button = Material(
-      color: tokens.surface,
+      color: toggled ? tokens.overlayPrimaria : tokens.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
-        side: BorderSide(color: tokens.border),
+        side: BorderSide(color: toggled ? tokens.coral : tokens.border),
       ),
       child: InkWell(
         onTap: enabled ? onPressed : null,
@@ -96,7 +98,9 @@ class DockIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: AppIcons.sizeMin,
-            color: enabled ? tokens.text2 : tokens.text4,
+            color: !enabled
+                ? tokens.text4
+                : (toggled ? tokens.coral : tokens.text2),
           ),
         ),
       ),

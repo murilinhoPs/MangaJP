@@ -20,6 +20,9 @@ abstract final class PageLabels {
   static const editarOcrTitulo = 'Editar OCR';
   static const salvarOcr = 'Salvar OCR';
   static const recorteN = 'Recorte';
+  static const overlay = 'Boxes';
+  static const overlayOn = 'Esconder boxes';
+  static const overlayOff = 'Mostrar boxes';
 }
 
 /// Layout numbers from the Deck / brief, not `tokens.json`.

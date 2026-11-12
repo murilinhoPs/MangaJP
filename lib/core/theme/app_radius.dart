@@ -2,6 +2,7 @@
 abstract final class AppRadius {
   static const double tecla = 5;
   static const double segmentado = 8;
+  static const double ocrBox = 6;
   static const double railBarra = 10;
   static const double linha = 12;
   static const double dockAcaoBusca = 14;

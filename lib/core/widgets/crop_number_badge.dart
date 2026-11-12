@@ -10,12 +10,15 @@ class CropNumberBadge extends StatelessWidget {
     super.key,
     required this.number,
     this.neutral = false,
+    this.size = defaultSize,
   });
 
   final int number;
   final bool neutral;
+  final double size;
 
-  static const double size = 18;
+  static const double defaultSize = 18;
+  static const double overlaySize = 16;
 
   @override
   Widget build(BuildContext context) {

@@ -218,8 +218,9 @@ void main() {
         GoRouter.of(tester.element(find.byType(PageDetailPage))).state.uri.path,
         '/pages/${crops.single.pageId}',
       );
-      expect(find.byKey(PageDetailKeys.ocrText), findsOneWidget);
-      expect(find.text(recognized), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.ocrText), findsNothing);
     },
   );
 
@@ -249,7 +250,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PageDetailPage), findsOneWidget);
-      expect(find.text(recognized), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
       final crops = await db.pagesDao.listCrops();
       expect(crops, hasLength(1));
       expect(crops.single.ocrText, recognized);
@@ -536,7 +538,10 @@ void main() {
           badge.top,
           greaterThanOrEqualTo(canvas.top + CropOverlay.badgeMinGap - 0.5),
         );
-        expect(badge.top, greaterThanOrEqualTo(62 + CropOverlay.badgeMinGap - 0.5));
+        expect(
+          badge.top,
+          greaterThanOrEqualTo(62 + CropOverlay.badgeMinGap - 0.5),
+        );
       },
     );
 

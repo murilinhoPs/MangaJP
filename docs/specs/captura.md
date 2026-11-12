@@ -14,6 +14,7 @@ Entrar no pipeline com uma imagem e chegar em texto OCR com ≤ 2 taps in-app (O
 - 1 tap **Confirmar crop(s)** dispara OCR automático. Drag/pinch **não** contam como tap. O share sheet do sistema não conta.
 - Galeria (tile / **Galeria +**): pick do sistema + confirm crop ≤ 2 taps in-app.
 - Pós-OCR: navega para `/pages/:id` ([leitor](leitor.md)).
+- No confirm, a imagem da página é copiada para o diretório de documentos do app (`path_provider`) e o caminho vai em `pages.image_path`. Boxes do motor (quando houver `Rect`) vão em `crops.ocr_blocks_json`.
 - Tela de tarefa: esconde os nav cards; dock próprio (F17 / [ADR-0004](../adr/0004-nav-design-system.md)).
 - Sair (Esc, X do dock, back Android): confirmação **só** se a pessoa editou algum recorte (criou, moveu ou apagou). O recorte inicial automático **não** conta como edição.
 
