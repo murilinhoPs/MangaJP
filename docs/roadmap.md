@@ -28,7 +28,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Tamanho.** G.
 
-**Status.** Entregue na `main` (loop de estudo). Sem milestone no GitHub. O README da raiz ainda marca lista `/pages`, `/deck` e `/settings` como stub de tela.
+**Status.** Entregue na `main` (loop de estudo). Sem milestone no GitHub. O README da raiz ainda marca `/settings` como stub de tela.
 
 ## D — Docs e processo
 
@@ -64,7 +64,7 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Features.** F21 (`/pages` histórico), F22 (bounding boxes), F23 (suspender no Deck), F24 (KANJIDIC2 no lookup), F25 (backup JSON), F26 (Cloud Vision), F45 (`saved_kanji` / aba Kanji).
 
-**Saída.** Kanji salvo aparece na aba Kanji com leituras, significados e traços, fora do SRS ([#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Cloud Vision só existe atrás do toggle ([#59](https://github.com/murilinhoPs/MangaJP/issues/59)). F21, F22, F23 e F25 ainda não têm issue.
+**Saída.** Kanji salvo aparece na aba Kanji com leituras, significados e traços, fora do SRS ([#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Cloud Vision só existe atrás do toggle ([#59](https://github.com/murilinhoPs/MangaJP/issues/59)). F23 tem a issue [#98](https://github.com/murilinhoPs/MangaJP/issues/98), fechada pelo [#112](https://github.com/murilinhoPs/MangaJP/pull/112).
 
 **Dependências.** Spec de kanji da [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada antes da implementação. Q-N3 (orçamento Cloud Vision) aberta. Fila Mac [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para prints iOS/macOS.
 
