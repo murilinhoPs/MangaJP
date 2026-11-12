@@ -18,6 +18,10 @@ jobs:
       - run: python3 tools/cer_bakeoff/test_cer.py
       - uses: subosito/flutter-action@v2
         with:
+          # Pin the last known-good stable. `channel: stable` alone tracks the
+          # latest stable SDK; 3.50.0 started reporting material.dart as
+          # deprecated_member_use (info → analyze exit 1).
+          flutter-version: "3.47.9"
           channel: stable
           cache: true
       - run: flutter pub get
