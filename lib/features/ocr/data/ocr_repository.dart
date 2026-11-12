@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/cloud_vision_exception.dart';
 import '../domain/ocr_engine.dart';
+import '../domain/ocr_exception.dart';
 import '../domain/ocr_result.dart';
 import 'cloud_vision_ocr_engine.dart';
 import 'cloud_vision_shot.dart';
@@ -48,7 +49,10 @@ bool get _useMemoryStoreInTests {
 @Riverpod(keepAlive: true)
 CloudVisionOcrEngine cloudVisionOcrEngine(Ref ref) {
   final store = ref.watch(cloudVisionStoreProvider);
-  return CloudVisionOcrEngine(readApiKey: store.readApiKey);
+  return CloudVisionOcrEngine(
+    readApiKey: store.readApiKey,
+    client: cloudVisionShotHttpClient(),
+  );
 }
 
 @Riverpod(keepAlive: true)
@@ -82,12 +86,27 @@ class OcrRepository {
         return CropOcrOutcome(result: result);
       } on CloudVisionException catch (error) {
         if (error.fallsBackToLocal) {
-          final local = await engine.recognize(image);
-          return CropOcrOutcome(result: local, fallback: error);
+          try {
+            final local = await engine.recognize(image);
+            return CropOcrOutcome(result: local, fallback: error);
+          } catch (localError, stack) {
+            debugPrint(
+              'OCR fallback failed after ${error.runtimeType}: '
+              '$localError\n$stack',
+            );
+            throw const OcrBothUnavailable();
+          }
         }
         rethrow;
       }
     }
-    return CropOcrOutcome(result: await engine.recognize(image));
+    try {
+      return CropOcrOutcome(result: await engine.recognize(image));
+    } on OcrException {
+      rethrow;
+    } catch (error, stack) {
+      debugPrint('OCR local failed: $error\n$stack');
+      throw const MangaOcrUnavailable();
+    }
   }
 }

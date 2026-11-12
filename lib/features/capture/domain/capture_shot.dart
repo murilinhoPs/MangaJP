@@ -17,6 +17,11 @@ const kCaptureShotExitDialog = bool.fromEnvironment(
   'MANGAJP_CAPTURE_EXIT_DIALOG',
 );
 
+/// After the shot image loads, tap-equivalent confirm (print helper).
+const kCaptureShotAutoConfirm = bool.fromEnvironment(
+  'MANGAJP_CAPTURE_AUTO_CONFIRM',
+);
+
 Uint8List? captureShotImage() {
   if (kCaptureShotCrops <= 0) {
     return null;

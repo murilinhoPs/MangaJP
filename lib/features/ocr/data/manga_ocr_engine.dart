@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../domain/ocr_engine.dart';
+import '../domain/ocr_exception.dart';
 import '../domain/ocr_result.dart';
 
 /// manga-ocr (kha-white) — M0.3 bake-off id `manga_ocr`, Q-B1 working default.
@@ -29,22 +30,18 @@ class MangaOcrEngine implements OcrEngine {
     final httpClient = client ?? http.Client();
     try {
       final response = await httpClient
-          .post(
-            uri,
-            headers: {'Content-Type': 'image/png'},
-            body: image,
-          )
+          .post(uri, headers: {'Content-Type': 'image/png'}, body: image)
           .timeout(const Duration(seconds: 120));
       if (response.statusCode != 200) {
-        throw StateError(
+        debugPrint(
           'manga-ocr sidecar HTTP ${response.statusCode}: ${response.body}',
         );
+        throw const MangaOcrUnavailable();
       }
       final decoded = jsonDecode(response.body);
       if (decoded is! Map) {
-        throw const FormatException(
-          'manga-ocr sidecar returned non-object JSON',
-        );
+        debugPrint('manga-ocr sidecar returned non-object JSON');
+        throw const MangaOcrUnavailable();
       }
       final text = '${decoded['text'] ?? decoded['full_text'] ?? ''}';
       return OcrResult(
@@ -52,15 +49,11 @@ class MangaOcrEngine implements OcrEngine {
         blocks: [if (text.isNotEmpty) OcrBlock(text: text)],
         engineId: engineId,
       );
-    } on StateError {
-      rethrow;
-    } on FormatException {
+    } on MangaOcrUnavailable {
       rethrow;
     } catch (error) {
-      throw StateError(
-        'manga-ocr sidecar is not reachable at $baseUrl. '
-        'Start tools/manga_ocr_sidecar/serve.py. ($error)',
-      );
+      debugPrint('manga-ocr sidecar is not reachable at $baseUrl: $error');
+      throw const MangaOcrUnavailable();
     } finally {
       if (client == null) {
         httpClient.close();

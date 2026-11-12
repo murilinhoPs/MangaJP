@@ -14,7 +14,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/hashing.dart';
 import '../../../core/utils/ids.dart';
 import '../../../core/widgets/crop_number_badge.dart';
+import '../../ocr/data/cloud_vision_shot.dart';
 import '../../ocr/data/ocr_repository.dart';
+import '../../ocr/domain/cloud_vision_exception.dart';
+import '../../ocr/domain/ocr_exception.dart';
 import '../../ocr/domain/ocr_result.dart';
 import '../../pages/data/pages_repository.dart';
 import '../data/image_source_service.dart';
@@ -153,6 +156,13 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         _pageId = null;
         _error = null;
       });
+      if (kCaptureShotAutoConfirm) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _confirm();
+          }
+        });
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -298,13 +308,32 @@ class _CapturePageState extends ConsumerState<CapturePage> {
         _busy = false;
       });
       _showFallbacks(fallbacks);
-    } catch (error) {
+    } on CloudVisionException catch (error) {
+      debugPrint('M1.1 OCR failed: $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _busy = false;
-        _error = '$error';
+        _error = error.testMessage;
+      });
+    } on OcrException catch (error) {
+      debugPrint('M1.1 OCR failed: $error');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _error = error.userMessage;
+      });
+    } catch (error, stack) {
+      debugPrint('M1.1 OCR failed: $error\n$stack');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _error = const OcrUnavailable().userMessage;
       });
     }
   }
@@ -317,7 +346,14 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     if (messenger == null) {
       return;
     }
-    messenger.showSnackBar(SnackBar(content: Text(fallbacks.join('\n'))));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(fallbacks.join('\n')),
+        duration: kCloudVisionShotFallbackNotice
+            ? const Duration(minutes: 5)
+            : const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
@@ -407,7 +443,15 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                         ),
                       if (_error != null)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            8 +
+                                (wide
+                                    ? ShellLayout.commandBarPaddingOf(context)
+                                    : 0),
+                          ),
                           child: Text(
                             _error!,
                             style: TextStyle(
