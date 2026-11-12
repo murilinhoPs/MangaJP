@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
+import 'package:manga_jp/features/flashcards/data/flashcards_repository.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
+import 'package:manga_jp/features/flashcards/domain/suspend_reason.dart';
 import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/review/domain/study_day.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
@@ -177,11 +179,58 @@ void main() {
       dueAt: DateTime.utc(2026, 9, 1),
       suspendReason: WordState.ignored.name,
     );
+    await _seedPair(
+      env.db,
+      id: 'user',
+      lemma: '休',
+      phase: CardPhase.review,
+      dueAt: DateTime.utc(2026, 9, 1),
+      suspendReason: SuspendReason.user.dbValue,
+    );
 
     final queue = await env.review.dueQueue();
     expect(queue, hasLength(1));
     expect(queue.single.cardId, 'card-open');
   });
+
+  test(
+    'user-suspended card leaves the due queue; reactivate restores SM-2',
+    () async {
+      final env = await _openRepo(now);
+      addTearDown(env.db.close);
+      await _seedPair(
+        env.db,
+        id: 'eat',
+        lemma: '食べる',
+        reading: 'たべる',
+        phase: CardPhase.review,
+        dueAt: DateTime.utc(2026, 10, 1),
+      );
+      await env.db.cardsDao.writeSrs(
+        'card-eat',
+        const UserCardSrsCompanion(
+          easeFactor: Value(2.36),
+          intervalDays: Value(14),
+          repetitions: Value(3),
+        ),
+      );
+      final before = (await env.db.select(env.db.userCardSrs).get()).single;
+      final cards = FlashcardsRepository(env.db);
+
+      expect(await env.review.dueQueue(), hasLength(1));
+      await cards.suspendByUser('eat');
+      expect(await env.review.dueQueue(), isEmpty);
+
+      await cards.reactivate('eat');
+      final queue = await env.review.dueQueue();
+      expect(queue, hasLength(1));
+      expect(queue.single.srs.easeFactor, before.easeFactor);
+      expect(queue.single.srs.intervalDays, before.intervalDays);
+      expect(queue.single.srs.repetitions, before.repetitions);
+      expect(queue.single.srs.dueAt, before.dueAt);
+      expect(queue.single.srs.phase.name, before.phase);
+    },
+  );
 
   test(
     'each rating writes rating, quality, engine_id and is_drill=0',

@@ -6,6 +6,8 @@ import 'package:manga_jp/core/srs/card_srs_state.dart';
 import 'package:manga_jp/core/srs/sm2_jr.dart';
 import 'package:manga_jp/features/flashcards/data/flashcards_repository.dart';
 import 'package:manga_jp/features/flashcards/domain/flashcard.dart';
+import 'package:manga_jp/features/flashcards/domain/suspend_reason.dart';
+import 'package:manga_jp/features/review/data/review_repository.dart';
 import 'package:manga_jp/features/words/domain/word_state.dart';
 
 void main() {
@@ -528,6 +530,246 @@ void main() {
       'card-drink',
     );
     expect(await _tableNames(env.db), contains('review_logs'));
+  });
+
+  test(
+    'suspendByUser sets user and keeps SRS, logs, word_states, and the card',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+      );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: seeded.cardId,
+              ratedAt: DateTime.utc(2026, 3, 1),
+              rating: 3,
+              quality: 4,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+      final tablesBefore = await _tableNames(env.db);
+
+      await env.cards.suspendByUser('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.learning.name);
+      expect(state.updatedAt, seeded.stateUpdatedAt);
+
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(cards.single.createdAt, seeded.createdAt);
+      expect(cards.single.suspendReason, SuspendReason.user.dbValue);
+      expect(cards.single.suspendReason, isNot(WordState.known.name));
+      expect(cards.single.suspendReason, isNot(WordState.ignored.name));
+      expect(await _srsSnapshot(env.db), seeded.srs);
+      expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(1));
+      expect(
+        (await env.db.select(env.db.userReviewLogs).get()).single.id,
+        'log-eat',
+      );
+      expect(await _tableNames(env.db), tablesBefore);
+    },
+  );
+
+  test('second suspendByUser is a no-op on state, SRS, logs, and the card', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.learning);
+    await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+    await env.cards.suspendByUser('eat');
+    final afterFirst = await _studySnapshot(env.db);
+
+    await env.cards.suspendByUser('eat');
+    await env.cards.suspendByUser('eat');
+
+    expect(await _studySnapshot(env.db), afterFirst);
+    expect(afterFirst.suspendReason, SuspendReason.user.dbValue);
+  });
+
+  test('suspendByUser without a card is a no-op', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.saved);
+    final before = await _studySnapshot(env.db);
+
+    await env.cards.suspendByUser('eat');
+
+    expect(await _studySnapshot(env.db), before);
+    expect(await env.db.select(env.db.userCards).get(), isEmpty);
+  });
+
+  test(
+    'reactivate clears user suspend, sets learning, and keeps SRS and logs',
+    () async {
+      final env = await _openRepo();
+      addTearDown(env.db.close);
+      await _seedWord(env.db, id: 'eat', state: WordState.learning);
+      final seeded = await _seedCard(
+        env.db,
+        wordId: 'eat',
+        srs: _progressedSrs,
+        suspendReason: SuspendReason.user.dbValue,
+      );
+      await env.db
+          .into(env.db.userReviewLogs)
+          .insert(
+            UserReviewLogsCompanion.insert(
+              id: 'log-eat',
+              cardId: seeded.cardId,
+              ratedAt: DateTime.utc(2026, 3, 1),
+              rating: 3,
+              quality: 4,
+              engineId: kSm2JrEngineId,
+              isDrill: 0,
+            ),
+          );
+
+      await env.cards.reactivate('eat');
+
+      final state = (await env.db.select(env.db.userWordStates).get()).single;
+      expect(state.state, WordState.learning.name);
+      final cards = await env.db.select(env.db.userCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.id, seeded.cardId);
+      expect(cards.single.suspendReason, isNull);
+      expect(await _srsSnapshot(env.db), seeded.srs);
+      expect(await env.db.select(env.db.userReviewLogs).get(), hasLength(1));
+      expect(
+        (await env.db.select(env.db.userReviewLogs).get()).single.id,
+        'log-eat',
+      );
+    },
+  );
+
+  test('reactivate from known sets learning without resetting SRS', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.known);
+    final seeded = await _seedCard(
+      env.db,
+      wordId: 'eat',
+      srs: _progressedSrs,
+      suspendReason: WordState.known.name,
+    );
+
+    await env.cards.reactivate('eat');
+
+    expect(
+      (await env.db.select(env.db.userWordStates).get()).single.state,
+      WordState.learning.name,
+    );
+    expect(
+      (await env.db.select(env.db.userCards).get()).single.suspendReason,
+      isNull,
+    );
+    expect(await _srsSnapshot(env.db), seeded.srs);
+    expect(await env.db.select(env.db.userCards).get(), hasLength(1));
+    expect(await env.db.select(env.db.userCardSrs).get(), hasLength(1));
+  });
+
+  test('user-suspended due card leaves the queue; reactivate restores SRS', () async {
+    final now = DateTime.utc(2026, 10, 5, 12);
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.learning);
+    final seeded = await _seedCard(
+      env.db,
+      wordId: 'eat',
+      srs: (
+        easeFactor: 2.36,
+        intervalDays: 14.0,
+        repetitions: 3,
+        dueAt: now.subtract(const Duration(hours: 1)),
+        phase: 'review',
+        engineId: kSm2JrEngineId,
+      ),
+    );
+    final review = ReviewRepository(env.db, clock: () => now);
+
+    expect(await review.dueQueue(), hasLength(1));
+    await env.cards.suspendByUser('eat');
+    expect(await review.dueQueue(), isEmpty);
+    expect(await _srsSnapshot(env.db), seeded.srs);
+
+    await env.cards.reactivate('eat');
+    final queue = await review.dueQueue();
+    expect(queue, hasLength(1));
+    expect(queue.single.cardId, seeded.cardId);
+    expect(queue.single.srs.easeFactor, seeded.srs.easeFactor);
+    expect(queue.single.srs.intervalDays, seeded.srs.intervalDays);
+    expect(queue.single.srs.repetitions, seeded.srs.repetitions);
+    expect(queue.single.srs.dueAt, seeded.srs.dueAt);
+    expect(queue.single.srs.phase.name, seeded.srs.phase);
+    expect(await _srsSnapshot(env.db), seeded.srs);
+  });
+
+  test('listDeck keeps user-suspended cards and lists newest first', () async {
+    final env = await _openRepo();
+    addTearDown(env.db.close);
+    await _seedWord(env.db, id: 'eat', state: WordState.learning);
+    await _seedCard(env.db, wordId: 'eat', srs: _progressedSrs);
+    await env.db
+        .into(env.db.userWords)
+        .insert(
+          UserWordsCompanion.insert(
+            id: 'drink',
+            seq: 1358300,
+            lemma: '飲む',
+            reading: 'のむ',
+            createdAt: DateTime.utc(2026, 1, 2),
+          ),
+        );
+    await env.db
+        .into(env.db.userWordStates)
+        .insert(
+          UserWordStatesCompanion.insert(
+            wordId: 'drink',
+            state: WordState.learning.name,
+            updatedAt: DateTime.utc(2026, 1, 2),
+          ),
+        );
+    await env.db
+        .into(env.db.userCards)
+        .insert(
+          UserCardsCompanion.insert(
+            id: 'card-drink',
+            wordId: 'drink',
+            kind: FlashcardKind.vocab.name,
+            createdAt: DateTime.utc(2026, 3, 1),
+          ),
+        );
+    await env.db
+        .into(env.db.userCardSrs)
+        .insert(
+          UserCardSrsCompanion.insert(
+            cardId: 'card-drink',
+            easeFactor: 2.5,
+            intervalDays: 7,
+            repetitions: 2,
+            dueAt: DateTime.utc(2026, 7, 1),
+            phase: 'review',
+            engineId: kSm2JrEngineId,
+          ),
+        );
+
+    await env.cards.suspendByUser('eat');
+    final listed = await env.cards.listDeck();
+    expect(listed, hasLength(2));
+    expect(listed.first.wordId, 'drink');
+    expect(listed.last.wordId, 'eat');
+    expect(listed.last.suspendReason, SuspendReason.user.dbValue);
+    expect(listed.last.canReactivate, isTrue);
+    expect(listed.first.canSuspend, isTrue);
   });
 }
 

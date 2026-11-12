@@ -60,7 +60,7 @@ Share / import image → crop bubble → OCR (manga-ocr) → page text
 
 ## Project status
 
-The core study loop (M1) is implemented end to end. Still stubs: the deck screen (`/deck`) and settings (`/settings`). `/pages` lists the full capture history (title, date; row is a title placeholder, not an image thumb); Home **Capturas recentes** still shows up to 6. OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are learned through the words that contain them: the lookup sheet, the Caderno, the word detail, and the review card all show the word in its kanji form (when it has one) together with its kana reading and meaning. Per-character KANJIDIC2 data is on the kanji sheet and the Caderno **Kanji** tab.
+The core study loop (M1) is implemented end to end. Still a stub: settings (`/settings`), aside from Cloud Vision. `/deck` lists vocab cards and can suspend / reactivate them (F23). `/pages` lists the full capture history (title, date; row is a title placeholder, not an image thumb); Home **Capturas recentes** still shows up to 6. OCR requires the local Python sidecar to be running; there is no on-device OCR yet. Kanji are learned through the words that contain them: the lookup sheet, the Caderno, the word detail, and the review card all show the word in its kanji form (when it has one) together with its kana reading and meaning. Per-character KANJIDIC2 data is on the kanji sheet and the Caderno **Kanji** tab.
 
 See [Milestone history](#milestone-history) for the detailed behavior of each step.
 
