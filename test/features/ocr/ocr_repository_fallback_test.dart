@@ -37,7 +37,10 @@ void main() {
   });
 
   test('401 falls back to manga-ocr and keeps the key', () async {
-    final store = MemoryCloudVisionStore(storedKey: _fakeKey, enabledFlag: true);
+    final store = MemoryCloudVisionStore(
+      storedKey: _fakeKey,
+      enabledFlag: true,
+    );
     final repo = OcrRepository(
       const FakeOcrEngine(text: 'manga', id: OcrEngineIds.mangaOcr),
       cloud: CloudVisionOcrEngine(
@@ -56,8 +59,34 @@ void main() {
     expect(await store.isEnabled, isTrue);
   });
 
+  test('400 API_KEY_INVALID falls back like 401 and keeps the key', () async {
+    final store = MemoryCloudVisionStore(
+      storedKey: _fakeKey,
+      enabledFlag: true,
+    );
+    final repo = OcrRepository(
+      const FakeOcrEngine(text: 'manga', id: OcrEngineIds.mangaOcr),
+      cloud: CloudVisionOcrEngine(
+        readApiKey: store.readApiKey,
+        client: ScriptedHttpClient((request) async {
+          return jsonHttpResponse(cloudVisionApiKeyInvalidError(), 400);
+        }),
+      ),
+      store: store,
+    );
+    final outcome = await repo.recognizeCrop(fixturePng());
+    expect(outcome.result.engineId, OcrEngineIds.mangaOcr);
+    expect(outcome.result.fullText, 'manga');
+    expect(outcome.fallback, isA<CloudVisionInvalidApiKey>());
+    expect(await store.readApiKey(), _fakeKey);
+    expect(await store.isEnabled, isTrue);
+  });
+
   test('success uses Cloud Vision engineId', () async {
-    final store = MemoryCloudVisionStore(storedKey: _fakeKey, enabledFlag: true);
+    final store = MemoryCloudVisionStore(
+      storedKey: _fakeKey,
+      enabledFlag: true,
+    );
     final repo = OcrRepository(
       const FakeOcrEngine(text: 'manga', id: OcrEngineIds.mangaOcr),
       cloud: CloudVisionOcrEngine(
