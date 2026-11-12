@@ -1,13 +1,9 @@
-head_sha 9b33fe0413b02493a7ac59ac7adcb35d0755280b
-head_sha7 9b33fe0
+head: 9b33fe0413b02493a7ac59ac7adcb35d0755280b
 
-ajustes_testar_chave_valid.png             390x844  34053 bytes
-  sha256 b7f4e78129d905b322ece99e34a50a65fb3c82bda80ed80d819e941c7d77fe15
-ajustes_testar_chave_invalid.png           390x844  34175 bytes
-  sha256 a9300e5d073c03616b8fe3e2763cd56de87795e2a0557cf61e50a9020957164e
-capture_invalid_key_no_sidecar.png         390x844  52880 bytes
-  sha256 ac6e7ffaac0fb9457f9136f9250b62b106a6be53a14bed59ee9e548d4b7bc58d
+ajustes_testar_chave_valid.png 390x844 sha256:b8010812326ef915b0978d16506f35ab360c873bf97df2a32ed86df61a0edc2c
+ajustes_testar_chave_invalid.png 390x844 sha256:cf541b8b448be9149e23c70b2097de1d96208e52bec51c0e51cca12e026eb893
+capture_invalid_key_no_sidecar.png 390x844 sha256:37282099c9ac39431ebce9fbdff69a703a449002bf5902577b7047ffc38046f0
 
-Linux desktop window resized; app client area only 390x844 (no GTK title bar).
-Key field masked (blur + solid cover). No API key in files.
-capture_invalid_key_no_sidecar.png: Cloud Vision invalid key fell through to manga-ocr; sidecar not running on this VM.
+fonte: janela Linux 390x844, só a área do app (sem title bar GTK).
+Campo da chave borrado + coberto. Sem a chave em arquivo.
+capture_invalid_key_no_sidecar.png: Vision com chave inválida caiu no manga-ocr; sidecar ausente nesta VM.
