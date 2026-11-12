@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:manga_jp/features/ocr/data/cloud_vision_ocr_engine.dart';
 import 'package:manga_jp/features/ocr/data/cloud_vision_response.dart';
+import 'package:manga_jp/features/ocr/data/cloud_vision_store.dart';
 import 'package:manga_jp/features/ocr/domain/cloud_vision_exception.dart';
+import 'package:manga_jp/features/ocr/domain/cloud_vision_labels.dart';
 import 'package:manga_jp/features/ocr/domain/ocr_engine_ids.dart';
 
 import '../capture/fixture_png.dart';
@@ -95,6 +97,28 @@ void main() {
       engine.recognize(fixturePng()),
       throwsA(isA<CloudVisionMissingApiKey>()),
     );
+    expect(sent, isFalse);
+    expect(client.requests, isEmpty);
+  });
+
+  test('slow keyring is typed, not a missing key, and does not HTTP', () async {
+    var sent = false;
+    final client = ScriptedHttpClient((request) async {
+      sent = true;
+      return http.Response('{}', 200);
+    });
+    final engine = CloudVisionOcrEngine(
+      readApiKey: () async => throw const KeyringSlowException(),
+      client: client,
+    );
+    try {
+      await engine.recognize(fixturePng());
+      fail('expected CloudVisionKeyringSlow');
+    } on CloudVisionKeyringSlow catch (error) {
+      expect(error.testMessage, CloudVisionLabels.keyringSlow);
+      expect(error.fallsBackToLocal, isFalse);
+      expect(error, isNot(isA<CloudVisionMissingApiKey>()));
+    }
     expect(sent, isFalse);
     expect(client.requests, isEmpty);
   });

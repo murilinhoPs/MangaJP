@@ -184,11 +184,102 @@ void main() {
 
       expect(find.byKey(CloudVisionKeys.keyringWarning), findsOneWidget);
       expect(find.text(CloudVisionLabels.keyringUnavailable), findsOneWidget);
+      expect(find.text(CloudVisionLabels.keyringSlow), findsNothing);
       expect(
         tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
         isFalse,
       );
       expect(_switch(tester).onChanged, isNull);
+    });
+
+    testWidgets(
+      'keyring slow keeps the toggle and shows its own copy at $label',
+      (tester) async {
+        final store = MemoryCloudVisionStore(
+          storedKey: _fakeKey,
+          enabledFlag: true,
+          privacyAcceptedFlag: true,
+          keyringSlow: true,
+        );
+        await _openSettings(tester, store: store, size: size);
+
+        expect(find.byKey(CloudVisionKeys.keyringSlowWarning), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringSlow), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringUnavailable), findsNothing);
+        expect(
+          tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
+          isTrue,
+        );
+        expect(_switch(tester).value, isTrue);
+        expect(_switch(tester).onChanged, isNotNull);
+        expect(await store.isEnabled, isTrue);
+        await expectLater(
+          store.readApiKey(),
+          throwsA(isA<KeyringSlowException>()),
+        );
+        expect(store.storedKey, _fakeKey);
+        expect(find.text(_fakeKey), findsNothing);
+      },
+    );
+
+    testWidgets('Testar chave when keyring is slow shows slow copy at $label', (
+      tester,
+    ) async {
+      final store = MemoryCloudVisionStore(
+        storedKey: _fakeKey,
+        enabledFlag: true,
+        privacyAcceptedFlag: true,
+        keyringSlow: true,
+      );
+      await _openSettings(tester, store: store, size: size);
+
+      await tester.ensureVisible(find.byKey(CloudVisionKeys.testKey));
+      await tester.tap(find.byKey(CloudVisionKeys.testKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text(CloudVisionLabels.keyringSlow),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(CloudVisionLabels.needKeyFirst), findsNothing);
+      expect(find.text('Cole uma chave primeiro.'), findsNothing);
+      expect(find.text('Sem chave. Recorte lido com manga-ocr.'), findsNothing);
+      expect(store.storedKey, _fakeKey);
+      expect(await store.isEnabled, isTrue);
+      expect(_switch(tester).value, isTrue);
+      expect(find.text(_fakeKey), findsNothing);
+    });
+
+    testWidgets('Remover chave when keyring is slow keeps the key at $label', (
+      tester,
+    ) async {
+      final store = MemoryCloudVisionStore(
+        storedKey: _fakeKey,
+        enabledFlag: true,
+        privacyAcceptedFlag: true,
+        keyringSlow: true,
+      );
+      await _openSettings(tester, store: store, size: size);
+
+      await tester.ensureVisible(find.byKey(CloudVisionKeys.removeKey));
+      await tester.tap(find.byKey(CloudVisionKeys.removeKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text(CloudVisionLabels.keyringSlow),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(CloudVisionLabels.keyRemoved), findsNothing);
+      expect(store.storedKey, _fakeKey);
+      expect(await store.isEnabled, isTrue);
+      expect(_switch(tester).value, isTrue);
+      expect(find.text(_fakeKey), findsNothing);
     });
   }
 }

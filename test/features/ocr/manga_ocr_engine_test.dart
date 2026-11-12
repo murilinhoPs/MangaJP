@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/features/ocr/data/manga_ocr_engine.dart';
+import 'package:manga_jp/features/ocr/domain/ocr_exception.dart';
 
 import '../capture/fixture_png.dart';
 
@@ -43,6 +44,36 @@ void main() {
     await server.close(force: true);
 
     final engine = MangaOcrEngine(baseUrl: 'http://127.0.0.1:$port');
-    expect(() => engine.recognize(fixturePng()), throwsA(isA<StateError>()));
+    try {
+      await engine.recognize(fixturePng());
+      fail('expected MangaOcrUnavailable');
+    } on MangaOcrUnavailable catch (error) {
+      expect(error.userMessage, 'OCR indisponível: manga-ocr não respondeu.');
+      expect('$error', error.userMessage);
+      expect('$error', isNot(contains('Bad state')));
+      expect('$error', isNot(contains('SocketException')));
+      expect('$error', isNot(contains('errno')));
+      expect('$error', isNot(contains('$port')));
+    }
+  });
+
+  test('MangaOcrEngine HTTP error is typed, not the sidecar body', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      request.response
+        ..statusCode = HttpStatus.internalServerError
+        ..write('traceback: boom');
+      await request.response.close();
+    });
+
+    final engine = MangaOcrEngine(baseUrl: 'http://127.0.0.1:${server.port}');
+    try {
+      await engine.recognize(fixturePng());
+      fail('expected MangaOcrUnavailable');
+    } on MangaOcrUnavailable catch (error) {
+      expect('$error', isNot(contains('traceback')));
+      expect('$error', isNot(contains('HTTP 500')));
+    }
   });
 }

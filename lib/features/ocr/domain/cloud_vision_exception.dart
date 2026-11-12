@@ -1,3 +1,5 @@
+import 'cloud_vision_labels.dart';
+
 /// Typed Cloud Vision failures. Messages never include the API key.
 sealed class CloudVisionException implements Exception {
   const CloudVisionException({
@@ -15,6 +17,18 @@ sealed class CloudVisionException implements Exception {
 
   @override
   String toString() => testMessage;
+}
+
+/// Secure storage timed out (400 ms). The key is not treated as missing.
+final class CloudVisionKeyringSlow extends CloudVisionException {
+  const CloudVisionKeyringSlow()
+    : super(
+        testMessage: CloudVisionLabels.keyringSlow,
+        fallbackMessage: CloudVisionLabels.keyringSlow,
+      );
+
+  @override
+  bool get fallsBackToLocal => false;
 }
 
 final class CloudVisionMissingApiKey extends CloudVisionException {

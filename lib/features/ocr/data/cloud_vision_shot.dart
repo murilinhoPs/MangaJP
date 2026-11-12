@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/database/app_database.dart';
 import 'cloud_vision_store.dart';
@@ -17,16 +18,27 @@ MemoryCloudVisionStore? cloudVisionShotStore({bool release = kReleaseMode}) {
   }
   return switch (kCloudVisionShot) {
     'idle' => MemoryCloudVisionStore(),
-    'masked' || 'privacy' || 'error' => MemoryCloudVisionStore(
-      storedKey: kCloudVisionShotFakeKey,
-    ),
+    'masked' ||
+    'privacy' ||
+    'error' => MemoryCloudVisionStore(storedKey: kCloudVisionShotFakeKey),
     'on' => MemoryCloudVisionStore(
       storedKey: kCloudVisionShotFakeKey,
       enabledFlag: true,
       privacyAcceptedFlag: true,
     ),
     'nokeyring' => MemoryCloudVisionStore(keyringAvailable: false),
+    'slow' => MemoryCloudVisionStore(
+      storedKey: kCloudVisionShotFakeKey,
+      enabledFlag: true,
+      privacyAcceptedFlag: true,
+      keyringSlow: true,
+    ),
     'mixed' => MemoryCloudVisionStore(
+      storedKey: kCloudVisionShotFakeKey,
+      enabledFlag: true,
+      privacyAcceptedFlag: true,
+    ),
+    'fallback' || 'bothfail' => MemoryCloudVisionStore(
       storedKey: kCloudVisionShotFakeKey,
       enabledFlag: true,
       privacyAcceptedFlag: true,
@@ -40,6 +52,35 @@ bool get kCloudVisionShotPrivacyDialog =>
 
 bool get kCloudVisionShotErrorBanner =>
     !kReleaseMode && kCloudVisionShot == 'error';
+
+bool get kCloudVisionShotFallbackNotice =>
+    !kReleaseMode && kCloudVisionShot == 'fallback';
+
+/// Debug-only fake Vision HTTP. `fallback` / `bothfail` answer 401. No real key.
+http.Client? cloudVisionShotHttpClient({bool release = kReleaseMode}) {
+  if (release) {
+    return null;
+  }
+  return switch (kCloudVisionShot) {
+    'fallback' || 'bothfail' => _FixedStatusClient(401),
+    _ => null,
+  };
+}
+
+final class _FixedStatusClient extends http.BaseClient {
+  _FixedStatusClient(this.status);
+
+  final int status;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    return http.StreamedResponse(
+      const Stream<List<int>>.empty(),
+      status,
+      request: request,
+    );
+  }
+}
 
 /// Seeds `/pages/cv-mixed` with one manga-ocr crop and one Cloud Vision crop.
 Future<void> seedCloudVisionShotIfRequested(AppDatabase db) async {

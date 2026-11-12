@@ -35,7 +35,7 @@ final class CloudVisionSettingsProvider
 }
 
 String _$cloudVisionSettingsHash() =>
-    r'a65fb2b4de5c0a1f2c022871eb6d982805e68569';
+    r'4118c7cf91d69cb397a4085100f44d2e46d3b6e1';
 
 abstract class _$CloudVisionSettings
     extends $AsyncNotifier<CloudVisionSettingsState> {

@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../data/cloud_vision_store.dart';
 import '../data/ocr_repository.dart';
 import '../domain/cloud_vision_exception.dart';
 
@@ -7,16 +8,22 @@ part 'cloud_vision_settings_controller.g.dart';
 
 class CloudVisionSettingsState {
   const CloudVisionSettingsState({
-    required this.keyringAvailable,
+    required this.keyringAvailability,
     required this.hasKey,
     required this.enabled,
     required this.privacyAccepted,
   });
 
-  final bool keyringAvailable;
+  final KeyringAvailability keyringAvailability;
   final bool hasKey;
   final bool enabled;
   final bool privacyAccepted;
+
+  /// Field and toggle stay usable unless the plugin is missing / errored.
+  bool get keyringAvailable =>
+      keyringAvailability != KeyringAvailability.unavailable;
+
+  bool get keyringSlow => keyringAvailability == KeyringAvailability.slow;
 }
 
 @Riverpod(keepAlive: true)
@@ -29,14 +36,51 @@ class CloudVisionSettings extends _$CloudVisionSettings {
 
   Future<CloudVisionSettingsState> _load() async {
     final store = ref.read(cloudVisionStoreProvider);
-    final key = await store.readApiKey();
+    final availability = await store.keyringAvailability;
+
+    if (availability == KeyringAvailability.unavailable) {
+      if (await store.isEnabled) {
+        await store.setEnabled(false);
+      }
+      return CloudVisionSettingsState(
+        keyringAvailability: availability,
+        hasKey: false,
+        enabled: false,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    }
+
+    if (availability == KeyringAvailability.slow) {
+      final enabled = await store.isEnabled;
+      return CloudVisionSettingsState(
+        keyringAvailability: availability,
+        // A slow read does not mean the key is gone. If the toggle was on,
+        // there was a key; keep that so the UI does not blank the field.
+        hasKey: enabled,
+        enabled: enabled,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    }
+
+    late final String? key;
+    try {
+      key = await store.readApiKey();
+    } on KeyringSlowException {
+      final enabled = await store.isEnabled;
+      return CloudVisionSettingsState(
+        keyringAvailability: KeyringAvailability.slow,
+        hasKey: enabled,
+        enabled: enabled,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    }
     final hasKey = key != null && key.isNotEmpty;
     final enabled = hasKey && await store.isEnabled;
     if (!hasKey && await store.isEnabled) {
       await store.setEnabled(false);
     }
     return CloudVisionSettingsState(
-      keyringAvailable: await store.isKeyringAvailable,
+      keyringAvailability: availability,
       hasKey: hasKey,
       enabled: enabled,
       privacyAccepted: await store.privacyAccepted,
@@ -48,13 +92,29 @@ class CloudVisionSettings extends _$CloudVisionSettings {
     if (trimmed.isEmpty) {
       return;
     }
-    await ref.read(cloudVisionStoreProvider).writeApiKey(trimmed);
+    try {
+      await ref.read(cloudVisionStoreProvider).writeApiKey(trimmed);
+    } on KeyringSlowException {
+      state = AsyncData(await _load());
+      rethrow;
+    } on KeyringUnavailableException {
+      state = AsyncData(await _load());
+      rethrow;
+    }
     state = AsyncData(await _load());
   }
 
   Future<void> removeKey() async {
     final store = ref.read(cloudVisionStoreProvider);
-    await store.deleteApiKey();
+    try {
+      await store.deleteApiKey();
+    } on KeyringSlowException {
+      state = AsyncData(await _load());
+      rethrow;
+    } on KeyringUnavailableException {
+      state = AsyncData(await _load());
+      rethrow;
+    }
     await store.setEnabled(false);
     state = AsyncData(await _load());
   }

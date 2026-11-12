@@ -146,7 +146,7 @@ final class CloudVisionOcrEngineProvider
 }
 
 String _$cloudVisionOcrEngineHash() =>
-    r'1dfd8ab5cedc1f0c7e2e503f51020c84c838db0c';
+    r'3d00fdf2d1d27e7e5f1de31dbd528e5326472d80';
 
 @ProviderFor(ocrRepository)
 final ocrRepositoryProvider = OcrRepositoryProvider._();
