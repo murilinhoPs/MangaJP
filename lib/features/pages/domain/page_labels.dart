@@ -8,6 +8,7 @@ abstract final class PageLabels {
   static const verTodas = 'Ver todas';
   static const watermark = '頁';
   static const voltar = 'Voltar';
+  static const fechar = 'Fechar';
   static const editar = 'Editar';
   static const adicionar = 'Captura';
   static const nenhumOcr = 'Nenhum texto OCR nesta página.';

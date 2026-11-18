@@ -214,6 +214,8 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       ),
     );
 
+    final overlaySheetOpen =
+        !wide && _isOverlayPage && _session != null && hasImage;
     final shortcuts = <ShortcutActivator, Intent>{
       if (hasImage)
         const SingleActivator(LogicalKeyboardKey.keyB):
@@ -223,10 +225,10 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         const SingleActivator(LogicalKeyboardKey.tab, shift: true):
             const _PrevBoxIntent(),
         const SingleActivator(LogicalKeyboardKey.enter): const _OpenBoxIntent(),
-        if (_selectedBoxId != null)
-          const SingleActivator(LogicalKeyboardKey.escape):
-              const _ClearBoxIntent(),
       },
+      if (overlaySheetOpen || (wide && _selectedBoxId != null))
+        const SingleActivator(LogicalKeyboardKey.escape):
+            const _ClearBoxIntent(),
     };
 
     return ShellBinder(
@@ -268,103 +270,125 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
           },
           child: Focus(
             autofocus: true,
-            child: Scaffold(
-              backgroundColor: context.tokens.bg,
-              appBar: AppBar(
-                leading: BackButton(
-                  key: PageDetailKeys.back,
-                  onPressed: () => popTaskOrHome(context),
+            child: PopScope(
+              canPop: !overlaySheetOpen,
+              onPopInvokedWithResult: (didPop, _) {
+                if (didPop) {
+                  return;
+                }
+                _clearBox();
+              },
+              child: Scaffold(
+                backgroundColor: context.tokens.bg,
+                appBar: AppBar(
+                  leading: BackButton(
+                    key: PageDetailKeys.back,
+                    onPressed: () => popTaskOrHome(context),
+                  ),
                 ),
-              ),
-              body: Stack(
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: wide
-                            ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(child: body),
-                                  _LookupDrawer(
+                body: Column(
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final maxSheet = (constraints.maxHeight - 96)
+                              .clamp(0.0, double.infinity);
+                          final sheetHeight = overlaySheetOpen
+                              ? lookupSheetHeightOf(
+                                  context,
+                                ).clamp(0.0, maxSheet)
+                              : 0.0;
+                          return Column(
+                            children: [
+                              Expanded(
+                                child: wide
+                                    ? Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(child: body),
+                                          _LookupDrawer(
+                                            loading: _lookupLoading,
+                                            error: _lookupError,
+                                            session: _session,
+                                            originPageId: widget.pageId,
+                                            onAction: _applyLookup,
+                                            onCustomAction: _applyCustomLookup,
+                                          ),
+                                        ],
+                                      )
+                                    : body,
+                              ),
+                              if (overlaySheetOpen)
+                                _OverlayLookupPanel(
+                                  height: sheetHeight,
+                                  onClose: _clearBox,
+                                  child: _LookupDrawer(
                                     loading: _lookupLoading,
                                     error: _lookupError,
                                     session: _session,
                                     originPageId: widget.pageId,
                                     onAction: _applyLookup,
                                     onCustomAction: _applyCustomLookup,
-                                  ),
-                                ],
-                              )
-                            : body,
-                      ),
-                      if (!wide)
-                        TaskDock(
-                          meta: widget.pageId,
-                          metaHint: hint,
-                          trailing: [
-                            if (hasImage)
-                              DockIconButton(
-                                key: PageDetailKeys.overlayToggle,
-                                icon: Icons.crop_free,
-                                tooltip: overlayOn
-                                    ? PageLabels.overlayOn
-                                    : PageLabels.overlayOff,
-                                toggled: overlayOn,
-                                onPressed: _toggleOverlay,
-                              ),
-                            DockIconButton(
-                              key: PageDetailKeys.edit,
-                              icon: Icons.edit_outlined,
-                              tooltip: PageLabels.editar,
-                              enabled: items.isNotEmpty,
-                              onPressed: () => _editOcr(items),
-                            ),
-                            DockIconButton(
-                              key: PageDetailKeys.add,
-                              icon: Icons.add,
-                              tooltip: PageLabels.adicionar,
-                              onPressed: () =>
-                                  const CaptureRoute().push<void>(context),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                  if (!wide && _session != null && _imageSize != null)
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SizedBox(
-                        height:
-                            MediaQuery.sizeOf(context).height *
-                            PageLayout.lookupSheetFraction,
-                        width: double.infinity,
-                        child: Material(
-                          color: AppColors.surface,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(AppRadius.sheetReview),
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: _LookupDrawer(
-                            loading: _lookupLoading,
-                            error: _lookupError,
-                            session: _session,
-                            originPageId: widget.pageId,
-                            onAction: _applyLookup,
-                            onCustomAction: _applyCustomLookup,
-                          ).sessionChild(context),
-                        ),
+                                  ).sessionChild(context),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ),
-                ],
+                    if (!wide)
+                      TaskDock(
+                        meta: widget.pageId,
+                        metaHint: hint,
+                        trailing: [
+                          if (hasImage)
+                            DockIconButton(
+                              key: PageDetailKeys.overlayToggle,
+                              icon: Icons.crop_free,
+                              tooltip: overlayOn
+                                  ? PageLabels.overlayOn
+                                  : PageLabels.overlayOff,
+                              toggled: overlayOn,
+                              onPressed: _toggleOverlay,
+                            ),
+                          DockIconButton(
+                            key: PageDetailKeys.edit,
+                            icon: Icons.edit_outlined,
+                            tooltip: PageLabels.editar,
+                            enabled: items.isNotEmpty,
+                            onPressed: () => _editOcr(items),
+                          ),
+                          DockIconButton(
+                            key: PageDetailKeys.add,
+                            icon: Icons.add,
+                            tooltip: PageLabels.adicionar,
+                            onPressed: () =>
+                                const CaptureRoute().push<void>(context),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Overlay reader vs text-card page. Loading a path is still overlay;
+  /// orphan paths fall back to cards after IHDR fails.
+  bool get _isOverlayPage {
+    final path = _sizedImagePath;
+    if (path == null || path.isEmpty) {
+      return false;
+    }
+    if (_imageResolved && _imageSize == null) {
+      return false;
+    }
+    return true;
   }
 
   void _scheduleImageSize(String? imagePath) {
@@ -543,7 +567,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             end: result.end,
           );
         });
-        if (!ShellLayout.isWide(context) && _imageSize == null) {
+        if (!ShellLayout.isWide(context) && !_isOverlayPage) {
           await showLookupSheet(
             context,
             result: result,
@@ -593,7 +617,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         _session = session;
         _touch = _TouchRange(cropId: crop.id, start: miss.start, end: miss.end);
       });
-      if (!ShellLayout.isWide(context) && _imageSize == null) {
+      if (!ShellLayout.isWide(context) && !_isOverlayPage) {
         await showCustomLookupSheet(
           context,
           surface: miss.surface,
@@ -705,6 +729,10 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     final shown = session.wordState.isProtected && action == LookupAction.save
         ? session.wordState
         : next;
+    if (!ShellLayout.isWide(context)) {
+      _clearBox();
+      return;
+    }
     setState(() {
       _session = _LookupSession(
         crop: session.crop,
@@ -1056,6 +1084,77 @@ class _TappableOcrTextState extends State<_TappableOcrText> {
       return false;
     }
     return token.start < end && token.end > start;
+  }
+}
+
+class _OverlayLookupPanel extends StatelessWidget {
+  const _OverlayLookupPanel({
+    required this.height,
+    required this.onClose,
+    required this.child,
+  });
+
+  final double height;
+  final VoidCallback onClose;
+  final Widget child;
+
+  static const _dismissVelocity = 280.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: Material(
+        color: AppColors.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheetReview),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            SizedBox(
+              height: AppTargets.dockTela,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      key: LookupSheetKeys.handle,
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragEnd: (details) {
+                        if ((details.primaryVelocity ?? 0) > _dismissVelocity) {
+                          onClose();
+                        }
+                      },
+                      child: Center(
+                        child: Container(
+                          width: 32,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: tokens.text3,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: LookupSheetKeys.close,
+                    tooltip: PageLabels.fechar,
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -450,6 +450,153 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('X closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-x',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-x')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.tap(find.byKey(LookupSheetKeys.close));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('handle drag closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-handle',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-handle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.fling(
+      find.byKey(LookupSheetKeys.handle),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+  });
+
+  testWidgets('PopScope back closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-back',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('Esc closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-esc',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-esc')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+  });
+
+  testWidgets(
+    'dock toggle and lower box stay hittable with lookup open at 390x844',
+    (tester) async {
+      await _openPage(
+        tester,
+        size: _phone,
+        jmdictPath: jmdictPath,
+        imagePath: _imagePath,
+        cropId: 'dock-top',
+        extraCropId: 'dock-low',
+        extraTop: 0.65,
+        extraHeight: 0.28,
+      );
+
+      await tester.tap(find.byKey(PageOverlayKeys.box('dock-top')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
+        '猫',
+      );
+
+      final sheet = tester.getRect(find.byKey(LookupSheetKeys.sheet));
+      final toggle = tester.getRect(find.byKey(PageDetailKeys.overlayToggle));
+      final edit = tester.getRect(find.byKey(PageDetailKeys.edit));
+      final add = tester.getRect(find.byKey(PageDetailKeys.add));
+      expect(toggle.overlaps(sheet), isFalse);
+      expect(edit.overlaps(sheet), isFalse);
+      expect(add.overlaps(sheet), isFalse);
+
+      await tester.tap(find.byKey(PageOverlayKeys.box('dock-low')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
+        '高い',
+      );
+
+      await tester.tap(find.byKey(PageDetailKeys.overlayToggle));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PageDetailKeys.overlay), findsNothing);
+      expect(find.byKey(PageDetailKeys.overlayToggle), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+    },
+  );
+
+  testWidgets('overlay sheet height subtracts viewInsets at 390x844', (
+    tester,
+  ) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'inset-sheet',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('inset-sheet')));
+    await tester.pumpAndSettle();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    final handleTop = tester.getTopLeft(find.byKey(LookupSheetKeys.handle)).dy;
+    final sheetBottom = tester
+        .getBottomLeft(find.byKey(LookupSheetKeys.sheet))
+        .dy;
+    expect(sheetBottom - handleTop, closeTo((844 - 300) * 0.5, 1));
+  });
+
   testWidgets('reader.ocrOverlay persists across rebuilds', (tester) async {
     SharedPreferences.setMockInitialValues({'reader.ocrOverlay': false});
     await _openPage(
@@ -477,6 +624,10 @@ Future<void> _openPage(
   required String cropId,
   String? imagePath,
   String? extraCropId,
+  double extraLeft = 0.55,
+  double extraTop = 0.15,
+  double extraWidth = 0.35,
+  double extraHeight = 0.28,
   List<OcrBlockGeometry> blocks = const [],
 }) async {
   tester.view.physicalSize = size;
@@ -517,10 +668,10 @@ Future<void> _openPage(
         pageId: pageId,
         ocrText: '高い',
         engineId: 'test',
-        left: 0.55,
-        top: 0.15,
-        width: 0.35,
-        height: 0.28,
+        left: extraLeft,
+        top: extraTop,
+        width: extraWidth,
+        height: extraHeight,
         createdAt: now.add(const Duration(seconds: 1)),
       ),
     );
