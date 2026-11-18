@@ -4,7 +4,7 @@ Ferramenta pessoal para estudar japonês via manga. Flutter only. Single-user (M
 
 Versão viva deste recorte: **v1.3**. Atualizado **2026-11-18** (F22 overlay, [#114](https://github.com/murilinhoPs/MangaJP/pull/114)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
 
-2026-11-18 — F22: boxes do OCR sobre a PNG da página (schema Drift 10: `pages.image_path`, `crops.ocr_blocks_json`); lookup inline no mobile, drawer no desktop. Spec: [leitor](specs/leitor.md), [ocr](specs/ocr.md).
+2026-11-18 — F22: boxes do OCR sobre a imagem da página (schema Drift 10: `pages.image_path`, `crops.ocr_blocks_json`); lookup inline no mobile, drawer no desktop. Spec: [leitor](specs/leitor.md), [ocr](specs/ocr.md).
 
 ## Visão
 

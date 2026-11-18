@@ -14,7 +14,7 @@ Entrar no pipeline com uma imagem e chegar em texto OCR com ≤ 2 taps in-app (O
 - 1 tap **Confirmar crop(s)** dispara OCR automático. Drag/pinch **não** contam como tap. O share sheet do sistema não conta.
 - Galeria (tile / **Galeria +**): pick do sistema + confirm crop ≤ 2 taps in-app.
 - Pós-OCR: navega para `/pages/:id` ([leitor](leitor.md)).
-- No confirm, a PNG da página é copiada para `{documents}/pages/{pageId}.png` (`path_provider` / `getApplicationDocumentsDirectory`) e o caminho vai em `pages.image_path` (só preenche se ainda for null — páginas antigas ficam null). Web: o save devolve `null`. Boxes do motor (quando houver `Rect`) vão em `crops.ocr_blocks_json` via `OcrBlocksJson.fromResult` com o tamanho do PNG do crop — [ocr](ocr.md), [leitor](leitor.md).
+- No confirm, os **bytes recebidos** vão para `{documents}/pages/{pageId}.png` (`path_provider` / `getApplicationDocumentsDirectory`) — hoje gravados como `.png`, **sem** recodificar. O caminho entra em `pages.image_path` (só preenche se ainda for null — páginas antigas ficam null). Web: o save devolve `null`. Boxes do motor (quando houver `Rect`) vão em `crops.ocr_blocks_json` via `OcrBlocksJson.fromResult` com o tamanho do PNG do crop (`cropToPng` / `encodePng`) — [ocr](ocr.md), [leitor](leitor.md).
 - Tela de tarefa: esconde os nav cards; dock próprio (F17 / [ADR-0004](../adr/0004-nav-design-system.md)).
 - Sair (Esc, X do dock, back Android): confirmação **só** se a pessoa editou algum recorte (criou, moveu ou apagou). O recorte inicial automático **não** conta como edição.
 
@@ -29,3 +29,4 @@ Entrar no pipeline com uma imagem e chegar em texto OCR com ≤ 2 taps in-app (O
 
 > Pendente: copy exato do diálogo ao sair com recorte editado.
 > Pendente: share no iOS é Must na M1 ou só na M2.1 (Q-N1 / F2 é Android).
+> Pendente (follow-up de código, F22): o confirm grava os bytes crus com extensão `.png`. JPEG/WebP da galeria ou do share falham o IHDR (`pageImagePixelSize`) e `/pages/:id` cai nos cards de texto como path órfão. Overlay só aparece com entrada PNG (screenshot). Normalizar (`encodePng` do `decoded` já existente) ou gravar com a extensão e o leitor de tamanho certos para cada formato; falta teste com entrada JPEG.
