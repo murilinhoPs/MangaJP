@@ -34,6 +34,9 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     required this.overlayPrimaria,
     required this.overlayEstadoAtivo,
     required this.overlayRailAtivo,
+    required this.overlayOcrBoxFill,
+    required this.overlayOcrBoxBorder,
+    required this.overlayOcrBoxHalo,
     required this.srsErreiFill,
     required this.srsBomFill,
     required this.queueNovos,
@@ -73,6 +76,9 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     overlayPrimaria: AppColors.overlayPrimaria,
     overlayEstadoAtivo: AppColors.overlayEstadoAtivo,
     overlayRailAtivo: AppColors.overlayRailAtivo,
+    overlayOcrBoxFill: AppColors.overlayOcrBoxFill,
+    overlayOcrBoxBorder: AppColors.overlayOcrBoxBorder,
+    overlayOcrBoxHalo: AppColors.overlayOcrBoxHalo,
     srsErreiFill: AppColors.srsErreiFill,
     srsBomFill: AppColors.srsBomFill,
     queueNovos: AppColors.violet,
@@ -110,6 +116,9 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
   final Color overlayPrimaria;
   final Color overlayEstadoAtivo;
   final Color overlayRailAtivo;
+  final Color overlayOcrBoxFill;
+  final Color overlayOcrBoxBorder;
+  final Color overlayOcrBoxHalo;
   final Color srsErreiFill;
   final Color srsBomFill;
   final Color queueNovos;
@@ -160,6 +169,9 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
     Color? overlayPrimaria,
     Color? overlayEstadoAtivo,
     Color? overlayRailAtivo,
+    Color? overlayOcrBoxFill,
+    Color? overlayOcrBoxBorder,
+    Color? overlayOcrBoxHalo,
     Color? srsErreiFill,
     Color? srsBomFill,
     Color? queueNovos,
@@ -193,10 +205,14 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
       danger: danger ?? this.danger,
       dangerBg: dangerBg ?? this.dangerBg,
       overlaySelecaoToque: overlaySelecaoToque ?? this.overlaySelecaoToque,
-      overlayPalavraNaFrase: overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
+      overlayPalavraNaFrase:
+          overlayPalavraNaFrase ?? this.overlayPalavraNaFrase,
       overlayPrimaria: overlayPrimaria ?? this.overlayPrimaria,
       overlayEstadoAtivo: overlayEstadoAtivo ?? this.overlayEstadoAtivo,
       overlayRailAtivo: overlayRailAtivo ?? this.overlayRailAtivo,
+      overlayOcrBoxFill: overlayOcrBoxFill ?? this.overlayOcrBoxFill,
+      overlayOcrBoxBorder: overlayOcrBoxBorder ?? this.overlayOcrBoxBorder,
+      overlayOcrBoxHalo: overlayOcrBoxHalo ?? this.overlayOcrBoxHalo,
       srsErreiFill: srsErreiFill ?? this.srsErreiFill,
       srsBomFill: srsBomFill ?? this.srsBomFill,
       queueNovos: queueNovos ?? this.queueNovos,
@@ -255,7 +271,26 @@ class MangaJpTokens extends ThemeExtension<MangaJpTokens> {
         other.overlayEstadoAtivo,
         t,
       )!,
-      overlayRailAtivo: Color.lerp(overlayRailAtivo, other.overlayRailAtivo, t)!,
+      overlayRailAtivo: Color.lerp(
+        overlayRailAtivo,
+        other.overlayRailAtivo,
+        t,
+      )!,
+      overlayOcrBoxFill: Color.lerp(
+        overlayOcrBoxFill,
+        other.overlayOcrBoxFill,
+        t,
+      )!,
+      overlayOcrBoxBorder: Color.lerp(
+        overlayOcrBoxBorder,
+        other.overlayOcrBoxBorder,
+        t,
+      )!,
+      overlayOcrBoxHalo: Color.lerp(
+        overlayOcrBoxHalo,
+        other.overlayOcrBoxHalo,
+        t,
+      )!,
       srsErreiFill: Color.lerp(srsErreiFill, other.srsErreiFill, t)!,
       srsBomFill: Color.lerp(srsBomFill, other.srsBomFill, t)!,
       queueNovos: Color.lerp(queueNovos, other.queueNovos, t)!,

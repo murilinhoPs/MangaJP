@@ -81,6 +81,21 @@ void main() {
       result.blocks.single.boundingBox,
       const Rect.fromLTRB(8, 4, 190, 72),
     );
+    expect(result.blocks.single.normalized, isFalse);
+  });
+
+  test('normalizedVertices set OcrBlock.normalized', () {
+    final box = parseVisionBoundingBox({
+      'normalizedVertices': [
+        {'x': 0.1, 'y': 0.2},
+        {'x': 0.5, 'y': 0.2},
+        {'x': 0.5, 'y': 0.8},
+        {'x': 0.1, 'y': 0.8},
+      ],
+    });
+    expect(box, isNotNull);
+    expect(box!.normalized, isTrue);
+    expect(box.rect, const Rect.fromLTRB(0.1, 0.2, 0.5, 0.8));
   });
 
   test('missing API key throws a typed error and does not HTTP', () async {

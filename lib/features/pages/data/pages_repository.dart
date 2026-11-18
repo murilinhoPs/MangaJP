@@ -1,12 +1,15 @@
+import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/app_database_provider.dart';
 import '../../../core/utils/ids.dart';
+import '../domain/ocr_block_geometry.dart';
 import '../domain/page.dart';
 import '../domain/page_crop.dart';
 import '../domain/page_list_entry.dart';
 import '../domain/recent_pages.dart';
+import 'ocr_blocks_json.dart';
 
 part 'pages_repository.g.dart';
 
@@ -36,6 +39,8 @@ class PagesRepository {
     required double height,
     required String ocrText,
     required String engineId,
+    String? imagePath,
+    List<OcrBlockGeometry> ocrBlocks = const [],
   }) async {
     final now = DateTime.now().toUtc();
     await _db.pagesDao.insertPage(
@@ -43,8 +48,12 @@ class PagesRepository {
         id: pageId,
         sha256: sourceSha256,
         createdAt: now,
+        imagePath: Value(imagePath),
       ),
     );
+    if (imagePath != null) {
+      await _db.pagesDao.setImagePathIfNull(pageId, imagePath);
+    }
     final existing = await cropsForPage(pageId);
     for (final crop in existing) {
       if (crop.left == left &&
@@ -55,6 +64,7 @@ class PagesRepository {
       }
     }
     final cropId = newId();
+    final blocksJson = OcrBlocksJson.encode(ocrBlocks);
     await _db.pagesDao.insertCrop(
       CapturedCropsCompanion.insert(
         id: cropId,
@@ -66,6 +76,7 @@ class PagesRepository {
         width: width,
         height: height,
         createdAt: now,
+        ocrBlocksJson: Value(blocksJson),
       ),
     );
     return PageCrop(
@@ -78,6 +89,7 @@ class PagesRepository {
       width: width,
       height: height,
       createdAt: now,
+      ocrBlocks: ocrBlocks,
     );
   }
 
@@ -145,7 +157,12 @@ class PagesRepository {
   Future<int> countPages() => _db.pagesDao.countPages();
 
   static MangaPage _toPage(CapturedPage row) {
-    return MangaPage(id: row.id, sha256: row.sha256, createdAt: row.createdAt);
+    return MangaPage(
+      id: row.id,
+      sha256: row.sha256,
+      createdAt: row.createdAt,
+      imagePath: row.imagePath,
+    );
   }
 
   static PageCrop _toCrop(CapturedCrop row) {
@@ -159,6 +176,7 @@ class PagesRepository {
       width: row.width,
       height: row.height,
       createdAt: row.createdAt,
+      ocrBlocks: OcrBlocksJson.decode(row.ocrBlocksJson),
     );
   }
 }

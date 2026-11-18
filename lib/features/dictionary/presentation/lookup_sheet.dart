@@ -28,6 +28,8 @@ abstract final class LookupSheetKeys {
   static const loading = Key('lookup-loading');
   static const error = Key('lookup-error');
   static const lemma = Key('lookup-lemma');
+  static const handle = Key('lookup-handle');
+  static const close = Key('lookup-close');
 
   static Key option(int seq) => Key('lookup-option-$seq');
 
@@ -36,6 +38,20 @@ abstract final class LookupSheetKeys {
 }
 
 enum LookupAction { learn, known, ignore, save }
+
+/// Half-screen sheet height, minus the on-screen keyboard.
+///
+/// [Scaffold] zeroes inherited [MediaQuery.viewInsets] for its body, so
+/// this also reads the [View] insets. Callers should still depend on
+/// [MediaQuery] (or a [LayoutBuilder] under a resizing [Scaffold]) so the
+/// widget rebuilds when the keyboard opens.
+double lookupSheetHeightOf(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  final inherited = MediaQuery.viewInsetsOf(context).bottom;
+  final fromView = MediaQueryData.fromView(View.of(context)).viewInsets.bottom;
+  final keyboard = inherited > fromView ? inherited : fromView;
+  return (size.height - keyboard) * PageLayout.lookupSheetFraction;
+}
 
 Future<void> showLookupSheet(
   BuildContext context, {
@@ -46,8 +62,6 @@ Future<void> showLookupSheet(
   onAction,
   ValueChanged<String>? onKanjiTap,
 }) {
-  final height =
-      MediaQuery.sizeOf(context).height * PageLayout.lookupSheetFraction;
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -60,7 +74,7 @@ Future<void> showLookupSheet(
     ),
     builder: (context) => SizedBox(
       key: LookupSheetKeys.modal,
-      height: height,
+      height: lookupSheetHeightOf(context),
       child: LookupSheet(
         result: result,
         sentence: sentence,
@@ -85,8 +99,6 @@ Future<void> showCustomLookupSheet(
   required Future<void> Function(LookupAction action, String userNote) onAction,
   ValueChanged<String>? onKanjiTap,
 }) {
-  final height =
-      MediaQuery.sizeOf(context).height * PageLayout.lookupSheetFraction;
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -99,7 +111,7 @@ Future<void> showCustomLookupSheet(
     ),
     builder: (context) => SizedBox(
       key: LookupSheetKeys.modal,
-      height: height,
+      height: lookupSheetHeightOf(context),
       child: LookupSheet.custom(
         surface: surface,
         sentence: sentence,
@@ -176,6 +188,29 @@ class _LookupSheetState extends State<LookupSheet> {
   }
 
   @override
+  void didUpdateWidget(covariant LookupSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_lookupIdentity(oldWidget) != _lookupIdentity(widget)) {
+      _selectedSeq = widget.result?.selectedSeq;
+      _note.clear();
+      _saving = false;
+    }
+  }
+
+  static Object _lookupIdentity(LookupSheet sheet) {
+    final result = sheet.result;
+    if (result == null) {
+      return (
+        sheet.surface,
+        sheet.highlightStart,
+        sheet.highlightEnd,
+        'custom',
+      );
+    }
+    return (result.surface, result.start, result.end, result.selectedSeq);
+  }
+
+  @override
   void dispose() {
     _note.removeListener(_onNoteChanged);
     _note.dispose();
@@ -187,8 +222,15 @@ class _LookupSheetState extends State<LookupSheet> {
 
   bool get _isCustom => widget.result == null;
 
-  DictEntry get _selected =>
-      widget.result!.entries.firstWhere((entry) => entry.seq == _selectedSeq);
+  DictEntry get _selected {
+    final entries = widget.result!.entries;
+    for (final entry in entries) {
+      if (entry.seq == _selectedSeq) {
+        return entry;
+      }
+    }
+    return entries.first;
+  }
 
   bool get _canAct {
     if (_saving) {

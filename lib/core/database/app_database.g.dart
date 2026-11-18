@@ -245,8 +245,19 @@ class $CapturedPagesTable extends CapturedPages
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, sha256, createdAt];
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, sha256, createdAt, imagePath];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -280,6 +291,12 @@ class $CapturedPagesTable extends CapturedPages
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
+      );
+    }
     return context;
   }
 
@@ -301,6 +318,10 @@ class $CapturedPagesTable extends CapturedPages
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
     );
   }
 
@@ -314,10 +335,16 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
   final String id;
   final String sha256;
   final DateTime createdAt;
+
+  /// Copied page image in app documents (`path_provider`). Null on pages
+  /// captured before schema 10 — overlay stays hidden and `/pages/:id`
+  /// keeps the text cards.
+  final String? imagePath;
   const CapturedPage({
     required this.id,
     required this.sha256,
     required this.createdAt,
+    this.imagePath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -325,6 +352,9 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
     map['id'] = Variable<String>(id);
     map['sha256'] = Variable<String>(sha256);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
     return map;
   }
 
@@ -333,6 +363,9 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
       id: Value(id),
       sha256: Value(sha256),
       createdAt: Value(createdAt),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
     );
   }
 
@@ -345,6 +378,7 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
       id: serializer.fromJson<String>(json['id']),
       sha256: serializer.fromJson<String>(json['sha256']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
     );
   }
   @override
@@ -354,20 +388,27 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
       'id': serializer.toJson<String>(id),
       'sha256': serializer.toJson<String>(sha256),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'imagePath': serializer.toJson<String?>(imagePath),
     };
   }
 
-  CapturedPage copyWith({String? id, String? sha256, DateTime? createdAt}) =>
-      CapturedPage(
-        id: id ?? this.id,
-        sha256: sha256 ?? this.sha256,
-        createdAt: createdAt ?? this.createdAt,
-      );
+  CapturedPage copyWith({
+    String? id,
+    String? sha256,
+    DateTime? createdAt,
+    Value<String?> imagePath = const Value.absent(),
+  }) => CapturedPage(
+    id: id ?? this.id,
+    sha256: sha256 ?? this.sha256,
+    createdAt: createdAt ?? this.createdAt,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
+  );
   CapturedPage copyWithCompanion(CapturedPagesCompanion data) {
     return CapturedPage(
       id: data.id.present ? data.id.value : this.id,
       sha256: data.sha256.present ? data.sha256.value : this.sha256,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
     );
   }
 
@@ -376,37 +417,42 @@ class CapturedPage extends DataClass implements Insertable<CapturedPage> {
     return (StringBuffer('CapturedPage(')
           ..write('id: $id, ')
           ..write('sha256: $sha256, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sha256, createdAt);
+  int get hashCode => Object.hash(id, sha256, createdAt, imagePath);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CapturedPage &&
           other.id == this.id &&
           other.sha256 == this.sha256 &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.imagePath == this.imagePath);
 }
 
 class CapturedPagesCompanion extends UpdateCompanion<CapturedPage> {
   final Value<String> id;
   final Value<String> sha256;
   final Value<DateTime> createdAt;
+  final Value<String?> imagePath;
   final Value<int> rowid;
   const CapturedPagesCompanion({
     this.id = const Value.absent(),
     this.sha256 = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CapturedPagesCompanion.insert({
     required String id,
     required String sha256,
     required DateTime createdAt,
+    this.imagePath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        sha256 = Value(sha256),
@@ -415,12 +461,14 @@ class CapturedPagesCompanion extends UpdateCompanion<CapturedPage> {
     Expression<String>? id,
     Expression<String>? sha256,
     Expression<DateTime>? createdAt,
+    Expression<String>? imagePath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (sha256 != null) 'sha256': sha256,
       if (createdAt != null) 'created_at': createdAt,
+      if (imagePath != null) 'image_path': imagePath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -429,12 +477,14 @@ class CapturedPagesCompanion extends UpdateCompanion<CapturedPage> {
     Value<String>? id,
     Value<String>? sha256,
     Value<DateTime>? createdAt,
+    Value<String?>? imagePath,
     Value<int>? rowid,
   }) {
     return CapturedPagesCompanion(
       id: id ?? this.id,
       sha256: sha256 ?? this.sha256,
       createdAt: createdAt ?? this.createdAt,
+      imagePath: imagePath ?? this.imagePath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -451,6 +501,9 @@ class CapturedPagesCompanion extends UpdateCompanion<CapturedPage> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -463,6 +516,7 @@ class CapturedPagesCompanion extends UpdateCompanion<CapturedPage> {
           ..write('id: $id, ')
           ..write('sha256: $sha256, ')
           ..write('createdAt: $createdAt, ')
+          ..write('imagePath: $imagePath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -565,6 +619,17 @@ class $CapturedCropsTable extends CapturedCrops
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _ocrBlocksJsonMeta = const VerificationMeta(
+    'ocrBlocksJson',
+  );
+  @override
+  late final GeneratedColumn<String> ocrBlocksJson = GeneratedColumn<String>(
+    'ocr_blocks_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -576,6 +641,7 @@ class $CapturedCropsTable extends CapturedCrops
     width,
     height,
     createdAt,
+    ocrBlocksJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -658,6 +724,15 @@ class $CapturedCropsTable extends CapturedCrops
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('ocr_blocks_json')) {
+      context.handle(
+        _ocrBlocksJsonMeta,
+        ocrBlocksJson.isAcceptableOrUnknown(
+          data['ocr_blocks_json']!,
+          _ocrBlocksJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -703,6 +778,10 @@ class $CapturedCropsTable extends CapturedCrops
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      ocrBlocksJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ocr_blocks_json'],
+      ),
     );
   }
 
@@ -722,6 +801,11 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
   final double width;
   final double height;
   final DateTime createdAt;
+
+  /// OCR block geometry as JSON, crop-normalized 0..1. Null when the engine
+  /// gave no `Rect` (manga-ocr). Shape is documented in
+  /// `features/pages/data/ocr_blocks_json.dart`.
+  final String? ocrBlocksJson;
   const CapturedCrop({
     required this.id,
     required this.pageId,
@@ -732,6 +816,7 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
     required this.width,
     required this.height,
     required this.createdAt,
+    this.ocrBlocksJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -745,6 +830,9 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
     map['width'] = Variable<double>(width);
     map['height'] = Variable<double>(height);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || ocrBlocksJson != null) {
+      map['ocr_blocks_json'] = Variable<String>(ocrBlocksJson);
+    }
     return map;
   }
 
@@ -759,6 +847,9 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
       width: Value(width),
       height: Value(height),
       createdAt: Value(createdAt),
+      ocrBlocksJson: ocrBlocksJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ocrBlocksJson),
     );
   }
 
@@ -777,6 +868,7 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
       width: serializer.fromJson<double>(json['width']),
       height: serializer.fromJson<double>(json['height']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      ocrBlocksJson: serializer.fromJson<String?>(json['ocrBlocksJson']),
     );
   }
   @override
@@ -792,6 +884,7 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
       'width': serializer.toJson<double>(width),
       'height': serializer.toJson<double>(height),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'ocrBlocksJson': serializer.toJson<String?>(ocrBlocksJson),
     };
   }
 
@@ -805,6 +898,7 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
     double? width,
     double? height,
     DateTime? createdAt,
+    Value<String?> ocrBlocksJson = const Value.absent(),
   }) => CapturedCrop(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
@@ -815,6 +909,9 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
     width: width ?? this.width,
     height: height ?? this.height,
     createdAt: createdAt ?? this.createdAt,
+    ocrBlocksJson: ocrBlocksJson.present
+        ? ocrBlocksJson.value
+        : this.ocrBlocksJson,
   );
   CapturedCrop copyWithCompanion(CapturedCropsCompanion data) {
     return CapturedCrop(
@@ -827,6 +924,9 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
       width: data.width.present ? data.width.value : this.width,
       height: data.height.present ? data.height.value : this.height,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      ocrBlocksJson: data.ocrBlocksJson.present
+          ? data.ocrBlocksJson.value
+          : this.ocrBlocksJson,
     );
   }
 
@@ -841,7 +941,8 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
           ..write('top: $top, ')
           ..write('width: $width, ')
           ..write('height: $height, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('ocrBlocksJson: $ocrBlocksJson')
           ..write(')'))
         .toString();
   }
@@ -857,6 +958,7 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
     width,
     height,
     createdAt,
+    ocrBlocksJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -870,7 +972,8 @@ class CapturedCrop extends DataClass implements Insertable<CapturedCrop> {
           other.top == this.top &&
           other.width == this.width &&
           other.height == this.height &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.ocrBlocksJson == this.ocrBlocksJson);
 }
 
 class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
@@ -883,6 +986,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
   final Value<double> width;
   final Value<double> height;
   final Value<DateTime> createdAt;
+  final Value<String?> ocrBlocksJson;
   final Value<int> rowid;
   const CapturedCropsCompanion({
     this.id = const Value.absent(),
@@ -894,6 +998,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
     this.width = const Value.absent(),
     this.height = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.ocrBlocksJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CapturedCropsCompanion.insert({
@@ -906,6 +1011,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
     required double width,
     required double height,
     required DateTime createdAt,
+    this.ocrBlocksJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        pageId = Value(pageId),
@@ -926,6 +1032,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
     Expression<double>? width,
     Expression<double>? height,
     Expression<DateTime>? createdAt,
+    Expression<String>? ocrBlocksJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -938,6 +1045,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
       if (width != null) 'width': width,
       if (height != null) 'height': height,
       if (createdAt != null) 'created_at': createdAt,
+      if (ocrBlocksJson != null) 'ocr_blocks_json': ocrBlocksJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -952,6 +1060,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
     Value<double>? width,
     Value<double>? height,
     Value<DateTime>? createdAt,
+    Value<String?>? ocrBlocksJson,
     Value<int>? rowid,
   }) {
     return CapturedCropsCompanion(
@@ -964,6 +1073,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
       width: width ?? this.width,
       height: height ?? this.height,
       createdAt: createdAt ?? this.createdAt,
+      ocrBlocksJson: ocrBlocksJson ?? this.ocrBlocksJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -998,6 +1108,9 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (ocrBlocksJson.present) {
+      map['ocr_blocks_json'] = Variable<String>(ocrBlocksJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1016,6 +1129,7 @@ class CapturedCropsCompanion extends UpdateCompanion<CapturedCrop> {
           ..write('width: $width, ')
           ..write('height: $height, ')
           ..write('createdAt: $createdAt, ')
+          ..write('ocrBlocksJson: $ocrBlocksJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3795,6 +3909,7 @@ typedef $$CapturedPagesTableCreateCompanionBuilder =
       required String id,
       required String sha256,
       required DateTime createdAt,
+      Value<String?> imagePath,
       Value<int> rowid,
     });
 typedef $$CapturedPagesTableUpdateCompanionBuilder =
@@ -3802,6 +3917,7 @@ typedef $$CapturedPagesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> sha256,
       Value<DateTime> createdAt,
+      Value<String?> imagePath,
       Value<int> rowid,
     });
 
@@ -3871,6 +3987,11 @@ class $$CapturedPagesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3948,6 +4069,11 @@ class $$CapturedPagesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CapturedPagesTableAnnotationComposer
@@ -3967,6 +4093,9 @@ class $$CapturedPagesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   Expression<T> capturedCropsRefs<T extends Object>(
     Expression<T> Function($$CapturedCropsTableAnnotationComposer a) f,
@@ -4050,11 +4179,13 @@ class $$CapturedPagesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> sha256 = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CapturedPagesCompanion(
                 id: id,
                 sha256: sha256,
                 createdAt: createdAt,
+                imagePath: imagePath,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4062,11 +4193,13 @@ class $$CapturedPagesTableTableManager
                 required String id,
                 required String sha256,
                 required DateTime createdAt,
+                Value<String?> imagePath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CapturedPagesCompanion.insert(
                 id: id,
                 sha256: sha256,
                 createdAt: createdAt,
+                imagePath: imagePath,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4163,6 +4296,7 @@ typedef $$CapturedCropsTableCreateCompanionBuilder =
       required double width,
       required double height,
       required DateTime createdAt,
+      Value<String?> ocrBlocksJson,
       Value<int> rowid,
     });
 typedef $$CapturedCropsTableUpdateCompanionBuilder =
@@ -4176,6 +4310,7 @@ typedef $$CapturedCropsTableUpdateCompanionBuilder =
       Value<double> width,
       Value<double> height,
       Value<DateTime> createdAt,
+      Value<String?> ocrBlocksJson,
       Value<int> rowid,
     });
 
@@ -4269,6 +4404,11 @@ class $$CapturedCropsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ocrBlocksJson => $composableBuilder(
+    column: $table.ocrBlocksJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4370,6 +4510,11 @@ class $$CapturedCropsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ocrBlocksJson => $composableBuilder(
+    column: $table.ocrBlocksJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CapturedPagesTableOrderingComposer get pageId {
     final $$CapturedPagesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4426,6 +4571,11 @@ class $$CapturedCropsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get ocrBlocksJson => $composableBuilder(
+    column: $table.ocrBlocksJson,
+    builder: (column) => column,
+  );
 
   $$CapturedPagesTableAnnotationComposer get pageId {
     final $$CapturedPagesTableAnnotationComposer composer = $composerBuilder(
@@ -4513,6 +4663,7 @@ class $$CapturedCropsTableTableManager
                 Value<double> width = const Value.absent(),
                 Value<double> height = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> ocrBlocksJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CapturedCropsCompanion(
                 id: id,
@@ -4524,6 +4675,7 @@ class $$CapturedCropsTableTableManager
                 width: width,
                 height: height,
                 createdAt: createdAt,
+                ocrBlocksJson: ocrBlocksJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4537,6 +4689,7 @@ class $$CapturedCropsTableTableManager
                 required double width,
                 required double height,
                 required DateTime createdAt,
+                Value<String?> ocrBlocksJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CapturedCropsCompanion.insert(
                 id: id,
@@ -4548,6 +4701,7 @@ class $$CapturedCropsTableTableManager
                 width: width,
                 height: height,
                 createdAt: createdAt,
+                ocrBlocksJson: ocrBlocksJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

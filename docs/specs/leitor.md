@@ -13,7 +13,7 @@ Ver a página com crops, texto OCR e termos; lookup no tap; reler sem perder `wo
 - Tap no texto → lookup (deinflexão + homógrafos) — [dicionario](dicionario.md).
 - Pode promover termo, marcar known, ou **adicionar novos crops** na mesma página (dedupe) — [recorte](recorte.md).
 - Tela de tarefa: esconde nav cards; dock próprio (voltar · meta). Swipe-back / back **normais** (não é Review; #46 / M1.29).
-- **F22 Should:** overlay de bounding boxes quando o OCR fornecer.
+- **F22 Should:** overlay de bounding boxes sobre a **imagem da página**. Toggle global `reader.ocrOverlay` (default ligado). Desktop: tecla **B**. Mobile: botão 48px no TaskDock. Sem `pages.image_path` o toggle some e a tela fica nos cards de texto. Tap na box abre o lookup do primeiro termo; desktop **Tab** / **Enter** / **Esc**.
 - **F26 Should:** cada crop guarda `engineId`; a página mostra um chip do motor, **misto** se os crops diferirem. Defaults aprovados em 2026-11-04; implementação na [#59](https://github.com/murilinhoPs/MangaJP/issues/59) — [cloud-vision](cloud-vision.md).
 - **F21 Should:** lista `/pages` (histórico). Título da página, data (`hoje` / `ontem` / `d MMM`; ano se for outro). Sem badges de `word_state`. Newest first. Sem página: «Nenhuma página.» + **Galeria +**. Capturas recentes na Home não substituem esta lista. Header **Ver todas** e paleta **Páginas** abrem `/pages`.
 - **Linha da lista (decisão do dono do projeto, 2026-11-04):** por enquanto a linha mostra um **placeholder com o título** (o título/OCR da página; sem OCR, «Página» com ícone — o que o [#101](https://github.com/murilinhoPs/MangaJP/pull/101) já faz). Nenhuma imagem de thumb é gerada nem salva agora.
@@ -33,6 +33,8 @@ Não-objetivo: reader completo tipo Mokuro.
 - Linha = placeholder com título (decisão 2026-11-04); sem imagem de thumb nesta entrega.
 - Rail Leitor: página mais recente, ou desabilitado se não houver páginas.
 - Back/swipe pop sem o diálogo da Review.
+- Com `pages.image_path`: a tela mostra a imagem da página; overlay ligado desenha as boxes (engine `Rect` ou, sem `Rect`, o retângulo do crop). Overlay desligado: a imagem permanece, sem boxes.
+- Sem `pages.image_path` (páginas antigas): cards de texto como antes; toggle de overlay oculto.
+- Tap na box → lookup do primeiro termo (o mesmo lookup do tap no texto). Desktop: Tab cicla boxes, Enter abre lookup, Esc desmarca.
 
 > Pendente: meta do dock (o que a pílula mostra).
-> Pendente: overlay F22 (M2) — quando liga e o que o tap na box faz; ver [`m2.md`](../milestones/m2.md).

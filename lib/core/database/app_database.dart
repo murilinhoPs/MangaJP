@@ -4,6 +4,7 @@ import '../../features/words/domain/custom_word_merge.dart';
 import '../utils/graphemes.dart';
 import '../utils/ids.dart';
 import '../../features/ocr/data/cloud_vision_shot.dart';
+import '../../features/pages/data/ocr_overlay_shot.dart';
 import 'app_database_open.dart';
 import 'demo_seed.dart';
 import 'daos/app_meta_dao.dart';
@@ -44,7 +45,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -54,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
         await batch((batch) {
           batch.insertAll(appMeta, [
             AppMetaCompanion.insert(key: 'hello', value: 'MangaJP M0.1'),
-            AppMetaCompanion.insert(key: 'schema_version', value: '9'),
+            AppMetaCompanion.insert(key: 'schema_version', value: '10'),
             AppMetaCompanion.insert(key: 'engine_id', value: 'sm2-jr@1'),
             AppMetaCompanion.insert(key: 'ocr_engine_id', value: 'manga_ocr'),
           ]);
@@ -150,11 +151,22 @@ class AppDatabase extends _$AppDatabase {
             ),
           );
         }
+        if (from < 10) {
+          await m.addColumn(capturedPages, capturedPages.imagePath);
+          await m.addColumn(capturedCrops, capturedCrops.ocrBlocksJson);
+          await into(appMeta).insert(
+            AppMetaCompanion.insert(key: 'schema_version', value: '10'),
+            onConflict: DoUpdate(
+              (_) => const AppMetaCompanion(value: Value('10')),
+            ),
+          );
+        }
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
         await seedDemoIfRequested(this);
         await seedCloudVisionShotIfRequested(this);
+        await seedOcrOverlayShotIfRequested(this);
       },
     );
   }

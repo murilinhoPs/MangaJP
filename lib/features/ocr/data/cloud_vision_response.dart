@@ -136,11 +136,13 @@ List<OcrBlock> _blocksFromAnnotation(Map<dynamic, dynamic> annotation) {
         continue;
       }
       final confidence = raw['confidence'];
+      final box = parseVisionBoundingBox(raw['boundingBox']);
       blocks.add(
         OcrBlock(
           text: text,
           confidence: confidence is num ? confidence.toDouble() : null,
-          boundingBox: boundingBoxFromVision(raw['boundingBox']),
+          boundingBox: box?.rect,
+          normalized: box?.normalized ?? false,
         ),
       );
     }
@@ -180,10 +182,17 @@ String _blockText(Map<dynamic, dynamic> block) {
 }
 
 Rect? boundingBoxFromVision(Object? boundingBox) {
+  return parseVisionBoundingBox(boundingBox)?.rect;
+}
+
+/// Pixel `vertices` vs 0..1 `normalizedVertices` — the key names the space.
+({Rect rect, bool normalized})? parseVisionBoundingBox(Object? boundingBox) {
   if (boundingBox is! Map) {
     return null;
   }
-  final vertices = boundingBox['vertices'] ?? boundingBox['normalizedVertices'];
+  final pixel = boundingBox['vertices'];
+  final normalized = boundingBox['normalizedVertices'];
+  final vertices = pixel ?? normalized;
   if (vertices is! List || vertices.isEmpty) {
     return null;
   }
@@ -207,5 +216,8 @@ Rect? boundingBoxFromVision(Object? boundingBox) {
   if (!saw) {
     return null;
   }
-  return Rect.fromLTRB(minX, minY, maxX, maxY);
+  return (
+    rect: Rect.fromLTRB(minX, minY, maxX, maxY),
+    normalized: pixel == null,
+  );
 }

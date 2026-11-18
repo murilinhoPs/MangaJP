@@ -107,6 +107,89 @@ abstract class _$PageCrops extends $AsyncNotifier<List<PageCrop>> {
   }
 }
 
+/// Page row (including `image_path`) for `/pages/:id`.
+
+@ProviderFor(mangaPage)
+final mangaPageProvider = MangaPageFamily._();
+
+/// Page row (including `image_path`) for `/pages/:id`.
+
+final class MangaPageProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MangaPage?>,
+          MangaPage?,
+          FutureOr<MangaPage?>
+        >
+    with $FutureModifier<MangaPage?>, $FutureProvider<MangaPage?> {
+  /// Page row (including `image_path`) for `/pages/:id`.
+  MangaPageProvider._({
+    required MangaPageFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'mangaPageProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$mangaPageHash();
+
+  @override
+  String toString() {
+    return r'mangaPageProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<MangaPage?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<MangaPage?> create(Ref ref) {
+    final argument = this.argument as String;
+    return mangaPage(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MangaPageProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$mangaPageHash() => r'96be45bf79f27f36ae49471583e890dc45da3edc';
+
+/// Page row (including `image_path`) for `/pages/:id`.
+
+final class MangaPageFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<MangaPage?>, String> {
+  MangaPageFamily._()
+    : super(
+        retry: null,
+        name: r'mangaPageProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Page row (including `image_path`) for `/pages/:id`.
+
+  MangaPageProvider call(String pageId) =>
+      MangaPageProvider._(argument: pageId, from: this);
+
+  @override
+  String toString() => r'mangaPageProvider';
+}
+
 /// Caderno states for Página token colors. Invalidate after lookup actions.
 
 @ProviderFor(listedWordStates)

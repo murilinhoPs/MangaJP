@@ -15,7 +15,7 @@ Ler japonês de crops de balão o bastante para lookup, sem ML Kit no app.
 - **F26 Should:** Cloud Vision opcional — spec em [cloud-vision](cloud-vision.md). `DOCUMENT_TEXT_DETECTION`, `languageHints: ["ja"]`. Só com toggle «Usar OCR na nuvem». Chave não embutida. Não é o default. Roda no mesmo crop que o manga-ocr (1 chamada por crop).
 - Filtro de ruby do Vision (CER 21,32%) é **unofficial** e não é default.
 - **F27 Should:** filtrar furigana por altura relativa **se** o engine der boxes. Não usar como reading automática (Q-N5).
-- **F22 Should:** overlay de bounding boxes quando o OCR fornecer.
+- **F22 Should:** overlay de bounding boxes sobre a imagem da página. Sem `Rect` (manga-ocr), a box é o retângulo do crop. Com `Rect` (Cloud Vision), as boxes vão em `crops.ocr_blocks_json`. Toggle `reader.ocrOverlay` (default on). Dashed só com confidence < 0.5.
 - **F29 Could:** mokuro / ONNX / PP-OCR via serviço local. manga-ocr em si é Must, não Could.
 - NF2: p50 < 5 s, p95 < 15 s (página ~2 MP / crop típico).
 - NF6: imagens não sobem à cloud salvo o toggle Cloud OCR (só o recorte; ver [cloud-vision](cloud-vision.md)).
@@ -30,4 +30,3 @@ Ler japonês de crops de balão o bastante para lookup, sem ML Kit no app.
 > Pendente: UX do editor de `ocr_text` (inline, sheet, teclado).
 > Pendente: Q-N3 — orçamento Cloud Vision (USD/mês); ver [cloud-vision](cloud-vision.md).
 > Pendente: limiar numérico da altura no filtro de furigana (Q-N5).
-> Pendente: overlay F22 (M2) — tap, toggle, sempre visível; ver [`m2.md`](../milestones/m2.md).

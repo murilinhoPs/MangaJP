@@ -165,15 +165,18 @@ class _AppChromeState extends ConsumerState<AppChrome> {
     if (_paletteOpen) {
       return;
     }
-    // `/capture` owns Esc (confirm if there are unsaved crops). Same path as
-    // the dock X and Android back — AppBar back is gone.
-    if (_path == '/capture') {
-      for (final action in _registry.task?.actions ?? const <ShellAction>[]) {
-        if (action.id == 'cancel') {
-          action.onPressed();
-          return;
-        }
+    // Task screens that own Esc (capture confirm, overlay lookup, review
+    // Fechar) register a ShellAction with shortcut Esc. Invoke that before
+    // popping — AppChrome's Shortcuts wrap the navigator and would otherwise
+    // steal the key from the page.
+    for (final action in _registry.task?.actions ?? const <ShellAction>[]) {
+      if (action.shortcut == 'Esc' && action.enabled) {
+        action.onPressed();
+        return;
       }
+    }
+    // `/capture` owns Esc even when the cancel action is missing.
+    if (_path == '/capture') {
       return;
     }
     final router = GoRouter.maybeOf(context);

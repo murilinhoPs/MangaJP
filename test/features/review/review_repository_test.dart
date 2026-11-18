@@ -18,7 +18,7 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '9');
+    expect(await db.appMetaDao.getValue('schema_version'), '10');
     final tables = await _tableNames(db);
     expect(tables, contains('review_logs'));
     final columns = await db.customSelect('PRAGMA table_info(card_srs)').get();

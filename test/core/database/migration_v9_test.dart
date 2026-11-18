@@ -19,8 +19,8 @@ void main() {
     final connection = await verifier.startAt(8);
     final db = AppDatabase(connection);
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 9);
-    expect(await db.appMetaDao.getValue('schema_version'), '9');
+    await verifier.migrateAndValidate(db, 10);
+    expect(await db.appMetaDao.getValue('schema_version'), '10');
 
     final names = await db
         .customSelect(
@@ -96,12 +96,12 @@ void main() {
 
     final db = AppDatabase(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 9);
+    await verifier.migrateAndValidate(db, 10);
 
     final fk = await db.customSelect('PRAGMA foreign_keys').get();
     expect(fk.single.read<int>('foreign_keys'), 1);
 
-    expect(await db.appMetaDao.getValue('schema_version'), '9');
+    expect(await db.appMetaDao.getValue('schema_version'), '10');
     expect((await db.select(db.userWords).get()).single.lemma, '食べる');
     expect(
       (await db.select(db.capturedPages).get()).map((row) => row.id).toSet(),

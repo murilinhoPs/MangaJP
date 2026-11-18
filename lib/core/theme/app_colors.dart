@@ -37,6 +37,9 @@ abstract final class AppColors {
   static const Color overlayPrimaria = Color.fromRGBO(255, 92, 122, 0.14);
   static const Color overlayEstadoAtivo = Color.fromRGBO(124, 99, 245, 0.14);
   static const Color overlayRailAtivo = Color.fromRGBO(255, 92, 122, 0.16);
+  static const Color overlayOcrBoxFill = Color.fromRGBO(255, 92, 122, 0.08);
+  static const Color overlayOcrBoxBorder = Color.fromRGBO(255, 92, 122, 0.70);
+  static const Color overlayOcrBoxHalo = Color.fromRGBO(14, 13, 18, 0.85);
 
   // SRS fills (`srs.*.fill` when not a named role)
   static const Color srsErreiFill = Color.fromRGBO(255, 92, 122, 0.12);

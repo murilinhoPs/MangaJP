@@ -5,11 +5,17 @@ import 'package:manga_jp/features/ocr/domain/ocr_result.dart';
 
 /// Test double for [OcrEngine]. Default app wiring stays [MangaOcrEngine].
 class FakeOcrEngine implements OcrEngine {
-  const FakeOcrEngine({this.text = 'よぉ、相棒', this.id = 'fake', this.error});
+  const FakeOcrEngine({
+    this.text = 'よぉ、相棒',
+    this.id = 'fake',
+    this.error,
+    this.blocks,
+  });
 
   final String text;
   final String id;
   final Object? error;
+  final List<OcrBlock>? blocks;
 
   @override
   String get engineId => id;
@@ -22,7 +28,7 @@ class FakeOcrEngine implements OcrEngine {
     }
     return OcrResult(
       fullText: text,
-      blocks: [OcrBlock(text: text)],
+      blocks: blocks ?? [OcrBlock(text: text)],
       engineId: id,
     );
   }

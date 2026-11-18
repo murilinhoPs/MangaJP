@@ -9,7 +9,7 @@ void main() {
     addTearDown(db.close);
 
     expect(await db.appMetaDao.getValue('hello'), 'MangaJP M0.1');
-    expect(await db.appMetaDao.getValue('schema_version'), '9');
+    expect(await db.appMetaDao.getValue('schema_version'), '10');
     expect(await db.appMetaDao.getValue('engine_id'), 'sm2-jr@1');
     expect(await db.appMetaDao.getValue('ocr_engine_id'), 'manga_ocr');
   });

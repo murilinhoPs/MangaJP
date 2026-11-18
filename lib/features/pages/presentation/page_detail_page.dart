@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/copy/recortes_label.dart';
@@ -17,16 +18,22 @@ import '../../dictionary/domain/dict_entry.dart';
 import '../../dictionary/domain/lookup_result.dart';
 import '../../dictionary/presentation/kanji_sheet.dart';
 import '../../dictionary/presentation/lookup_sheet.dart';
+import '../../capture/presentation/crop_overlay.dart';
 import '../../flashcards/data/flashcards_repository.dart';
 import '../../words/data/words_repository.dart';
 import '../../words/domain/word_state.dart';
 import '../../words/domain/word_state_index.dart';
+import '../data/ocr_overlay_shot.dart';
 import '../data/pages_repository.dart';
+import '../data/reader_overlay_store.dart';
+import '../domain/ocr_overlay_box.dart';
 import '../domain/page_crop.dart';
 import '../domain/page_labels.dart';
 import 'ocr_char_index.dart';
+import 'ocr_overlay.dart';
 import 'ocr_token_spans.dart';
 import 'page_detail_controller.dart';
+import 'page_image.dart';
 
 /// Keys for `/pages/:id` OCR text (persisted Drift `crops.ocr_text`).
 abstract final class PageDetailKeys {
@@ -36,6 +43,9 @@ abstract final class PageDetailKeys {
   static const add = Key('page-detail-add');
   static const ocrEditor = Key('page-detail-ocr-editor');
   static const ocrEditorSave = Key('page-detail-ocr-editor-save');
+  static const image = PageOverlayKeys.image;
+  static const overlay = PageOverlayKeys.overlay;
+  static const overlayToggle = PageOverlayKeys.toggle;
 }
 
 class _TouchRange {
@@ -57,6 +67,7 @@ class _LookupSession {
     required this.start,
     required this.end,
     required this.wordState,
+    this.sentence,
     this.result,
   });
 
@@ -65,7 +76,10 @@ class _LookupSession {
   final int start;
   final int end;
   final WordState wordState;
+  final String? sentence;
   final LookupResult? result;
+
+  String get lookupSentence => sentence ?? crop.ocrText;
 
   bool get isCustom => result == null;
 }
@@ -80,43 +94,105 @@ class PageDetailPage extends ConsumerStatefulWidget {
   ConsumerState<PageDetailPage> createState() => _PageDetailPageState();
 }
 
-class _PageDetailPageState extends ConsumerState<PageDetailPage> {
+class _ToggleOverlayIntent extends Intent {
+  const _ToggleOverlayIntent();
+}
+
+class _NextBoxIntent extends Intent {
+  const _NextBoxIntent();
+}
+
+class _PrevBoxIntent extends Intent {
+  const _PrevBoxIntent();
+}
+
+class _OpenBoxIntent extends Intent {
+  const _OpenBoxIntent();
+}
+
+class _ClearBoxIntent extends Intent {
+  const _ClearBoxIntent();
+}
+
+class _PageDetailPageState extends ConsumerState<PageDetailPage>
+    with WidgetsBindingObserver {
   _TouchRange? _touch;
   _LookupSession? _session;
   bool _lookupLoading = false;
   String? _lookupError;
   bool _didAutoLookup = false;
+  bool _didShotPrefs = false;
+  String? _selectedBoxId;
+  String? _hoveredBoxId;
+  String? _sizedImagePath;
+  Size? _imageSize;
+  bool _imageResolved = true;
+  int _imageLoadGen = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     final crops = ref.watch(pageCropsProvider(widget.pageId));
+    final page = ref.watch(mangaPageProvider(widget.pageId)).asData?.value;
+    final overlayOn = ref.watch(readerOcrOverlayProvider);
     final wide = ShellLayout.isWide(context);
     final items = crops.asData?.value ?? const <PageCrop>[];
+    final boxes = overlayBoxesFor(items);
+    final imagePath = page?.imagePath;
+    _scheduleImageSize(imagePath);
+    final imageSize = _imageSize;
+    final hasImage = imageSize != null;
+    final waitingImage =
+        imagePath != null && imagePath.isNotEmpty && !_imageResolved;
+    _maybeApplyShot(boxes, hasImage);
     final count = items.length;
     final hint = count == 0 ? null : RecortesLabel.count(count);
-    final task = ShellTask(
-      meta: widget.pageId,
-      metaHint: hint,
-      actions: [
-        ShellAction(
-          id: 'edit',
-          label: PageLabels.editar,
-          icon: Icons.edit_outlined,
-          enabled: items.isNotEmpty,
-          onPressed: () => _editOcr(items),
-        ),
-        ShellAction(
-          id: 'add',
-          label: '+',
-          icon: Icons.add,
-          onPressed: () => const CaptureRoute().push<void>(context),
-        ),
-      ],
-    );
+    final overlayAction = hasImage
+        ? ShellAction(
+            id: 'ocr-overlay',
+            label: overlayOn ? PageLabels.overlayOn : PageLabels.overlayOff,
+            shortcut: 'B',
+            icon: Icons.crop_free,
+            enabled: true,
+            onPressed: _toggleOverlay,
+          )
+        : null;
 
     final body = crops.when(
       data: (list) {
         _maybeAutoLookup(list);
+        if (waitingImage) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (hasImage) {
+          return _PageImageBody(
+            path: imagePath!,
+            imageSize: imageSize,
+            crops: list,
+            boxes: boxes,
+            overlayOn: overlayOn,
+            selectedId: _selectedBoxId,
+            hoveredId: _hoveredBoxId,
+            onSelect: (box) => _openBox(list, box),
+            onHover: (box) => setState(() => _hoveredBoxId = box?.id),
+          );
+        }
         return _PageOcrBody(
           crops: list,
           touch: _touch,
@@ -136,60 +212,331 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       ),
     );
 
+    final overlaySheetOpen =
+        !wide && overlayOn && _isOverlayPage && _session != null && hasImage;
+    final taskActions = <ShellAction>[
+      ?overlayAction,
+      if (overlaySheetOpen)
+        ShellAction(
+          id: 'close-lookup',
+          label: PageLabels.fechar,
+          shortcut: 'Esc',
+          onPressed: _clearBox,
+        ),
+      ShellAction(
+        id: 'edit',
+        label: PageLabels.editar,
+        icon: Icons.edit_outlined,
+        enabled: items.isNotEmpty,
+        onPressed: () => _editOcr(items),
+      ),
+      ShellAction(
+        id: 'add',
+        label: '+',
+        icon: Icons.add,
+        onPressed: () => const CaptureRoute().push<void>(context),
+      ),
+    ];
+    final task = ShellTask(
+      meta: widget.pageId,
+      metaHint: hint,
+      actions: taskActions,
+    );
+    final shortcuts = <ShortcutActivator, Intent>{
+      if (hasImage)
+        const SingleActivator(LogicalKeyboardKey.keyB):
+            const _ToggleOverlayIntent(),
+      if (hasImage && overlayOn && wide) ...{
+        const SingleActivator(LogicalKeyboardKey.tab): const _NextBoxIntent(),
+        const SingleActivator(LogicalKeyboardKey.tab, shift: true):
+            const _PrevBoxIntent(),
+        const SingleActivator(LogicalKeyboardKey.enter): const _OpenBoxIntent(),
+      },
+      // Phone in-tree sheet and desktop selected box both own Esc.
+      if (overlaySheetOpen || _selectedBoxId != null)
+        const SingleActivator(LogicalKeyboardKey.escape):
+            const _ClearBoxIntent(),
+    };
+
     return ShellBinder(
       task: task,
-      child: Scaffold(
-        backgroundColor: context.tokens.bg,
-        appBar: AppBar(
-          leading: BackButton(
-            key: PageDetailKeys.back,
-            onPressed: () => popTaskOrHome(context),
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: wide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: body),
-                        _LookupDrawer(
-                          loading: _lookupLoading,
-                          error: _lookupError,
-                          session: _session,
-                          originPageId: widget.pageId,
-                          onAction: _applyLookup,
-                          onCustomAction: _applyCustomLookup,
-                        ),
-                      ],
-                    )
-                  : body,
+      child: Shortcuts(
+        shortcuts: shortcuts,
+        child: Actions(
+          actions: {
+            _ToggleOverlayIntent: CallbackAction<_ToggleOverlayIntent>(
+              onInvoke: (_) {
+                _toggleOverlay();
+                return null;
+              },
             ),
-            if (!wide)
-              TaskDock(
-                meta: widget.pageId,
-                metaHint: hint,
-                trailing: [
-                  DockIconButton(
-                    key: PageDetailKeys.edit,
-                    icon: Icons.edit_outlined,
-                    tooltip: PageLabels.editar,
-                    enabled: items.isNotEmpty,
-                    onPressed: () => _editOcr(items),
+            _NextBoxIntent: CallbackAction<_NextBoxIntent>(
+              onInvoke: (_) {
+                _cycleBox(boxes, 1);
+                return null;
+              },
+            ),
+            _PrevBoxIntent: CallbackAction<_PrevBoxIntent>(
+              onInvoke: (_) {
+                _cycleBox(boxes, -1);
+                return null;
+              },
+            ),
+            _OpenBoxIntent: CallbackAction<_OpenBoxIntent>(
+              onInvoke: (_) {
+                _openSelected(items, boxes);
+                return null;
+              },
+            ),
+            _ClearBoxIntent: CallbackAction<_ClearBoxIntent>(
+              onInvoke: (_) {
+                _clearBox();
+                return null;
+              },
+            ),
+          },
+          child: Focus(
+            autofocus: true,
+            child: PopScope(
+              canPop: !overlaySheetOpen,
+              onPopInvokedWithResult: (didPop, _) {
+                if (didPop) {
+                  return;
+                }
+                _clearBox();
+              },
+              child: Scaffold(
+                backgroundColor: context.tokens.bg,
+                appBar: AppBar(
+                  leading: BackButton(
+                    key: PageDetailKeys.back,
+                    onPressed: overlaySheetOpen
+                        ? _clearBox
+                        : () => popTaskOrHome(context),
                   ),
-                  DockIconButton(
-                    key: PageDetailKeys.add,
-                    icon: Icons.add,
-                    tooltip: PageLabels.adicionar,
-                    onPressed: () => const CaptureRoute().push<void>(context),
-                  ),
-                ],
+                ),
+                body: Column(
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final maxSheet = (constraints.maxHeight - 96).clamp(
+                            0.0,
+                            double.infinity,
+                          );
+                          final sheetHeight = overlaySheetOpen
+                              ? lookupSheetHeightOf(context)
+                                    .clamp(0.0, maxSheet)
+                              : 0.0;
+                          return Column(
+                            children: [
+                              Expanded(
+                                child: wide
+                                    ? Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(child: body),
+                                          _LookupDrawer(
+                                            loading: _lookupLoading,
+                                            error: _lookupError,
+                                            session: _session,
+                                            originPageId: widget.pageId,
+                                            onAction: _applyLookup,
+                                            onCustomAction: _applyCustomLookup,
+                                          ),
+                                        ],
+                                      )
+                                    : body,
+                              ),
+                              if (overlaySheetOpen)
+                                _OverlayLookupPanel(
+                                  height: sheetHeight,
+                                  onClose: _clearBox,
+                                  child: _LookupDrawer(
+                                    loading: _lookupLoading,
+                                    error: _lookupError,
+                                    session: _session,
+                                    originPageId: widget.pageId,
+                                    onAction: _applyLookup,
+                                    onCustomAction: _applyCustomLookup,
+                                  ).sessionChild(context),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    if (!wide)
+                      TaskDock(
+                        meta: widget.pageId,
+                        metaHint: hint,
+                        trailing: [
+                          if (hasImage)
+                            DockIconButton(
+                              key: PageDetailKeys.overlayToggle,
+                              icon: Icons.crop_free,
+                              tooltip: overlayOn
+                                  ? PageLabels.overlayOn
+                                  : PageLabels.overlayOff,
+                              toggled: overlayOn,
+                              onPressed: _toggleOverlay,
+                            ),
+                          DockIconButton(
+                            key: PageDetailKeys.edit,
+                            icon: Icons.edit_outlined,
+                            tooltip: PageLabels.editar,
+                            enabled: items.isNotEmpty,
+                            onPressed: () => _editOcr(items),
+                          ),
+                          DockIconButton(
+                            key: PageDetailKeys.add,
+                            icon: Icons.add,
+                            tooltip: PageLabels.adicionar,
+                            onPressed: () =>
+                                const CaptureRoute().push<void>(context),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  /// Overlay reader vs text-card page. Loading a path is still overlay;
+  /// orphan paths fall back to cards after IHDR fails.
+  bool get _isOverlayPage {
+    final path = _sizedImagePath;
+    if (path == null || path.isEmpty) {
+      return false;
+    }
+    if (_imageResolved && _imageSize == null) {
+      return false;
+    }
+    return true;
+  }
+
+  void _scheduleImageSize(String? imagePath) {
+    if (imagePath == _sizedImagePath) {
+      return;
+    }
+    _sizedImagePath = imagePath;
+    final gen = ++_imageLoadGen;
+    if (imagePath == null || imagePath.isEmpty) {
+      _imageSize = null;
+      _imageResolved = true;
+      return;
+    }
+    _imageSize = null;
+    _imageResolved = false;
+    pageImagePixelSize(imagePath).then((size) {
+      if (!mounted || gen != _imageLoadGen) {
+        return;
+      }
+      setState(() {
+        _imageSize = size;
+        _imageResolved = true;
+      });
+    });
+  }
+
+  void _maybeApplyShot(List<OcrOverlayBox> boxes, bool hasImage) {
+    if (!kOcrOverlayShotEnabled) {
+      return;
+    }
+    if (!_didShotPrefs) {
+      _didShotPrefs = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref
+            .read(readerOcrOverlayProvider.notifier)
+            .setEnabled(!kOcrOverlayShotForceOff);
+      });
+    }
+    if (boxes.isEmpty || !hasImage) {
+      return;
+    }
+    final select = kOcrOverlayShotSelectFirst && _selectedBoxId == null
+        ? boxes.first.id
+        : null;
+    final hover =
+        kOcrOverlayShotHoverSecond && boxes.length > 1 && _hoveredBoxId == null
+        ? boxes[1].id
+        : null;
+    if (select == null && hover == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _selectedBoxId ??= select;
+        _hoveredBoxId ??= hover;
+      });
+    });
+  }
+
+  void _toggleOverlay() {
+    final overlayOn = ref.read(readerOcrOverlayProvider);
+    ref.read(readerOcrOverlayProvider.notifier).toggle();
+    if (overlayOn) {
+      _clearBox();
+    }
+  }
+
+  void _cycleBox(List<OcrOverlayBox> boxes, int delta) {
+    if (boxes.isEmpty) {
+      return;
+    }
+    final ids = [for (final box in boxes) box.id];
+    final current = _selectedBoxId;
+    final from = current == null ? (delta > 0 ? -1 : 0) : ids.indexOf(current);
+    final next = (from + delta) % ids.length;
+    setState(() => _selectedBoxId = ids[next < 0 ? next + ids.length : next]);
+  }
+
+  void _openSelected(List<PageCrop> crops, List<OcrOverlayBox> boxes) {
+    final id = _selectedBoxId;
+    if (id == null) {
+      return;
+    }
+    for (final box in boxes) {
+      if (box.id == id) {
+        _openBox(crops, box);
+        return;
+      }
+    }
+  }
+
+  void _clearBox() {
+    setState(() {
+      _selectedBoxId = null;
+      _session = null;
+      _touch = null;
+    });
+  }
+
+  void _openBox(List<PageCrop> crops, OcrOverlayBox box) {
+    PageCrop? crop;
+    for (final item in crops) {
+      if (item.id == box.cropId) {
+        crop = item;
+        break;
+      }
+    }
+    if (crop == null) {
+      return;
+    }
+    setState(() => _selectedBoxId = box.id);
+    _lookup(crop, 0, fromBox: box.text);
   }
 
   void _maybeAutoLookup(List<PageCrop> crops) {
@@ -207,8 +554,10 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     });
   }
 
-  Future<void> _lookup(PageCrop crop, int tapIndex) async {
-    final text = crop.ocrText;
+  Future<void> _lookup(PageCrop crop, int tapIndex, {String? fromBox}) async {
+    final text = (fromBox != null && fromBox.isNotEmpty)
+        ? fromBox
+        : crop.ocrText;
     final startGuess = text.isEmpty
         ? 0
         : graphemeStart(
@@ -232,7 +581,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       if (!mounted) {
         return;
       }
-      final result = lookup.findAt(crop.ocrText, tapIndex: tapIndex);
+      final result = lookup.findAt(text, tapIndex: tapIndex);
       if (result != null) {
         final session = _LookupSession(
           crop: crop,
@@ -240,6 +589,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
           start: result.start,
           end: result.end,
           wordState: states.ofSeq(result.selected.seq),
+          sentence: text,
           result: result,
         );
         setState(() {
@@ -251,11 +601,11 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             end: result.end,
           );
         });
-        if (!ShellLayout.isWide(context)) {
+        if (!ShellLayout.isWide(context) && !_isOverlayPage) {
           await showLookupSheet(
             context,
             result: result,
-            sentence: crop.ocrText,
+            sentence: text,
             wordState: session.wordState,
             onKanjiTap: (literal) => showKanjiSheet(
               context,
@@ -264,7 +614,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             ),
             onAction: (action, entry) => _applyLookup(session, action, entry),
           );
-          if (mounted) {
+          if (mounted && identical(_session, session)) {
             setState(() {
               _session = null;
               _touch = null;
@@ -273,7 +623,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         }
         return;
       }
-      final miss = lookup.missAt(crop.ocrText, tapIndex: tapIndex);
+      final miss = lookup.missAt(text, tapIndex: tapIndex);
       if (miss == null) {
         setState(() {
           _lookupLoading = false;
@@ -294,17 +644,18 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         start: miss.start,
         end: miss.end,
         wordState: states.ofLemma(miss.surface),
+        sentence: text,
       );
       setState(() {
         _lookupLoading = false;
         _session = session;
         _touch = _TouchRange(cropId: crop.id, start: miss.start, end: miss.end);
       });
-      if (!ShellLayout.isWide(context)) {
+      if (!ShellLayout.isWide(context) && !_isOverlayPage) {
         await showCustomLookupSheet(
           context,
           surface: miss.surface,
-          sentence: crop.ocrText,
+          sentence: text,
           highlightStart: miss.start,
           highlightEnd: miss.end,
           wordState: session.wordState,
@@ -315,7 +666,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
           ),
           onAction: (action, note) => _applyCustomLookup(session, action, note),
         );
-        if (mounted) {
+        if (mounted && identical(_session, session)) {
           setState(() {
             _session = null;
             _touch = null;
@@ -412,6 +763,10 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
     final shown = session.wordState.isProtected && action == LookupAction.save
         ? session.wordState
         : next;
+    if (!ShellLayout.isWide(context)) {
+      _clearBox();
+      return;
+    }
     setState(() {
       _session = _LookupSession(
         crop: session.crop,
@@ -419,6 +774,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         start: session.start,
         end: session.end,
         wordState: shown,
+        sentence: session.sentence,
         result: session.result,
       );
     });
@@ -485,6 +841,90 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
       await repo.updateCropOcr(cropId: crops[i].id, ocrText: texts[i]);
     }
     ref.invalidate(pageCropsProvider(widget.pageId));
+  }
+}
+
+class _PageImageBody extends ConsumerWidget {
+  const _PageImageBody({
+    required this.path,
+    required this.imageSize,
+    required this.crops,
+    required this.boxes,
+    required this.overlayOn,
+    required this.onSelect,
+    required this.onHover,
+    this.selectedId,
+    this.hoveredId,
+  });
+
+  final String path;
+  final Size imageSize;
+  final List<PageCrop> crops;
+  final List<OcrOverlayBox> boxes;
+  final bool overlayOn;
+  final String? selectedId;
+  final String? hoveredId;
+  final ValueChanged<OcrOverlayBox> onSelect;
+  final ValueChanged<OcrOverlayBox?> onHover;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chip = OcrEngineChipData.of(crops.map((crop) => crop.engineId));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (chip != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OcrEngineChip(data: chip),
+            ),
+          ),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              12,
+              12,
+              12,
+              12 +
+                  (ShellLayout.isWide(context)
+                      ? ShellLayout.commandBarPaddingOf(context)
+                      : 0),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final dest = containedDest(constraints.biggest, imageSize);
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Positioned.fromRect(
+                      rect: dest,
+                      child: PageImageView(
+                        key: PageDetailKeys.image,
+                        path: path,
+                      ),
+                    ),
+                    if (overlayOn)
+                      Positioned.fill(
+                        child: OcrPageOverlay(
+                          key: PageDetailKeys.overlay,
+                          boxes: boxes,
+                          imageSize: imageSize,
+                          selectedId: selectedId,
+                          hoveredId: hoveredId,
+                          onSelect: onSelect,
+                          onHover: onHover,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -681,6 +1121,77 @@ class _TappableOcrTextState extends State<_TappableOcrText> {
   }
 }
 
+class _OverlayLookupPanel extends StatelessWidget {
+  const _OverlayLookupPanel({
+    required this.height,
+    required this.onClose,
+    required this.child,
+  });
+
+  final double height;
+  final VoidCallback onClose;
+  final Widget child;
+
+  static const _dismissVelocity = 280.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: Material(
+        color: AppColors.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheetReview),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            SizedBox(
+              height: AppTargets.dockTela,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      key: LookupSheetKeys.handle,
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragEnd: (details) {
+                        if ((details.primaryVelocity ?? 0) > _dismissVelocity) {
+                          onClose();
+                        }
+                      },
+                      child: Center(
+                        child: Container(
+                          width: 32,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: tokens.text3,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: LookupSheetKeys.close,
+                    tooltip: PageLabels.fechar,
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _LookupDrawer extends StatelessWidget {
   const _LookupDrawer({
     required this.loading,
@@ -708,6 +1219,10 @@ class _LookupDrawer extends StatelessWidget {
   )
   onCustomAction;
 
+  Widget sessionChild(BuildContext context) {
+    return _body(context, context.tokens);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -729,7 +1244,7 @@ class _LookupDrawer extends StatelessWidget {
 
   Widget _body(BuildContext context, MangaJpTokens tokens) {
     final session = this.session;
-    if (loading) {
+    if (loading && session == null) {
       return const Center(
         key: LookupSheetKeys.loading,
         child: CircularProgressIndicator(),
@@ -765,7 +1280,7 @@ class _LookupDrawer extends StatelessWidget {
     if (result == null) {
       return LookupSheet.custom(
         surface: session.surface,
-        sentence: session.crop.ocrText,
+        sentence: session.lookupSentence,
         highlightStart: session.start,
         highlightEnd: session.end,
         wordState: session.wordState,
@@ -779,7 +1294,7 @@ class _LookupDrawer extends StatelessWidget {
     }
     return LookupSheet(
       result: result,
-      sentence: session.crop.ocrText,
+      sentence: session.lookupSentence,
       highlightStart: session.start,
       highlightEnd: session.end,
       wordState: session.wordState,

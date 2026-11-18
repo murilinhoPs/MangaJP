@@ -8,6 +8,7 @@ abstract final class PageLabels {
   static const verTodas = 'Ver todas';
   static const watermark = '頁';
   static const voltar = 'Voltar';
+  static const fechar = 'Fechar';
   static const editar = 'Editar';
   static const adicionar = 'Captura';
   static const nenhumOcr = 'Nenhum texto OCR nesta página.';
@@ -20,6 +21,9 @@ abstract final class PageLabels {
   static const editarOcrTitulo = 'Editar OCR';
   static const salvarOcr = 'Salvar OCR';
   static const recorteN = 'Recorte';
+  static const overlay = 'Boxes';
+  static const overlayOn = 'Esconder boxes';
+  static const overlayOff = 'Mostrar boxes';
 }
 
 /// Layout numbers from the Deck / brief, not `tokens.json`.

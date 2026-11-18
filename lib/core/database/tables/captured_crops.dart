@@ -17,6 +17,11 @@ class CapturedCrops extends Table {
   RealColumn get height => real()();
   DateTimeColumn get createdAt => dateTime()();
 
+  /// OCR block geometry as JSON, crop-normalized 0..1. Null when the engine
+  /// gave no `Rect` (manga-ocr). Shape is documented in
+  /// `features/pages/data/ocr_blocks_json.dart`.
+  TextColumn get ocrBlocksJson => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

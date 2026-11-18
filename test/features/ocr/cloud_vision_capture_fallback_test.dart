@@ -56,11 +56,13 @@ void main() {
 
       _expectVisibleFallback(tester, size: size);
       expect(find.byType(PageDetailPage), findsOneWidget);
-      expect(find.text('よぉ、相棒'), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+      expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
       expect(await store.readApiKey(), _fakeKey);
       expect(find.text(_fakeKey), findsNothing);
       final crops = await db.pagesDao.listCrops();
       expect(crops, hasLength(1));
+      expect(crops.single.ocrText, 'よぉ、相棒');
       expect(crops.single.engineId, OcrEngineIds.mangaOcr);
     });
 
@@ -212,11 +214,13 @@ void main() {
       find.text(const CloudVisionUnexpected().fallbackMessage),
       findsNothing,
     );
-    expect(find.text('よぉ、相棒'), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+    expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
     expect(await store.readApiKey(), _fakeKey);
     expect(find.text(_fakeKey), findsNothing);
     final crops = await db.pagesDao.listCrops();
     expect(crops, hasLength(1));
+    expect(crops.single.ocrText, 'よぉ、相棒');
     expect(crops.single.engineId, OcrEngineIds.mangaOcr);
   });
 }

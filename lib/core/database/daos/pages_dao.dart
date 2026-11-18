@@ -14,6 +14,13 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
     return into(capturedPages).insert(row, mode: InsertMode.insertOrIgnore);
   }
 
+  /// Fills `pages.image_path` only when it is still null (old pages stay null).
+  Future<void> setImagePathIfNull(String pageId, String path) {
+    return (update(capturedPages)
+          ..where((t) => t.id.equals(pageId) & t.imagePath.isNull()))
+        .write(CapturedPagesCompanion(imagePath: Value(path)));
+  }
+
   Future<void> insertCrop(CapturedCropsCompanion row) {
     return into(capturedCrops).insert(row);
   }
@@ -22,9 +29,7 @@ class PagesDao extends DatabaseAccessor<AppDatabase> with _$PagesDaoMixin {
     required String cropId,
     required String ocrText,
   }) {
-    return (update(
-      capturedCrops,
-    )..where((t) => t.id.equals(cropId))).write(
+    return (update(capturedCrops)..where((t) => t.id.equals(cropId))).write(
       CapturedCropsCompanion(ocrText: Value(ocrText)),
     );
   }

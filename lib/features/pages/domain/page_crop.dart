@@ -1,3 +1,5 @@
+import 'ocr_block_geometry.dart';
+
 /// One persisted crop + OCR text (M1.1). Tap-to-lookup is M1.3 (no Caderno).
 class PageCrop {
   const PageCrop({
@@ -10,6 +12,7 @@ class PageCrop {
     required this.width,
     required this.height,
     required this.createdAt,
+    this.ocrBlocks = const [],
   });
 
   final String id;
@@ -21,4 +24,7 @@ class PageCrop {
   final double width;
   final double height;
   final DateTime createdAt;
+
+  /// Engine boxes, crop-normalized. Empty → overlay uses this crop's rect.
+  final List<OcrBlockGeometry> ocrBlocks;
 }

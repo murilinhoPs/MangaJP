@@ -19,6 +19,8 @@ import '../../ocr/data/ocr_repository.dart';
 import '../../ocr/domain/cloud_vision_exception.dart';
 import '../../ocr/domain/ocr_exception.dart';
 import '../../ocr/domain/ocr_result.dart';
+import '../../pages/data/ocr_blocks_json.dart';
+import '../../pages/data/page_image_store.dart';
 import '../../pages/data/pages_repository.dart';
 import '../data/image_source_service.dart';
 import '../domain/capture_labels.dart';
@@ -259,6 +261,9 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       OcrResult? lastOcr;
       final pageId = _pageId ??= newId();
       final sha = sha256Hex(bytes);
+      final imagePath = await ref
+          .read(pageImageStoreProvider)
+          .savePageImage(pageId: pageId, bytes: bytes);
       final fallbacks = <String>[];
       for (final index in order) {
         final rect = _crops[index];
@@ -285,6 +290,12 @@ class _CapturePageState extends ConsumerState<CapturePage> {
               height: rect.height,
               ocrText: ocr.fullText,
               engineId: ocr.engineId,
+              imagePath: imagePath,
+              ocrBlocks: OcrBlocksJson.fromResult(
+                ocr,
+                cropWidth: cropped.width,
+                cropHeight: cropped.height,
+              ),
             );
         _savedCropKeys.add(key);
         debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/core/database/app_database.dart';
 import 'package:manga_jp/core/utils/hashing.dart';
 import 'package:manga_jp/features/pages/data/pages_repository.dart';
+import 'package:manga_jp/features/pages/domain/ocr_block_geometry.dart';
 import 'package:manga_jp/features/pages/domain/page_crop.dart';
 
 import '../capture/fixture_png.dart';
@@ -231,9 +232,7 @@ void main() {
     addTearDown(sub.cancel);
 
     await pumpEventQueue();
-    expect(events, [
-      <String>[],
-    ]);
+    expect(events, [<String>[]]);
 
     await repo.saveRecognizedCrop(
       pageId: 'live-1',
@@ -249,5 +248,109 @@ void main() {
 
     expect(events.last, ['live-1']);
     expect((await repo.watchPageEntries().first).single.title, '見せる');
+  });
+
+  test('saveRecognizedCrop stores image_path and ocr_blocks_json', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = PagesRepository(db);
+
+    await repo.saveRecognizedCrop(
+      pageId: 'page-img',
+      sourceSha256: 'sha',
+      left: 0.1,
+      top: 0.2,
+      width: 0.3,
+      height: 0.4,
+      ocrText: '高い',
+      engineId: 'cloud_vision',
+      imagePath: '/tmp/page-img.png',
+      ocrBlocks: const [
+        OcrBlockGeometry(
+          text: '高い',
+          confidence: 0.91,
+          left: 0.2,
+          top: 0.1,
+          width: 0.5,
+          height: 0.6,
+        ),
+      ],
+    );
+
+    final page = await repo.pageById('page-img');
+    expect(page, isNotNull);
+    expect(page!.imagePath, '/tmp/page-img.png');
+    final crop = (await repo.cropsForPage('page-img')).single;
+    expect(crop.ocrBlocks, hasLength(1));
+    expect(crop.ocrBlocks.single.text, '高い');
+    expect(crop.ocrBlocks.single.confidence, 0.91);
+    expect(crop.ocrBlocks.single.left, 0.2);
+    expect(crop.ocrBlocks.single.hasRect, isTrue);
+
+    final row = (await db.select(db.capturedCrops).get()).single;
+    expect(row.ocrBlocksJson, contains('"text":"高い"'));
+    expect(row.ocrBlocksJson, contains('"left":0.2'));
+  });
+
+  test(
+    'old pages keep image_path null; manga-ocr keeps ocr_blocks_json null',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final repo = PagesRepository(db);
+
+      await repo.saveRecognizedCrop(
+        pageId: 'page-legacy',
+        sourceSha256: 'sha',
+        left: 0.2,
+        top: 0.2,
+        width: 0.6,
+        height: 0.6,
+        ocrText: '猫を食べた。',
+        engineId: 'manga_ocr',
+        ocrBlocks: const [OcrBlockGeometry(text: '猫を食べた。')],
+      );
+
+      expect((await repo.pageById('page-legacy'))!.imagePath, isNull);
+      expect(
+        (await repo.cropsForPage('page-legacy')).single.ocrBlocks,
+        isEmpty,
+      );
+      expect(
+        (await db.select(db.capturedCrops).get()).single.ocrBlocksJson,
+        isNull,
+      );
+    },
+  );
+
+  test('setImagePathIfNull does not overwrite an existing path', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = PagesRepository(db);
+
+    await repo.saveRecognizedCrop(
+      pageId: 'page-keep',
+      sourceSha256: 'sha',
+      left: 0.1,
+      top: 0.1,
+      width: 0.4,
+      height: 0.4,
+      ocrText: 'a',
+      engineId: 'test',
+      imagePath: '/tmp/first.png',
+    );
+    await repo.saveRecognizedCrop(
+      pageId: 'page-keep',
+      sourceSha256: 'sha',
+      left: 0.5,
+      top: 0.5,
+      width: 0.3,
+      height: 0.3,
+      ocrText: 'b',
+      engineId: 'test',
+      imagePath: '/tmp/second.png',
+    );
+
+    expect((await repo.pageById('page-keep'))!.imagePath, '/tmp/first.png');
   });
 }
