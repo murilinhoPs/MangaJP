@@ -173,26 +173,6 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
             onPressed: _toggleOverlay,
           )
         : null;
-    final task = ShellTask(
-      meta: widget.pageId,
-      metaHint: hint,
-      actions: [
-        ?overlayAction,
-        ShellAction(
-          id: 'edit',
-          label: PageLabels.editar,
-          icon: Icons.edit_outlined,
-          enabled: items.isNotEmpty,
-          onPressed: () => _editOcr(items),
-        ),
-        ShellAction(
-          id: 'add',
-          label: '+',
-          icon: Icons.add,
-          onPressed: () => const CaptureRoute().push<void>(context),
-        ),
-      ],
-    );
 
     final body = crops.when(
       data: (list) {
@@ -233,7 +213,35 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
     );
 
     final overlaySheetOpen =
-        !wide && _isOverlayPage && _session != null && hasImage;
+        !wide && overlayOn && _isOverlayPage && _session != null && hasImage;
+    final taskActions = <ShellAction>[
+      ?overlayAction,
+      if (overlaySheetOpen)
+        ShellAction(
+          id: 'close-lookup',
+          label: PageLabels.fechar,
+          shortcut: 'Esc',
+          onPressed: _clearBox,
+        ),
+      ShellAction(
+        id: 'edit',
+        label: PageLabels.editar,
+        icon: Icons.edit_outlined,
+        enabled: items.isNotEmpty,
+        onPressed: () => _editOcr(items),
+      ),
+      ShellAction(
+        id: 'add',
+        label: '+',
+        icon: Icons.add,
+        onPressed: () => const CaptureRoute().push<void>(context),
+      ),
+    ];
+    final task = ShellTask(
+      meta: widget.pageId,
+      metaHint: hint,
+      actions: taskActions,
+    );
     final shortcuts = <ShortcutActivator, Intent>{
       if (hasImage)
         const SingleActivator(LogicalKeyboardKey.keyB):
@@ -301,7 +309,9 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
                 appBar: AppBar(
                   leading: BackButton(
                     key: PageDetailKeys.back,
-                    onPressed: () => popTaskOrHome(context),
+                    onPressed: overlaySheetOpen
+                        ? _clearBox
+                        : () => popTaskOrHome(context),
                   ),
                 ),
                 body: Column(
@@ -309,12 +319,13 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
                     Expanded(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final maxSheet = (constraints.maxHeight - 96)
-                              .clamp(0.0, double.infinity);
+                          final maxSheet = (constraints.maxHeight - 96).clamp(
+                            0.0,
+                            double.infinity,
+                          );
                           final sheetHeight = overlaySheetOpen
-                              ? lookupSheetHeightOf(
-                                  context,
-                                ).clamp(0.0, maxSheet)
+                              ? lookupSheetHeightOf(context)
+                                    .clamp(0.0, maxSheet)
                               : 0.0;
                           return Column(
                             children: [
@@ -473,7 +484,11 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
   }
 
   void _toggleOverlay() {
+    final overlayOn = ref.read(readerOcrOverlayProvider);
     ref.read(readerOcrOverlayProvider.notifier).toggle();
+    if (overlayOn) {
+      _clearBox();
+    }
   }
 
   void _cycleBox(List<OcrOverlayBox> boxes, int delta) {

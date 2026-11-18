@@ -526,6 +526,71 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
     expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('AppBar back closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-appbar',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-appbar')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.tap(find.byKey(PageDetailKeys.back));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+
+    await tester.tap(find.byKey(PageDetailKeys.back));
+    await tester.pumpAndSettle();
+    expect(find.byType(PageDetailPage), findsNothing);
+    expect(find.byType(HomePage), findsOneWidget);
+  });
+
+  testWidgets('toggle overlay closes overlay lookup at 390x844', (
+    tester,
+  ) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-toggle',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.tap(find.byKey(PageDetailKeys.overlayToggle));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byKey(PageDetailKeys.overlay), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
+  });
+
+  testWidgets('B closes overlay lookup at 390x844', (tester) async {
+    await _openPage(
+      tester,
+      size: _phone,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'close-b',
+    );
+    await tester.tap(find.byKey(PageOverlayKeys.box('close-b')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+    await tester.pumpAndSettle();
+    expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
+    expect(find.byKey(PageDetailKeys.overlay), findsNothing);
+    expect(find.byType(PageDetailPage), findsOneWidget);
   });
 
   testWidgets(
@@ -544,10 +609,7 @@ void main() {
 
       await tester.tap(find.byKey(PageOverlayKeys.box('dock-top')));
       await tester.pumpAndSettle();
-      expect(
-        tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
-        '猫',
-      );
+      expect(tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data, '猫');
 
       final sheet = tester.getRect(find.byKey(LookupSheetKeys.sheet));
       final toggle = tester.getRect(find.byKey(PageDetailKeys.overlayToggle));
@@ -560,16 +622,13 @@ void main() {
       await tester.tap(find.byKey(PageOverlayKeys.box('dock-low')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(
-        tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
-        '高い',
-      );
+      expect(tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data, '高い');
 
       await tester.tap(find.byKey(PageDetailKeys.overlayToggle));
       await tester.pumpAndSettle();
       expect(find.byKey(PageDetailKeys.overlay), findsNothing);
       expect(find.byKey(PageDetailKeys.overlayToggle), findsOneWidget);
-      expect(find.byKey(LookupSheetKeys.sheet), findsOneWidget);
+      expect(find.byKey(LookupSheetKeys.sheet), findsNothing);
     },
   );
 
