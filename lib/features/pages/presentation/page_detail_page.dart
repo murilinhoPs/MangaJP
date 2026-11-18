@@ -114,7 +114,8 @@ class _ClearBoxIntent extends Intent {
   const _ClearBoxIntent();
 }
 
-class _PageDetailPageState extends ConsumerState<PageDetailPage> {
+class _PageDetailPageState extends ConsumerState<PageDetailPage>
+    with WidgetsBindingObserver {
   _TouchRange? _touch;
   _LookupSession? _session;
   bool _lookupLoading = false;
@@ -127,6 +128,23 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
   Size? _imageSize;
   bool _imageResolved = true;
   int _imageLoadGen = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
