@@ -276,56 +276,87 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
                   onPressed: () => popTaskOrHome(context),
                 ),
               ),
-              body: Column(
+              body: Stack(
                 children: [
-                  Expanded(
-                    child: wide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(child: body),
-                              _LookupDrawer(
-                                loading: _lookupLoading,
-                                error: _lookupError,
-                                session: _session,
-                                originPageId: widget.pageId,
-                                onAction: _applyLookup,
-                                onCustomAction: _applyCustomLookup,
+                  Column(
+                    children: [
+                      Expanded(
+                        child: wide
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(child: body),
+                                  _LookupDrawer(
+                                    loading: _lookupLoading,
+                                    error: _lookupError,
+                                    session: _session,
+                                    originPageId: widget.pageId,
+                                    onAction: _applyLookup,
+                                    onCustomAction: _applyCustomLookup,
+                                  ),
+                                ],
+                              )
+                            : body,
+                      ),
+                      if (!wide)
+                        TaskDock(
+                          meta: widget.pageId,
+                          metaHint: hint,
+                          trailing: [
+                            if (hasImage)
+                              DockIconButton(
+                                key: PageDetailKeys.overlayToggle,
+                                icon: Icons.crop_free,
+                                tooltip: overlayOn
+                                    ? PageLabels.overlayOn
+                                    : PageLabels.overlayOff,
+                                toggled: overlayOn,
+                                onPressed: _toggleOverlay,
                               ),
-                            ],
-                          )
-                        : body,
+                            DockIconButton(
+                              key: PageDetailKeys.edit,
+                              icon: Icons.edit_outlined,
+                              tooltip: PageLabels.editar,
+                              enabled: items.isNotEmpty,
+                              onPressed: () => _editOcr(items),
+                            ),
+                            DockIconButton(
+                              key: PageDetailKeys.add,
+                              icon: Icons.add,
+                              tooltip: PageLabels.adicionar,
+                              onPressed: () =>
+                                  const CaptureRoute().push<void>(context),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
-                  if (!wide)
-                    TaskDock(
-                      meta: widget.pageId,
-                      metaHint: hint,
-                      trailing: [
-                        if (hasImage)
-                          DockIconButton(
-                            key: PageDetailKeys.overlayToggle,
-                            icon: Icons.crop_free,
-                            tooltip: overlayOn
-                                ? PageLabels.overlayOn
-                                : PageLabels.overlayOff,
-                            toggled: overlayOn,
-                            onPressed: _toggleOverlay,
+                  if (!wide && _session != null && _imageSize != null)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        height:
+                            MediaQuery.sizeOf(context).height *
+                            PageLayout.lookupSheetFraction,
+                        width: double.infinity,
+                        child: Material(
+                          color: AppColors.surface,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(AppRadius.sheetReview),
+                            ),
                           ),
-                        DockIconButton(
-                          key: PageDetailKeys.edit,
-                          icon: Icons.edit_outlined,
-                          tooltip: PageLabels.editar,
-                          enabled: items.isNotEmpty,
-                          onPressed: () => _editOcr(items),
+                          clipBehavior: Clip.antiAlias,
+                          child: _LookupDrawer(
+                            loading: _lookupLoading,
+                            error: _lookupError,
+                            session: _session,
+                            originPageId: widget.pageId,
+                            onAction: _applyLookup,
+                            onCustomAction: _applyCustomLookup,
+                          ).sessionChild(context),
                         ),
-                        DockIconButton(
-                          key: PageDetailKeys.add,
-                          icon: Icons.add,
-                          tooltip: PageLabels.adicionar,
-                          onPressed: () =>
-                              const CaptureRoute().push<void>(context),
-                        ),
-                      ],
+                      ),
                     ),
                 ],
               ),
@@ -512,7 +543,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             end: result.end,
           );
         });
-        if (!ShellLayout.isWide(context)) {
+        if (!ShellLayout.isWide(context) && _imageSize == null) {
           await showLookupSheet(
             context,
             result: result,
@@ -525,7 +556,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
             ),
             onAction: (action, entry) => _applyLookup(session, action, entry),
           );
-          if (mounted) {
+          if (mounted && identical(_session, session)) {
             setState(() {
               _session = null;
               _touch = null;
@@ -562,7 +593,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
         _session = session;
         _touch = _TouchRange(cropId: crop.id, start: miss.start, end: miss.end);
       });
-      if (!ShellLayout.isWide(context)) {
+      if (!ShellLayout.isWide(context) && _imageSize == null) {
         await showCustomLookupSheet(
           context,
           surface: miss.surface,
@@ -577,7 +608,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage> {
           ),
           onAction: (action, note) => _applyCustomLookup(session, action, note),
         );
-        if (mounted) {
+        if (mounted && identical(_session, session)) {
           setState(() {
             _session = null;
             _touch = null;
@@ -1055,6 +1086,10 @@ class _LookupDrawer extends StatelessWidget {
   )
   onCustomAction;
 
+  Widget sessionChild(BuildContext context) {
+    return _body(context, context.tokens);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -1076,7 +1111,7 @@ class _LookupDrawer extends StatelessWidget {
 
   Widget _body(BuildContext context, MangaJpTokens tokens) {
     final session = this.session;
-    if (loading) {
+    if (loading && session == null) {
       return const Center(
         key: LookupSheetKeys.loading,
         child: CircularProgressIndicator(),

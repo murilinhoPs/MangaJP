@@ -176,6 +176,29 @@ class _LookupSheetState extends State<LookupSheet> {
   }
 
   @override
+  void didUpdateWidget(covariant LookupSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_lookupIdentity(oldWidget) != _lookupIdentity(widget)) {
+      _selectedSeq = widget.result?.selectedSeq;
+      _note.clear();
+      _saving = false;
+    }
+  }
+
+  static Object _lookupIdentity(LookupSheet sheet) {
+    final result = sheet.result;
+    if (result == null) {
+      return (
+        sheet.surface,
+        sheet.highlightStart,
+        sheet.highlightEnd,
+        'custom',
+      );
+    }
+    return (result.surface, result.start, result.end, result.selectedSeq);
+  }
+
+  @override
   void dispose() {
     _note.removeListener(_onNoteChanged);
     _note.dispose();
@@ -187,8 +210,15 @@ class _LookupSheetState extends State<LookupSheet> {
 
   bool get _isCustom => widget.result == null;
 
-  DictEntry get _selected =>
-      widget.result!.entries.firstWhere((entry) => entry.seq == _selectedSeq);
+  DictEntry get _selected {
+    final entries = widget.result!.entries;
+    for (final entry in entries) {
+      if (entry.seq == _selectedSeq) {
+        return entry;
+      }
+    }
+    return entries.first;
+  }
 
   bool get _canAct {
     if (_saving) {

@@ -172,6 +172,36 @@ void main() {
       expect((paint.painter! as OcrBoxPainter).borderWidth, 2);
     });
 
+    testWidgets(
+      'tap box 1 then box 2 switches lookup without crash at $label',
+      (tester) async {
+        await _openPage(
+          tester,
+          size: size,
+          jmdictPath: jmdictPath,
+          imagePath: _imagePath,
+          cropId: 'switch-a',
+          extraCropId: 'switch-b',
+        );
+
+        await tester.tap(find.byKey(PageOverlayKeys.box('switch-a')));
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
+          '猫',
+        );
+
+        await tester.tap(find.byKey(PageOverlayKeys.box('switch-b')));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(LookupSheetKeys.lemma), findsOneWidget);
+        expect(
+          tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data,
+          '高い',
+        );
+      },
+    );
+
     testWidgets('low-confidence box is dashed at $label', (tester) async {
       await _openPage(
         tester,
@@ -197,6 +227,30 @@ void main() {
       expect((paint.painter! as OcrBoxPainter).dashed, isTrue);
     });
   }
+
+  testWidgets('Tab then Enter with lookup open switches term on 1280x800', (
+    tester,
+  ) async {
+    await _openPage(
+      tester,
+      size: _desktop,
+      jmdictPath: jmdictPath,
+      imagePath: _imagePath,
+      cropId: 'enter-a',
+      extraCropId: 'enter-b',
+    );
+
+    await tester.tap(find.byKey(PageOverlayKeys.box('enter-a')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data, '猫');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.widget<Text>(find.byKey(LookupSheetKeys.lemma)).data, '高い');
+  });
 
   testWidgets('B toggles overlay on 1280x800', (tester) async {
     await _openPage(
@@ -337,10 +391,7 @@ void main() {
     );
 
     final destGlobal = tester.getRect(find.byKey(PageDetailKeys.image));
-    expect(
-      destGlobal.width / destGlobal.height,
-      closeTo(200 / 300, 0.02),
-    );
+    expect(destGlobal.width / destGlobal.height, closeTo(200 / 300, 0.02));
 
     final visual = Rect.fromLTWH(
       destGlobal.left + 0.1 * destGlobal.width,
