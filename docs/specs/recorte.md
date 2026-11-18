@@ -22,6 +22,8 @@ Um ou mais retângulos de balão, recortados do original, antes de qualquer OCR.
 | Thumbnail (`pages.thumb_path`) | JPEG ~**400 px** no lado longo, q~75. |
 | Crop (`crops.image_path`) | PNG do recorte (do original ou já reduzido pela exceção 3000 px). |
 
+F22 (schema 10, na `main`): o confirm grava a PNG recebida em `{documents}/pages/{pageId}.png` (`path_provider`) **sem** a redução 3000 px desta tabela. `crops.image_path` e `pages.thumb_path` continuam pendentes — [captura](captura.md).
+
 Não downscalear screenshot de telefone com lado longo ≤ ~2400 px.
 
 **Dedupe:** `image_sha256 = sha256(bytes recebidos)` (ou pós-redução 3000 px). `UNIQUE`.
