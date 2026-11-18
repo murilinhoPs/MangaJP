@@ -252,7 +252,8 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
             const _PrevBoxIntent(),
         const SingleActivator(LogicalKeyboardKey.enter): const _OpenBoxIntent(),
       },
-      if (overlaySheetOpen || (wide && _selectedBoxId != null))
+      // Phone in-tree sheet and desktop selected box both own Esc.
+      if (overlaySheetOpen || _selectedBoxId != null)
         const SingleActivator(LogicalKeyboardKey.escape):
             const _ClearBoxIntent(),
     };
