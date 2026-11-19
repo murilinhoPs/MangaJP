@@ -2,7 +2,9 @@
 
 Ferramenta pessoal para estudar japonês via manga. Flutter only. Single-user (Murilo).
 
-Versão viva deste recorte: **v1.3**. Atualizado **2026-10-22** (print/QA). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
+Versão viva deste recorte: **v1.3**. Atualizado **2026-11-18** (F22 overlay, [#114](https://github.com/murilinhoPs/MangaJP/pull/114)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
+
+2026-11-18 — F22: boxes do OCR sobre a imagem da página (schema Drift 10: `pages.image_path`, `crops.ocr_blocks_json`); lookup inline no mobile, drawer no desktop. Spec: [leitor](specs/leitor.md), [ocr](specs/ocr.md).
 
 ## Visão
 
@@ -36,7 +38,7 @@ Must, Should, Could, Won't do PRD. Spec por feature:
 | --- | --- | --- | --- |
 | Captura | [captura](specs/captura.md) | F1 galeria, F2 share Android | F28 câmera Could |
 | Recorte | [recorte](specs/recorte.md) | F3 crop ≥1, F19 imagens | — |
-| OCR | [ocr](specs/ocr.md), [cloud-vision](specs/cloud-vision.md) | F4 manga-ocr, F5 texto editável | F22 boxes, F26 Cloud, F27 furigana Should; F29 outros motores Could |
+| OCR | [ocr](specs/ocr.md), [cloud-vision](specs/cloud-vision.md) | F4 manga-ocr, F5 texto editável | F22 overlay de boxes + lookup inline, F26 Cloud, F27 furigana Should; F29 outros motores Could |
 | Dicionário | [dicionario](specs/dicionario.md) | F6–F9 lookup | F24 KANJIDIC2 Should; F34 tokenização Could |
 | Palavras / Caderno | [caderno](specs/caderno.md) | F10, F12, F41–F44 | F45 kanji Should/M2; F46 export Could |
 | Flashcards | [flashcards](specs/flashcards.md) | F11 CRUD vocab | F23 suspender Should; F38 kanji cards ([M2b](roadmap.md#m2b--kanji-no-srs), proposta) |
@@ -52,7 +54,7 @@ Won't de produto: F35 contas, F36 scraping, F37 multi-deck sharing, F40 iOS só 
 
 1. **Share → estudo** — share abre [`/capture`](specs/captura.md) (sem Home) → ≥1 crop → OCR auto → [`/pages/:id`](specs/leitor.md) → tap → Salvar / Aprendendo / Conhecido / Ignorar ([caderno](specs/caderno.md)).
 2. **Revisão offline** — Home **Revisar** → fila due → Again/Hard/Good/Easy → resumo ([revisao](specs/revisao.md)).
-3. **Releitura** — página recente: crops + `word_state`; promover, known, novos crops.
+3. **Releitura** — página recente: imagem + overlay de boxes (F22) ou cards de texto se não houver `pages.image_path`; tap na box ou no texto abre lookup; crops + `word_state`; promover, known, novos crops.
 4. **Caderno** — lista, busca, filtros; detalhe read-only; Aprender / remover.
 5. **Backup (Should)** — export JSON/SQLite. Sync HTTP é Could (Q-N4).
 

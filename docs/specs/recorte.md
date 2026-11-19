@@ -22,6 +22,8 @@ Um ou mais retângulos de balão, recortados do original, antes de qualquer OCR.
 | Thumbnail (`pages.thumb_path`) | JPEG ~**400 px** no lado longo, q~75. |
 | Crop (`crops.image_path`) | PNG do recorte (do original ou já reduzido pela exceção 3000 px). |
 
+F22 (schema 10, na `main`): o confirm grava os **bytes recebidos** (hoje com extensão `.png`, sem recodificar) em `{documents}/pages/{pageId}.png` (`path_provider`) **sem** a redução 3000 px desta tabela. JPEG/WebP nesse arquivo falham o IHDR e a overlay não liga — [captura](captura.md). `crops.image_path` e `pages.thumb_path` continuam pendentes.
+
 Não downscalear screenshot de telefone com lado longo ≤ ~2400 px.
 
 **Dedupe:** `image_sha256 = sha256(bytes recebidos)` (ou pós-redução 3000 px). `UNIQUE`.
@@ -38,3 +40,4 @@ Em colisão: não cria segunda `pages`; abre a existente; permite novos crops; a
 
 > Pendente: copy exato do diálogo de descarte / sair com edição.
 > Pendente: o recorte inicial automático — tamanho, posição, um vs. vários.
+> Pendente (follow-up de código, F22): bytes crus gravados como `.png`; JPEG/WebP não ligam a overlay — [captura](captura.md).

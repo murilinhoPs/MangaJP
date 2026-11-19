@@ -17,6 +17,7 @@ Do tap na forma da página até lemma + gloss, offline, com deinflexão e homóg
 - **F24 Should:** KANJIDIC2 no lookup (on/kun, significados, traços). Sem flashcard kanji. Tocar um kanji na ficha da palavra abre a ficha do kanji, com **Salvar kanji** (F45 / M2) — [kanji](kanji.md). F24 e F45 entram no mesmo PR da [#58](https://github.com/murilinhoPs/MangaJP/issues/58).
 - NF3 / AC-lookup: p95 < 100 ms com dict em disco.
 - Sheet de ação: **Salvar / Aprendendo / Conhecido / Ignorar** — [caderno](caderno.md).
+- **Onde o lookup aparece** (F22 / [leitor](leitor.md)): desktop (≥ 900) = drawer 400 px. Mobile com imagem + overlay ligado = sheet **inline** (não modal) acima do TaskDock. Mobile sem imagem (páginas antigas / path órfão) = sheet **modal**. Trocar de termo com o sheet aberto: a seleção do homógrafo volta para a primeira entrada.
 
 **F34 Could:** tokenização Kuromoji/MeCab.
 
