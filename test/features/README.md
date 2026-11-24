@@ -28,3 +28,6 @@ sidecar) is in `test/features/ocr/`. Cloud Vision (F26) uses a fake HTTP
 client in the same folder: parse JP, missing/invalid key, 429, network,
 timeout, header `X-Goog-Api-Key` without `?key=`, no key in logs, fallback
 per crop, and widget tests of Ajustes › OCR at 390×844 and 1280×800.
+Backup JSON (F25) encode/decode, schema validation, atomic restore, and
+`normalizeKanjiLiteral` live in `test/features/backup/`; widget tests of
+Ajustes › Backup and Sobre / Fontes run at 390×844 and 1280×800.
