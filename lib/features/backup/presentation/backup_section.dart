@@ -80,7 +80,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     if (_didShot) {
       return;
     }
-    if (kBackupShotConfirm ||
+    if (kBackupShotBackup ||
+        kBackupShotConfirm ||
         kBackupShotRejected ||
         kBackupShotOk ||
         kBackupShotSkipped) {

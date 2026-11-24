@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 /// `flutter run --dart-define=MANGAJP_BACKUP_SHOT=confirm` (and siblings).
 const kBackupShot = String.fromEnvironment('MANGAJP_BACKUP_SHOT');
 
+bool get kBackupShotBackup => !kReleaseMode && kBackupShot == 'backup';
+
 bool get kBackupShotConfirm => !kReleaseMode && kBackupShot == 'confirm';
 
 bool get kBackupShotRejected => !kReleaseMode && kBackupShot == 'rejected';
