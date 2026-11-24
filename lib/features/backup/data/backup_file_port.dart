@@ -71,10 +71,19 @@ class FilePickerBackupPort implements BackupFilePort {
     if (path == null) {
       return BackupSaveResult.cancelled;
     }
-    if (path.isNotEmpty && !path.startsWith('content:')) {
-      final file = File(path);
-      if (!file.existsSync() || file.lengthSync() == 0) {
-        await file.writeAsString(contents);
+    // Android/iOS persist [bytes] in the platform channel. A second
+    // dart:io write on the SAF path throws FileSystemException after a
+    // successful save (seen as «Falha ao exportar.» with an 11 kB file).
+    if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      if (path.isNotEmpty && !path.startsWith('content:')) {
+        try {
+          final file = File(path);
+          if (!file.existsSync() || file.lengthSync() == 0) {
+            await file.writeAsString(contents);
+          }
+        } on FileSystemException {
+          // Picker already wrote the file.
+        }
       }
     }
     return BackupSaveResult.saved;
