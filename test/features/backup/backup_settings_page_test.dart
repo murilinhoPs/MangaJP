@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -59,6 +61,29 @@ void main() {
       expect(find.text(BackupLabels.exportFailed), findsOneWidget);
       expect(files.lastExported, isNull);
     });
+
+    testWidgets(
+      'failing desktop write shows Falha ao exportar, not success at $label',
+      (tester) async {
+        final files = MemoryBackupFilePort(
+          saveError: const FileSystemException(
+            'Permission denied',
+            '/tmp/mangajp-backup.json',
+            OSError('Permission denied', 13),
+          ),
+        );
+        await _openSettings(tester, files: files, size: size);
+
+        await tester.ensureVisible(find.byKey(BackupKeys.export));
+        await tester.tap(find.byKey(BackupKeys.export));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.text(BackupLabels.exportFailed), findsOneWidget);
+        expect(find.text(BackupLabels.exportOk), findsNothing);
+        expect(files.lastExported, isNull);
+      },
+    );
 
     testWidgets('unreadable restore file shows a snackbar at $label', (
       tester,
