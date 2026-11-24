@@ -40,10 +40,46 @@ void main() {
 
       expect(files.lastFileName, 'mangajp-backup.json');
       expect(files.lastExported, contains('"schema_version": 10'));
-      expect(files.lastExported, contains('"format_version": 1'));
+      expect(files.lastExported, contains('"format_version": 2'));
       expect(files.lastExported, contains('"saved_kanji": []'));
+      expect(files.lastExported, contains('"crop_words": []'));
       expect(find.text(BackupLabels.exportOk), findsOneWidget);
       expect(find.text(BackupLabels.exportJson), findsOneWidget);
+    });
+
+    testWidgets('export error shows a snackbar at $label', (tester) async {
+      final files = MemoryBackupFilePort(saveError: Exception('disk'));
+      await _openSettings(tester, files: files, size: size);
+
+      await tester.ensureVisible(find.byKey(BackupKeys.export));
+      await tester.tap(find.byKey(BackupKeys.export));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text(BackupLabels.exportFailed), findsOneWidget);
+      expect(files.lastExported, isNull);
+    });
+
+    testWidgets('unreadable restore file shows a snackbar at $label', (
+      tester,
+    ) async {
+      final files = MemoryBackupFilePort(
+        pickError: const FormatException('bad utf-8'),
+      );
+      final env = await _openSettings(tester, files: files, size: size);
+      await _seedLocalWord(env.db);
+
+      await tester.ensureVisible(find.byKey(BackupKeys.restore));
+      await tester.tap(find.byKey(BackupKeys.restore));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.byKey(BackupKeys.confirmDialog), findsNothing);
+      expect(find.text(BackupLabels.invalidFile), findsOneWidget);
+      expect(
+        (await env.db.select(env.db.userWords).get()).single.id,
+        'keep-me',
+      );
     });
 
     testWidgets('restore ok replaces Caderno after confirm at $label', (

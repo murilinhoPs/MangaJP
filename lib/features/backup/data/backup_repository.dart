@@ -16,8 +16,10 @@ BackupRepository backupRepository(Ref ref) {
   return BackupRepository(ref.watch(appDatabaseProvider));
 }
 
-/// Export / restore Caderno + SRS + `saved_kanji`. Pages, crops, images,
-/// `app_meta`, and the Cloud Vision key are not in the JSON.
+/// Export / restore Caderno + SRS + `saved_kanji` + `crop_words`.
+/// Pages, crops, images, `app_meta`, and the Cloud Vision key are not
+/// in the JSON. Restore re-inserts `crop_words` only when the crop still
+/// exists (same skip pattern as `origin_page_id`).
 class BackupRepository {
   const BackupRepository(this._db);
 
@@ -31,6 +33,7 @@ class BackupRepository {
     final cards = await _db.select(_db.userCards).get();
     final srs = await _db.select(_db.userCardSrs).get();
     final logs = await _db.select(_db.userReviewLogs).get();
+    final links = await _db.select(_db.cropWords).get();
     final kanji = await _db.select(_db.savedKanji).get();
     return BackupDocument(
       formatVersion: kBackupFormatVersion,
@@ -88,6 +91,14 @@ class BackupRepository {
             quality: row.quality,
             engineId: row.engineId,
             isDrill: row.isDrill,
+          ),
+      ],
+      cropWords: [
+        for (final row in links)
+          BackupCropWord(
+            cropId: row.cropId,
+            wordId: row.wordId,
+            createdAt: row.createdAt.toUtc(),
           ),
       ],
       savedKanji: [
@@ -191,6 +202,31 @@ class BackupRepository {
                   quality: log.quality,
                   engineId: log.engineId,
                   isDrill: log.isDrill,
+                ),
+              );
+        }
+
+        final cropIds = {
+          for (final crop in await _db.select(_db.capturedCrops).get()) crop.id,
+        };
+        final wordIds = {for (final word in doc.words) word.id};
+        final seenLinks = <String>{};
+        for (final link in doc.cropWords) {
+          if (!cropIds.contains(link.cropId) ||
+              !wordIds.contains(link.wordId)) {
+            continue;
+          }
+          final key = '${link.cropId}\u0000${link.wordId}';
+          if (!seenLinks.add(key)) {
+            continue;
+          }
+          await _db
+              .into(_db.cropWords)
+              .insert(
+                CropWordsCompanion.insert(
+                  cropId: link.cropId,
+                  wordId: link.wordId,
+                  createdAt: link.createdAt,
                 ),
               );
         }

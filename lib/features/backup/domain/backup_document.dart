@@ -1,7 +1,14 @@
 /// Envelope version of the JSON file, independent of Drift [schemaVersion].
-const kBackupFormatVersion = 1;
+///
+/// 1 = Caderno + SRS + `saved_kanji` (no `crop_words` key).
+/// 2 = same plus `crop_words`. The decoder still accepts 1.
+const kBackupFormatVersion = 2;
 
-/// Caderno + SRS + `saved_kanji` snapshot (F25). No pages, crops, or images.
+/// Oldest envelope this app still reads. Missing `format_version` → 1.
+const kMinBackupFormatVersion = 1;
+
+/// Caderno + SRS + `saved_kanji` + `crop_words` snapshot (F25).
+/// No pages, crops, or images.
 class BackupDocument {
   const BackupDocument({
     required this.formatVersion,
@@ -12,6 +19,7 @@ class BackupDocument {
     required this.cards,
     required this.cardSrs,
     required this.reviewLogs,
+    this.cropWords = const [],
     required this.savedKanji,
   });
 
@@ -23,6 +31,7 @@ class BackupDocument {
   final List<BackupCard> cards;
   final List<BackupCardSrs> cardSrs;
   final List<BackupReviewLog> reviewLogs;
+  final List<BackupCropWord> cropWords;
   final List<BackupSavedKanji> savedKanji;
 }
 
@@ -112,6 +121,18 @@ class BackupReviewLog {
   final int quality;
   final String engineId;
   final int isDrill;
+}
+
+class BackupCropWord {
+  const BackupCropWord({
+    required this.cropId,
+    required this.wordId,
+    required this.createdAt,
+  });
+
+  final String cropId;
+  final String wordId;
+  final DateTime createdAt;
 }
 
 class BackupSavedKanji {

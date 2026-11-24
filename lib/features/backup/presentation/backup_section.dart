@@ -122,6 +122,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
       if (saved == BackupSaveResult.saved) {
         _snack(BackupLabels.exportOk);
       }
+    } catch (_) {
+      if (mounted) {
+        _snack(BackupLabels.exportFailed);
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -130,7 +134,20 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
   }
 
   Future<void> _restore() async {
-    final source = await ref.read(backupFilePortProvider).pickBackupJson();
+    late final String? source;
+    try {
+      source = await ref.read(backupFilePortProvider).pickBackupJson();
+    } on BackupRejectedException catch (error) {
+      if (mounted) {
+        _snack(error.message);
+      }
+      return;
+    } catch (_) {
+      if (mounted) {
+        _snack(BackupLabels.invalidFile);
+      }
+      return;
+    }
     if (!mounted || source == null) {
       return;
     }
@@ -140,6 +157,9 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
       doc = decodeBackupJson(source, currentSchemaVersion: schemaVersion);
     } on BackupRejectedException catch (error) {
       _snack(error.message);
+      return;
+    } catch (_) {
+      _snack(BackupLabels.invalidFile);
       return;
     }
     final confirmed = await _showConfirmDialog();

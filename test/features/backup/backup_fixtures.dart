@@ -7,9 +7,12 @@ const kRated = '2026-01-04T03:04:05.000Z';
 const kKanjiSaved = '2026-01-05T00:00:00.000Z';
 const kExported = '2026-01-06T00:00:00.000Z';
 
+const kCropLinked = '2026-01-02T03:05:00.000Z';
+
 BackupDocument sampleDocument({
   int formatVersion = kBackupFormatVersion,
   int schemaVersion = 10,
+  List<BackupCropWord>? cropWords,
   List<BackupSavedKanji>? savedKanji,
 }) {
   return BackupDocument(
@@ -64,6 +67,7 @@ BackupDocument sampleDocument({
         isDrill: 0,
       ),
     ],
+    cropWords: cropWords ?? const [],
     savedKanji:
         savedKanji ??
         [
@@ -76,10 +80,22 @@ BackupDocument sampleDocument({
   );
 }
 
+BackupCropWord sampleCropWord({
+  String cropId = 'crop-a',
+  String wordId = 'eat',
+}) {
+  return BackupCropWord(
+    cropId: cropId,
+    wordId: wordId,
+    createdAt: DateTime.parse(kCropLinked).toUtc(),
+  );
+}
+
 String sampleJson({
   int formatVersion = kBackupFormatVersion,
   int schemaVersion = 10,
   bool includeSavedKanji = true,
+  bool includeCropWords = false,
   String? extraKanji,
 }) {
   final kanji = includeSavedKanji
@@ -92,6 +108,18 @@ String sampleJson({
     }${extraKanji ?? ''}
   ]'''
       : null;
+  final cropWords = includeCropWords
+      ? '''
+  "crop_words": [
+    {
+      "crop_id": "crop-a",
+      "word_id": "eat",
+      "created_at": "$kCropLinked"
+    }
+  ]'''
+      : null;
+  final extras = <String>[?cropWords, ?kanji];
+  final tail = extras.isEmpty ? '' : ',\n${extras.join(',\n')}';
   return '''
 {
   "format_version": $formatVersion,
@@ -145,9 +173,10 @@ String sampleJson({
       "engine_id": "sm2-jr@1",
       "is_drill": 0
     }
-  ]${kanji == null ? '' : ',\n$kanji'}
+  ]$tail
 }
 ''';
 }
 
-String schema8Json() => sampleJson(schemaVersion: 8, includeSavedKanji: false);
+String schema8Json() =>
+    sampleJson(formatVersion: 1, schemaVersion: 8, includeSavedKanji: false);

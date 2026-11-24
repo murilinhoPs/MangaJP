@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/backup_exception.dart';
 import '../domain/backup_labels.dart';
 
 part 'backup_file_port.g.dart';
@@ -37,15 +38,21 @@ class FilePickerBackupPort implements BackupFilePort {
       return null;
     }
     final file = result.files.single;
-    final bytes = file.bytes;
-    if (bytes != null) {
-      return utf8.decode(bytes);
+    try {
+      final bytes = file.bytes;
+      if (bytes != null) {
+        return utf8.decode(bytes);
+      }
+      final path = file.path;
+      if (path == null || path.isEmpty) {
+        return null;
+      }
+      return await File(path).readAsString();
+    } on FormatException {
+      throw const BackupRejectedException(BackupLabels.invalidFile);
+    } on FileSystemException {
+      throw const BackupRejectedException(BackupLabels.invalidFile);
     }
-    final path = file.path;
-    if (path == null || path.isEmpty) {
-      return null;
-    }
-    return File(path).readAsString();
   }
 
   @override
@@ -76,16 +83,22 @@ class FilePickerBackupPort implements BackupFilePort {
 
 /// In-memory double for widget / domain tests. No plugins.
 class MemoryBackupFilePort implements BackupFilePort {
-  MemoryBackupFilePort({this.importJson});
+  MemoryBackupFilePort({this.importJson, this.pickError, this.saveError});
 
   String? importJson;
   String? lastExported;
   String? lastFileName;
   bool cancelPick = false;
   bool cancelSave = false;
+  Object? pickError;
+  Object? saveError;
 
   @override
   Future<String?> pickBackupJson() async {
+    final error = pickError;
+    if (error != null) {
+      throw error;
+    }
     if (cancelPick) {
       return null;
     }
@@ -97,6 +110,10 @@ class MemoryBackupFilePort implements BackupFilePort {
     required String fileName,
     required String contents,
   }) async {
+    final error = saveError;
+    if (error != null) {
+      throw error;
+    }
     if (cancelSave) {
       return BackupSaveResult.cancelled;
     }

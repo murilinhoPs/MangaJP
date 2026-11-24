@@ -22,8 +22,9 @@ void main() {
 
     final json = encodeBackupJson(await env.backup.export());
     expect(json, contains('"schema_version": 10'));
-    expect(json, contains('"format_version": 1'));
+    expect(json, contains('"format_version": 2'));
     expect(json, contains('"saved_kanji": []'));
+    expect(json, contains('"crop_words": []'));
     expect(json, contains('"words": []'));
   });
 
@@ -62,6 +63,78 @@ void main() {
     expect(kanji.literal, '食');
     expect(kanji.originPageId, 'page-a');
   });
+
+  test(
+    'round-trip keeps a crop_words link when the crop still exists',
+    () async {
+      final env = await _open();
+      addTearDown(env.db.close);
+      await _page(env.db, 'page-a');
+      await _crop(env.db, id: 'crop-a', pageId: 'page-a');
+      await env.backup.restore(sampleDocument(cropWords: [sampleCropWord()]));
+
+      final json = encodeBackupJson(await env.backup.export());
+      expect(json, contains('"crop_id": "crop-a"'));
+
+      final other = await _open();
+      addTearDown(other.db.close);
+      await _page(other.db, 'page-a');
+      await _crop(other.db, id: 'crop-a', pageId: 'page-a');
+      await other.backup.restoreJson(json);
+
+      final links = await other.db.select(other.db.cropWords).get();
+      expect(links, hasLength(1));
+      expect(links.single.cropId, 'crop-a');
+      expect(links.single.wordId, 'eat');
+      expect(
+        (await other.db.select(other.db.userWords).get()).single.id,
+        'eat',
+      );
+    },
+  );
+
+  test(
+    'crop_words whose crop is gone are skipped; the rest restores',
+    () async {
+      final env = await _open();
+      addTearDown(env.db.close);
+      await _page(env.db, 'page-a');
+      await _crop(env.db, id: 'crop-keep', pageId: 'page-a');
+
+      await env.backup.restore(
+        sampleDocument(
+          cropWords: [
+            sampleCropWord(cropId: 'crop-gone'),
+            sampleCropWord(cropId: 'crop-keep'),
+          ],
+        ),
+      );
+
+      final links = await env.db.select(env.db.cropWords).get();
+      expect(links, hasLength(1));
+      expect(links.single.cropId, 'crop-keep');
+      expect(links.single.wordId, 'eat');
+      expect((await env.db.select(env.db.userWords).get()).single.id, 'eat');
+      expect(
+        (await env.db.select(env.db.savedKanji).get()).single.literal,
+        '食',
+      );
+    },
+  );
+
+  test(
+    'format 1 backup without crop_words restores words and no links',
+    () async {
+      final env = await _open();
+      addTearDown(env.db.close);
+      await _page(env.db, 'page-a');
+      await _crop(env.db, id: 'crop-a', pageId: 'page-a');
+
+      await env.backup.restoreJson(sampleJson(formatVersion: 1));
+      expect((await env.db.select(env.db.userWords).get()).single.id, 'eat');
+      expect(await env.db.select(env.db.cropWords).get(), isEmpty);
+    },
+  );
 
   test(
     'schema 8 backup without saved_kanji restores Caderno + SRS, empty Kanji',
@@ -148,7 +221,7 @@ void main() {
       await _seedLocalWord(env.db);
 
       expect(
-        () => env.backup.restoreJson(sampleJson(formatVersion: 2)),
+        () => env.backup.restoreJson(sampleJson(formatVersion: 3)),
         throwsA(isA<BackupRejectedException>()),
       );
       expect(
@@ -267,6 +340,26 @@ Future<void> _page(AppDatabase db, String id) {
         ),
         mode: InsertMode.insertOrIgnore,
       );
+}
+
+Future<void> _crop(
+  AppDatabase db, {
+  required String id,
+  required String pageId,
+}) {
+  return db.pagesDao.insertCrop(
+    CapturedCropsCompanion.insert(
+      id: id,
+      pageId: pageId,
+      ocrText: '食べるのは楽しい。',
+      engineId: 'test',
+      left: 0.1,
+      top: 0.1,
+      width: 0.5,
+      height: 0.5,
+      createdAt: DateTime.utc(2026, 1, 1),
+    ),
+  );
 }
 
 Future<void> _seedLocalWord(AppDatabase db) async {

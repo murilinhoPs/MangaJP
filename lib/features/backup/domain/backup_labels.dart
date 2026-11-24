@@ -15,6 +15,7 @@ abstract final class BackupLabels {
   static const restoreOk = 'Backup restaurado.';
   static const invalidFile = 'Arquivo de backup inválido. Nada foi gravado.';
   static const restoreFailed = 'Falha ao restaurar. Nada foi gravado.';
+  static const exportFailed = 'Falha ao exportar.';
   static const exportDialogTitle = 'Exportar backup';
   static const importDialogTitle = 'Restaurar backup';
   static const aboutSection = 'Sobre / Fontes';

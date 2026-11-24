@@ -1,9 +1,18 @@
 import 'dart:convert';
 
+import '../../../core/srs/card_srs_state.dart';
 import '../../../core/utils/graphemes.dart';
+import '../../flashcards/domain/flashcard.dart';
+import '../../flashcards/domain/suspend_reason.dart';
+import '../../words/domain/word_state.dart';
 import 'backup_document.dart';
 import 'backup_exception.dart';
 import 'backup_labels.dart';
+
+final _wordStates = {for (final value in WordState.values) value.name};
+final _cardKinds = {for (final value in FlashcardKind.values) value.name};
+final _cardPhases = {for (final value in CardPhase.values) value.name};
+final _suspendReasons = {for (final value in SuspendReason.values) value.name};
 
 /// Encodes [doc] as pretty JSON. Keys are snake_case, matching SQL columns.
 String encodeBackupJson(BackupDocument doc) {
@@ -12,10 +21,11 @@ String encodeBackupJson(BackupDocument doc) {
 
 /// Parses and validates a backup file. Does not write to the database.
 ///
-/// Rejects unknown / newer [BackupDocument.formatVersion] and a
+/// Rejects a [BackupDocument.formatVersion] outside
+/// [[kMinBackupFormatVersion], [kBackupFormatVersion]] and a
 /// `schema_version` greater than [currentSchemaVersion]. A missing
-/// `format_version` is treated as [kBackupFormatVersion] (schema 8 fixtures
-/// from before this field existed). A missing `saved_kanji` is an empty list.
+/// `format_version` is treated as 1 (schema 8 fixtures from before this
+/// field existed). Missing `saved_kanji` / `crop_words` are empty lists.
 BackupDocument decodeBackupJson(
   String source, {
   required int currentSchemaVersion,
@@ -35,8 +45,9 @@ BackupDocument decodeBackupJson(
   }
 
   final formatVersion =
-      _optionalInt(map, 'format_version') ?? kBackupFormatVersion;
-  if (formatVersion != kBackupFormatVersion) {
+      _optionalInt(map, 'format_version') ?? kMinBackupFormatVersion;
+  if (formatVersion < kMinBackupFormatVersion ||
+      formatVersion > kBackupFormatVersion) {
     throw BackupRejectedException(BackupLabels.unknownFormat(formatVersion));
   }
 
@@ -73,6 +84,9 @@ BackupDocument decodeBackupJson(
     reviewLogs: [
       for (final row in _objectList(map, 'review_logs'))
         _reviewLogFromJson(row),
+    ],
+    cropWords: [
+      for (final row in _objectList(map, 'crop_words')) _cropWordFromJson(row),
     ],
     savedKanji: [
       for (final row in _objectList(map, 'saved_kanji'))
@@ -140,6 +154,14 @@ Map<String, Object?> _documentToJson(BackupDocument doc) {
           'is_drill': log.isDrill,
         },
     ],
+    'crop_words': [
+      for (final link in doc.cropWords)
+        <String, Object?>{
+          'crop_id': link.cropId,
+          'word_id': link.wordId,
+          'created_at': _date(link.createdAt),
+        },
+    ],
     'saved_kanji': [
       for (final kanji in doc.savedKanji)
         <String, Object?>{
@@ -170,7 +192,7 @@ BackupWord _wordFromJson(Map<String, Object?> row) {
 BackupWordState _wordStateFromJson(Map<String, Object?> row) {
   return BackupWordState(
     wordId: _requiredString(row, 'word_id'),
-    state: _requiredString(row, 'state'),
+    state: _requiredEnum(row, 'state', _wordStates),
     updatedAt: _requiredDateTime(row, 'updated_at'),
   );
 }
@@ -179,9 +201,9 @@ BackupCard _cardFromJson(Map<String, Object?> row) {
   return BackupCard(
     id: _requiredString(row, 'id'),
     wordId: _requiredString(row, 'word_id'),
-    kind: _requiredString(row, 'kind'),
+    kind: _requiredEnum(row, 'kind', _cardKinds),
     createdAt: _requiredDateTime(row, 'created_at'),
-    suspendReason: _optionalString(row, 'suspend_reason'),
+    suspendReason: _optionalEnum(row, 'suspend_reason', _suspendReasons),
   );
 }
 
@@ -192,7 +214,7 @@ BackupCardSrs _cardSrsFromJson(Map<String, Object?> row) {
     intervalDays: _requiredDouble(row, 'interval_days'),
     repetitions: _requiredInt(row, 'repetitions'),
     dueAt: _requiredDateTime(row, 'due_at'),
-    phase: _requiredString(row, 'phase'),
+    phase: _requiredEnum(row, 'phase', _cardPhases),
     engineId: _requiredString(row, 'engine_id'),
   );
 }
@@ -206,6 +228,14 @@ BackupReviewLog _reviewLogFromJson(Map<String, Object?> row) {
     quality: _requiredInt(row, 'quality'),
     engineId: _requiredString(row, 'engine_id'),
     isDrill: _requiredInt(row, 'is_drill'),
+  );
+}
+
+BackupCropWord _cropWordFromJson(Map<String, Object?> row) {
+  return BackupCropWord(
+    cropId: _requiredString(row, 'crop_id'),
+    wordId: _requiredString(row, 'word_id'),
+    createdAt: _requiredDateTime(row, 'created_at'),
   );
 }
 
@@ -296,6 +326,33 @@ String _requiredString(Map<String, Object?> map, String key) {
     return value;
   }
   throw const BackupRejectedException(BackupLabels.invalidFile);
+}
+
+String _requiredEnum(
+  Map<String, Object?> map,
+  String key,
+  Set<String> allowed,
+) {
+  final value = _requiredString(map, key);
+  if (!allowed.contains(value)) {
+    throw const BackupRejectedException(BackupLabels.invalidFile);
+  }
+  return value;
+}
+
+String? _optionalEnum(
+  Map<String, Object?> map,
+  String key,
+  Set<String> allowed,
+) {
+  final value = _optionalString(map, key);
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  if (!allowed.contains(value)) {
+    throw const BackupRejectedException(BackupLabels.invalidFile);
+  }
+  return value;
 }
 
 String? _optionalString(Map<String, Object?> map, String key) {
