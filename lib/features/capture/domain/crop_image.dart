@@ -23,17 +23,24 @@ CropPng cropToPng(Uint8List sourceBytes, CropRect rect) {
   if (decoded == null) {
     throw const FormatException('Could not decode image bytes');
   }
+  final oriented = img.bakeOrientation(decoded);
 
   final clamped = rect.clamped();
-  final x = (clamped.left * decoded.width).round().clamp(0, decoded.width - 1);
-  final y = (clamped.top * decoded.height).round().clamp(0, decoded.height - 1);
-  var width = (clamped.width * decoded.width).round();
-  var height = (clamped.height * decoded.height).round();
-  width = width.clamp(1, decoded.width - x);
-  height = height.clamp(1, decoded.height - y);
+  final x = (clamped.left * oriented.width).round().clamp(
+    0,
+    oriented.width - 1,
+  );
+  final y = (clamped.top * oriented.height).round().clamp(
+    0,
+    oriented.height - 1,
+  );
+  var width = (clamped.width * oriented.width).round();
+  var height = (clamped.height * oriented.height).round();
+  width = width.clamp(1, oriented.width - x);
+  height = height.clamp(1, oriented.height - y);
 
   final cropped = img.copyCrop(
-    decoded,
+    oriented,
     x: x,
     y: y,
     width: width,

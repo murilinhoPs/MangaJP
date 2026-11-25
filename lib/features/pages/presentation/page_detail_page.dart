@@ -409,7 +409,7 @@ class _PageDetailPageState extends ConsumerState<PageDetailPage>
   }
 
   /// Overlay reader vs text-card page. Loading a path is still overlay;
-  /// orphan paths fall back to cards after IHDR fails.
+  /// orphan paths fall back to cards after the header size read fails.
   bool get _isOverlayPage {
     final path = _sizedImagePath;
     if (path == null || path.isEmpty) {
