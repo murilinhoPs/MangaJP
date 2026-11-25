@@ -52,6 +52,8 @@ Colunas:
 
 Índice em `saved_at`. `schemaVersion` Drift **9** (`saved_kanji`), migração 8 → 9.
 
+F25 / [#118](https://github.com/murilinhoPs/MangaJP/pull/118): o backup JSON inclui as linhas de `saved_kanji`. Restore substitui a tabela; `origin_page_id` órfão vira `null`; literal inválido é pulado — [backup](backup.md).
+
 O mesmo kanji com e sem IVS/VS colapsa no `literal` sem seletor. `叱` (U+53F1) e `𠮟` (U+20B9F) **continuam distintas**: o strip não as normaliza uma na outra, e cada uma é a sua própria linha em `saved_kanji`. A rota `/notebook/kanji/:char` usa esse `literal`. O `literal` é rejeitado se não sobrar exatamente 1 code point depois do strip. A consulta em `kanji.character` e o parâmetro da rota também passam pelo strip.
 
 ### Aba Kanji no Caderno (F45)

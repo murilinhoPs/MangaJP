@@ -8,7 +8,7 @@ No máximo 1 card vocab por `word_id`. Template derivado. Deck ≠ Caderno (Q-N6
 
 ## Comportamento
 
-- **F11:** CRUD vocab. `kind = vocab`. `UNIQUE(word_id, kind)`.
+- **F11:** CRUD vocab. `kind = vocab`. `UNIQUE(word_id, kind)`. F25 / [#118](https://github.com/murilinhoPs/MangaJP/pull/118): o backup JSON leva `cards`, `card_srs` e `review_logs`; restore **substitui** o SRS — [backup](backup.md).
 - Frente = `dict_form` (kanji/lemma; se só kana, kana). Verso = `reading` · até 3 glosses EN · `user_note` · `context_sentence` (tipo menor). Sem colunas `front`/`back`.
 - **F30 Could:** toggle «mostrar reading na frente» (default off) — [settings](settings.md).
 - Criação: ação **Aprendendo** / **Aprender**. Segundo Aprendendo no mesmo `word_id` não duplica; reativa ou no-op **sem** reset SRS (AC-card).

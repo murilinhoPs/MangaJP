@@ -64,13 +64,13 @@ Visão das milestones do MangaJP, sem lista de tasks. Fonte: recorte da PRD v1.3
 
 **Features.** F21 (`/pages` histórico), F22 (bounding boxes), F23 (suspender no Deck), F24 (KANJIDIC2 no lookup), F25 (backup JSON), F26 (Cloud Vision), F45 (`saved_kanji` / aba Kanji).
 
-**Saída.** Kanji salvo aparece na aba Kanji com leituras, significados e traços, fora do SRS ([#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Cloud Vision só existe atrás do toggle ([#59](https://github.com/murilinhoPs/MangaJP/issues/59)). F21 lista `/pages` ([#96](https://github.com/murilinhoPs/MangaJP/issues/96), squash do [#101](https://github.com/murilinhoPs/MangaJP/pull/101)). F22 overlay de boxes ([#97](https://github.com/murilinhoPs/MangaJP/issues/97), squash do [#114](https://github.com/murilinhoPs/MangaJP/pull/114)). F23 suspender no Deck ([#98](https://github.com/murilinhoPs/MangaJP/issues/98), squash do [#112](https://github.com/murilinhoPs/MangaJP/pull/112)). F25 backup JSON ([#99](https://github.com/murilinhoPs/MangaJP/issues/99)).
+**Saída.** Kanji salvo aparece na aba Kanji com leituras, significados e traços, fora do SRS ([#58](https://github.com/murilinhoPs/MangaJP/issues/58)). Cloud Vision só existe atrás do toggle ([#59](https://github.com/murilinhoPs/MangaJP/issues/59)). F21 lista `/pages` ([#96](https://github.com/murilinhoPs/MangaJP/issues/96), squash do [#101](https://github.com/murilinhoPs/MangaJP/pull/101)). F22 overlay de boxes ([#97](https://github.com/murilinhoPs/MangaJP/issues/97), squash do [#114](https://github.com/murilinhoPs/MangaJP/pull/114)). F23 suspender no Deck ([#98](https://github.com/murilinhoPs/MangaJP/issues/98), squash do [#112](https://github.com/murilinhoPs/MangaJP/pull/112)). F25 backup JSON ([#99](https://github.com/murilinhoPs/MangaJP/issues/99), squash [`1990912`](https://github.com/murilinhoPs/MangaJP/commit/1990912) do [#118](https://github.com/murilinhoPs/MangaJP/pull/118)).
 
 **Dependências.** Spec de kanji da [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada antes da implementação. Q-N3 (orçamento Cloud Vision) aberta. Fila Mac [#54](https://github.com/murilinhoPs/MangaJP/issues/54) para prints iOS/macOS.
 
 **Tamanho.** G.
 
-**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2). [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada; [#59](https://github.com/murilinhoPs/MangaJP/issues/59) aberta. Plano: [`milestones/m2.md`](milestones/m2.md). Spec F26: [`specs/cloud-vision.md`](specs/cloud-vision.md).
+**Status.** Aberta — [milestone M2](https://github.com/murilinhoPs/MangaJP/milestone/2). [#58](https://github.com/murilinhoPs/MangaJP/issues/58) fechada; [#59](https://github.com/murilinhoPs/MangaJP/issues/59) aberta; [#99](https://github.com/murilinhoPs/MangaJP/issues/99) fechada. Plano: [`milestones/m2.md`](milestones/m2.md). Spec F26: [`specs/cloud-vision.md`](specs/cloud-vision.md). Spec F25: [`specs/backup.md`](specs/backup.md).
 
 ## M2b — Kanji no SRS
 
