@@ -17,7 +17,9 @@ bool pageImageFileExists(String? path) => impl.pageImageFileExists(path);
 /// Completes in a later microtask so callers can kick this off from `build`
 /// without reading the file on the current frame. Header-only (no decode).
 /// Format comes from magic bytes, not the extension — JPEG/WebP saved as
-/// `.png` still return a size so the F22 overlay can paint.
+/// `.png` still return a size so the F22 overlay can paint. WebP size uses
+/// only the VP8/VP8L/VP8X dimension bytes, so a file bigger than
+/// [kPageImageHeaderCap] still works.
 Future<Size?> pageImagePixelSize(String? path) {
   if (debugPageImageUsePlaceholder) {
     if (path == null || path.isEmpty) {

@@ -67,12 +67,39 @@ void main() {
       addTearDown(() => dir.deleteSync(recursive: true));
 
       final jpegFile = File('${dir.path}/legacy-jpeg.png');
-      jpegFile.writeAsBytesSync(fixtureJpeg(width: 96, height: 48), flush: true);
+      jpegFile.writeAsBytesSync(
+        fixtureJpeg(width: 96, height: 48),
+        flush: true,
+      );
       expect(await pageImagePixelSize(jpegFile.path), const Size(96, 48));
 
       final webpFile = File('${dir.path}/legacy-webp.png');
-      webpFile.writeAsBytesSync(fixtureWebp(width: 36, height: 72), flush: true);
+      webpFile.writeAsBytesSync(
+        fixtureWebp(width: 36, height: 72),
+        flush: true,
+      );
       expect(await pageImagePixelSize(webpFile.path), const Size(36, 72));
+    },
+  );
+
+  test(
+    'pageImagePixelSize sizes a WebP >128KiB named .png (overlay gate)',
+    () async {
+      debugPageImageUsePlaceholder = false;
+      addTearDown(() => debugPageImageUsePlaceholder = false);
+      final dir = await Directory.systemTemp.createTemp('page-img-big-webp-');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File('${dir.path}/legacy-big.webp.png');
+      final bytes = fixtureWebpInflatedTo(
+        kPageImageHeaderCap + 32 * 1024,
+        width: 48,
+        height: 36,
+      );
+      expect(bytes.length, greaterThan(kPageImageHeaderCap));
+      file.writeAsBytesSync(bytes, flush: true);
+      // hasImage / overlay follows this size; FileImage of WebP does not
+      // settle under AutomatedTestWidgetsFlutterBinding.
+      expect(await pageImagePixelSize(file.path), const Size(48, 36));
     },
   );
 }

@@ -5,8 +5,12 @@ import 'package:flutter/widgets.dart';
 
 import '../domain/image_magic.dart';
 
-/// Enough for PNG IHDR, WebP VP8X, and a JPEG APP1 (max 64 KiB) plus SOF.
-const _headerCap = 128 * 1024;
+/// Prefix read for [pageImagePixelSize]. [kPageImageHeaderCap] covers PNG
+/// IHDR, WebP VP8/VP8L/VP8X dimension bytes, and a typical JPEG APP1
+/// (max 64 KiB) plus SOF.
+///
+/// JPEG with huge XMP / ICC / MPF segments before SOF can still miss the
+/// size and fall back to text cards — acceptable for the overlay gate.
 
 bool pageImageFileExists(String? path) {
   if (path == null || path.isEmpty) {
@@ -23,7 +27,7 @@ Size? pageImagePixelSize(String? path) {
   final raf = File(path!).openSync();
   try {
     final length = raf.lengthSync();
-    final n = math.min(length, _headerCap);
+    final n = math.min(length, kPageImageHeaderCap);
     final header = raf.readSync(n);
     return imageSizeFromHeader(header);
   } finally {

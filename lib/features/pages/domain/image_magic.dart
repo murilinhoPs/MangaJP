@@ -1,6 +1,10 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
+/// Prefix the native reader feeds [imageSizeFromHeader] (PNG IHDR, WebP
+/// dimension bytes, typical JPEG APP1 + SOF). See `page_image_io.dart`.
+const kPageImageHeaderCap = 128 * 1024;
+
 /// File format from magic bytes (not the path extension).
 enum ImageMagic { png, jpeg, webp, unknown }
 
@@ -120,6 +124,11 @@ Size? jpegSizeFromHeader(List<int> header) {
 }
 
 /// VP8 / VP8L / VP8X canvas size from a RIFF/WEBP prefix.
+///
+/// Simple WebP (no VP8X) stores the whole bitstream in one `VP8 `/`VP8L`
+/// chunk. The page reader only feeds a header prefix, so this parser needs
+/// just the dimension bytes (`payload + 10` / `payload + 5`), not the rest
+/// of the chunk.
 Size? webpSizeFromHeader(List<int> header) {
   if (!_isWebp(header) || header.length < 16) {
     return null;
@@ -134,12 +143,9 @@ Size? webpSizeFromHeader(List<int> header) {
         (header[offset + 7] << 24);
     final payload = offset + 8;
     final payloadEnd = payload + size;
-    if (payloadEnd > header.length) {
-      return null;
-    }
     switch (tag) {
       case 'VP8X':
-        if (size < 10) {
+        if (size < 10 || payload + 10 > header.length) {
           return null;
         }
         final width =
@@ -157,7 +163,7 @@ Size? webpSizeFromHeader(List<int> header) {
         }
         return Size(width.toDouble(), height.toDouble());
       case 'VP8 ':
-        if (size < 10) {
+        if (size < 10 || payload + 10 > header.length) {
           return null;
         }
         // Lossy: 3-byte frame tag, then 9d 01 2a, then 14-bit width/height.
@@ -175,7 +181,10 @@ Size? webpSizeFromHeader(List<int> header) {
         }
         return Size(width.toDouble(), height.toDouble());
       case 'VP8L':
-        if (size < 5 || header[payload] != 0x2F) {
+        if (size < 5 || payload + 5 > header.length) {
+          return null;
+        }
+        if (header[payload] != 0x2F) {
           return null;
         }
         final bits =
@@ -190,6 +199,9 @@ Size? webpSizeFromHeader(List<int> header) {
         }
         return Size(width.toDouble(), height.toDouble());
       default:
+        if (payloadEnd > header.length) {
+          return null;
+        }
         break;
     }
     offset = payloadEnd + (size.isOdd ? 1 : 0);

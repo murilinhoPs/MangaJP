@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/features/pages/domain/image_magic.dart';
@@ -25,5 +26,19 @@ void main() {
     final jpeg = fixtureJpeg();
     expect(detectImageMagic(jpeg), ImageMagic.jpeg);
     expect(imageSizeFromHeader(jpeg), isNotNull);
+  });
+
+  test('webpSizeFromHeader reads VP8 dimensions from a truncated prefix', () {
+    const width = 48;
+    const height = 36;
+    final full = fixtureWebpInflatedTo(
+      kPageImageHeaderCap + 64 * 1024,
+      width: width,
+      height: height,
+    );
+    expect(full.length, greaterThan(kPageImageHeaderCap));
+    final prefix = Uint8List.sublistView(full, 0, kPageImageHeaderCap);
+    expect(webpSizeFromHeader(prefix), const Size(48, 36));
+    expect(imageSizeFromHeader(prefix), const Size(48, 36));
   });
 }
