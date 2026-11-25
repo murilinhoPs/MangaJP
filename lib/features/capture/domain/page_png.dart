@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
 import '../../pages/domain/image_magic.dart';
+import 'off_ui.dart';
 
 /// Page bytes stored as `{pageId}.png`.
 ///
@@ -18,4 +19,13 @@ Uint8List encodePagePng(Uint8List sourceBytes) {
   }
   final oriented = img.bakeOrientation(decoded);
   return Uint8List.fromList(img.encodePng(oriented));
+}
+
+/// [encodePagePng] off the UI isolate. PNG input stays on this isolate so
+/// the screenshot bytes remain [identical].
+Future<Uint8List> encodePagePngOffUi(Uint8List sourceBytes) {
+  if (detectImageMagic(sourceBytes) == ImageMagic.png) {
+    return Future<Uint8List>.value(sourceBytes);
+  }
+  return offUiCompute(encodePagePng, sourceBytes);
 }

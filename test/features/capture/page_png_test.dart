@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -49,19 +50,15 @@ void main() {
     expect(pixel.b, lessThan(80));
   });
 
-  test(
-    'encodePagePng handles a large JPEG without blowing time or format',
-    () {
-      final jpeg = fixtureJpeg(width: 2048, height: 1536, quality: 70);
-      final sw = Stopwatch()..start();
-      final png = encodePagePng(jpeg);
-      sw.stop();
-      expect(detectImageMagic(png), ImageMagic.png);
-      expect(pngSizeFromHeader(png), const Size(2048, 1536));
-      expect(sw.elapsed, lessThan(const Duration(seconds: 20)));
-    },
-    timeout: const Timeout(Duration(seconds: 30)),
-  );
+  test('encodePagePng handles a large JPEG without blowing time or format', () {
+    final jpeg = fixtureJpeg(width: 2048, height: 1536, quality: 70);
+    final sw = Stopwatch()..start();
+    final png = encodePagePng(jpeg);
+    sw.stop();
+    expect(detectImageMagic(png), ImageMagic.png);
+    expect(pngSizeFromHeader(png), const Size(2048, 1536));
+    expect(sw.elapsed, lessThan(const Duration(seconds: 20)));
+  }, timeout: const Timeout(Duration(seconds: 30)));
 
   test('encodePagePng converts WebP to PNG of the same pixel size', () {
     final webp = fixtureWebp(width: 40, height: 24);
@@ -77,5 +74,63 @@ void main() {
     final out = encodePagePng(png);
     expect(identical(out, png), isTrue);
     expect(out, png);
+  });
+
+  test(
+    'encodePagePngOffUi matches encodePagePng for JPEG, EXIF 6, WebP, PNG',
+    () async {
+      final jpeg = fixtureJpeg(width: 48, height: 32);
+      expect(await encodePagePngOffUi(jpeg), encodePagePng(jpeg));
+
+      final stored = img.Image(width: 8, height: 16);
+      img.fill(stored, color: img.ColorRgb8(20, 20, 20));
+      img.fillRect(
+        stored,
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 1,
+        color: img.ColorRgb8(220, 10, 10),
+      );
+      stored.exif.imageIfd.orientation = 6;
+      final exifJpeg = Uint8List.fromList(img.encodeJpg(stored, quality: 100));
+      final offUi = await encodePagePngOffUi(exifJpeg);
+      final onUi = encodePagePng(exifJpeg);
+      expect(offUi, onUi);
+      expect(pngSizeFromHeader(offUi), const Size(16, 8));
+
+      final webp = fixtureWebp(width: 40, height: 24);
+      expect(await encodePagePngOffUi(webp), encodePagePng(webp));
+
+      final png = fixturePng(width: 32, height: 48);
+      final passed = await encodePagePngOffUi(png);
+      expect(identical(passed, png), isTrue);
+      expect(passed, encodePagePng(png));
+    },
+  );
+
+  test('Isolate.run encodePagePng matches sync JPEG, EXIF 6, WebP', () async {
+    final jpeg = fixtureJpeg(width: 48, height: 32);
+    expect(await Isolate.run(() => encodePagePng(jpeg)), encodePagePng(jpeg));
+
+    final stored = img.Image(width: 8, height: 16);
+    img.fill(stored, color: img.ColorRgb8(20, 20, 20));
+    img.fillRect(
+      stored,
+      x1: 0,
+      y1: 0,
+      x2: 1,
+      y2: 1,
+      color: img.ColorRgb8(220, 10, 10),
+    );
+    stored.exif.imageIfd.orientation = 6;
+    final exifJpeg = Uint8List.fromList(img.encodeJpg(stored, quality: 100));
+    expect(
+      await Isolate.run(() => encodePagePng(exifJpeg)),
+      encodePagePng(exifJpeg),
+    );
+
+    final webp = fixtureWebp(width: 40, height: 24);
+    expect(await Isolate.run(() => encodePagePng(webp)), encodePagePng(webp));
   });
 }

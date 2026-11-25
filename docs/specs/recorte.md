@@ -22,7 +22,7 @@ Um ou mais retângulos de balão, recortados do original, antes de qualquer OCR.
 | Thumbnail (`pages.thumb_path`) | JPEG ~**400 px** no lado longo, q~75. |
 | Crop (`crops.image_path`) | PNG do recorte (do original ou já reduzido pela exceção 3000 px). |
 
-F22 (schema 10, na `main`): o confirm grava a **PNG da página** em `{documents}/pages/{pageId}.png` (`path_provider`) **sem** a redução 3000 px desta tabela — JPEG/WebP passam por `encodePagePng` (`bakeOrientation` + `encodePng`); PNG de entrada não é re-encodado. O leitor do overlay usa magic bytes, então arquivos antigos JPEG/WebP com extensão `.png` ainda ligam a overlay — [captura](captura.md), [leitor](leitor.md). `crops.image_path` e `pages.thumb_path` continuam pendentes.
+F22 (schema 10, na `main`): o confirm grava a **PNG da página** em `{documents}/pages/{pageId}.png` (`path_provider`) **sem** a redução 3000 px desta tabela — JPEG/WebP passam por `encodePagePng` (`bakeOrientation` + `encodePng` no isolate); PNG de entrada não é re-encodado. Os crops do confirm usam `cropAllToPng` (um decode). O leitor do overlay usa magic bytes, então arquivos antigos JPEG/WebP com extensão `.png` ainda ligam a overlay — [captura](captura.md), [leitor](leitor.md). `crops.image_path` e `pages.thumb_path` continuam pendentes.
 
 Não downscalear screenshot de telefone com lado longo ≤ ~2400 px.
 
