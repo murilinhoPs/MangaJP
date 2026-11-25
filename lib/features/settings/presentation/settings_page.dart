@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/shell/shell_layout.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../backup/presentation/about_section.dart';
+import '../../backup/presentation/backup_section.dart';
 import '../../ocr/presentation/cloud_vision_settings_section.dart';
 import 'settings_controller.dart';
 
@@ -46,6 +48,10 @@ class SettingsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           const CloudVisionSettingsSection(),
+          const SizedBox(height: 16),
+          const BackupSection(),
+          const SizedBox(height: 16),
+          const AboutSection(),
         ],
       ),
     );
