@@ -2,8 +2,9 @@
 
 Ferramenta pessoal para estudar japonês via manga. Flutter only. Single-user (Murilo).
 
-Versão viva deste recorte: **v1.3**. Atualizado **2026-11-18** (F22 overlay, [#114](https://github.com/murilinhoPs/MangaJP/pull/114)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
+Versão viva deste recorte: **v1.3**. Atualizado **2026-11-25** (F25 backup JSON, [#118](https://github.com/murilinhoPs/MangaJP/pull/118)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
 
+2026-11-25 — F25: backup JSON do Caderno + SRS em Ajustes › Backup (`format_version` 2, `schema_version` 10; sem migração Drift). Q6/Q7 fechadas no default implementado: um arquivo JSON com `format_version`/`schema_version`; restore **substitui** depois de confirmação. Spec: [backup](specs/backup.md).
 2026-11-18 — F22: boxes do OCR sobre a imagem da página (schema Drift 10: `pages.image_path`, `crops.ocr_blocks_json`); lookup inline no mobile, drawer no desktop. Spec: [leitor](specs/leitor.md), [ocr](specs/ocr.md).
 
 ## Visão
@@ -46,7 +47,7 @@ Must, Should, Could, Won't do PRD. Spec por feature:
 | Home / nav | [home](specs/home.md) | F17 shell | — |
 | Galeria | [galeria](specs/galeria.md) | F1 + entrada F21 | — |
 | Leitor | [leitor](specs/leitor.md) | `/pages/:id` pós-OCR; F21 lista `/pages` | — |
-| Ajustes | [settings](specs/settings.md) | destino F17, F18 offline | F25 backup Should; F31 Anki Could |
+| Ajustes | [settings](specs/settings.md), [backup](specs/backup.md) | destino F17, F18 offline | F25 backup Should; F31 Anki Could |
 
 Won't de produto: F35 contas, F36 scraping, F37 multi-deck sharing, F40 iOS só na M2.1.
 
@@ -56,7 +57,7 @@ Won't de produto: F35 contas, F36 scraping, F37 multi-deck sharing, F40 iOS só 
 2. **Revisão offline** — Home **Revisar** → fila due → Again/Hard/Good/Easy → resumo ([revisao](specs/revisao.md)).
 3. **Releitura** — página recente: imagem + overlay de boxes (F22) ou cards de texto se não houver `pages.image_path`; tap na box ou no texto abre lookup; crops + `word_state`; promover, known, novos crops.
 4. **Caderno** — lista, busca, filtros; detalhe read-only; Aprender / remover.
-5. **Backup (Should)** — export JSON/SQLite. Sync HTTP é Could (Q-N4).
+5. **Backup (Should)** — Ajustes › Backup; um JSON (`format_version` / `schema_version`); restore substitui Caderno + SRS + `saved_kanji` depois de confirmação ([backup](specs/backup.md)). Sync HTTP é Could (Q-N4). Zip de imagens e export SQLite ficam fora desta entrega (Q6).
 
 O4: ≤ 2 taps in-app share → texto OCR (confirm/nav contam; drag/pinch do crop não).
 

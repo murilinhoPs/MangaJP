@@ -54,6 +54,7 @@ Templates GitHub (fora de `/docs`): [`.github/pull_request_template.md`](../.git
 - [Galeria](specs/galeria.md)
 - [Leitor](specs/leitor.md)
 - [Ajustes](specs/settings.md)
+- [Backup JSON](specs/backup.md)
 
 ## ADRs deste D1
 

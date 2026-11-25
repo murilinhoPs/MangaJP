@@ -34,7 +34,7 @@ Qualquer ação na sheet faz upsert em `words` + ocorrência em `crop_words`. Fr
 
 **F45 Should / M2:** spec em [kanji](kanji.md). Salvar kanji (`saved_kanji`); aba Kanji. Sem nota. Sem card. F24 e F45 entram no mesmo PR da [#58](https://github.com/murilinhoPs/MangaJP/issues/58).
 
-**F46 Could:** export Markdown ou CSV.
+**F46 Could:** export Markdown ou CSV. Distinto do backup JSON (F25) — [backup](backup.md).
 
 ## Critérios de aceite
 
