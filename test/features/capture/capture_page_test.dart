@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +24,12 @@ import 'package:manga_jp/features/home/presentation/home_page.dart';
 import 'package:manga_jp/features/ocr/data/ocr_repository.dart';
 import 'package:manga_jp/features/ocr/domain/ocr_engine.dart';
 import 'package:manga_jp/features/ocr/domain/ocr_result.dart';
+import 'package:manga_jp/features/pages/domain/image_magic.dart';
 import 'package:manga_jp/features/pages/presentation/page_detail_page.dart';
 
 import '../ocr/fake_ocr_engine.dart';
 import 'fake_image_source_service.dart';
-import 'fixture_png.dart';
+import 'fixture_images.dart';
 
 List<Override> _harness({
   required AppDatabase db,
@@ -261,6 +264,90 @@ void main() {
       );
     },
   );
+
+  for (final size in [const Size(390, 844), const Size(1280, 800)]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+    for (final entry in [
+      ('JPEG', fixtureJpeg()),
+      ('WebP', fixtureWebp()),
+      ('PNG', fixturePng()),
+    ]) {
+      final format = entry.$1;
+      final bytes = entry.$2;
+      testWidgets(
+        'gallery $format confirm shows overlay and stores PNG at $label',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+
+          final db = AppDatabase(NativeDatabase.memory());
+          addTearDown(db.close);
+          await tester.pumpWidget(
+            MangaJpApp(
+              overrides: _harness(
+                db: db,
+                source: FakeImageSourceService(
+                  galleryImage: IncomingImage(bytes: bytes),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(HomeKeys.gallery));
+          await tester.pumpAndSettle();
+          await tester.tap(_confirmFinder(size.width >= 900));
+          await tester.pumpAndSettle();
+
+          expect(find.byType(PageDetailPage), findsOneWidget);
+          expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+          expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
+          expect(find.byKey(PageDetailKeys.ocrText), findsNothing);
+          final page = (await db.pagesDao.listPages()).single;
+          expect(page.imagePath, isNotNull);
+          final saved = File(page.imagePath!).readAsBytesSync();
+          expect(detectImageMagic(saved), ImageMagic.png);
+        },
+      );
+
+      testWidgets(
+        'share $format confirm shows overlay and stores PNG at $label',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+
+          final db = AppDatabase(NativeDatabase.memory());
+          addTearDown(db.close);
+          await tester.pumpWidget(
+            MangaJpApp(
+              overrides: _harness(
+                db: db,
+                source: FakeImageSourceService(
+                  initial: IncomingImage(bytes: bytes),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(_confirmFinder(size.width >= 900));
+          await tester.pumpAndSettle();
+
+          expect(find.byType(PageDetailPage), findsOneWidget);
+          expect(find.byKey(PageDetailKeys.image), findsOneWidget);
+          expect(find.byKey(PageDetailKeys.overlay), findsOneWidget);
+          final page = (await db.pagesDao.listPages()).single;
+          expect(page.imagePath, isNotNull);
+          expect(
+            detectImageMagic(File(page.imagePath!).readAsBytesSync()),
+            ImageMagic.png,
+          );
+        },
+      );
+    }
+  }
 
   testWidgets('RTL numbers: right-to-left then top-to-bottom', (tester) async {
     await _pumpCrop(tester, crops: _threeCrops, activeIndex: 0);
@@ -778,6 +865,12 @@ Future<void> _pumpCrop(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Finder _confirmFinder(bool wide) {
+  return wide
+      ? find.byKey(ShellKeys.command('confirm'))
+      : find.byKey(CaptureKeys.confirm);
 }
 
 class _FlakyOcrEngine implements OcrEngine {

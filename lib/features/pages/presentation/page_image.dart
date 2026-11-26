@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import 'page_image_stub.dart' if (dart.library.io) 'page_image_io.dart' as impl;
 
+export '../domain/image_magic.dart';
+
 /// When true, [PageImageView] paints a solid surface instead of `Image.file`
 /// (`FileImage` never settles under `AutomatedTestWidgetsFlutterBinding`).
 @visibleForTesting
@@ -10,10 +12,14 @@ bool debugPageImageUsePlaceholder = false;
 /// True when [path] points at a readable file (native). Always false on web.
 bool pageImageFileExists(String? path) => impl.pageImageFileExists(path);
 
-/// Pixel size of a PNG at [path], or null if missing / unreadable / web.
+/// Pixel size of a page image at [path], or null if missing / unreadable / web.
 ///
 /// Completes in a later microtask so callers can kick this off from `build`
 /// without reading the file on the current frame. Header-only (no decode).
+/// Format comes from magic bytes, not the extension — JPEG/WebP saved as
+/// `.png` still return a size so the F22 overlay can paint. WebP size uses
+/// only the VP8/VP8L/VP8X dimension bytes, so a file bigger than
+/// [kPageImageHeaderCap] still works.
 Future<Size?> pageImagePixelSize(String? path) {
   if (debugPageImageUsePlaceholder) {
     if (path == null || path.isEmpty) {
@@ -23,9 +29,6 @@ Future<Size?> pageImagePixelSize(String? path) {
   }
   return Future<Size?>.microtask(() => impl.pageImagePixelSize(path));
 }
-
-/// PNG signature + IHDR → size. Exposed for unit tests.
-Size? pngSizeFromHeader(List<int> header) => impl.pngSizeFromHeader(header);
 
 /// Page PNG from [path], contained. Empty on web / missing file.
 class PageImageView extends StatelessWidget {

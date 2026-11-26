@@ -29,6 +29,7 @@ import '../domain/crop_image.dart';
 import '../domain/crop_order.dart';
 import '../domain/crop_rect.dart';
 import '../domain/incoming_image.dart';
+import '../domain/page_png.dart';
 import 'crop_overlay.dart';
 
 /// Keys for the capture path test (fixture → ≥1 rect → OCR → `/pages/:id`).
@@ -147,12 +148,16 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       if (decoded == null) {
         throw const FormatException('Could not decode image');
       }
+      final oriented = img.bakeOrientation(decoded);
       if (!mounted) {
         return;
       }
       setState(() {
         _bytes = bytes;
-        _imageSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
+        _imageSize = Size(
+          oriented.width.toDouble(),
+          oriented.height.toDouble(),
+        );
         _cropped = null;
         _ocr = null;
         _pageId = null;
@@ -261,17 +266,26 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       OcrResult? lastOcr;
       final pageId = _pageId ??= newId();
       final sha = sha256Hex(bytes);
+      final pagePng = await encodePagePngOffUi(bytes);
       final imagePath = await ref
           .read(pageImageStoreProvider)
-          .savePageImage(pageId: pageId, bytes: bytes);
+          .savePageImage(pageId: pageId, bytes: pagePng);
       final fallbacks = <String>[];
+      final pendingRects = <CropRect>[];
+      final pendingKeys = <String>[];
       for (final index in order) {
         final rect = _crops[index];
         final key = _geometryKey(rect);
         if (_savedCropKeys.contains(key)) {
           continue;
         }
-        final cropped = cropToPng(bytes, rect);
+        pendingRects.add(rect);
+        pendingKeys.add(key);
+      }
+      final croppedList = await cropAllToPngOffUi(pagePng, pendingRects);
+      for (var i = 0; i < croppedList.length; i++) {
+        final cropped = croppedList[i];
+        final rect = pendingRects[i];
         last = cropped;
         widget.onCropped?.call(cropped.bytes);
         final outcome = await ref
@@ -297,7 +311,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                 cropHeight: cropped.height,
               ),
             );
-        _savedCropKeys.add(key);
+        _savedCropKeys.add(pendingKeys[i]);
         debugPrint('M1.1 OCR ${ocr.engineId}: ${ocr.fullText}');
         final fallback = outcome.fallback;
         if (fallback != null) {
