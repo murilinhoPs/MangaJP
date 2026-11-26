@@ -2,8 +2,9 @@
 
 Ferramenta pessoal para estudar japonês via manga. Flutter only. Single-user (Murilo).
 
-Versão viva deste recorte: **v1.3**. Atualizado **2026-11-25** (F25 backup JSON, [#118](https://github.com/murilinhoPs/MangaJP/pull/118)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
+Versão viva deste recorte: **v1.3**. Atualizado **2026-11-26** (JPEG/WebP→PNG no confirm, [#120](https://github.com/murilinhoPs/MangaJP/pull/120)). Origem: snapshot 2026-10-14c. Cortes seguintes: git tag `prd-vX.Y`. Texto completo do PRD não mora no repo. Milestones: [`roadmap.md`](roadmap.md).
 
+2026-11-26 — Confirm da captura converte JPEG/WebP pra PNG (`encodePagePng`, `bakeOrientation`, via `compute`); PNG de entrada sem re-encode; `sha256` de dedupe nos bytes recebidos. Leitor dimensiona pelos magic bytes (PNG / JPEG EXIF 5–8 / WebP VP8/VP8L/VP8X), sem decode da imagem inteira. Sem migração (schema 10). Spec: [captura](specs/captura.md), [leitor](specs/leitor.md).
 2026-11-25 — F25: backup JSON do Caderno + SRS em Ajustes › Backup (`format_version` 2, `schema_version` 10; sem migração Drift). Q6/Q7 fechadas no default implementado: um arquivo JSON com `format_version`/`schema_version`; restore **substitui** depois de confirmação. Spec: [backup](specs/backup.md).
 2026-11-18 — F22: boxes do OCR sobre a imagem da página (schema Drift 10: `pages.image_path`, `crops.ocr_blocks_json`); lookup inline no mobile, drawer no desktop. Spec: [leitor](specs/leitor.md), [ocr](specs/ocr.md).
 
