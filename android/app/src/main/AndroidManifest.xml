@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release OCR needs network: manga-ocr sidecar (HTTP) and Cloud Vision.
+         debug/profile already declare INTERNET for the Flutter tool. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Older Android file:// shares. Android 13+ uses the photo picker / content URIs. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
