@@ -37,6 +37,11 @@ dependencies:
   material_ui: ^1.11.1
   cupertino_ui: ^1.1.7
 
+# Linux 1.2.3 threw `char const*` on GNOME keyring Cancel (process death).
+dependency_overrides:
+  flutter_secure_storage_linux:
+    path: packages/flutter_secure_storage_linux
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

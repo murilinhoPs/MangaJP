@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Probe of Keychain / Keystore / libsecret.
 ///
 /// [slow] is a 400 ms plugin timeout: the key is not treated as missing.
+/// [locked] is a cancelled / failed GNOME unlock: catchable, retryable.
 /// [unavailable] is an error or a missing plugin (nothing is saved in plaintext).
-enum KeyringAvailability { available, slow, unavailable }
+enum KeyringAvailability { available, slow, locked, unavailable }
 
 /// Plugin read/write did not finish within [FlutterCloudVisionStore.pluginTimeout].
 final class KeyringSlowException implements Exception {
@@ -18,12 +20,42 @@ final class KeyringSlowException implements Exception {
   String toString() => 'keyring slow';
 }
 
+/// GNOME keyring dialog cancelled, or unlock returned false.
+///
+/// Distinct from [KeyringUnavailableException]: the plugin is present, the
+/// user can try again. Native `throw "Failed to unlock the keyring"` used to
+/// kill the Linux process (`terminate called after throwing 'char const*'`).
+final class KeyringLockedException implements Exception {
+  const KeyringLockedException();
+
+  @override
+  String toString() => 'keyring locked';
+}
+
 /// Plugin missing, threw, or platform has no secure storage (including web).
 final class KeyringUnavailableException implements Exception {
   const KeyringUnavailableException();
 
   @override
   String toString() => 'keyring unavailable';
+}
+
+/// Linux plugin `PlatformException(code: KeyringLocked)` or the old
+/// «Failed to unlock the keyring» C-string message, now mapped on the channel.
+bool isKeyringLockedError(Object error) {
+  if (error is KeyringLockedException) {
+    return true;
+  }
+  if (error is PlatformException) {
+    final blob =
+        '${error.code} ${error.message ?? ''} ${error.details ?? ''}'
+            .toLowerCase();
+    return blob.contains('keyringlocked') ||
+        blob.contains('failed to unlock the keyring');
+  }
+  final text = error.toString().toLowerCase();
+  return text.contains('keyringlocked') ||
+      text.contains('failed to unlock the keyring');
 }
 
 /// Key + toggle + privacy. The API key never goes to Drift / prefs / backup.
@@ -45,6 +77,7 @@ class MemoryCloudVisionStore implements CloudVisionStore {
   MemoryCloudVisionStore({
     this.keyringAvailable = true,
     this.keyringSlow = false,
+    this.keyringLocked = false,
     this.storedKey,
     this.enabledFlag = false,
     this.privacyAcceptedFlag = false,
@@ -52,6 +85,7 @@ class MemoryCloudVisionStore implements CloudVisionStore {
 
   bool keyringAvailable;
   bool keyringSlow;
+  bool keyringLocked;
   String? storedKey;
   bool enabledFlag;
   bool privacyAcceptedFlag;
@@ -63,6 +97,9 @@ class MemoryCloudVisionStore implements CloudVisionStore {
     }
     if (keyringSlow) {
       return KeyringAvailability.slow;
+    }
+    if (keyringLocked) {
+      return KeyringAvailability.locked;
     }
     return KeyringAvailability.available;
   }
@@ -76,6 +113,9 @@ class MemoryCloudVisionStore implements CloudVisionStore {
     if (keyringSlow) {
       throw const KeyringSlowException();
     }
+    if (keyringLocked) {
+      throw const KeyringLockedException();
+    }
     return storedKey;
   }
 
@@ -87,6 +127,9 @@ class MemoryCloudVisionStore implements CloudVisionStore {
     if (keyringSlow) {
       throw const KeyringSlowException();
     }
+    if (keyringLocked) {
+      throw const KeyringLockedException();
+    }
     storedKey = value;
   }
 
@@ -94,6 +137,9 @@ class MemoryCloudVisionStore implements CloudVisionStore {
   Future<void> deleteApiKey() async {
     if (keyringSlow) {
       throw const KeyringSlowException();
+    }
+    if (keyringLocked) {
+      throw const KeyringLockedException();
     }
     storedKey = null;
   }
@@ -151,7 +197,10 @@ class FlutterCloudVisionStore implements CloudVisionStore {
       // an unhandled async error.
       future.ignore();
       return const _GuardOutcome.timeout();
-    } catch (_) {
+    } catch (error) {
+      if (isKeyringLockedError(error)) {
+        return const _GuardOutcome.locked();
+      }
       return const _GuardOutcome.failed();
     }
   }
@@ -168,6 +217,9 @@ class FlutterCloudVisionStore implements CloudVisionStore {
     final result = await _readRaw();
     if (result.timedOut) {
       return KeyringAvailability.slow;
+    }
+    if (result.locked) {
+      return KeyringAvailability.locked;
     }
     if (result.failed) {
       return KeyringAvailability.unavailable;
@@ -187,6 +239,9 @@ class FlutterCloudVisionStore implements CloudVisionStore {
     final result = await _readRaw();
     if (result.timedOut) {
       throw const KeyringSlowException();
+    }
+    if (result.locked) {
+      throw const KeyringLockedException();
     }
     if (result.failed) {
       return null;
@@ -210,6 +265,9 @@ class FlutterCloudVisionStore implements CloudVisionStore {
     if (ok.timedOut) {
       throw const KeyringSlowException();
     }
+    if (ok.locked) {
+      throw const KeyringLockedException();
+    }
     if (ok.failed || ok.value != true) {
       throw const KeyringUnavailableException();
     }
@@ -226,6 +284,9 @@ class FlutterCloudVisionStore implements CloudVisionStore {
     });
     if (ok.timedOut) {
       throw const KeyringSlowException();
+    }
+    if (ok.locked) {
+      throw const KeyringLockedException();
     }
     if (ok.failed || ok.value != true) {
       throw const KeyringUnavailableException();
@@ -258,11 +319,28 @@ class FlutterCloudVisionStore implements CloudVisionStore {
 }
 
 final class _GuardOutcome<T> {
-  const _GuardOutcome.ok(T this.value) : timedOut = false, failed = false;
-  const _GuardOutcome.timeout() : value = null, timedOut = true, failed = false;
-  const _GuardOutcome.failed() : value = null, timedOut = false, failed = true;
+  const _GuardOutcome.ok(T this.value)
+    : timedOut = false,
+      locked = false,
+      failed = false;
+  const _GuardOutcome.timeout()
+    : value = null,
+      timedOut = true,
+      locked = false,
+      failed = false;
+  const _GuardOutcome.locked()
+    : value = null,
+      timedOut = false,
+      locked = true,
+      failed = false;
+  const _GuardOutcome.failed()
+    : value = null,
+      timedOut = false,
+      locked = false,
+      failed = true;
 
   final T? value;
   final bool timedOut;
+  final bool locked;
   final bool failed;
 }

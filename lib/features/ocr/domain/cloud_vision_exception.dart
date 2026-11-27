@@ -31,6 +31,18 @@ final class CloudVisionKeyringSlow extends CloudVisionException {
   bool get fallsBackToLocal => false;
 }
 
+/// GNOME keyring Cancel / unlock failed. Catchable; the user can retry.
+final class CloudVisionKeyringLocked extends CloudVisionException {
+  const CloudVisionKeyringLocked()
+    : super(
+        testMessage: CloudVisionLabels.keyringLocked,
+        fallbackMessage: CloudVisionLabels.keyringLocked,
+      );
+
+  @override
+  bool get fallsBackToLocal => false;
+}
+
 final class CloudVisionMissingApiKey extends CloudVisionException {
   const CloudVisionMissingApiKey()
     : super(

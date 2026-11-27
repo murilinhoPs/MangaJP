@@ -27,6 +27,7 @@ MemoryCloudVisionStore? cloudVisionShotStore({bool release = kReleaseMode}) {
       privacyAcceptedFlag: true,
     ),
     'nokeyring' => MemoryCloudVisionStore(keyringAvailable: false),
+    'locked' => MemoryCloudVisionStore(keyringLocked: true),
     'slow' => MemoryCloudVisionStore(
       storedKey: kCloudVisionShotFakeKey,
       enabledFlag: true,

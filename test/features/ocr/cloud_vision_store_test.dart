@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/features/ocr/data/cloud_vision_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -204,6 +205,52 @@ void main() {
     expect(await keyPending, _fakeKey);
   });
 
+  test('KeyringLocked PlatformException is locked, not a crash or missing key',
+      () async {
+    final store = FlutterCloudVisionStore(
+      readPlugin: () async => throw PlatformException(
+        code: 'KeyringLocked',
+        message: 'KeyringLocked',
+      ),
+      writePlugin: (_) async => throw PlatformException(
+        code: 'KeyringLocked',
+        message: 'Failed to unlock the keyring',
+      ),
+      deletePlugin: () async => throw PlatformException(
+        code: 'KeyringLocked',
+        message: 'KeyringLocked',
+      ),
+    );
+
+    expect(await store.keyringAvailability, KeyringAvailability.locked);
+    expect(await store.isKeyringAvailable, isTrue);
+    await expectLater(
+      store.readApiKey(),
+      throwsA(isA<KeyringLockedException>()),
+    );
+    await expectLater(
+      store.writeApiKey(_fakeKey),
+      throwsA(isA<KeyringLockedException>()),
+    );
+    await expectLater(
+      store.deleteApiKey(),
+      throwsA(isA<KeyringLockedException>()),
+    );
+  });
+
+  test('C-string unlock message from the old plugin is locked', () async {
+    final store = FlutterCloudVisionStore(
+      readPlugin: () async => throw PlatformException(
+        code: 'Libsecret error',
+        message: 'Failed to unlock the keyring',
+      ),
+      writePlugin: (_) async {},
+      deletePlugin: () async {},
+    );
+    expect(await store.keyringAvailability, KeyringAvailability.locked);
+    expect(isKeyringLockedError(const KeyringLockedException()), isTrue);
+  });
+
   test('plugin error is unavailable, not slow', () async {
     final store = FlutterCloudVisionStore(
       readPlugin: () async => throw StateError('missing plugin'),
@@ -240,6 +287,24 @@ void main() {
       throwsA(isA<KeyringSlowException>()),
     );
     expect(slow.storedKey, _fakeKey);
+
+    final locked = MemoryCloudVisionStore(
+      storedKey: _fakeKey,
+      enabledFlag: true,
+      keyringLocked: true,
+    );
+    expect(await locked.keyringAvailability, KeyringAvailability.locked);
+    expect(await locked.isKeyringAvailable, isTrue);
+    await expectLater(
+      locked.readApiKey(),
+      throwsA(isA<KeyringLockedException>()),
+    );
+    expect(locked.storedKey, _fakeKey);
+    await expectLater(
+      locked.writeApiKey(_fakeKey),
+      throwsA(isA<KeyringLockedException>()),
+    );
+    expect(locked.storedKey, _fakeKey);
 
     final missing = MemoryCloudVisionStore(keyringAvailable: false);
     expect(await missing.keyringAvailability, KeyringAvailability.unavailable);

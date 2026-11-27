@@ -138,6 +138,29 @@ void main() {
     expect(client.requests, isEmpty);
   });
 
+  test('locked keyring is typed, not a missing key, and does not HTTP',
+      () async {
+    var sent = false;
+    final client = ScriptedHttpClient((request) async {
+      sent = true;
+      return http.Response('{}', 200);
+    });
+    final engine = CloudVisionOcrEngine(
+      readApiKey: () async => throw const KeyringLockedException(),
+      client: client,
+    );
+    try {
+      await engine.recognize(fixturePng());
+      fail('expected CloudVisionKeyringLocked');
+    } on CloudVisionKeyringLocked catch (error) {
+      expect(error.testMessage, CloudVisionLabels.keyringLocked);
+      expect(error.fallsBackToLocal, isFalse);
+      expect(error, isNot(isA<CloudVisionMissingApiKey>()));
+    }
+    expect(sent, isFalse);
+    expect(client.requests, isEmpty);
+  });
+
   test('POST uses X-Goog-Api-Key and never ?key=', () async {
     final client = ScriptedHttpClient((request) async {
       return jsonHttpResponse(_jpVisionJson);

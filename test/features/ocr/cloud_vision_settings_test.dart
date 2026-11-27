@@ -176,6 +176,36 @@ void main() {
       expect(find.text(_fakeKey), findsNothing);
     });
 
+    testWidgets(
+      'keyring locked keeps the field and shows retry copy at $label',
+      (tester) async {
+        final store = MemoryCloudVisionStore(keyringLocked: true);
+        await _openSettings(tester, store: store, size: size);
+
+        expect(find.byKey(CloudVisionKeys.keyringLockedWarning), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringLocked), findsOneWidget);
+        expect(find.text(CloudVisionLabels.keyringUnavailable), findsNothing);
+        expect(
+          tester.widget<TextField>(find.byKey(CloudVisionKeys.apiKey)).enabled,
+          isTrue,
+        );
+        expect(_switch(tester).onChanged, isNotNull);
+
+        await tester.enterText(find.byKey(CloudVisionKeys.apiKey), _fakeKey);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.descendant(
+            of: find.byType(SnackBar),
+            matching: find.text(CloudVisionLabels.keyringLocked),
+          ),
+          findsOneWidget,
+        );
+        expect(store.storedKey, isNull);
+      },
+    );
+
     testWidgets('keyring unavailable disables the field at $label', (
       tester,
     ) async {

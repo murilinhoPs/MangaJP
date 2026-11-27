@@ -24,6 +24,8 @@ class CloudVisionSettingsState {
       keyringAvailability != KeyringAvailability.unavailable;
 
   bool get keyringSlow => keyringAvailability == KeyringAvailability.slow;
+
+  bool get keyringLocked => keyringAvailability == KeyringAvailability.locked;
 }
 
 @Riverpod(keepAlive: true)
@@ -62,6 +64,16 @@ class CloudVisionSettings extends _$CloudVisionSettings {
       );
     }
 
+    if (availability == KeyringAvailability.locked) {
+      final enabled = await store.isEnabled;
+      return CloudVisionSettingsState(
+        keyringAvailability: availability,
+        hasKey: enabled,
+        enabled: enabled,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    }
+
     late final String? key;
     try {
       key = await store.readApiKey();
@@ -69,6 +81,14 @@ class CloudVisionSettings extends _$CloudVisionSettings {
       final enabled = await store.isEnabled;
       return CloudVisionSettingsState(
         keyringAvailability: KeyringAvailability.slow,
+        hasKey: enabled,
+        enabled: enabled,
+        privacyAccepted: await store.privacyAccepted,
+      );
+    } on KeyringLockedException {
+      final enabled = await store.isEnabled;
+      return CloudVisionSettingsState(
+        keyringAvailability: KeyringAvailability.locked,
         hasKey: enabled,
         enabled: enabled,
         privacyAccepted: await store.privacyAccepted,
@@ -97,6 +117,9 @@ class CloudVisionSettings extends _$CloudVisionSettings {
     } on KeyringSlowException {
       state = AsyncData(await _load());
       rethrow;
+    } on KeyringLockedException {
+      state = AsyncData(await _load());
+      rethrow;
     } on KeyringUnavailableException {
       state = AsyncData(await _load());
       rethrow;
@@ -109,6 +132,9 @@ class CloudVisionSettings extends _$CloudVisionSettings {
     try {
       await store.deleteApiKey();
     } on KeyringSlowException {
+      state = AsyncData(await _load());
+      rethrow;
+    } on KeyringLockedException {
       state = AsyncData(await _load());
       rethrow;
     } on KeyringUnavailableException {

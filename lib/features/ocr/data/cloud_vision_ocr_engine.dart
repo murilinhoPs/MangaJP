@@ -118,6 +118,8 @@ class CloudVisionOcrEngine implements OcrEngine {
       apiKey = (await readApiKey())?.trim() ?? '';
     } on KeyringSlowException {
       throw const CloudVisionKeyringSlow();
+    } on KeyringLockedException {
+      throw const CloudVisionKeyringLocked();
     }
     if (apiKey.isEmpty) {
       throw const CloudVisionMissingApiKey();
