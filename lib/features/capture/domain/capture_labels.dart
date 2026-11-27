@@ -7,6 +7,10 @@ abstract final class CaptureLabels {
   static const recortes = 'Recortes';
   static const arrasteParaCriar = 'arraste para criar';
   static const escolherGaleria = 'Escolher da galeria';
+  static const sharePermissionDenied =
+      'Não foi possível abrir a imagem compartilhada. '
+      'Sem permissão para acessar o arquivo.';
+  static const loadFailed = 'Não foi possível abrir a imagem.';
 
   /// Exit-confirm copy. Motif / draft review — not in the Deck.
   static const descartarTitulo = 'Descartar recortes?';

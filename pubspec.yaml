@@ -38,9 +38,12 @@ dependencies:
   cupertino_ui: ^1.1.7
 
 # Linux 1.2.3 threw `char const*` on GNOME keyring Cancel (process death).
+# Android 1.9.0 threw uncaught SecurityException on content:// without grant.
 dependency_overrides:
   flutter_secure_storage_linux:
     path: packages/flutter_secure_storage_linux
+  receive_sharing_intent:
+    path: packages/receive_sharing_intent
 
 dev_dependencies:
   flutter_test:

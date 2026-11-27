@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/image_source_service.dart';
@@ -19,10 +20,17 @@ class ShareIntentBinder {
   bool _disposed = false;
 
   void start() {
-    _sub = source.mediaStream.listen(_open);
+    _sub = source.mediaStream.listen(
+      _open,
+      onError: (Object error, StackTrace stack) {
+        debugPrint('ShareIntentBinder.mediaStream: $error\n$stack');
+      },
+    );
     source.initialMedia().then((image) {
       if (_disposed || image == null) return;
       _open(image);
+    }, onError: (Object error, StackTrace stack) {
+      debugPrint('ShareIntentBinder.initialMedia: $error\n$stack');
     });
   }
 

@@ -80,6 +80,73 @@ void main() {
     expect(find.textContaining('bytes'), findsOneWidget);
   });
 
+  for (final size in const [Size(390, 844), Size(1280, 800)]) {
+    final label = '${size.width.toInt()}x${size.height.toInt()}';
+
+    testWidgets(
+      'content:// without permission shows PT-BR error at $label',
+      (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+        await tester.pumpWidget(
+          CapturePage(
+            image: const IncomingImage(
+              path: 'content://media/external/images/media/42',
+            ),
+            readPath: (_) async => throw PlatformException(
+              code: 'SecurityException',
+              message:
+                  'Permission Denial: opening provider '
+                  'com.android.providers.media.MediaProvider',
+            ),
+          ).wrap(overrides: _harness(db: db)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(CaptureKeys.page), findsOneWidget);
+        expect(find.byKey(CaptureKeys.loadError), findsOneWidget);
+        expect(
+          find.text(CaptureLabels.sharePermissionDenied),
+          findsOneWidget,
+        );
+        expect(find.textContaining('SecurityException'), findsNothing);
+        expect(find.byKey(CaptureKeys.canvas), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'pre-resolved share permission error shows PT-BR copy at $label',
+      (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+        await tester.pumpWidget(
+          const CapturePage(
+            image: IncomingImage(
+              errorMessage: CaptureLabels.sharePermissionDenied,
+            ),
+          ).wrap(overrides: _harness(db: db)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(CaptureKeys.loadError), findsOneWidget);
+        expect(
+          find.text(CaptureLabels.sharePermissionDenied),
+          findsOneWidget,
+        );
+      },
+    );
+  }
+
   testWidgets('share intent extra opens /capture without bottom tabs', (
     tester,
   ) async {

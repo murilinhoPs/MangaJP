@@ -30,6 +30,7 @@ import '../domain/crop_order.dart';
 import '../domain/crop_rect.dart';
 import '../domain/incoming_image.dart';
 import '../domain/page_png.dart';
+import '../domain/share_access.dart';
 import 'crop_overlay.dart';
 
 /// Keys for the capture path test (fixture → ≥1 rect → OCR → `/pages/:id`).
@@ -39,6 +40,7 @@ abstract final class CaptureKeys {
   static const cropBytes = Key('capture-crop-bytes');
   static const ocrText = Key('capture-ocr-text');
   static const pickGallery = Key('capture-pick-gallery');
+  static const loadError = Key('capture-load-error');
   static const overlay = Key('capture-overlay');
   static const canvas = Key('capture-canvas');
   static const recortesPanel = Key('capture-recortes-panel');
@@ -58,10 +60,12 @@ class CapturePage extends ConsumerStatefulWidget {
     this.onCropped,
     this.initialCrops,
     this.initialActiveIndex = 0,
+    this.readPath,
   });
 
   final IncomingImage? image;
   final ValueChanged<Uint8List>? onCropped;
+  final Future<Uint8List> Function(String path)? readPath;
 
   /// Test / screenshot seed. When null, uses [CropRect.initial] (or the shot).
   final List<CropRect>? initialCrops;
@@ -93,6 +97,12 @@ class _CapturePageState extends ConsumerState<CapturePage> {
     _applyInitialCrops();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
+        return;
+      }
+      if (kCaptureShotShareDenied) {
+        setState(() {
+          _error = CaptureLabels.sharePermissionDenied;
+        });
         return;
       }
       await _load();
@@ -142,8 +152,21 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       });
       return;
     }
+    if (incoming.errorMessage != null) {
+      setState(() {
+        _bytes = null;
+        _cropped = null;
+        _ocr = null;
+        _pageId = null;
+        _error = incoming.errorMessage;
+        _imageSize = Size.zero;
+      });
+      return;
+    }
     try {
-      final bytes = incoming.bytes ?? await XFile(incoming.path!).readAsBytes();
+      final bytes =
+          incoming.bytes ??
+          await (widget.readPath ?? _defaultIncomingRead)(incoming.path!);
       final decoded = img.decodeImage(bytes);
       if (decoded == null) {
         throw const FormatException('Could not decode image');
@@ -176,7 +199,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
       }
       setState(() {
         _bytes = null;
-        _error = '$error';
+        _error = captureLoadErrorMessage(error);
       });
     }
   }
@@ -479,6 +502,7 @@ class _CapturePageState extends ConsumerState<CapturePage> {
                           ),
                           child: Text(
                             _error!,
+                            key: CaptureKeys.loadError,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.error,
                             ),
@@ -773,4 +797,8 @@ bool _cropListEquals(List<CropRect> a, List<CropRect> b) {
 
 class _CaptureExitIntent extends Intent {
   const _CaptureExitIntent();
+}
+
+Future<Uint8List> _defaultIncomingRead(String path) {
+  return XFile(path).readAsBytes();
 }
