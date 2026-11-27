@@ -24,7 +24,10 @@ G_DEFINE_TYPE(FlutterSecureStorageLinuxPlugin, flutter_secure_storage_linux_plug
 
 static SecretStorage keyring;
 void deleteIt(const gchar *key) { keyring.deleteItem(key); }
-void deleteAll() { keyring.deleteKeyring(); }
+void deleteAll() {
+  keyring.clearStatus();
+  keyring.deleteKeyring();
+}
 void write(const gchar *key, const gchar *value)
 {
   keyring.addItem(key, value);
@@ -246,7 +249,7 @@ static void method_call_cb(FlMethodChannel *channel, FlMethodCall *method_call,
     // GLib C callbacks are not exception-safe. Last-resort so Cancel cannot
     // `std::terminate` the process.
     g_autoptr(FlMethodResponse) response = FL_METHOD_RESPONSE(
-        fl_method_error_response_new("KeyringLocked", "KeyringLocked", nullptr));
+        fl_method_error_response_new("Libsecret error", "unknown", nullptr));
     fl_method_call_respond(method_call, response, nullptr);
   }
 }

@@ -2,6 +2,7 @@
 #include "json.hpp"
 #include <cstring>
 #include <exception>
+#include <gio/gio.h>
 #include <libsecret/secret.h>
 #include <string>
 
@@ -77,6 +78,7 @@ public:
   bool deleteKeyring() { return this->storeToKeyring(nlohmann::json()); }
 
   bool storeToKeyring(nlohmann::json value) {
+    clearStatus();
     const std::string output = value.dump(0);
     GError *err = nullptr;
     bool result = secret_password_storev_sync(
@@ -127,13 +129,17 @@ private:
   }
 
   void setErrorFromGError(GError *err) {
-    const char *msg = (err && err->message) ? err->message : "Libsecret error";
-    if (strstr(msg, "unlock") != nullptr || strstr(msg, "cancelled") != nullptr ||
-        strstr(msg, "canceled") != nullptr) {
+    if (err == nullptr) {
+      m_error = "Libsecret error";
+      return;
+    }
+    // GError messages are translated; do not strstr "cancelled"/"unlock".
+    if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) ||
+        g_error_matches(err, SECRET_ERROR, SECRET_ERROR_IS_LOCKED)) {
       setLocked();
       return;
     }
-    m_error = msg;
+    m_error = err->message ? err->message : "Libsecret error";
   }
 
   // Search with schemas fails in cold keyrings.

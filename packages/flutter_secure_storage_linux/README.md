@@ -31,8 +31,12 @@ Dart `try/catch` never runs. The process is already dead.
   process on GNOME Cancel (verified on this VM).
 - Map Cancel / failed unlock to `SecretStorage::wasLocked()` and return
   `PlatformException(code: KeyringLocked)` on the method channel.
+  Cancel is `g_error_matches(..., G_IO_ERROR, G_IO_ERROR_CANCELLED)` or
+  `SECRET_ERROR_IS_LOCKED` — not a `strstr` on the translated GError text.
+- `deleteAll` / `storeToKeyring` call `clearStatus()` so a previous Cancel
+  cannot leak `KeyringLocked` onto a later call.
 - Catch leftover C++ exceptions only as a last resort in the GObject
-  method-call callback.
+  method-call callback (`Libsecret error`, not a fake `KeyringLocked`).
 
 The app maps that to a PT-BR «tente de novo» state instead of crashing.
 
