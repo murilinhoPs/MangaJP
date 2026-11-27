@@ -60,7 +60,7 @@ Device-only remaining steps (need a Mac + Apple Developer team):
 3. First `flutter pub get` / `flutter build ios` on macOS fills
    `ios/Flutter/ephemeral/Packages/.packages/receive_sharing_intent-1.9.0`
    so the Share Extension can link the `receive-sharing-intent` Swift product
-   (Flutter 3.47 versions that directory).
+   (Flutter 3.50 versions that directory).
 4. Photos / Files → **Share** → **MangaJP** should open `/capture` with the image.
 
 `flutter build ios` is not run in this Linux CI / Cloud Agent environment (no
