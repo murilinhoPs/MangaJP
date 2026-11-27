@@ -31,9 +31,12 @@ object FileDirectory {
             getAbsolutePathUnguarded(context, uri)
         } catch (e: SecurityException) {
             // ACTION_SEND with a MediaStore content:// and no persistable grant.
-            // Returning the URI lets Dart show a PT-BR error instead of crashing.
+            // Do not return the URI as a fake filesystem path — Dart's
+            // XFile(content://…).readAsBytes() would throw PathNotFoundException
+            // and hide the denial. Re-throw so handleIntent can put
+            // "error": "uri_permission_denied" on the JSON payload.
             Log.e("FileDirectory", "URI permission denied: $uri", e)
-            uri.toString()
+            throw e
         }
     }
 

@@ -112,6 +112,13 @@ class ImageSourceService {
 
   Future<IncomingImage?> _firstImage(List<SharedMediaFile> files) async {
     for (final file in files) {
+      if (isShareUriPermissionDeniedCode(file.error)) {
+        return const IncomingImage(
+          errorMessage: CaptureLabels.sharePermissionDenied,
+        );
+      }
+    }
+    for (final file in files) {
       final mime = file.mimeType ?? '';
       if (file.type == SharedMediaType.image || mime.startsWith('image/')) {
         return _fromSharedPath(file.path);

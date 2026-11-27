@@ -21,6 +21,11 @@ class SharedMediaFile {
   /// Post message iOS ONLY
   final String? message;
 
+  /// Native marker when the share URI could not be opened (Android
+  /// `content://` without `FLAG_GRANT_READ_URI_PERMISSION`). Value is
+  /// `uri_permission_denied`.
+  final String? error;
+
   SharedMediaFile({
     required this.path,
     required this.type,
@@ -28,15 +33,17 @@ class SharedMediaFile {
     this.duration,
     this.mimeType,
     this.message,
+    this.error,
   });
 
   SharedMediaFile.fromMap(Map<String, dynamic> json)
-      : path = json['path'],
-        thumbnail = json['thumbnail'],
-        duration = json['duration'],
-        type = SharedMediaType.fromValue(json['type']),
-        mimeType = json['mimeType'],
-        message = json['message'];
+    : path = json['path'] as String? ?? '',
+      thumbnail = json['thumbnail'],
+      duration = json['duration'],
+      type = SharedMediaType.fromValue(json['type']),
+      mimeType = json['mimeType'],
+      message = json['message'],
+      error = json['error'] as String?;
 
   Map<String, dynamic> toMap() {
     return {
@@ -46,6 +53,7 @@ class SharedMediaFile {
       'type': type.value,
       'mimeType': mimeType,
       'message': message,
+      'error': error,
     };
   }
 }

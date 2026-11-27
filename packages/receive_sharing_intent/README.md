@@ -3,10 +3,13 @@
 Vendored from `receive_sharing_intent` **1.9.0**. Android `FileDirectory` /
 `handleIntent` used to throw an uncaught `SecurityException` on a
 `content://` share without `FLAG_GRANT_READ_URI_PERMISSION` (QA of #120),
-killing the process before Dart ran. The patch catches that on the Activity
-thread, returns the URI string, and lets Dart show
+killing the process before Dart ran. The patch catches that (and other
+`Exception`s from a revoked provider) on the Activity thread and puts
+`"error": "uri_permission_denied"` on the JSON payload. Dart maps that to
 «Não foi possível abrir a imagem compartilhada. Sem permissão para acessar o
-arquivo.»
+arquivo.» Returning the URI as `path` without the error field made
+`XFile('content://…').readAsBytes()` throw `PathNotFoundException` and hide
+the copy.
 
 # receive_sharing_intent
 [![pub package](https://img.shields.io/pub/v/receive_sharing_intent.svg)](https://pub.dev/packages/receive_sharing_intent)

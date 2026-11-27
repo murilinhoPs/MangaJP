@@ -90,13 +90,16 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
 
                 val value = try {
                     getMediaUris(intent)
-                } catch (e: SecurityException) {
+                } catch (e: Exception) {
                     // content:// without FLAG_GRANT_READ_URI_PERMISSION used to
                     // crash the process (uncaught SecurityException on the
-                    // Activity thread). Keep the URI so Dart can show an error.
+                    // Activity thread). FileNotFoundException / IOException from
+                    // a revoked provider would do the same. Mark the payload so
+                    // Dart shows PT-BR instead of treating a leftover content://
+                    // path as a real file (XFile → PathNotFoundException).
                     android.util.Log.e(
                         "ReceiveSharingIntent",
-                        "share URI permission denied",
+                        "share URI unreadable",
                         e,
                     )
                     deniedShareJson(intent)
@@ -121,15 +124,29 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     }
 
     private fun deniedShareJson(intent: Intent): JSONArray {
-        val uri = intent.parcelable<Uri>(Intent.EXTRA_STREAM)
-        return JSONArray(
-            listOf(
-                JSONObject()
-                    .put("path", uri?.toString() ?: "")
-                    .put("type", MediaType.IMAGE.value)
-                    .put("mimeType", intent.type)
-            )
-        )
+        val items = mutableListOf<JSONObject>()
+        if (intent.action == Intent.ACTION_SEND_MULTIPLE) {
+            val uris = intent.parcelableArrayList<Uri>(Intent.EXTRA_STREAM)
+            if (uris.isNullOrEmpty()) {
+                items.add(deniedShareItem("", intent.type))
+            } else {
+                for (uri in uris) {
+                    items.add(deniedShareItem(uri.toString(), intent.type))
+                }
+            }
+        } else {
+            val uri = intent.parcelable<Uri>(Intent.EXTRA_STREAM) ?: intent.data
+            items.add(deniedShareItem(uri?.toString() ?: "", intent.type))
+        }
+        return JSONArray(items)
+    }
+
+    private fun deniedShareItem(path: String, mimeType: String?): JSONObject {
+        return JSONObject()
+            .put("path", path)
+            .put("type", MediaType.fromMimeType(mimeType).value)
+            .put("mimeType", mimeType)
+            .put("error", "uri_permission_denied")
     }
 
     private fun getMediaUris(intent: Intent?): JSONArray? {
@@ -163,6 +180,9 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     // content can only be uri or string
     private fun toJsonObject(uri: Uri?, text: String?, mimeType: String?): JSONObject? {
         val path = uri?.let { FileDirectory.getAbsolutePath(applicationContext, it) }
+        if (path != null && path.startsWith("content:", ignoreCase = true)) {
+            return deniedShareItem(path, mimeType)
+        }
         val mType = mimeType ?: path?.let { URLConnection.guessContentTypeFromName(path) }
         val type = MediaType.fromMimeType(mType)
         val (thumbnail, duration) = path?.let { getThumbnailAndDuration(path, type) }
