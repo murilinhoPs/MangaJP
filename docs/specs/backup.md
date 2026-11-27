@@ -94,7 +94,7 @@ Snackbar flutuante; margem inferior = `ShellLayout.commandBarPaddingOf` + 8 (sob
 ### Plataformas
 
 - **Android e iOS:** `file_picker` persiste os bytes no canal da plataforma (SAF no Android). Sem rewrite `dart:io` no path — um rewrite depois do save ok lançava `FileSystemException` e mostrava «Falha ao exportar.» com o JSON já gravado.
-- **Desktop (Linux / macOS / Windows):** `file_picker` devolve o path; `writeDesktopBackupAtomically` grava num `.tmp`, faz flush, confere o tamanho e que o JSON parseia, e só então faz rename atômico para o destino. Falha no meio apaga o `.tmp` (e não conta como sucesso). `FileSystemException` / JSON inválido é **relançada** e a UI mostra «Falha ao exportar.». Android SAF inalterado.
+- **Desktop:** sucesso **só** depois de o JSON no disco bater (tamanho + `jsonDecode` + bytes). Linux / Windows: `saveFile` **sem** `bytes` (o picker 10.3.10 com `bytes:` grava direto no destino e destruiria o backup antigo); depois sidecar único `.<pid>.<µs>.tmp`, flush, validação, rename. macOS sandbox (`files.user-selected.read-write`): o painel só autoriza o arquivo escolhido, não a pasta — um sidecar `.tmp` dá EPERM. O picker grava os bytes no path; se tamanho/`jsonDecode` já batem, não reescreve; se estiver errado, reescreve **no próprio path**. Falha não conta como sucesso. Android SAF inalterado.
 
 ### Q6 / Q7
 
