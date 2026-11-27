@@ -74,7 +74,7 @@ See [Milestone history](#milestone-history) for the detailed behavior of each st
 
 ## Tech stack
 
-Flutter / Dart, Riverpod (codegen), go_router (typed routes), Drift, freezed / json_serializable, `receive_sharing_intent` (share target), `image_picker` + `image` (crop). Python tooling for the dictionary build, OCR sidecar, and OCR bake-off.
+Flutter / Dart, `material_ui` / `cupertino_ui`, Riverpod (codegen), go_router (typed routes), Drift, freezed / json_serializable, `receive_sharing_intent` (share target), `image_picker` + `image` (crop). Python tooling for the dictionary build, OCR sidecar, and OCR bake-off.
 
 ## Project layout
 
@@ -93,7 +93,7 @@ Feature-first + MVVM (PRD §12.2).
 
 ## Setup
 
-Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.47.x / Dart 3.13). Android APKs need an Android SDK (`compileSdk` 37, required by `receive_sharing_intent`). iOS builds need Xcode on macOS.
+Requires [Flutter stable](https://docs.flutter.dev/get-started/install) (developed on 3.50.1 / Dart 3.14; CI pins this SDK). Android APKs need an Android SDK (`compileSdk` 37, required by `receive_sharing_intent`). iOS builds need Xcode on macOS.
 
 ```bash
 flutter pub get
@@ -214,7 +214,7 @@ flutter analyze
 flutter test
 ```
 
-CI (GitHub Actions) runs the JMdict fixture smoke, the CER-protocol unit tests (no OCR models), then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, `web/**`, `lib/**/*_web.dart`, and `build/**`.
+CI (GitHub Actions) pins Flutter **3.50.1** (`channel: stable`) and runs the JMdict fixture smoke, the CER-protocol unit tests (no OCR models), then `build_runner`, `flutter analyze`, and `flutter test` on Ubuntu (no iOS compile job). `analysis_options.yaml` excludes generated `*.g.dart` / `*.freezed.dart` plus `android/**`, `ios/**`, `linux/**`, `web/**`, `lib/**/*_web.dart`, and `build/**`.
 
 ## Cloud Agents environment
 
