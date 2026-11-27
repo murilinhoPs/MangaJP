@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -247,7 +247,9 @@ void main() {
       expect(shape.borderRadius, BorderRadius.circular(AppRadius.linha));
       expect(shape.side.color, AppColors.border);
 
-      final todos = tester.widget<FilterChip>(find.byKey(NotebookKeys.stateAll));
+      final todos = tester.widget<FilterChip>(
+        find.byKey(NotebookKeys.stateAll),
+      );
       expect(todos.selected, isTrue);
       expect(todos.side?.color, AppColors.coral);
       expect(todos.selectedColor, AppColors.overlayPrimaria);

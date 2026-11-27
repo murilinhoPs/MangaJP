@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/shell/shell_layout.dart';
@@ -40,9 +40,7 @@ class DeckPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.tokens.bg,
-      appBar: AppBar(
-        title: const Text(DeckLabels.title, key: DeckKeys.title),
-      ),
+      appBar: AppBar(title: const Text(DeckLabels.title, key: DeckKeys.title)),
       body: cards.when(
         data: (items) => items.isEmpty
             ? _DeckEmpty(wide: wide)
@@ -153,7 +151,8 @@ class _DeckRow extends ConsumerWidget {
             else if (card.canReactivate)
               TextButton(
                 key: DeckKeys.reactivate(card.wordId),
-                onPressed: () => _run(ref, (repo) => repo.reactivate(card.wordId)),
+                onPressed: () =>
+                    _run(ref, (repo) => repo.reactivate(card.wordId)),
                 child: const Text(DeckLabels.reativar),
               ),
           ],

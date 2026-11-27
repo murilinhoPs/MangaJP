@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_theme.dart';
 import 'kbd_chip.dart';
@@ -48,10 +48,7 @@ class CommandBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.dockAcaoBusca),
               border: Border.all(color: tokens.border),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: _children(),
-            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: _children()),
           ),
         ),
       ),

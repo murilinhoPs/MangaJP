@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/app_bootstrap.dart';
 import 'package:manga_jp/core/database/linux_app_support_migration.dart';

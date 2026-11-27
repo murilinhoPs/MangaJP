@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -560,11 +560,7 @@ void main() {
       tester,
       jmdictPath: jmdictPath,
       pages: [
-        _SeedPage(
-          id: 'page-a',
-          createdAt: DateTime.now(),
-          ocrText: '見せる',
-        ),
+        _SeedPage(id: 'page-a', createdAt: DateTime.now(), ocrText: '見せる'),
       ],
     );
     final router = GoRouter.of(tester.element(find.byType(HomePage)));
