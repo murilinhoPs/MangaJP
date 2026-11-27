@@ -22,6 +22,11 @@ const kCaptureShotAutoConfirm = bool.fromEnvironment(
   'MANGAJP_CAPTURE_AUTO_CONFIRM',
 );
 
+/// Empty `/capture` with the share-permission error (print helper).
+const kCaptureShotShareDenied = bool.fromEnvironment(
+  'MANGAJP_SHARE_DENIED',
+);
+
 Uint8List? captureShotImage() {
   if (kCaptureShotCrops <= 0) {
     return null;

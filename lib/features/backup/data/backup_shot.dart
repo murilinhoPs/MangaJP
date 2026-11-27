@@ -16,3 +16,6 @@ bool get kBackupShotOk => !kReleaseMode && kBackupShot == 'ok';
 bool get kBackupShotAbout => !kReleaseMode && kBackupShot == 'about';
 
 bool get kBackupShotSkipped => !kReleaseMode && kBackupShot == 'skipped';
+
+bool get kBackupShotExportFailed =>
+    !kReleaseMode && kBackupShot == 'exportfailed';

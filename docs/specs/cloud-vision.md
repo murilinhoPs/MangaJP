@@ -32,7 +32,7 @@ Roda no **mesmo crop** que o manga-ocr, depois do confirm dos recortes. **Não**
 
 O usuário cola a chave num campo em **Ajustes › OCR**. O toggle «Usar OCR na nuvem» **só liga depois que houver chave**. A chave fica no armazenamento seguro do sistema (Keychain, Keystore, libsecret no Linux). **Nunca** no Drift, no backup da F25, em log, em print ou no repo. Na UI aparece mascarada, com botão **Testar chave** e **Remover chave**. Nenhuma chave embutida no app.
 
-Sem armazenamento seguro (Linux sem Secret Service / keyring, ou plataforma sem Keychain/Keystore/libsecret): o campo da chave fica **desabilitado** com aviso; **nada** é salvo em texto puro. A web (F33 / M3) fica **fora** da F26. Timeout de **400 ms** no plugin **não** é esse caso — a chave não é tratada como ausente. Ver **Keyring lento**.
+Sem armazenamento seguro (Linux sem Secret Service / keyring, ou plataforma sem Keychain/Keystore/libsecret): o campo da chave fica **desabilitado** com aviso; **nada** é salvo em texto puro. A web (F33 / M3) fica **fora** da F26. Timeout de **400 ms** no plugin **não** é esse caso — a chave não é tratada como ausente. Ver **Keyring lento**. Cancelar o diálogo de unlock do GNOME **não** derruba o app. Ver **Keyring bloqueado**.
 
 A chave vai no header `X-Goog-Api-Key`. **Nunca** em query string (`?key=`).
 
@@ -54,6 +54,14 @@ Prints do campo usam valor fake mascarado; se algum trecho vazar, borrão declar
 - Se o Cloud Vision falha com fallback local e o manga-ocr daquele recorte também falha, a Captura **não** confirma o recorte (`OcrBothUnavailable`): permanece na tela de crop e mostra «OCR indisponível: Cloud Vision e manga-ocr falharam.», acima do dock (**390×844**) e acima da command bar no wide. A chave permanece. (Atualizado pelo #109, 2026-11-12.)
 - Toggle desligado, ou Cloud Vision fora do caminho, e o sidecar manga-ocr falha (sidecar fora, HTTP ≠ 200, JSON ilegível): `MangaOcrUnavailable`. A Captura **não** confirma; permanece na tela de crop com «OCR indisponível: manga-ocr não respondeu.», no mesmo lugar do erro de ambos os OCRs. Não é a copy da falha dupla. (Follow-up do #110, 2026-11-12.)
 - Qualquer outro erro no `_confirm` da Captura que não seja `CloudVisionException` nem `OcrException`: `OcrUnavailable` («OCR indisponível.»). A Captura **não** confirma; mesma posição. Catch-all para a UI não mostrar `StateError` / `SocketException` crus. (Follow-up do #110, 2026-11-12.)
+
+### Keyring bloqueado (Linux / GNOME Cancel)
+
+O plugin `flutter_secure_storage_linux` **1.2.3** fazia `throw "Failed to unlock the keyring"` (`char const*`) em `warmupKeyring()` quando o usuário cancelava o diálogo do GNOME. Flutter Linux não captura essa exceção C++; o processo morria com `terminate called after throwing 'char const*'`. `throw err->message` ainda era use-after-free (`g_autoptr` libera o `GError` no unwind). Dart `try/catch` **não** alcança esse crash.
+
+MangaJP usa uma cópia vendored em `packages/flutter_secure_storage_linux`. **Não lança C++**: `g_autoptr` + o loop GLib aninhado do diálogo GNOME não são exception-safe (`throw std::runtime_error` ainda dava `std::terminate`). Cancel / unlock falho vira `wasLocked()` → `PlatformException(code: KeyringLocked)`. `FlutterCloudVisionStore` mapeia isso para `KeyringAvailability.locked` / `KeyringLockedException`.
+
+Cópia: «Armazenamento seguro indisponível. Tente de novo.» (`CloudVisionLabels.keyringLocked`). Campo e toggle **continuam usáveis** (diferente de keyring indisponível) para o usuário tentar de novo. A chave **não** é apagada nem salva em texto puro. `MemoryCloudVisionStore(keyringLocked: true)` cobre o caminho nos testes. Shot: `--dart-define=MANGAJP_CLOUD_VISION_SHOT=locked`.
 
 ### Keyring lento (atualizado pelo #109, 2026-11-12)
 
@@ -86,6 +94,7 @@ Hoje `macos/Runner/Release.entitlements` (e DebugProfile) só têm `app-sandbox`
 - **AC-cv-crop:** Vision no mesmo crop que o manga-ocr; 1 chamada por crop; `engineId` em `crops`; schema inalterado; chip **misto** se os crops da página diferirem. (Aprovado, 2026-11-04.)
 - **AC-cv-key:** chave colada em Ajustes › OCR; toggle só liga com chave; armazenamento seguro do sistema; nunca Drift / backup F25 / log / print / repo; mascarada; **Testar chave** e **Remover chave**; nenhuma chave embutida. (Aprovado, 2026-11-04.)
 - **AC-cv-keyring:** sem secure storage o campo fica desabilitado com aviso; nada em texto puro; web fora da F26. (Aprovado, 2026-11-04.)
+- **AC-cv-keyring-locked:** cancelar o diálogo do GNOME no Linux **não** termina o processo. O plugin vendored devolve `KeyringLocked` no canal; Ajustes mostra «Armazenamento seguro indisponível. Tente de novo.»; campo e toggle seguem habilitados. (Follow-up do #126.)
 - **AC-cv-keyring-slow:** timeout **400 ms** no plugin (`FlutterCloudVisionStore.pluginTimeout`); `readApiKey` / `writeApiKey` / `deleteApiKey` lançam `KeyringSlowException`; `_guard` ignora o future tardio; `MemoryCloudVisionStore` simula o caminho. A chave não é tratada como ausente nem apagada. Cópia: «Armazenamento seguro demorou para responder. A chave não foi apagada — tente de novo.» Captura: `CloudVisionKeyringSlow` (`fallsBackToLocal: false`), aquele crop não cai no manga-ocr, fica na tela de crop com o aviso no mesmo lugar do erro de ambos os OCRs. Ajustes › OCR: aviso na seção OCR; campo e toggle continuam usáveis (diferente de keyring indisponível); Remover/salvar com timeout mostram o mesmo aviso e a chave permanece. `hasKey` segue `enabled` sempre no caminho lento: toggle ligado → a UI não trata a chave como ausente; chave salva + toggle desligado + keyring lento → `hasKey` falso, hint «Cole a chave», Remover desabilitado, Ajustes parece sem chave (residual conhecido; a chave não é apagada). (Atualizado pelo #109, 2026-11-12.) (Follow-up do #110, 2026-11-12.)
 - **AC-cv-header:** chave no header `X-Goog-Api-Key`; nunca em query string. (Aprovado, 2026-11-04.)
 - **AC-cv-nolog:** testes interceptam logger e texto de erro; a chave **nunca** aparece. (Aprovado, 2026-11-04.)

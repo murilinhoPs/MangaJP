@@ -84,7 +84,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
         kBackupShotConfirm ||
         kBackupShotRejected ||
         kBackupShotOk ||
-        kBackupShotSkipped) {
+        kBackupShotSkipped ||
+        kBackupShotExportFailed) {
       _didShot = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
@@ -103,6 +104,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
           _snack(BackupLabels.restoreOk);
         } else if (kBackupShotSkipped) {
           _snack(BackupLabels.restoreOkSkipped(2));
+        } else if (kBackupShotExportFailed) {
+          _snack(BackupLabels.exportFailed);
         }
       });
     }
@@ -240,7 +243,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
           16,
           ShellLayout.commandBarPaddingOf(context) + 8,
         ),
-        duration: kBackupShotRejected || kBackupShotOk || kBackupShotSkipped
+        duration: kBackupShotRejected ||
+                kBackupShotOk ||
+                kBackupShotSkipped ||
+                kBackupShotExportFailed
             ? const Duration(minutes: 5)
             : const Duration(seconds: 4),
       ),

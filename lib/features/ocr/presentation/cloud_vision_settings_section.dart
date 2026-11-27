@@ -90,6 +90,14 @@ class _CloudVisionSettingsSectionState
                     style: AppTypeScale.ui13.copyWith(color: tokens.danger),
                   ),
                 ],
+                if (state.keyringLocked) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    CloudVisionLabels.keyringLocked,
+                    key: CloudVisionKeys.keyringLockedWarning,
+                    style: AppTypeScale.ui13.copyWith(color: tokens.danger),
+                  ),
+                ],
                 if (!state.keyringAvailable) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -232,6 +240,10 @@ class _CloudVisionSettingsSectionState
       if (mounted) {
         _snack(CloudVisionLabels.keyringSlow);
       }
+    } on KeyringLockedException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringLocked);
+      }
     } on KeyringUnavailableException {
       if (mounted) {
         _snack(CloudVisionLabels.keyringUnavailable);
@@ -269,6 +281,10 @@ class _CloudVisionSettingsSectionState
     } on KeyringSlowException {
       if (mounted) {
         _snack(CloudVisionLabels.keyringSlow);
+      }
+    } on KeyringLockedException {
+      if (mounted) {
+        _snack(CloudVisionLabels.keyringLocked);
       }
     } on KeyringUnavailableException {
       if (mounted) {

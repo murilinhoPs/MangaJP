@@ -8,7 +8,7 @@ Entrar no pipeline com uma imagem e chegar em texto OCR com ≤ 2 taps in-app (O
 
 ## Comportamento
 
-- **F2 / AC-share:** share de screenshot no Android abre `/capture` com a imagem, **sem** passar pela Home.
+- **F2 / AC-share:** share de screenshot no Android abre `/capture` com a imagem, **sem** passar pela Home. Share de `content://` **sem** permissão de URI (`SecurityException` / provider revogado no plugin nativo) **não** derruba o app: o JSON nativo traz `"error": "uri_permission_denied"` e a Captura mostra «Não foi possível abrir a imagem compartilhada. Sem permissão para acessar o arquivo.» e permanece viva (galeria segue disponível). Devolver só a URI em `path` faria o Dart cair em `PathNotFoundException` e esconder a copy.
 - **F1:** seleção via galeria (`image_picker`) — ver [galeria](galeria.md).
 - Crop obrigatório (≥1 retângulo) antes do OCR — [recorte](recorte.md).
 - 1 tap **Confirmar crop(s)** dispara OCR automático. Drag/pinch **não** contam como tap. O share sheet do sistema não conta.
