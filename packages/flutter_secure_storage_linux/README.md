@@ -25,11 +25,14 @@ Dart `try/catch` never runs. The process is already dead.
 
 ## Patch
 
-- Copy GError messages into `std::runtime_error` before unwind.
-- Map Cancel / failed unlock to `std::runtime_error("KeyringLocked")`.
-- Catch `std::exception`, leftover C strings, and `...` and return a
-  `PlatformException` (`KeyringLocked` or `Libsecret error`) on the method
-  channel.
+- **Do not throw.** `g_autoptr` + the nested GLib loop inside
+  `secret_password_storev_sync` are not exception-safe. `throw char const*`
+  *and* `throw std::runtime_error` both `std::terminate` the Flutter Linux
+  process on GNOME Cancel (verified on this VM).
+- Map Cancel / failed unlock to `SecretStorage::wasLocked()` and return
+  `PlatformException(code: KeyringLocked)` on the method channel.
+- Catch leftover C++ exceptions only as a last resort in the GObject
+  method-call callback.
 
 The app maps that to a PT-BR «tente de novo» state instead of crashing.
 

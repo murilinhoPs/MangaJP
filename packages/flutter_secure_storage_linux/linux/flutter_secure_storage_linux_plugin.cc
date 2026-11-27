@@ -30,6 +30,21 @@ void write(const gchar *key, const gchar *value)
   keyring.addItem(key, value);
 }
 
+FlMethodResponse *statusErrorOrNull()
+{
+  if (keyring.wasLocked())
+  {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "KeyringLocked", "KeyringLocked", nullptr));
+  }
+  if (!keyring.lastError().empty())
+  {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+        "Libsecret error", keyring.lastError().c_str(), nullptr));
+  }
+  return nullptr;
+}
+
 FlValue *read(const gchar *key)
 {
   auto str = keyring.getItem(key);
@@ -92,8 +107,12 @@ static void flutter_secure_storage_linux_plugin_handle_method_call(
         else
         {
           write(keyString, valueString);
-          response =
-              FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+          response = statusErrorOrNull();
+          if (response == nullptr)
+          {
+            response =
+                FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+          }
         }
       }
       else if (strcmp(method, "read") == 0)
@@ -106,14 +125,22 @@ static void flutter_secure_storage_linux_plugin_handle_method_call(
         else
         {
           g_autoptr(FlValue) result = read(keyString);
-          response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+          response = statusErrorOrNull();
+          if (response == nullptr)
+          {
+            response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+          }
         }
       }
       else if (strcmp(method, "readAll") == 0)
       {
         g_autoptr(FlValue) result = readAll();
-        response =
-            FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+        response = statusErrorOrNull();
+        if (response == nullptr)
+        {
+          response =
+              FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+        }
       }
       else if (strcmp(method, "delete") == 0)
       {
@@ -125,14 +152,22 @@ static void flutter_secure_storage_linux_plugin_handle_method_call(
         else
         {
           deleteIt(keyString);
-          response =
-              FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+          response = statusErrorOrNull();
+          if (response == nullptr)
+          {
+            response =
+                FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+          }
         }
       }
       else if (strcmp(method, "deleteAll") == 0)
       {
         deleteAll();
-        response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+        response = statusErrorOrNull();
+        if (response == nullptr)
+        {
+          response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+        }
       } 
       else if (strcmp(method, "containsKey") == 0) {
         if (!keyString) {
@@ -140,7 +175,11 @@ static void flutter_secure_storage_linux_plugin_handle_method_call(
               "Bad arguments", "Key is null", nullptr));
         } else {
           g_autoptr(FlValue) result = containsKey(keyString);
-          response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+          response = statusErrorOrNull();
+          if (response == nullptr)
+          {
+            response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+          }
         }
       }
       else
@@ -198,7 +237,18 @@ static void method_call_cb(FlMethodChannel *channel, FlMethodCall *method_call,
                            gpointer user_data)
 {
   FlutterSecureStorageLinuxPlugin *plugin = flutter_secure_storage_linux_plugin(user_data);
-  flutter_secure_storage_linux_plugin_handle_method_call(plugin, method_call);
+  try
+  {
+    flutter_secure_storage_linux_plugin_handle_method_call(plugin, method_call);
+  }
+  catch (...)
+  {
+    // GLib C callbacks are not exception-safe. Last-resort so Cancel cannot
+    // `std::terminate` the process.
+    g_autoptr(FlMethodResponse) response = FL_METHOD_RESPONSE(
+        fl_method_error_response_new("KeyringLocked", "KeyringLocked", nullptr));
+    fl_method_call_respond(method_call, response, nullptr);
+  }
 }
 
 void flutter_secure_storage_linux_plugin_register_with_registrar(

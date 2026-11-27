@@ -59,7 +59,7 @@ Prints do campo usam valor fake mascarado; se algum trecho vazar, borrão declar
 
 O plugin `flutter_secure_storage_linux` **1.2.3** fazia `throw "Failed to unlock the keyring"` (`char const*`) em `warmupKeyring()` quando o usuário cancelava o diálogo do GNOME. Flutter Linux não captura essa exceção C++; o processo morria com `terminate called after throwing 'char const*'`. `throw err->message` ainda era use-after-free (`g_autoptr` libera o `GError` no unwind). Dart `try/catch` **não** alcança esse crash.
 
-MangaJP usa uma cópia vendored em `packages/flutter_secure_storage_linux`: a mensagem vai num `std::runtime_error`, Cancel vira `PlatformException(code: KeyringLocked)`, e o handler nativo tem `catch (...)`. `FlutterCloudVisionStore` mapeia isso para `KeyringAvailability.locked` / `KeyringLockedException`.
+MangaJP usa uma cópia vendored em `packages/flutter_secure_storage_linux`. **Não lança C++**: `g_autoptr` + o loop GLib aninhado do diálogo GNOME não são exception-safe (`throw std::runtime_error` ainda dava `std::terminate`). Cancel / unlock falho vira `wasLocked()` → `PlatformException(code: KeyringLocked)`. `FlutterCloudVisionStore` mapeia isso para `KeyringAvailability.locked` / `KeyringLockedException`.
 
 Cópia: «Armazenamento seguro indisponível. Tente de novo.» (`CloudVisionLabels.keyringLocked`). Campo e toggle **continuam usáveis** (diferente de keyring indisponível) para o usuário tentar de novo. A chave **não** é apagada nem salva em texto puro. `MemoryCloudVisionStore(keyringLocked: true)` cobre o caminho nos testes. Shot: `--dart-define=MANGAJP_CLOUD_VISION_SHOT=locked`.
 
