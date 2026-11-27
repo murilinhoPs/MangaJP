@@ -84,7 +84,7 @@ Schema **mais antigo** que o app (ex. 8 no app 10) **é aceito**. Enums válidos
 | Situação | Copy |
 | --- | --- |
 | Export ok | «Backup exportado.» |
-| Falha de export (incluindo `FileSystemException` relançada no desktop) | «Falha ao exportar.» |
+| Falha de export (incluindo escrita parcial / `FileSystemException` no desktop) | «Falha ao exportar.» |
 | Restore ok | «Backup restaurado.» |
 | Restore ok com kanji pulado | «Backup restaurado. 1 kanji ignorado (literal inválido).» / «Backup restaurado. N kanji ignorados (literal inválido).» |
 | Falha no meio da transação (já revertida) | «Falha ao restaurar. Nada foi gravado.» |
@@ -94,7 +94,7 @@ Snackbar flutuante; margem inferior = `ShellLayout.commandBarPaddingOf` + 8 (sob
 ### Plataformas
 
 - **Android e iOS:** `file_picker` persiste os bytes no canal da plataforma (SAF no Android). Sem rewrite `dart:io` no path — um rewrite depois do save ok lançava `FileSystemException` e mostrava «Falha ao exportar.» com o JSON já gravado.
-- **Desktop (Linux / macOS / Windows):** `file_picker` devolve o path; `writeDesktopBackupIfEmpty` escreve via `dart:io` se o arquivo não existe ou está vazio. `FileSystemException` com arquivo ainda vazio/ausente é **relançada** e a UI mostra «Falha ao exportar.». Se o picker já deixou bytes (`exists && length > 0`), a exceção é engolida.
+- **Desktop (Linux / macOS / Windows):** `file_picker` devolve o path; `writeDesktopBackupAtomically` grava num `.tmp`, faz flush, confere o tamanho e que o JSON parseia, e só então faz rename atômico para o destino. Falha no meio apaga o `.tmp` (e não conta como sucesso). `FileSystemException` / JSON inválido é **relançada** e a UI mostra «Falha ao exportar.». Android SAF inalterado.
 
 ### Q6 / Q7
 
@@ -115,6 +115,5 @@ Fechadas no default implementado (Murilo não decidiu antes do [#118](https://gi
 - **AC-backup-normalize:** cada `literal` passa por `normalizeKanjiLiteral`; inválido não entra, com contagem na UI.
 - **AC-kanjidic-attr:** seção Sobre / Fontes **dentro de `/settings`** (sem rota nova) mostra «KANJIDIC2 © EDRDG, CC BY-SA 4.0» com link da EDRDG.
 
-> Pendente (follow-up de código, não desta spec): no desktop, uma escrita `dart:io` que falha no meio deixa bytes parciais (`exists && length > 0`) e o export conta como sucesso («Backup exportado.»). `writeDesktopBackupIfEmpty` engole `FileSystemException` nesse caso.
 > Pendente: zip de imagens (opcional, separado). Fora desta entrega.
 > Pendente: limpeza manual de storage.

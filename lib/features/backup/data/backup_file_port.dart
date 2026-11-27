@@ -75,28 +75,71 @@ class FilePickerBackupPort implements BackupFilePort {
     // dart:io-rewrite the SAF path (it throws after a successful save).
     if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
       if (path.isNotEmpty && !path.startsWith('content:')) {
-        await writeDesktopBackupIfEmpty(File(path), contents);
+        await writeDesktopBackupAtomically(File(path), contents);
       }
     }
     return BackupSaveResult.saved;
   }
 }
 
-/// Desktop follow-up write. file_picker may return a path without writing
-/// [contents]. Swallow [FileSystemException] only when the file already
-/// has bytes (the picker wrote them). Otherwise rethrow so the UI shows
-/// «Falha ao exportar.» instead of a false «Backup exportado.».
+/// Writes [contents] to [file] only after a full, flushed, validated temp
+/// file is renamed into place. A mid-write failure used to leave bytes in
+/// [file] (`exists && length > 0`) and count as success — a corrupt backup
+/// the user would restore later.
+typedef DesktopBackupTmpWriter =
+    Future<void> Function(File tmp, List<int> bytes);
+
 @visibleForTesting
-Future<void> writeDesktopBackupIfEmpty(File file, String contents) async {
+Future<void> writeDesktopBackupAtomically(
+  File file,
+  String contents, {
+  DesktopBackupTmpWriter? writeTmp,
+}) async {
+  final bytes = utf8.encode(contents);
+  final tmp = File('${file.path}.tmp');
   try {
-    if (!file.existsSync() || file.lengthSync() == 0) {
-      await file.writeAsString(contents);
+    await (writeTmp ?? _writeTmpFlushed)(tmp, bytes);
+    if (!tmp.existsSync()) {
+      throw FileSystemException('temp file missing after write', tmp.path);
+    }
+    final written = tmp.lengthSync();
+    if (written != bytes.length) {
+      throw FileSystemException(
+        'partial write: $written != ${bytes.length}',
+        tmp.path,
+      );
+    }
+    jsonDecode(utf8.decode(tmp.readAsBytesSync()));
+    await tmp.rename(file.path);
+  } catch (_) {
+    _deleteQuietly(tmp);
+    rethrow;
+  }
+}
+
+/// Kept as a name tests / call sites may still mention. Always atomic.
+@visibleForTesting
+Future<void> writeDesktopBackupIfEmpty(File file, String contents) {
+  return writeDesktopBackupAtomically(file, contents);
+}
+
+Future<void> _writeTmpFlushed(File tmp, List<int> bytes) async {
+  final raf = await tmp.open(mode: FileMode.write);
+  try {
+    await raf.writeFrom(bytes);
+    await raf.flush();
+  } finally {
+    await raf.close();
+  }
+}
+
+void _deleteQuietly(File file) {
+  try {
+    if (file.existsSync()) {
+      file.deleteSync();
     }
   } on FileSystemException {
-    if (file.existsSync() && file.lengthSync() > 0) {
-      return;
-    }
-    rethrow;
+    // Best-effort cleanup of a partial temp file.
   }
 }
 

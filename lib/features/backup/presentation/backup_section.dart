@@ -84,7 +84,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
         kBackupShotConfirm ||
         kBackupShotRejected ||
         kBackupShotOk ||
-        kBackupShotSkipped) {
+        kBackupShotSkipped ||
+        kBackupShotExportFailed) {
       _didShot = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
@@ -103,6 +104,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
           _snack(BackupLabels.restoreOk);
         } else if (kBackupShotSkipped) {
           _snack(BackupLabels.restoreOkSkipped(2));
+        } else if (kBackupShotExportFailed) {
+          _snack(BackupLabels.exportFailed);
         }
       });
     }
