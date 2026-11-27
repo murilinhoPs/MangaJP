@@ -243,7 +243,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
           16,
           ShellLayout.commandBarPaddingOf(context) + 8,
         ),
-        duration: kBackupShotRejected || kBackupShotOk || kBackupShotSkipped
+        duration: kBackupShotRejected ||
+                kBackupShotOk ||
+                kBackupShotSkipped ||
+                kBackupShotExportFailed
             ? const Duration(minutes: 5)
             : const Duration(seconds: 4),
       ),
