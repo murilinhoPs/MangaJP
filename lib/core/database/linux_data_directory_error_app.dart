@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_theme.dart';
 
@@ -36,6 +36,7 @@ class LinuxDataDirectoryErrorApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       locale: const Locale('pt', 'BR'),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: const LinuxDataDirectoryErrorPage(),
     );
   }

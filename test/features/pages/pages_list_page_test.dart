@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -28,11 +28,7 @@ const _phone = Size(390, 844);
 const _desktop = Size(1280, 800);
 
 class _SeedPage {
-  const _SeedPage({
-    required this.id,
-    required this.createdAt,
-    this.ocrText,
-  });
+  const _SeedPage({required this.id, required this.createdAt, this.ocrText});
 
   final String id;
   final DateTime createdAt;
@@ -68,9 +64,10 @@ void main() {
             expect(find.byKey(PagesKeys.list), findsOneWidget);
             expect(find.byKey(PagesKeys.empty), findsNothing);
             expect(
-              GoRouter.of(
-                tester.element(find.byType(PagesListPage)),
-              ).state.uri.path,
+              GoRouter.of(tester.element(find.byType(PagesListPage)))
+                  .state
+                  .uri
+                  .path,
               '/pages',
             );
 
@@ -91,11 +88,7 @@ void main() {
             );
             for (var i = 7; i >= 1; i--) {
               final row = find.byKey(PagesKeys.row('page-$i'));
-              await tester.scrollUntilVisible(
-                row,
-                120,
-                scrollable: scrollable,
-              );
+              await tester.scrollUntilVisible(row, 120, scrollable: scrollable);
               await tester.pumpAndSettle();
               expect(row, findsOneWidget);
               expect(find.byKey(PagesKeys.thumb('page-$i')), findsOneWidget);
@@ -113,9 +106,10 @@ void main() {
               await tester.tap(find.byKey(ShellKeys.railItem('leitor')));
               await tester.pumpAndSettle();
               expect(
-                GoRouter.of(
-                  tester.element(find.byType(PageDetailPage)),
-                ).state.uri.path,
+                GoRouter.of(tester.element(find.byType(PageDetailPage)))
+                    .state
+                    .uri
+                    .path,
                 '/pages/page-7',
               );
             } else {
@@ -152,9 +146,10 @@ void main() {
           expect(source.galleryCalls, 1);
           expect(find.byType(CapturePage), findsOneWidget);
           expect(
-            GoRouter.of(
-              tester.element(find.byType(CapturePage)),
-            ).state.uri.path,
+            GoRouter.of(tester.element(find.byType(CapturePage)))
+                .state
+                .uri
+                .path,
             '/capture',
           );
         },
@@ -200,46 +195,41 @@ void main() {
       },
     );
 
-    testWidgets(
-      '/pages/:id then /pages then /home via back at $label',
-      (tester) async {
-        await _openHome(
-          tester,
-          size: size,
-          pages: [
-            _SeedPage(
-              id: 'page-back',
-              createdAt: DateTime.now(),
-              ocrText: '見せる',
-            ),
-          ],
-          body: () async {
-            await tester.tap(find.byKey(HomeKeys.pagesLink));
-            await tester.pumpAndSettle();
-            expect(find.byType(PagesListPage), findsOneWidget);
-            expect(_path(tester), '/pages');
-            if (!wide) {
-              expect(find.byKey(PagesKeys.back), findsOneWidget);
-            }
+    testWidgets('/pages/:id then /pages then /home via back at $label', (
+      tester,
+    ) async {
+      await _openHome(
+        tester,
+        size: size,
+        pages: [
+          _SeedPage(id: 'page-back', createdAt: DateTime.now(), ocrText: '見せる'),
+        ],
+        body: () async {
+          await tester.tap(find.byKey(HomeKeys.pagesLink));
+          await tester.pumpAndSettle();
+          expect(find.byType(PagesListPage), findsOneWidget);
+          expect(_path(tester), '/pages');
+          if (!wide) {
+            expect(find.byKey(PagesKeys.back), findsOneWidget);
+          }
 
-            await tester.tap(find.byKey(PagesKeys.row('page-back')));
-            await tester.pumpAndSettle();
-            expect(find.byType(PageDetailPage), findsOneWidget);
-            expect(_path(tester), '/pages/page-back');
+          await tester.tap(find.byKey(PagesKeys.row('page-back')));
+          await tester.pumpAndSettle();
+          expect(find.byType(PageDetailPage), findsOneWidget);
+          expect(_path(tester), '/pages/page-back');
 
-            await tester.binding.handlePopRoute();
-            await tester.pumpAndSettle();
-            expect(find.byType(PagesListPage), findsOneWidget);
-            expect(_path(tester), '/pages');
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          expect(find.byType(PagesListPage), findsOneWidget);
+          expect(_path(tester), '/pages');
 
-            await tester.binding.handlePopRoute();
-            await tester.pumpAndSettle();
-            expect(find.byType(HomePage), findsOneWidget);
-            expect(_path(tester), '/home');
-          },
-        );
-      },
-    );
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          expect(find.byType(HomePage), findsOneWidget);
+          expect(_path(tester), '/home');
+        },
+      );
+    });
 
     testWidgets('tapping a /pages row opens /pages/:id at $label', (
       tester,
@@ -249,11 +239,7 @@ void main() {
         tester,
         size: size,
         pages: [
-          _SeedPage(
-            id: 'page-open',
-            createdAt: DateTime.now(),
-            ocrText: ocr,
-          ),
+          _SeedPage(id: 'page-open', createdAt: DateTime.now(), ocrText: ocr),
           _SeedPage(
             id: 'page-other',
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -267,9 +253,10 @@ void main() {
 
           expect(find.byType(PageDetailPage), findsOneWidget);
           expect(
-            GoRouter.of(
-              tester.element(find.byType(PageDetailPage)),
-            ).state.uri.path,
+            GoRouter.of(tester.element(find.byType(PageDetailPage)))
+                .state
+                .uri
+                .path,
             '/pages/page-open',
           );
           expect(find.byKey(PageDetailKeys.ocrText), findsOneWidget);
@@ -308,9 +295,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(PagesListPage), findsOneWidget);
         expect(
-          GoRouter.of(
-            tester.element(find.byType(PagesListPage)),
-          ).state.uri.path,
+          GoRouter.of(tester.element(find.byType(PagesListPage)))
+              .state
+              .uri
+              .path,
           '/pages',
         );
         expect(find.byKey(PagesKeys.row('page-7')), findsOneWidget);
@@ -328,7 +316,10 @@ Finder _confirmFinder(bool wide) {
 }
 
 String _path(WidgetTester tester) {
-  return GoRouter.of(tester.element(find.byType(Navigator).first)).state.uri.path;
+  return GoRouter.of(tester.element(find.byType(Navigator).first))
+      .state
+      .uri
+      .path;
 }
 
 Future<void> _openPages(

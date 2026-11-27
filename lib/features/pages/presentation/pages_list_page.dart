@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/routes.dart';
@@ -110,11 +110,7 @@ class _PagesList extends StatelessWidget {
 }
 
 class _PageRow extends StatelessWidget {
-  const _PageRow({
-    required this.entry,
-    required this.now,
-    required this.wide,
-  });
+  const _PageRow({required this.entry, required this.now, required this.wide});
 
   final PageListEntry entry;
   final DateTime now;
@@ -182,11 +178,7 @@ class _PageRow extends StatelessWidget {
 
 /// Page-shaped tile. OCR snippet stands in for `pages.thumb_path` (not in v9).
 class _PageThumb extends StatelessWidget {
-  const _PageThumb({
-    super.key,
-    required this.size,
-    required this.preview,
-  });
+  const _PageThumb({super.key, required this.size, required this.preview});
 
   final Size size;
   final String? preview;

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -314,11 +314,7 @@ void main() {
       addTearDown(tester.view.resetPadding);
       addTearDown(tester.view.resetViewPadding);
 
-      await _openWord(
-        tester,
-        jmdictPath: jmdictPath,
-        state: WordState.known,
-      );
+      await _openWord(tester, jmdictPath: jmdictPath, state: WordState.known);
 
       final last = find.byKey(NotebookWordKeys.removeFromNotebook);
       await tester.ensureVisible(last);

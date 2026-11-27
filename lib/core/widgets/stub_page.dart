@@ -1,12 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Placeholder screen used by full-screen routes (outside the tab shell).
 class StubPage extends StatelessWidget {
-  const StubPage({
-    super.key,
-    required this.title,
-    this.subtitle,
-  });
+  const StubPage({super.key, required this.title, this.subtitle});
 
   final String title;
   final String? subtitle;

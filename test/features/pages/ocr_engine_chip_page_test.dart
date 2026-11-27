@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/app.dart';
 import 'package:manga_jp/core/database/app_database.dart';
@@ -35,7 +35,9 @@ void main() {
       expect(find.text(CloudVisionLabels.chipMixed), findsNothing);
     });
 
-    testWidgets('mixed engine chip when crops differ at $label', (tester) async {
+    testWidgets('mixed engine chip when crops differ at $label', (
+      tester,
+    ) async {
       await _openPage(
         tester,
         size: size,

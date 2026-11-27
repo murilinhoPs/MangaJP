@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:manga_jp/app.dart';
@@ -176,9 +176,9 @@ void main() {
         final strokesLabel = find.text(NotebookLabels.kanjiStrokes);
         expect(strokesLabel, findsOneWidget);
         expect(
-          tester.getRect(strokesLabel).overlaps(
-            tester.getRect(find.byKey(KanjiSheetKeys.save)),
-          ),
+          tester
+              .getRect(strokesLabel)
+              .overlaps(tester.getRect(find.byKey(KanjiSheetKeys.save))),
           isFalse,
         );
       } else if (extent > 0.5) {
@@ -332,7 +332,10 @@ void main() {
           tester.widget<Text>(find.byKey(KanjiSheetKeys.meanings)).data,
           'life; genuine; birth; raw; fresh',
         );
-        expect(tester.widget<Text>(find.byKey(KanjiSheetKeys.strokes)).data, '5');
+        expect(
+          tester.widget<Text>(find.byKey(KanjiSheetKeys.strokes)).data,
+          '5',
+        );
 
         final modalRect = tester.getRect(find.byKey(KanjiSheetKeys.modal));
         expect(

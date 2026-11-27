@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// One command for the mobile task dock and/or the desktop command bar.
 class ShellAction {

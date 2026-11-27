@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Color tokens from `tokens.json` (MangaJP Study · M1). Extra hex only when
 /// the DS adds a named role (`danger` / `danger-bg` in M1.25).

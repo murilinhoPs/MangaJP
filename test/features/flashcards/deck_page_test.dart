@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manga_jp/app.dart';
@@ -101,12 +101,15 @@ void main() {
             expect(find.text('食べる'), findsOneWidget);
             expect(find.text('たべる'), findsOneWidget);
             expect(find.text('猫'), findsOneWidget);
+            expect(find.byKey(DeckKeys.status('eat')), findsOneWidget);
             expect(
-              find.byKey(DeckKeys.status('eat')),
+              find.text(NotebookLabels.state(WordState.learning)),
+              findsWidgets,
+            );
+            expect(
+              find.text(NotebookLabels.state(WordState.known)),
               findsOneWidget,
             );
-            expect(find.text(NotebookLabels.state(WordState.learning)), findsWidgets);
-            expect(find.text(NotebookLabels.state(WordState.known)), findsOneWidget);
             expect(find.byKey(DeckKeys.suspend('eat')), findsOneWidget);
             expect(find.byKey(DeckKeys.reactivate('eat')), findsNothing);
             expect(find.byKey(DeckKeys.suspend('known')), findsNothing);
@@ -154,7 +157,10 @@ void main() {
             expect(find.byKey(DeckKeys.suspend('eat')), findsOneWidget);
             expect(find.byKey(DeckKeys.reactivate('eat')), findsNothing);
             expect(find.text(DeckLabels.suspenso), findsNothing);
-            expect(find.text(NotebookLabels.state(WordState.learning)), findsWidgets);
+            expect(
+              find.text(NotebookLabels.state(WordState.learning)),
+              findsWidgets,
+            );
           },
         );
       },
